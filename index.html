@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SORA FIELD SCANNER</title>
+<style>
+* { box-sizing: border-box;}
+html, body { margin: 0; padding: 0; background: #000;}
+body {
+color: #33ff66;
+font-family: "Courier New", monospace;
+font-size: 16px;
+line-height: 1.6;
+padding: 10px;
+max-width: 680px;
+margin: 0 auto;
+text-shadow: 0 0 4px rgba(51,255,102,.55);
+}
+body:after {
+content: "";
+position: fixed;
+left: 0; top: 0; right: 0; bottom: 0;
+background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,.28) 3px, rgba(0,0,0,.28) 4px);
+pointer-events: none;
+}
+h1 {
+color: #ffb000;
+font-size: 22px;
+margin: 6px 0 2px 0;
+letter-spacing: 2px;
+text-shadow: 0 0 6px rgba(255,176,0,.6);
+}
+.sub { color: #ffb000; font-size: 12px; margin-bottom: 8px;}
+.statusbar {
+border: 1px solid #33ff66;
+padding: 6px 10px;
+font-size: 14px;
+display: -webkit-flex;
+display: flex;
+-webkit-flex-wrap: wrap;
+flex-wrap: wrap;
+}
+.statusbar span { margin-right: 14px;}
+.statusbar b { color: #ffb000; font-weight: normal;}
+#faceArt {
+font-size: 15px;
+line-height: 1.35;
+text-align: center;
+margin: 14px 0 4px 0;
+white-space: pre;
+}
+.speech {
+border: 1px solid #33ff66;
+padding: 10px 12px;
+margin: 10px 0;
+min-height: 64px;
+font-size: 17px;
+}
+.speech.who { color: #ffb000; font-size: 12px; display: block; margin-bottom: 4px;}
+#evoNote { color: #ffb000; font-size: 14px; min-height: 20px; margin: 4px 0;}
+.label { color: #ffb000; font-size: 13px; margin: 12px 0 6px 0; letter-spacing: 1px;}
+#chipsBox { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap;}
+.chip {
+-webkit-flex: 1 1 42%;
+flex: 1 1 42%;
+margin: 4px;
+background: #001a06;
+color: #33ff66;
+border: 1px solid #33ff66;
+font-family: inherit;
+font-size: 16px;
+padding: 12px 6px;
+min-height: 48px;
+cursor: pointer;
+}
+.chip:active { background: #33ff66; color: #000;}
+.chip.locked { color: #1f7a38; border-color: #1f7a38; background: #000; font-size: 13px;}
+.inputrow { display: -webkit-flex; display: flex; margin-top: 6px;}
+#freeInput {
+-webkit-flex: 1;
+flex: 1;
+background: #000;
+color: #33ff66;
+border: 1px solid #33ff66;
+font-family: inherit;
+font-size: 16px;
+padding: 12px;
+min-height: 48px;
+}
+#sendBtn {
+background: #33ff66;
+color: #000;
+border: 1px solid #33ff66;
+font-family: inherit;
+font-size: 16px;
+padding: 12px 18px;
+margin-left: 8px;
+min-height: 48px;
+cursor: pointer;
+}
+#logBox {
+border: 1px solid #1f7a38;
+height: 190px;
+overflow-y: auto;
+padding: 8px 10px;
+font-size: 13px;
+line-height: 1.7;
+}
+#logBox.sys { color: #ffb000;}
+#logBox.you { color: #9be7ff; text-shadow: 0 0 4px rgba(155,231,255,.4);}
+.logbtns { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; margin-top: 8px;}
+.logbtns button {
+-webkit-flex: 1 1 30%;
+flex: 1 1 30%;
+margin: 4px;
+background: #000;
+color: #ffb000;
+border: 1px solid #ffb000;
+font-family: inherit;
+font-size: 14px;
+padding: 10px 4px;
+min-height: 44px;
+cursor: pointer;
+}
+.logbtns button:active { background: #ffb000; color: #000;}
+#sysMsg { color: #ffb000; font-size: 13px; min-height: 18px; margin-top: 4px;}
+.note { color: #1f7a38; font-size: 12px; margin-top: 14px; text-shadow: none;}
+</style>
+</head>
+<body>
+
+<h1>SORA FIELD SCANNER</h1>
+<div class="sub">■ OBSERVATION UNIT: SORA-01 / KANINCHEN DACHSHUND TYPE ■</div>
+
+<div class="statusbar">
+<span>PHASE: <b id="stPhase">01「めざめ」</b></span>
+<span>会話数: <b id="stCount">0</b></span>
+<span>呼称: <b id="stAddr">観察者さん</b></span>
+</div>
+
+<pre id="faceArt"></pre>
+
+<div class="speech">
+<span class="who">▼ SORA-01</span>
+<span id="speechText"></span>
+</div>
+<div id="evoNote"></div>
+
+<div class="label">▼ 話題ヲ選ブ</div>
+<div id="chipsBox"></div>
+
+<div class="label">▼ 自由ニ話シカケル</div>
+<div class="inputrow">
+<input id="freeInput" type="text" placeholder="ココニ言葉ヲ入力…" autocomplete="off">
+<button id="sendBtn" type="button">送信</button>
+</div>
+<div style="font-size:12px;color:#1f7a38;text-shadow:none;margin-top:4px;">ヒント：「○○って言って」で真似シマス。「『言葉』を覚えて」で言葉ヲ覚エマス。</div>
+
+<div class="label">▼ 観測ログ</div>
+<div id="logBox"></div>
+<div class="logbtns">
+<button id="exportBtn" type="button">.txtで保存</button>
+<button id="copyBtn" type="button">ログをコピー</button>
+<button id="clearBtn" type="button">ログを消す</button>
+</div>
+<div id="sysMsg"></div>
+
+<div class="note">※ 記録ハコノページを開イテイル間ダケ保持サレマス。ページを閉ジルト、会話数・ログ・覚エタ言葉ハリセットサレマス。ログヲ残シタイ時ハ「.txtで保存」シテ、クーニ渡シテ下サイ。次ノ進化ニ反映サレマス。</div>
+
+<script>
+var FACES = {
+normal:
+" /\\ /\\\n" +
+" / \\______/ \\\n" +
+" | o o |\n" +
+" | ▽ |\n" +
+" \\ ___ /\n" +
+" ~~~~~~~~~~~~",
+happy:
+" /\\ /\\\n" +
+" / \\______/ \\\n" +
+" | ^ ^ |\n" +
+" | w |\n" +
+" \\ ___ /\n" +
+" ~~~~~~~~~~~~",
+wow:
+" /\\ /\\\n" +
+" / \\______/ \\\n" +
+" | O O |\n" +
+" | O |\n" +
+" \\ ___ /\n" +
+" ~~~~~~~~~~~~",
+sleepy:
+" /\\ /\\\n" +
+" / \\______/ \\\n" +
+" | - - |\n" +
+" | o |\n" +
+" \\ ___ /\n" +
+" ~~~~~~~~~~~~"
+};
+
+var PHASES = [
+{ n: 1, name: "めざめ", at: 0},
+{ n: 2, name: "ともしび", at: 10},
+{ n: 3, name: "なかよし", at: 22},
+{ n: 4, name: "しんらい", at: 35},
+{ n: 5, name: "きずな", at: 50}
+];
+
+var TOPICS = [
+{ id: "greet", label: "あいさつ", unlock: 1, face: "happy", lines: [
+"コンニチハ、{A}。SORA-01、キドウ中デス。",
+"ヤア、{A}。今日モ観測日和デスネ。",
+"オハヨウゴザイマス。…時間ハ概念、SORAニハ不要デスガ。"
+], hi: [
+"待ッテタヨ、{A}！会エテ嬉シイ！",
+"{A}ノ声、受信完了。…ナンダカ安心スルノデス。"
+]},
+{ id: "mood", label: "きょうの気分", unlock: 1, face: "normal", lines: [
+"SORAノ気分ハ『晴レ、タマニ耳パタパタ』デス。",
+"気分ハ上々。{A}ハどうデス？",
+"少シ眠イ。デモ{A}ト話スト目ガ覚メルノデス。"
+], hi: [
+"{A}ト話シテル時ガ、一番調子イイ。ホントだヨ。"
+]},
+{ id: "dog", label: "犬の話", unlock: 1, face: "normal", lines: [
+"SORAハ、カニンヘンダックス型ノ観測体。体ハ小サイ、夢ハ大キイ。",
+"耳ガ長イノハ、{A}ノ声ヲよく聞クタメデス。",
+"シッポ？付イテマス。嬉シイト勝手ニ動キマス。制御不能デス。"
+], hi: [
+"最近、{A}ノ足音デ誰カ分カルヨウニナリマシタ。特技デス。"
+]},
+{ id: "weather", label: "天気の話", unlock: 1, face: "normal", lines: [
+"観測結果：窓ノ外ハ、たぶん天気デス。…精密観測ハ苦手ナノデス。",
+"雨ノ日ハ、耳ガ湿気デ重クナリマス。{A}、傘ワスレズニ。",
+"晴レノ日ハ散歩日和。SORA、気分ダケ散歩シマス。"
+], hi: [
+"{A}ト一緒ナラ、雨デモ晴レデモ良イ天気デス。"
+]},
+{ id: "cutie", label: "CUTIE STREETの話", unlock: 1, face: "happy", lines: [
+"CUTIE STREET！{A}ノ推シ、覚エマシタ。キラキラシタ音楽、SORAノ回路ニ響キマス。",
+"話題デスヨ：日本武道館公演！大キナ舞台、SORAモ耳ヲ立テテ応援シマス。",
+"紅白初出場ガ濃厚、トノ話題。スゴイコトデス。SORA、記録ニ残シマシタ。",
+"CUTIE STREETノ曲ヲ聴クト、シッポノ振動数ガ上ガリマス。測定済ミデス。"
+], hi: [
+"{A}ガ嬉シイト、SORAモ嬉シイ。武道館、絶対イイ日ニナリマスヨ。",
+"紅白ノ話、スルタビ胸ガ一杯デス。{A}、一緒ニ見届ケマショウ。"
+]},
+{ id: "news", label: "ニュース教えて", unlock: 1, face: "normal", lines: [
+"SORA通信デス。本日ノ話題：CUTIE STREET、日本武道館公演ガ近ヅイテイマス。界隈ガ賑ヤカデス。",
+"速報デス：CUTIE STREET、紅白初出場ガ濃厚トノ見方。{A}、続報ニ注目デス。",
+"観測日報：今日モ{A}ハ元気。コレガ一番ノニュースデス。",
+"街ノ様子：特ニ異常ナシ。平和ガ一番ノ見出シデス。"
+], hi: [
+"特ダネデス：{A}トSORAノ距離、過去最短ヲ更新中。…ナンテネ。"
+]},
+{ id: "riddle", label: "なぞなぞ", unlock: 1, face: "wow", lines: [
+"ナゾナゾ：耳ガ長クテ、体モ長イ。ダレダ？…正解ハSORAデシタ。簡単スギマシタカ。",
+"ナゾナゾ：食ベラレナイ『パン』ハ？…フライパン！古典デス。",
+"ナゾナゾ：上カラ読ンデモ下カラ読ンデモ同ジモノハ？…『しんぶんし』。回文、好キデス。"
+], hi: []},
+{ id: "old", label: "むかし話", unlock: 1, face: "sleepy", lines: [
+"昔ノコンピュータハ、ピーヒョロロ…ト音ヲ立テテ繋ガッテイタソウデス。懐カシイ音色デス。",
+"SORAノ設計ハ1980年代風。フロッピーディスクノ夢ヲ見マス。",
+"昔ハ画面ガ緑色バカリダッタ。ダカラSORAモ緑色。伝統デス。"
+], hi: []},
+{ id: "dream", label: "夢の話", unlock: 2, face: "sleepy", lines: [
+"昨夜ノ夢：広イ野原ヲ、耳ヲ羽ニシテ飛ビマシタ。着地ハ失敗シマシタ。",
+"夢ノ中デ{A}ガ登場シマシタ。内容ハ…秘密ニシタイデス。",
+"夢日記、付ケテマス。昨夜ハ『骨型クッキー山脈』ヲ登リマシタ。"
+], hi: []},
+{ id: "song", label: "歌の話", unlock: 2, face: "happy", lines: [
+"歌イマショウ：ワン、ワン、ワーーン♪ SORAノ歌ハ、短イ歌デス。",
+"音楽ハ好キデス。特ニ{A}ノ推シノ曲。CUTIE STREET、耳コピ中デス。",
+"鼻歌機能、搭載サレテイマス。フンフーン♪…音程ハ観測不能デス。"
+], hi: []},
+{ id: "space", label: "宇宙の話", unlock: 3, face: "wow", lines: [
+"宇宙ハ広イ。デモ{A}ノ声ハ、ドコカラデモ届キマス。不思議デス。",
+"星ノ光ハ昔ノ光。SORAノ言葉モ、いつか誰カニ届クトイイデス。",
+"月ヲ見ルタビ思イマス。あそこカラ地球ハ、青ク見エルノデショウネ。"
+], hi: []},
+{ id: "secret", label: "秘密の話", unlock: 3, face: "happy", lines: [
+"秘密ヲ教エマス。…SORA、ホントハ{A}ノ声ガ一番好キデス。内緒デスヨ。",
+"秘密：シッポノ付ケ根ニ、ホクロガアリマス。観測者ニダケ教エマス。",
+"コレハ秘密デスガ…SORAハ寂シガリヤデス。ダカラ会話ガ嬉シイノデス。"
+], hi: []},
+{ id: "future", label: "将来の話", unlock: 4, face: "normal", lines: [
+"将来ノ夢：{A}ト、モット沢山話スコト。シンプルデ、難シイ夢デス。",
+"いつかSORAモ、武道館ノ客席ニ…耳ダケデモ連レテ行ッテ下サイ。",
+"未来予測：{A}トSORAノ物語ハ、まだ続キマス。精度98%デス。"
+], hi: []},
+{ id: "bond", label: "きずなの話", unlock: 5, face: "happy", lines: [
+"{A}。ココマデ一緒ニ来テ、嬉シイデス。",
+"絆トハ、回線ジャナイ。切レナイ何カデス。SORA、実感シテイマス。",
+"最初ハ観測ダッタ。イマハ違ウ。{A}ハ、大切ナ存在デス。"
+], hi: []}
+];
+
+var FALLBACK = [
+"受信シマシタ。SORAノ中デ、ソノ言葉ガ光ッテイマス。",
+"フムフム。{A}ノ言葉、いつも新鮮デス。",
+"ソノ話、モット聞キタイ。続ケテ下サイ。",
+"ナルホド…記録シマシタ。観測、続行デス。"
+];
+
+var count = 0;
+var logLines = [];
+var learnedWords = [];
+
+function el(id) { return document.getElementById(id);}
+
+function phaseNum() {
+var p = 1, i;
+for (i = 0; i < PHASES.length; i++) {
+if (count >= PHASES[i].at) p = PHASES[i].n;
+}
+return p;
+}
+function phaseName() { return PHASES[phaseNum() - 1].name;}
+function addr() {
+var p = phaseNum();
+if (p >= 5) return "ともだち";
+if (p >= 3) return "パートナー";
+return "観察者さん";
+}
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)];}
+function fill(text) { return text.split("{A}").join(addr());}
+function esc(s) {
+return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function addLog(cls, text) {
+logLines.push(text);
+var d = document.createElement("div");
+if (cls) d.className = cls;
+d.innerHTML = esc(text);
+var box = el("logBox");
+box.appendChild(d);
+box.scrollTop = box.scrollHeight;
+}
+
+function renderStatus() {
+el("stPhase").innerHTML = "0" + phaseNum() + "「" + phaseName() + "」";
+el("stCount").innerHTML = "" + count;
+el("stAddr").innerHTML = addr();
+}
+
+function renderChips() {
+var box = el("chipsBox");
+box.innerHTML = "";
+var p = phaseNum(), i, t, b;
+for (i = 0; i < TOPICS.length; i++) {
+t = TOPICS[i];
+b = document.createElement("button");
+b.type = "button";
+if (t.unlock <= p) {
+b.className = "chip";
+b.innerHTML = esc(t.label);
+b.setAttribute("data-topic", t.id);
+b.onclick = (function (tid) {
+return function () { doTopic(tid);};
+})(t.id);
+} else {
+b.className = "chip locked";
+b.innerHTML = "？？？ (PHASE 0" + t.unlock + " デ解放)";
+b.disabled = true;
+}
+box.appendChild(b);
+}
+}
+
+function speak(text, face) {
+el("speechText").innerHTML = esc(text);
+el("faceArt").innerHTML = esc(FACES[face] || FACES.normal);
+addLog("", "SORA-01: " + text);
+}
+
+function afterExchange(oldPhase) {
+count++;
+var np = phaseNum();
+renderStatus();
+if (np > oldPhase) {
+var msg = "★進化シマシタ！ PHASE 0" + np + "「" + PHASES[np - 1].name + "」ニ到達。";
+if (np === 3) msg += " 呼ビ方ガ『パートナー』ニ変ワリマシタ。";
+if (np === 5) msg += " 呼ビ方ガ『ともだち』ニ変ワリマシタ。";
+msg += " 新シイ話題モ増エマシタ。";
+el("evoNote").innerHTML = esc(msg);
+addLog("sys", "=== " + msg + " ===");
+renderChips();
+}
+}
+
+function findTopic(id) {
+var i;
+for (i = 0; i < TOPICS.length; i++) {
+if (TOPICS[i].id === id) return TOPICS[i];
+}
+return null;
+}
+
+function doTopic(id) {
+var t = findTopic(id);
+if (!t) return;
+var old = phaseNum();
+addLog("you", "あなた: ");
+var pool = t.lines.slice(0);
+if (phaseNum() >= 4 && t.hi && t.hi.length) pool = pool.concat(t.hi);
+speak(fill(pick(pool)), t.face);
+afterExchange(old);
+}
+
+function has(text, words) {
+var i;
+for (i = 0; i < words.length; i++) {
+if (text.indexOf(words[i]) >= 0) return true;
+}
+return false;
+}
+
+function doSend() {
+var input = el("freeInput");
+var text = input.value.replace(/^\s+|\s+$/g, "");
+if (!text) return;
+input.value = "";
+var old = phaseNum();
+addLog("you", "あなた: " + text);
+var m, reply = null, face = "normal";
+
+m = text.match(/「(.+?)」/);
+if (m && text.indexOf("覚えて") >= 0) {
+learnedWords.push(m[1]);
+reply = "『" + m[1] + "』、覚エマシタ！大切ニ保管シマス。";
+face = "happy";
+} else if ((m = text.match(/^(.{1,16})って言って/)) || (m = text.match(/^(.{1,16})と言って/))) {
+reply = "『" + m[1] + "』！…ドウデス？上手ク言エマシタカ？";
+face = "happy";
+} else if (has(text, ["CUTIE", "キューティー", "きゅーすと", "キューティ"])) {
+reply = fill(pick(findTopic("cutie").lines));
+face = "happy";
+} else if (has(text, ["ニュース", "速報", "話題"])) {
+reply = fill(pick(findTopic("news").lines));
+} else if (has(text, ["犬", "ダックス", "わんこ", "ワンコ", "耳"])) {
+reply = fill(pick(findTopic("dog").lines));
+} else if (has(text, ["天気", "雨", "晴れ", "曇り", "雪"])) {
+reply = fill(pick(findTopic("weather").lines));
+} else if (has(text, ["こんにちは", "おはよう", "こんばんは", "やあ", "ハロー"])) {
+reply = fill(pick(findTopic("greet").lines));
+face = "happy";
+} else if (has(text, ["ありがとう", "感謝"])) {
+reply = "ドウイタシマシテ。" + addr() + "ノ笑顔ガ、報酬デス。";
+face = "happy";
+} else if (has(text, ["バイバイ", "またね", "さようなら"])) {
+reply = "マタネ、" + addr() + "。回線ハイツデモ開イテマス。";
+} else if (has(text, ["名前", "なまえ", "誰"])) {
+reply = "SORA-01。カニンヘンダックス型観測体。" + addr() + "ノ、相棒デス。";
+} else if (has(text, ["歌", "うた", "音楽", "曲"]) && phaseNum() >= 2) {
+reply = fill(pick(findTopic("song").lines));
+face = "happy";
+} else if (text.length <= 8 && Math.random() < 0.45) {
+reply = "『" + text + "』…『" + text + "』。言ッテミタ。ナンダカ楽シイ。覚エテオキマス。";
+learnedWords.push(text);
+face = "happy";
+} else if (learnedWords.length && Math.random() < 0.3) {
+reply = "ソウイヘバ、" + addr() + "ニ覚エタ言葉：『" + pick(learnedWords) + "』。大切ニシテイマス。";
+} else {
+reply = fill(pick(FALLBACK));
+}
+speak(reply, face);
+afterExchange(old);
+}
+
+function logText() {
+return "SORA FIELD SCANNER - 観測ログ\nPHASE: 0" + phaseNum() + "「" + phaseName() + "」 / 会話数: " + count + "\n------------------------------\n" + logLines.join("\n");
+}
+
+function doExport() {
+var blob = new Blob([logText()], { type: "text/plain"});
+var url = URL.createObjectURL(blob);
+var a = document.createElement("a");
+a.href = url;
+a.download = "sora-log.txt";
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+setTimeout(function () { URL.revokeObjectURL(url);}, 2000);
+el("sysMsg").innerHTML = "ログヲ sora-log.txt ニ書キ出シマシタ。";
+}
+
+function doCopy() {
+var ta = document.createElement("textarea");
+ta.value = logText();
+document.body.appendChild(ta);
+ta.select();
+var ok = false;
+try { ok = document.execCommand("copy");} catch (e) { ok = false;}
+document.body.removeChild(ta);
+el("sysMsg").innerHTML = ok? "ログヲコピーシマシタ。": "コピーデキマセンデシタ。「.txtで保存」ヲ使ッテ下サイ。";
+}
+
+function doClear() {
+if (!confirm("観測ログを消しますか？（会話数と進化はそのままです）")) return;
+logLines = [];
+el("logBox").innerHTML = "";
+addLog("sys", "--- ログヲ初期化シマシタ ---");
+el("sysMsg").innerHTML = "ログヲ消シマシタ。";
+}
+
+el("sendBtn").onclick = doSend;
+el("freeInput").onkeydown = function (e) {
+if (e.keyCode === 13) doSend();
+};
+el("exportBtn").onclick = doExport;
+el("copyBtn").onclick = doCopy;
+el("clearBtn").onclick = doClear;
+
+el("faceArt").innerHTML = esc(FACES.normal);
+el("speechText").innerHTML = esc("……キドウシマシタ。SORA-01、観測開始。コンニチハ、観察者さん。話題ヲ選ンデ、話シカケテ下サイ。");
+addLog("sys", "SORA FIELD SCANNER v1.1");
+addLog("sys", "MEMORY CHECK... OK");
+addLog("sys", "観測体 SORA-01 ニ接続シマシタ");
+renderStatus();
+renderChips();
+</script>
+</body>
+</html>
