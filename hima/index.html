@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HIMA-6 ひまステーション</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 10px;
+    background: #000;
+    background-image: repeating-linear-gradient(0deg, rgba(0,255,120,0.03) 0px, rgba(0,255,120,0.03) 1px, transparent 1px, transparent 4px);
+    color: #39ff6a;
+    font-family: "Hiragino Kaku Gothic ProN", monospace;
+    font-size: 17px; line-height: 1.6;
+  }
+  h1 { color: #ffb000; font-size: 26px; margin: 6px 0 2px 0; letter-spacing: 2px; }
+  .sub { color: #00e5ff; font-size: 15px; margin-bottom: 10px; }
+  .card {
+    border: 1px solid #1d7a3f; border-radius: 6px;
+    padding: 12px; margin: 0 0 14px 0; background: rgba(0,40,16,0.35);
+  }
+  .card h2 {
+    color: #ffb000; font-size: 20px; margin: 0 0 8px 0;
+    border-bottom: 1px dashed #1d7a3f; padding-bottom: 6px;
+  }
+  .card h3 { color: #00e5ff; font-size: 18px; margin: 14px 0 6px 0; }
+  .card h3:first-of-type { margin-top: 2px; }
+  button {
+    min-height: 48px; min-width: 48px;
+    font-size: 18px; font-family: inherit;
+    background: #062b14; color: #39ff6a;
+    border: 1px solid #39ff6a; border-radius: 6px;
+    padding: 8px 16px; margin: 4px 2px;
+  }
+  button:active { background: #0d4d24; }
+  .amber { color: #ffb000; }
+  .cyan { color: #00e5ff; }
+  .big { font-size: 22px; }
+  .news-item { margin: 0 0 10px 0; }
+  .news-item a { color: #39ff6a; text-decoration: none; }
+  .news-date { color: #8fdc9f; font-size: 13px; }
+  .fail { color: #ffb000; }
+  input[type="number"], input[type="text"] {
+    font-size: 20px; font-family: inherit; width: 110px;
+    background: #02150a; color: #39ff6a;
+    border: 1px solid #39ff6a; border-radius: 6px;
+    padding: 10px; min-height: 48px;
+  }
+  .slotbox {
+    display: inline-block; width: 72px; height: 72px; line-height: 72px;
+    text-align: center; font-size: 34px; color: #ffb000;
+    border: 2px solid #ffb000; border-radius: 8px; margin: 4px;
+    background: #140e00; vertical-align: middle;
+  }
+  .dicebox {
+    display: inline-block; width: 84px; height: 84px;
+    border: 2px solid #00e5ff; border-radius: 8px; margin: 4px;
+    background: #00131a; text-align: center; padding-top: 10px;
+    vertical-align: middle; line-height: 1.15;
+  }
+  .pip { color: #00e5ff; font-size: 17px; }
+  .pipoff { color: #00131a; font-size: 17px; }
+  .linkbtn {
+    display: block; width: 100%; text-align: left;
+    margin: 6px 0; font-size: 19px;
+  }
+  .ans { color: #ffb000; display: none; margin-top: 6px; }
+  .footer { color: #8fdc9f; font-size: 14px; text-align: center; margin: 18px 0 8px 0; }
+  .stat { color: #8fdc9f; font-size: 15px; }
+</style>
+</head>
+<body>
+
+<h1>HIMA-6 ひまステーション</h1>
+<div class="sub" id="dateLine">----/--/--</div>
+<div class="card">
+  <h2>■ 本日の一言</h2>
+  <div class="big" id="hitokoto">読み込み中…</div>
+</div>
+
+<div class="card">
+  <h2>■ CUTIE STREET ニュース</h2>
+  <div id="cutieNews">取得中…</div>
+  <button id="cutieRetry" type="button">↻ 再試行</button>
+</div>
+
+<div class="card">
+  <h2>■ 宇宙ニュース</h2>
+  <div id="spaceNews">取得中…</div>
+  <button id="spaceRetry" type="button">↻ 再試行</button>
+</div>
+
+<div class="card">
+  <h2>■ 読み物コーナー</h2>
+
+  <h3>◆ ダックス小ネタ</h3>
+  <div id="daxText">読み込み中…</div>
+  <button id="daxNext" type="button">次のをみる</button>
+
+  <h3>◆ 宇宙の雑学</h3>
+  <div id="spaceText">読み込み中…</div>
+  <button id="spaceNext" type="button">次のをみる</button>
+
+  <h3>◆ なぞなぞ</h3>
+  <div id="riddleText">読み込み中…</div>
+  <div class="ans" id="riddleAns"></div>
+  <button id="riddleShow" type="button">答えを見る</button>
+  <button id="riddleNext" type="button">次の問題</button>
+
+  <h3>◆ ダジャレ</h3>
+  <div id="jokeText">読み込み中…</div>
+  <button id="jokeNext" type="button">次のをみる</button>
+</div>
+
+<div class="card">
+  <h2>■ ミニゲーム</h2>
+
+  <h3>◆ スロット</h3>
+  <div>
+    <span class="slotbox" id="slot1">犬</span><span class="slotbox" id="slot2">星</span><span class="slotbox" id="slot3">月</span>
+  </div>
+  <button id="slotSpin" type="button">まわす</button>
+  <div id="slotMsg">3つそろえば当たり！「犬・犬・犬」は特別賞</div>
+  <div class="stat" id="slotStat">回数 0 ／ 当たり 0</div>
+
+  <h3>◆ 数当て（1〜50）</h3>
+  <div>コンピュータの決めた数を当ててください。</div>
+  <input type="number" id="guessInput" min="1" max="50" value="">
+  <button id="guessBtn" type="button">当てる</button>
+  <button id="guessReset" type="button">はじめから</button>
+  <div id="guessMsg">数を入れて「当てる」を押してください。</div>
+  <div class="stat" id="guessStat">挑戦回数 0</div>
+
+  <h3>◆ じゃんけん</h3>
+  <button id="jkGu" type="button">グー</button>
+  <button id="jkChoki" type="button">チョキ</button>
+  <button id="jkPa" type="button">パー</button>
+  <div id="jkMsg">手を選んでください。</div>
+  <div class="stat" id="jkStat">勝ち 0 ／ 負け 0 ／ あいこ 0</div>
+
+  <h3>◆ おみくじ</h3>
+  <button id="omikujiBtn" type="button">おみくじを引く</button>
+  <div id="omikujiMsg">今日の運勢は…？</div>
+
+  <h3>◆ サイコロ</h3>
+  <div>
+    <span class="dicebox" id="dice1"></span><span class="dicebox" id="dice2"></span>
+  </div>
+  <button id="diceBtn" type="button">ふる</button>
+  <div id="diceMsg">ボタンを押すとサイコロをふります。</div>
+</div>
+
+<div class="card">
+  <h2>■ 姉妹サイトへのリンク</h2>
+  <button class="linkbtn" id="linkBoard" type="button">▶ 情報ボード（天気・地震・ニュース）</button>
+  <button class="linkbtn" id="linkSora" type="button">▶ SORA FIELD SCANNER</button>
+  <button class="linkbtn" id="linkOrbit" type="button">▶ ORBIT-6 宇宙管制</button>
+  <button class="linkbtn" id="linkRadar" type="button">▶ RDR-6 周辺探査レーダー</button>
+</div>
+
+<div class="footer">
+  HIMA-6 は昼休みと夜の1時間のための、小野さん専用ステーションです<br>
+  データ出典：ニュースは Google News / sorae.info を rss2json 経由で取得
+</div>
+
+<script>
+function el(id) { return document.getElementById(id); }
+function daySeed() {
+  var now = new Date();
+  var start = new Date(now.getFullYear(), 0, 0);
+  return Math.floor((now.getTime() - start.getTime()) / 86400000);
+}
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* ---------- ヘッダー ---------- */
+var HITOKOTO = [
+  '今日もダックスは短い足で全力疾走。',
+  '宇宙は広い。お昼寝のスペースも広く使おう。',
+  '笑う門には福来る、らしいです。',
+  '今日の敵は、昨日の自分と眠気だけ。',
+  'おやつは裏切らない。',
+  '星に願いを、昼寝に夢を。',
+  '焦らず一歩ずつ。ダックスの歩幅でOK。',
+  'いい一日は、いい朝ごはんから。',
+  '考える前に、まずお茶を一杯。',
+  '今日の小さなラッキーが、明日の大きな笑いに。',
+  '骨のある奴は、犬も人もモテる。',
+  '夜空を見上げる余裕が、いい夜を作る。',
+  '休むのも仕事のうち。堂々と休もう。',
+  '推しの笑顔は万能薬。'
+];
+function initHeader() {
+  var now = new Date();
+  var wday = ['日', '月', '火', '水', '木', '金', '土'];
+  el('dateLine').innerHTML = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日（' + wday[now.getDay()] + '）';
+  el('hitokoto').innerHTML = esc(HITOKOTO[daySeed() % HITOKOTO.length]);
+}
+
+/* ---------- 読み物データ ---------- */
+var DAX = [
+  'ダックスフントはドイツ語で「アナグマ犬」。アナグマ狩りのために作られた犬種です。',
+  '「カニンヘン」はドイツ語でウサギの意味。ウサギ狩り用に、さらに小さく改良されました。',
+  'カニンヘンの体重目安は3〜4kgほど。胸囲30cm以下が基準とされています。',
+  'あの胴の長さは、巣穴に入って獲物を追うため。体型そのものが機能美です。',
+  '短い足でも運動量は本格派。毎日の散歩はしっかり必要です。',
+  '垂れた長い耳は、土や汚れが耳に入りにくくするためとも言われています。',
+  'ロングヘアーは、寒さや茂みから体を守るために改良された被毛です。',
+  'ダックスは頑固で独立心が強め。しつけは根気勝負です。',
+  '吠え声は体に似合わず大きめ。巣穴の中から飼い主に合図するためでした。',
+  '腰に負担がかかりやすい犬種。高い所からの飛び降りには要注意です。',
+  '穴掘りが大好き。庭に穴があったら、だいたいダックスの仕業です。',
+  'イギリスのビクトリア女王が愛したことでも有名な犬種です。'
+];
+var SPACE_TRIVIA = [
+  '国際宇宙ステーションは約90分で地球を1周。1日に16回も日の出が見られます。',
+  '月は毎年約3.8cmずつ、地球から遠ざかっています。',
+  '金星の1日は地球の243日分。1年よりも1日の方が長い惑星です。',
+  '土星は水より密度が小さいので、巨大な浴槽があれば浮いてしまいます。',
+  '宇宙では足の裏の皮が剥けて、ピンク色の柔らかい足になるそうです。',
+  '中性子星は角砂糖1個分で約10億トンとも言われる、超高密度の天体です。',
+  'ふたご座流星群は毎年12月中旬が見ごろ。三大流星群のひとつです。',
+  '太陽の光が地球に届くまで約8分20秒。今見ている太陽は8分前の姿です。',
+  '木星の大赤斑は、少なくとも300年以上続いている巨大な嵐です。',
+  '宇宙服1着のお値段は、およそ10億円以上とも言われます。',
+  '月面の足跡は風がないため、何百万年も残り続けると言われます。',
+  '銀河系には少なくとも1000億個以上の星があると考えられています。'
+];
+var RIDDLES = [
+  { q: 'パンはパンでも、食べられないパンはなーんだ？', a: 'フライパン' },
+  { q: '足が4本あるのに、ぜんぜん歩けないものはなーんだ？', a: 'テーブル（机）' },
+  { q: '目があるのに、ぜんぜん見えないものはなーんだ？', a: 'サイコロの目' },
+  { q: '増えれば増えるほど、軽くなるものはなーんだ？', a: '穴（掘るほど土が減るから）' },
+  { q: 'いつも走っているのに、前に進まないものはなーんだ？', a: '時計の針' },
+  { q: '犬が大好きな、「ホ」から始まるものはなーんだ？', a: '骨（ホネ）' },
+  { q: '夜になると出てきて、朝になると消えるものはなーんだ？', a: '星' },
+  { q: '買ったときは黒くて、使うと赤くなり、捨てるときは灰色になるものは？', a: '木炭' },
+  { q: '世界の真ん中にいる虫はなーんだ？', a: '蚊（「せかい」の真ん中の文字は「か」）' },
+  { q: '上から読んでも、下から読んでも同じになる食べ物はなーんだ？', a: 'トマト' }
+];
+var JOKES = [
+  '布団が吹っ飛んだ。',
+  'アルミ缶の上にあるミカン。',
+  '電話に出んわ。',
+  '猫が寝転んだ。',
+  '骨のある犬は、ホネがある。',
+  '星空を見てホッとした。星だけに。',
+  '月見団子を食べ過ぎて、ツキまで太った。',
+  '宇宙飛行士は無重力でも、責任は重い。',
+  'ロケット発射！ 気分も打ち上がっていく。',
+  'サイコロを振ったら、目が回った。',
+  'おみくじで大吉。気分は上々、犬も喜ぶ。',
+  'カレーは辛いが、人生は甘くしたい。'
+];
+
+var daxIdx = 0, spaceIdx = 0, riddleIdx = 0, jokeIdx = 0;
+function showReading() {
+  el('daxText').innerHTML = esc(DAX[daxIdx % DAX.length]);
+  el('spaceText').innerHTML = esc(SPACE_TRIVIA[spaceIdx % SPACE_TRIVIA.length]);
+  el('riddleText').innerHTML = esc(RIDDLES[riddleIdx % RIDDLES.length].q);
+  el('riddleAns').innerHTML = '答え：' + esc(RIDDLES[riddleIdx % RIDDLES.length].a);
+  el('riddleAns').style.display = 'none';
+  el('jokeText').innerHTML = esc(JOKES[jokeIdx % JOKES.length]);
+}
+function initReading() {
+  var s = daySeed();
+  daxIdx = s % DAX.length;
+  spaceIdx = s % SPACE_TRIVIA.length;
+  riddleIdx = s % RIDDLES.length;
+  jokeIdx = s % JOKES.length;
+  showReading();
+  el('daxNext').onclick = function () { daxIdx = daxIdx + 1; showReading(); };
+  el('spaceNext').onclick = function () { spaceIdx = spaceIdx + 1; showReading(); };
+  el('jokeNext').onclick = function () { jokeIdx = jokeIdx + 1; showReading(); };
+  el('riddleNext').onclick = function () { riddleIdx = riddleIdx + 1; showReading(); };
+  el('riddleShow').onclick = function () {
+    var a = el('riddleAns');
+    a.style.display = (a.style.display === 'block') ? 'none' : 'block';
+  };
+}
+
+/* ---------- ニュース ---------- */
+function fetchNews(rssUrl, boxId) {
+  var api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', api, true);
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    var box = el(boxId);
+    if (xhr.status !== 200) {
+      box.innerHTML = '<span class="fail">取得できませんでした。↻で再試行できます</span>';
+      return;
+    }
+    var data = null;
+    try { data = JSON.parse(xhr.responseText); } catch (e) { data = null; }
+    if (!data || !data.items || data.items.length === 0) {
+      box.innerHTML = '<span class="fail">取得できませんでした。↻で再試行できます</span>';
+      return;
+    }
+    var html = '', i, it, n = Math.min(5, data.items.length);
+    for (i = 0; i < n; i++) {
+      it = data.items[i];
+      html += '<div class="news-item"><a href="' + esc(it.link) + '">' + esc(it.title) + '</a><br><span class="news-date">' + esc(it.pubDate || '') + '</span></div>';
+    }
+    box.innerHTML = html;
+  };
+  xhr.onerror = function () {
+    el(boxId).innerHTML = '<span class="fail">取得できませんでした。↻で再試行できます</span>';
+  };
+  xhr.send(null);
+}
+var CUTIE_RSS = 'https://news.google.com/rss/search?q=%22CUTIE%20STREET%22&hl=ja&gl=JP&ceid=JP:ja';
+var SORAE_RSS = 'https://sorae.info/feed';
+function loadCutie() { el('cutieNews').innerHTML = '取得中…'; fetchNews(CUTIE_RSS, 'cutieNews'); }
+function loadSpace() { el('spaceNews').innerHTML = '取得中…'; fetchNews(SORAE_RSS, 'spaceNews'); }
+function initNews() {
+  el('cutieRetry').onclick = loadCutie;
+  el('spaceRetry').onclick = loadSpace;
+  loadCutie();
+  loadSpace();
+}
+</script>
+
+<script>
+/* ---------- スロット ---------- */
+var SLOT_FACES = ['犬', '星', '月', '肉', '骨', '鈴'];
+var slotPlays = 0, slotWins = 0, slotTimer = null;
+function slotRandom() { return SLOT_FACES[Math.floor(Math.random() * SLOT_FACES.length)]; }
+function initSlot() {
+  el('slotSpin').onclick = function () {
+    if (slotTimer !== null) { return; }
+    var ticks = 0;
+    slotTimer = setInterval(function () {
+      el('slot1').innerHTML = slotRandom();
+      el('slot2').innerHTML = slotRandom();
+      el('slot3').innerHTML = slotRandom();
+      ticks = ticks + 1;
+      if (ticks >= 10) {
+        clearInterval(slotTimer);
+        slotTimer = null;
+        var a = el('slot1').innerHTML, b = el('slot2').innerHTML, c = el('slot3').innerHTML;
+        slotPlays = slotPlays + 1;
+        var msg;
+        if (a === b && b === c) {
+          slotWins = slotWins + 1;
+          if (a === '犬') { msg = '犬・犬・犬！ ダックス大当たり！！ 特別賞です！'; }
+          else if (a === '骨') { msg = '骨・骨・骨！ 骨まで愛して当たり！'; }
+          else { msg = a + '・' + a + '・' + a + '！ 3つそろって当たり！'; }
+        } else if (a === b || b === c || a === c) {
+          msg = 'おしい！ 2つそろいました。あと1つ！';
+        } else {
+          msg = '残念、そろいませんでした。もう一回どうぞ。';
+        }
+        el('slotMsg').innerHTML = esc(msg);
+        el('slotStat').innerHTML = '回数 ' + slotPlays + ' ／ 当たり ' + slotWins;
+      }
+    }, 80);
+  };
+}
+
+/* ---------- 数当て ---------- */
+var guessTarget = 0, guessCount = 0;
+function guessNewGame() {
+  guessTarget = Math.floor(Math.random() * 50) + 1;
+  guessCount = 0;
+  el('guessMsg').innerHTML = '新しい数を決めました。1〜50の数を入れてください。';
+  el('guessStat').innerHTML = '挑戦回数 0';
+  el('guessInput').value = '';
+}
+function initGuess() {
+  el('guessBtn').onclick = function () {
+    var v = parseInt(el('guessInput').value, 10);
+    if (isNaN(v) || v < 1 || v > 50) {
+      el('guessMsg').innerHTML = '1〜50の数を入れてください。';
+      return;
+    }
+    guessCount = guessCount + 1;
+    el('guessStat').innerHTML = '挑戦回数 ' + guessCount;
+    if (v === guessTarget) {
+      el('guessMsg').innerHTML = '大当たり！ 正解は ' + guessTarget + ' でした。' + guessCount + '回で当てました！ 「はじめから」で次の問題へ。';
+    } else if (v < guessTarget) {
+      el('guessMsg').innerHTML = v + ' より大きいです。';
+    } else {
+      el('guessMsg').innerHTML = v + ' より小さいです。';
+    }
+  };
+  el('guessReset').onclick = guessNewGame;
+  guessNewGame();
+}
+
+/* ---------- じゃんけん ---------- */
+var jkWin = 0, jkLose = 0, jkDraw = 0;
+var JK_HANDS = ['グー', 'チョキ', 'パー'];
+function jkPlay(mine) {
+  var cpu = Math.floor(Math.random() * 3);
+  var result;
+  if (cpu === mine) { result = 'あいこ！'; jkDraw = jkDraw + 1; }
+  else if ((mine === 0 && cpu === 1) || (mine === 1 && cpu === 2) || (mine === 2 && cpu === 0)) { result = 'あなたの勝ち！'; jkWin = jkWin + 1; }
+  else { result = 'コンピュータの勝ち…'; jkLose = jkLose + 1; }
+  el('jkMsg').innerHTML = 'あなた：' + JK_HANDS[mine] + ' ／ コンピュータ：' + JK_HANDS[cpu] + ' → ' + result;
+  el('jkStat').innerHTML = '勝ち ' + jkWin + ' ／ 負け ' + jkLose + ' ／ あいこ ' + jkDraw;
+}
+function initJanken() {
+  el('jkGu').onclick = function () { jkPlay(0); };
+  el('jkChoki').onclick = function () { jkPlay(1); };
+  el('jkPa').onclick = function () { jkPlay(2); };
+}
+
+/* ---------- おみくじ ---------- */
+var OMIKUJI = [
+  { r: '大吉', c: 'ダックスが全力でしっぽを振るレベルの幸運日。いいことあります。' },
+  { r: '中吉', c: 'お散歩日和の運気。軽い一歩がいい出会いを連れてきます。' },
+  { r: '小吉', c: '小さなラッキーあり。落とした骨…ではなく小銭を拾うかも。' },
+  { r: '吉', c: '平和な一日。お茶とおやつでさらに運気アップ。' },
+  { r: '末吉', c: '夕方から運気上昇。夜の1時間にいいことがありそうです。' },
+  { r: '凶', c: '今日は穴掘り注意。焦らず、ダックスのように地面を嗅いで慎重に。' },
+  { r: '大凶', c: 'でも大丈夫。ダックスは大凶の日でもごはんをしっかり食べます。食べて寝れば回復。' }
+];
+function initOmikuji() {
+  el('omikujiBtn').onclick = function () {
+    var o = OMIKUJI[Math.floor(Math.random() * OMIKUJI.length)];
+    el('omikujiMsg').innerHTML = '<span class="big amber">' + esc(o.r) + '</span><br>' + esc(o.c);
+  };
+}
+
+/* ---------- サイコロ ---------- */
+var PIPS = [
+  [0,0,0,0,1,0,0,0,0],
+  [1,0,0,0,0,0,0,0,1],
+  [1,0,0,0,1,0,0,0,1],
+  [1,0,1,0,0,0,1,0,1],
+  [1,0,1,0,1,0,1,0,1],
+  [1,0,1,1,0,1,1,0,1]
+];
+function diceHTML(n) {
+  var p = PIPS[n - 1], html = '', i;
+  for (i = 0; i < 9; i++) {
+    html += '<span class="' + (p[i] ? 'pip' : 'pipoff') + '">●</span>';
+    if (i % 3 === 2 && i < 8) { html += '<br>'; }
+  }
+  return html;
+}
+function initDice() {
+  el('dice1').innerHTML = diceHTML(1);
+  el('dice2').innerHTML = diceHTML(6);
+  el('diceBtn').onclick = function () {
+    var a = Math.floor(Math.random() * 6) + 1;
+    var b = Math.floor(Math.random() * 6) + 1;
+    el('dice1').innerHTML = diceHTML(a);
+    el('dice2').innerHTML = diceHTML(b);
+    var msg = '出た目は ' + a + ' と ' + b + '、合計 ' + (a + b) + ' です。';
+    if (a === b) { msg += ' ゾロ目！ なんだかいいことありそう。'; }
+    el('diceMsg').innerHTML = esc(msg);
+  };
+}
+
+/* ---------- リンク ---------- */
+function initLinks() {
+  el('linkBoard').onclick = function () { location.href = 'https://9rdyzkr686-png.github.io/iPhone6-board/'; };
+  el('linkSora').onclick = function () { location.href = 'https://9rdyzkr686-png.github.io/sora-field-scanner/'; };
+  el('linkOrbit').onclick = function () { location.href = 'https://9rdyzkr686-png.github.io/sora-field-scanner/orbit/'; };
+  el('linkRadar').onclick = function () { location.href = 'https://9rdyzkr686-png.github.io/sora-field-scanner/radar/'; };
+}
+
+/* ---------- 起動 ---------- */
+initHeader();
+initReading();
+initNews();
+initSlot();
+initGuess();
+initJanken();
+initOmikuji();
+initDice();
+initLinks();
+</script>
+</body>
+</html>
