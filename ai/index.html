@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AI-6 おしゃべりAI端末</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { background:#050807; }
+  body {
+    color:#e8f5e9; font-family:"Courier New", monospace;
+    padding:12px 10px 24px; max-width:640px; margin:0 auto;
+  }
+  h1 { font-size:22px; color:#7dff9a; letter-spacing:2px; text-shadow:0 0 8px rgba(80,255,140,.6); }
+  h1 .sub { color:#cfe8d4; font-size:13px; letter-spacing:1px; text-shadow:none; }
+  .desc { font-size:14px; color:#a9cbb2; margin:6px 0 10px; line-height:1.6; }
+
+  .panel { border:1px solid #1e4d2c; background:rgba(0,25,10,.35); padding:10px; margin-bottom:10px; }
+  .panel-title { font-size:13px; color:#7dff9a; letter-spacing:2px; border-bottom:1px solid #1e4d2c; padding-bottom:4px; margin-bottom:8px; }
+
+  .chiprow { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .chiprow:last-child { margin-bottom:0; }
+  button {
+    background:#021a08; color:#b9f5c6; border:1px solid #2e7d46;
+    font-family:inherit; font-size:15px; cursor:pointer; padding:8px 10px; min-height:48px;
+  }
+  button.active { background:#2e7d46; color:#fff; font-weight:bold; }
+  button:active { background:#14532a; }
+  button:disabled { opacity:.45; cursor:default; }
+  .mchip { flex:1 1 30%; }
+  .qchip { flex:1 1 45%; font-size:14px; }
+
+  #logBox { min-height:220px; }
+  .row { margin-bottom:12px; line-height:1.6; }
+  .row .who { font-size:12px; letter-spacing:1px; margin-bottom:2px; }
+  .row .msg { font-size:17px; white-space:pre-wrap; word-break:break-word; }
+  .row.user { text-align:right; }
+  .row.user .who { color:#8fd0ff; }
+  .row.user .msg {
+    display:inline-block; text-align:left; color:#eaf7ff;
+    background:rgba(20,60,110,.45); border:1px solid #2c5f8a;
+    padding:8px 10px; max-width:88%;
+  }
+  .row.ai { text-align:left; }
+  .row.ai .who { color:#7dff9a; }
+  .row.ai .msg {
+    display:inline-block; color:#eefbee;
+    background:rgba(0,40,16,.5); border:1px solid #1e4d2c;
+    padding:8px 10px; max-width:88%;
+  }
+  .row.ai .msg.thinking { color:#ffe9a8; border-color:#7a5a00; background:rgba(40,26,0,.4); }
+  .row.ai .msg.error { color:#ffb3ab; border-color:#7a2d24; background:rgba(50,10,5,.4); }
+  .row.sys { text-align:center; }
+  .row.sys .msg { font-size:13px; color:#9fb8a6; }
+
+  .inputrow { display:flex; gap:6px; margin-bottom:10px; }
+  #inputBox {
+    flex:1 1 auto; min-width:0; min-height:52px; font-size:17px; font-family:inherit;
+    background:#0a140c; color:#eefbee; border:1px solid #2e7d46; padding:10px;
+  }
+  #sendBtn { flex:0 0 92px; min-height:52px; font-size:17px; font-weight:bold; background:#2e7d46; color:#fff; border-color:#7dff9a; }
+  #sendBtn:disabled { background:#12351c; border-color:#1e4d2c; color:#7d9a86; }
+
+  .utilrow { display:flex; gap:6px; flex-wrap:wrap; }
+  .utilrow button { flex:1 1 30%; font-size:14px; }
+  #statusLine { font-size:13px; color:#9fb8a6; min-height:18px; margin-top:6px; line-height:1.5; }
+
+  footer { font-size:13px; color:#6f9279; margin-top:14px; line-height:1.7; }
+  .portal-link {
+    display:block; text-align:center; text-decoration:none;
+    border:1px solid #2e7d46; color:#b9f5c6; background:#021a08;
+    padding:12px; font-size:16px; margin-top:10px; min-height:48px;
+  }
+</style>
+</head>
+<body>
+
+<h1>AI-6 <span class="sub">おしゃべりAI端末</span></h1>
+<p class="desc">自由に文章を送ると、AIが返事をします。モードを変えると、相手の性格が変わります。</p>
+
+<div class="panel">
+  <div class="panel-title">MODE / モード</div>
+  <div class="chiprow" id="modeRow">
+    <button type="button" class="mchip active" data-mode="normal">ふつう</button>
+    <button type="button" class="mchip" data-mode="chat">雑談</button>
+    <button type="button" class="mchip" data-mode="doctor">ダックス博士</button>
+    <button type="button" class="mchip" data-mode="fortune">占い師</button>
+    <button type="button" class="mchip" data-mode="story">昔話</button>
+  </div>
+  <div class="chiprow">
+    <button type="button" id="voiceBtn">ボイス：OFF</button>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">QUICK / すぐ聞く</div>
+  <div class="chiprow">
+    <button type="button" class="qchip" data-q="ダックスフンドの豆知識を1つ教えてください。">ダックスの豆知識を教えて</button>
+    <button type="button" class="qchip" data-q="なぞなぞを1つ出してください。答えはまだ言わないでください。">なぞなぞを出して</button>
+    <button type="button" class="qchip" data-q="短い昔話をしてください。">短い昔話をして</button>
+    <button type="button" class="qchip" data-q="今日の運勢を占ってください。">今日の運勢を占って</button>
+    <button type="button" class="qchip" data-q="宇宙の不思議な話を1つ教えてください。">宇宙の不思議を教えて</button>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">CHAT / 会話</div>
+  <div id="logBox"></div>
+</div>
+
+<div class="inputrow">
+  <input type="text" id="inputBox" placeholder="ここに書いて送信" autocomplete="off">
+  <button type="button" id="sendBtn">送信</button>
+</div>
+
+<div class="utilrow">
+  <button type="button" id="copyBtn">会話をコピー</button>
+  <button type="button" id="clearBtn">会話を消す</button>
+</div>
+<div id="statusLine"></div>
+
+<footer>
+  AIの相手は無料の外部AIサービスです（クーではありません）。1日100回くらいまでが目安です。会話はこのページを閉じると消えます。
+  <a class="portal-link" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
+</footer>
+
+<script>
+var API_BASE = "https://text.pollinations.ai/";
+var GREETING = "こんにちは、小野さん。AI-6です。何でも聞いてください。";
+var FAIL_MSG = "AI回線が混み合っています。少し待って、もう一度送ってみてください。";
+
+var MODES = {
+  normal:  { label: "ふつう",       inst: "あなたは親切なAIアシスタントです。丁寧で簡潔に答えてください。" },
+  chat:    { label: "雑談",         inst: "あなたは明るくフレンドリーな話し相手です。楽しく、短めに答えてください。" },
+  doctor:  { label: "ダックス博士", inst: "あなたはダックスフンドにくわしい博士です。博士らしい口調で、ダックスフンドの知識を交えて答えてください。" },
+  fortune: { label: "占い師",       inst: "あなたは神秘的な口調の占い師です。占いとして楽しく答えてください。これはエンターテイメントです。" },
+  story:   { label: "昔話",         inst: "あなたは昔話の語り部です。「むかしむかし」で始まる、短い創作の昔話を語ってください。" }
+};
+var COMMON_RULES = "必ず日本語で答えてください。マークダウン記号（#、*、-、番号リストなど）は使わないでください。改行は控えめにしてください。";
+
+var mode = "normal";
+var voiceOn = false;
+var sending = false;
+var history = []; /* [{u:"...", a:"..."}] 直近のやりとり */
+
+var logBox = document.getElementById("logBox");
+var inputBox = document.getElementById("inputBox");
+var sendBtn = document.getElementById("sendBtn");
+var statusEl = document.getElementById("statusLine");
+var voiceBtn = document.getElementById("voiceBtn");
+
+function setStatus(t) { statusEl.innerHTML = t; }
+
+function scrollToBottom() {
+  try { window.scrollTo(0, document.body.scrollHeight); } catch (e) { /* ignore */ }
+}
+
+function addRow(cls, who, text) {
+  var row = document.createElement("div");
+  row.className = "row " + cls;
+  if (who) {
+    var w = document.createElement("div");
+    w.className = "who";
+    w.innerHTML = who;
+    row.appendChild(w);
+  }
+  var m = document.createElement("div");
+  m.className = "msg";
+  m.innerHTML = text;
+  row.appendChild(m);
+  logBox.appendChild(row);
+  scrollToBottom();
+  return m;
+}
+
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function addUserRow(text) { return addRow("user", "あなた", esc(text)); }
+function addAiRow(text) { return addRow("ai", "AI", esc(text)); }
+function addSysRow(text) { return addRow("sys", "", esc(text)); }
+
+function speak(text) {
+  if (!voiceOn) return;
+  try {
+    if (!window.speechSynthesis) return;
+    if (text.length > 150) return;
+    if (text.indexOf("\n") >= 0) return;
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 0.7;
+    u.rate = 1.0;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  } catch (e) { /* ignore */ }
+}
+
+function buildPrompt(userText) {
+  var inst = MODES[mode].inst;
+  var limit = (mode === "chat") ? "150文字以内で答えてください。" : "300文字以内で答えてください。";
+  var p = inst + COMMON_RULES + limit;
+  var i, h;
+  var from = Math.max(0, history.length - 6);
+  if (from < history.length) {
+    p += " これまでの会話：";
+    for (i = from; i < history.length; i++) {
+      h = history[i];
+      p += " あなた：" + h.u.substring(0, 120) + " / AI：" + h.a.substring(0, 120) + "。";
+    }
+  }
+  p += " 新しい質問：" + userText;
+  return p;
+}
+
+function sendMessage(text) {
+  text = (text || "").replace(/^\s+|\s+$/g, "");
+  if (!text || sending) return;
+  sending = true;
+  sendBtn.disabled = true;
+  inputBox.value = "";
+  addUserRow(text);
+  var thinkMsg = addRow("ai", "AI", "考え中…");
+  thinkMsg.className = "msg thinking";
+
+  var done = false;
+  function fail() {
+    if (done) return;
+    done = true;
+    thinkMsg.className = "msg error";
+    thinkMsg.innerHTML = esc(FAIL_MSG);
+    sending = false;
+    sendBtn.disabled = false;
+    scrollToBottom();
+  }
+  function succeed(reply) {
+    if (done) return;
+    done = true;
+    thinkMsg.className = "msg";
+    thinkMsg.innerHTML = esc(reply);
+    history.push({ u: text, a: reply });
+    if (history.length > 12) history.shift();
+    sending = false;
+    sendBtn.disabled = false;
+    scrollToBottom();
+    speak(reply);
+  }
+
+  try {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", API_BASE + encodeURIComponent(buildPrompt(text)), true);
+    xhr.timeout = 30000;
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) return;
+      if (xhr.status !== 200) { fail(); return; }
+      var body = (xhr.responseText || "").replace(/^\s+|\s+$/g, "");
+      if (!body) { fail(); return; }
+      if (body.indexOf("Free limit reached") === 0) { fail(); return; }
+      succeed(body);
+    };
+    xhr.ontimeout = function () { fail(); };
+    xhr.onerror = function () { fail(); };
+    xhr.send(null);
+  } catch (e) {
+    fail();
+  }
+}
+
+sendBtn.onclick = function () { sendMessage(inputBox.value); };
+inputBox.onkeydown = function (e) {
+  if (e.keyCode === 13) { sendMessage(inputBox.value); }
+};
+
+/* mode chips */
+var modeRow = document.getElementById("modeRow");
+var mchips = modeRow.getElementsByTagName("button");
+var mi;
+for (mi = 0; mi < mchips.length; mi++) {
+  mchips[mi].onclick = function () {
+    var m = this.getAttribute("data-mode");
+    if (m === mode) return;
+    mode = m;
+    var q;
+    for (q = 0; q < mchips.length; q++) {
+      mchips[q].className = "mchip" + (mchips[q].getAttribute("data-mode") === m ? " active" : "");
+    }
+    addSysRow("モードを『" + MODES[m].label + "』に変えました");
+  };
+}
+
+/* quick chips */
+var qchips = document.getElementsByClassName("qchip");
+var qi;
+for (qi = 0; qi < qchips.length; qi++) {
+  qchips[qi].onclick = function () { sendMessage(this.getAttribute("data-q")); };
+}
+
+voiceBtn.onclick = function () {
+  voiceOn = !voiceOn;
+  voiceBtn.innerHTML = "ボイス：" + (voiceOn ? "ON" : "OFF");
+  voiceBtn.className = voiceOn ? "active" : "";
+  if (!voiceOn) {
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
+  }
+};
+
+document.getElementById("copyBtn").onclick = function () {
+  var lines = [], i;
+  lines.push("AI: " + GREETING);
+  for (i = 0; i < logBox.childNodes.length; i++) {
+    var row = logBox.childNodes[i];
+    if (!row.className) continue;
+    var msgEl = null, j;
+    for (j = 0; j < row.childNodes.length; j++) {
+      if (row.childNodes[j].className === "msg" || (row.childNodes[j].className || "").indexOf("msg") === 0) msgEl = row.childNodes[j];
+    }
+    if (!msgEl) continue;
+    var t = msgEl.innerHTML.replace(/<[^>]*>/g, "");
+    if (row.className.indexOf("user") >= 0) lines.push("あなた: " + t);
+    else if (row.className.indexOf("sys") >= 0) lines.push("（" + t + "）");
+    else lines.push("AI: " + t);
+  }
+  var txt = lines.join("\n");
+  var ok = false;
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = txt;
+    ta.style.position = "absolute";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+  } catch (e) { ok = false; }
+  setStatus(ok ? "会話をコピーしました。" : "コピーできませんでした。");
+};
+
+document.getElementById("clearBtn").onclick = function () {
+  history = [];
+  logBox.innerHTML = "";
+  addAiRow(GREETING);
+  setStatus("会話を消しました。");
+  try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
+};
+
+addAiRow(GREETING);
+</script>
+</body>
+</html>
