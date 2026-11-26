@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ORBIT-6 宇宙管制</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #000408;
+  color: #4dffd2;
+  font-family: "Courier New", monospace;
+  font-size: 17px;
+  line-height: 1.45;
+  padding: 10px;
+  -webkit-text-size-adjust: 100%;
+}
+body:after {
+  content: "";
+  position: fixed; left: 0; top: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px);
+  pointer-events: none;
+  z-index: 50;
+}
+h1 {
+  font-size: 24px; letter-spacing: 3px; color: #33ff66;
+  text-shadow: 0 0 8px rgba(51,255,102,0.7);
+  text-align: center; margin: 4px 0 2px 0;
+}
+.sub { text-align: center; color: #ffb000; font-size: 14px; letter-spacing: 2px; margin-bottom: 8px; }
+.clocks { overflow: hidden; margin-bottom: 8px; }
+.clock-box {
+  float: left; width: 49%; background: #02141a; border: 1px solid #0e5a4a;
+  padding: 6px 8px; text-align: center;
+}
+.clock-box:last-child { float: right; }
+.clock-label { font-size: 12px; color: #ffb000; letter-spacing: 2px; }
+.clock-time { font-size: 22px; color: #4dffd2; }
+.panel {
+  background: #010d12; border: 1px solid #0e5a4a; margin-bottom: 10px; padding: 8px;
+}
+.panel-title {
+  font-size: 15px; color: #33ff66; letter-spacing: 2px;
+  border-bottom: 1px solid #0e5a4a; padding-bottom: 4px; margin-bottom: 6px;
+}
+.panel-title .jp { color: #ffb000; font-size: 13px; }
+.row { overflow: hidden; }
+.cell { float: left; width: 50%; padding: 2px 0; }
+.k { font-size: 12px; color: #7fb8a8; letter-spacing: 1px; }
+.v { font-size: 21px; color: #eafff8; }
+.v small { font-size: 13px; color: #7fb8a8; }
+.msg { font-size: 13px; color: #ffb000; min-height: 18px; }
+canvas { display: block; width: 100%; background: #000a10; border: 1px solid #0e5a4a; }
+#mapCanvas { height: auto; }
+.moon-wrap { overflow: hidden; }
+#moonCanvas { width: 110px; height: 110px; float: left; margin-right: 12px; }
+.moon-info { overflow: hidden; padding-top: 10px; }
+.event-item, .news-item { padding: 5px 0; border-bottom: 1px dashed #0e5a4a; font-size: 16px; }
+.event-item:last-child, .news-item:last-child { border-bottom: none; }
+.event-days { color: #ffb000; font-size: 14px; }
+.news-date { color: #7fb8a8; font-size: 13px; }
+.news-item a { color: #4dffd2; text-decoration: none; }
+button {
+  display: block; width: 100%; min-height: 48px; margin: 4px 0 10px 0;
+  background: #03251d; color: #33ff66; border: 1px solid #33ff66;
+  font-family: "Courier New", monospace; font-size: 18px; letter-spacing: 2px;
+  border-radius: 4px; cursor: pointer;
+}
+button:active { background: #33ff66; color: #000; }
+.footer { font-size: 12px; color: #5f8a7d; text-align: center; margin: 8px 0 16px 0; }
+.blink { color: #33ff66; }
+</style>
+</head>
+<body>
+
+<h1>ORBIT-6</h1>
+<div class="sub">宇宙管制 ORBITAL CONTROL — FUJIMINO STATION</div>
+
+<div class="clocks">
+  <div class="clock-box">
+    <div class="clock-label">UTC 世界時</div>
+    <div class="clock-time" id="utcClock">--:--:--</div>
+  </div>
+  <div class="clock-box">
+    <div class="clock-label">JST 日本時間</div>
+    <div class="clock-time" id="jstClock">--:--:--</div>
+  </div>
+</div>
+
+<button id="refreshBtn">↻ 更新 REFRESH</button>
+
+<div class="panel">
+  <div class="panel-title">ISS TRACKING <span class="jp">国際宇宙ステーション追跡</span></div>
+  <canvas id="mapCanvas" width="640" height="320"></canvas>
+  <div class="row">
+    <div class="cell"><div class="k">LAT 緯度</div><div class="v" id="issLat">---</div></div>
+    <div class="cell"><div class="k">LON 経度</div><div class="v" id="issLon">---</div></div>
+  </div>
+  <div class="row">
+    <div class="cell"><div class="k">ALT 高度</div><div class="v" id="issAlt">---</div></div>
+    <div class="cell"><div class="k">VEL 速度</div><div class="v" id="issVel">---</div></div>
+  </div>
+  <div class="row">
+    <div class="cell"><div class="k">VISIBILITY 可視状態</div><div class="v" id="issVis">---</div></div>
+    <div class="cell"><div class="k">STATION 観測地</div><div class="v" style="font-size:16px;">ふじみ野市</div></div>
+  </div>
+  <div class="msg" id="issMsg">ISSデータ取得中…</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">MOON <span class="jp">月齢・月相</span></div>
+  <div class="moon-wrap">
+    <canvas id="moonCanvas" width="110" height="110"></canvas>
+    <div class="moon-info">
+      <div class="k">月齢 MOON AGE</div>
+      <div class="v" id="moonAge">---</div>
+      <div class="k" style="margin-top:6px;">月相 PHASE</div>
+      <div class="v" id="moonName">---</div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">SUN TIMES <span class="jp">日の出・日の入り（ふじみ野市）</span></div>
+  <div class="row">
+    <div class="cell"><div class="k">SUNRISE 日の出</div><div class="v" id="sunriseT">--:--</div></div>
+    <div class="cell"><div class="k">SUNSET 日の入り</div><div class="v" id="sunsetT">--:--</div></div>
+  </div>
+  <div class="msg" id="sunMsg">太陽データ取得中…</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">ASTRO EVENTS <span class="jp">今後の天文イベント</span></div>
+  <div id="eventsList"></div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">SPACE NEWS <span class="jp">宇宙ニュース見出し</span></div>
+  <div id="newsList"></div>
+  <div class="msg" id="newsMsg">ニュース取得中…</div>
+</div>
+
+<div class="footer">
+  DATA SOURCES: wheretheiss.at / Open-Meteo / Google News<br>
+  ORBIT-6 v1.0 — 観測地：埼玉県ふじみ野市 (35.8795, 139.5197)
+</div>
+
+<script>
+var LAT = 35.8795;
+var LON = 139.5197;
+var issTrail = [];
+var issBlink = true;
+
+function el(id) { return document.getElementById(id); }
+
+function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+function getJSON(url, okFn, ngFn) {
+  fetch(url).then(function (res) {
+    if (!res.ok) { throw new Error("HTTP " + res.status); }
+    return res.json();
+  }).then(okFn).catch(function (e) { ngFn(e); });
+}
+
+/* ---------- CLOCKS ---------- */
+function tickClock() {
+  var now = new Date();
+  var utc = pad2(now.getUTCHours()) + ":" + pad2(now.getUTCMinutes()) + ":" + pad2(now.getUTCSeconds());
+  var jstDate = new Date(now.getTime() + 9 * 3600000);
+  var jst = pad2(jstDate.getUTCHours()) + ":" + pad2(jstDate.getUTCMinutes()) + ":" + pad2(jstDate.getUTCSeconds());
+  el("utcClock").innerHTML = utc;
+  el("jstClock").innerHTML = jst;
+}
+
+/* ---------- ISS ---------- */
+function drawMap() {
+  var cv = el("mapCanvas");
+  var ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height;
+  ctx.fillStyle = "#000a10";
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = "rgba(77,255,210,0.25)";
+  ctx.lineWidth = 1;
+  var i, x, y;
+  for (i = 0; i <= 12; i++) {
+    x = (W / 12) * i;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (i = 0; i <= 6; i++) {
+    y = (H / 6) * i;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  ctx.strokeStyle = "rgba(255,176,0,0.5)";
+  y = H / 2;
+  ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  // home station marker (Fujimino)
+  var hx = (LON + 180) / 360 * W;
+  var hy = (90 - LAT) / 180 * H;
+  ctx.strokeStyle = "#ffb000";
+  ctx.beginPath(); ctx.moveTo(hx - 6, hy); ctx.lineTo(hx + 6, hy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(hx, hy - 6); ctx.lineTo(hx, hy + 6); ctx.stroke();
+  // trail
+  var j, p, alpha;
+  for (j = 0; j < issTrail.length; j++) {
+    p = issTrail[j];
+    alpha = 0.15 + 0.6 * (j + 1) / issTrail.length;
+    ctx.fillStyle = "rgba(51,255,102," + alpha.toFixed(2) + ")";
+    ctx.beginPath();
+    ctx.arc((p.lon + 180) / 360 * W, (90 - p.lat) / 180 * H, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // current position (blinking)
+  if (issTrail.length > 0 && issBlink) {
+    p = issTrail[issTrail.length - 1];
+    ctx.fillStyle = "#33ff66";
+    ctx.beginPath();
+    ctx.arc((p.lon + 180) / 360 * W, (90 - p.lat) / 180 * H, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(51,255,102,0.6)";
+    ctx.beginPath();
+    ctx.arc((p.lon + 180) / 360 * W, (90 - p.lat) / 180 * H, 11, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function fetchISS() {
+  getJSON("https://api.wheretheiss.at/v1/satellites/25544", function (d) {
+    var lat = parseFloat(d.latitude);
+    var lon = parseFloat(d.longitude);
+    el("issLat").innerHTML = lat.toFixed(2) + "°";
+    el("issLon").innerHTML = lon.toFixed(2) + "°";
+    el("issAlt").innerHTML = parseFloat(d.altitude).toFixed(1) + " <small>km</small>";
+    el("issVel").innerHTML = Math.round(parseFloat(d.velocity)) + " <small>km/h</small>";
+    el("issVis").innerHTML = (d.visibility === "eclipsed") ? "地球の影" : "日照中";
+    el("issMsg").innerHTML = "受信OK " + new Date().toLocaleTimeString("ja-JP");
+    issTrail.push({ lat: lat, lon: lon });
+    if (issTrail.length > 20) { issTrail.shift(); }
+    drawMap();
+  }, function () {
+    el("issMsg").innerHTML = "ISSデータを取得できませんでした。次回更新で再試行します。";
+  });
+}
+
+/* ---------- MOON ---------- */
+function moonCalc() {
+  var synodic = 29.530588853;
+  var newMoon = Date.UTC(2000, 0, 6, 18, 14) / 86400000;
+  var nowDays = Date.now() / 86400000;
+  var age = (nowDays - newMoon) % synodic;
+  if (age < 0) { age += synodic; }
+  var names = ["新月", "三日月", "上弦の月", "十三夜", "満月", "寝待月", "下弦の月", "有明月"];
+  var idx = Math.floor(((age + synodic / 16) % synodic) / (synodic / 8));
+  el("moonAge").innerHTML = age.toFixed(1) + " <small>日</small>";
+  el("moonName").innerHTML = names[idx];
+  drawMoon(age / synodic);
+}
+
+function drawMoon(phase) {
+  var cv = el("moonCanvas");
+  var ctx = cv.getContext("2d");
+  var cx = 55, cy = 55, r = 46;
+  ctx.clearRect(0, 0, 110, 110);
+  // dark disc
+  ctx.fillStyle = "#101c26";
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "rgba(77,255,210,0.5)";
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  // lit portion
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
+  ctx.fillStyle = "#ffe9a8";
+  var waxing = phase <= 0.5;
+  var c = Math.cos(2 * Math.PI * phase);
+  var rx = Math.abs(c) * r;
+  // lit semicircle side
+  ctx.beginPath();
+  if (waxing) {
+    ctx.arc(cx, cy, r, -Math.PI / 2, Math.PI / 2, false);
+  } else {
+    ctx.arc(cx, cy, r, Math.PI / 2, Math.PI * 1.5, false);
+  }
+  ctx.fill();
+  // terminator ellipse
+  ctx.beginPath();
+  if ((waxing && c > 0) || (!waxing && c < 0)) {
+    ctx.fillStyle = "#ffe9a8";
+    ctx.ellipse(cx, cy, rx, r, 0, 0, Math.PI * 2);
+  } else {
+    ctx.fillStyle = "#101c26";
+    ctx.ellipse(cx, cy, rx, r, 0, 0, Math.PI * 2);
+  }
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ---------- SUN TIMES ---------- */
+function fetchSun() {
+  var url = "https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON +
+    "&daily=sunrise,sunset&timezone=Asia%2FTokyo&forecast_days=1";
+  getJSON(url, function (d) {
+    var sr = d.daily.sunrise[0];
+    var ss = d.daily.sunset[0];
+    el("sunriseT").innerHTML = sr.substring(11, 16);
+    el("sunsetT").innerHTML = ss.substring(11, 16);
+    el("sunMsg").innerHTML = "";
+  }, function () {
+    el("sunMsg").innerHTML = "太陽データを取得できませんでした。";
+  });
+}
+
+/* ---------- ASTRO EVENTS ---------- */
+var ASTRO_EVENTS = [
+  { date: "2026-12-14", name: "ふたご座流星群 極大" },
+  { date: "2027-01-03", name: "しぶんぎ座流星群 極大" },
+  { date: "2027-04-22", name: "こと座流星群 極大" },
+  { date: "2027-05-06", name: "みずがめ座η流星群 極大" },
+  { date: "2027-08-13", name: "ペルセウス座流星群 極大" }
+];
+
+function renderEvents() {
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var items = [];
+  var i, parts, dt, diff;
+  for (i = 0; i < ASTRO_EVENTS.length; i++) {
+    parts = ASTRO_EVENTS[i].date.split("-");
+    dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    diff = Math.round((dt.getTime() - today.getTime()) / 86400000);
+    if (diff >= 0) {
+      items.push({ name: ASTRO_EVENTS[i].name, date: ASTRO_EVENTS[i].date, diff: diff });
+    }
+  }
+  items.sort(function (a, b) { return a.diff - b.diff; });
+  var html = "";
+  for (i = 0; i < items.length && i < 5; i++) {
+    html += '<div class="event-item">' + items[i].name +
+      ' <span class="event-days">' + items[i].date + " / あと" + items[i].diff + "日</span></div>";
+  }
+  if (html === "") { html = '<div class="event-item">表示できるイベントがありません。</div>'; }
+  el("eventsList").innerHTML = html;
+}
+
+/* ---------- SPACE NEWS ---------- */
+function fetchNews() {
+  var rss = "https://news.google.com/rss/search?q=%E5%AE%87%E5%AE%99%20%E6%8E%A2%E6%9F%BB&hl=ja&gl=JP&ceid=JP:ja";
+  var url = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rss);
+  getJSON(url, function (d) {
+    if (!d.items || d.items.length === 0) {
+      el("newsMsg").innerHTML = "ニュースが見つかりませんでした。";
+      return;
+    }
+    var html = "";
+    var i, it, dtxt;
+    for (i = 0; i < d.items.length && i < 5; i++) {
+      it = d.items[i];
+      dtxt = it.pubDate ? it.pubDate.substring(0, 10) : "";
+      html += '<div class="news-item"><a href="' + it.link + '">' + it.title + "</a>" +
+        ' <span class="news-date">' + dtxt + "</span></div>";
+    }
+    el("newsList").innerHTML = html;
+    el("newsMsg").innerHTML = "";
+  }, function () {
+    el("newsMsg").innerHTML = "ニュースを取得できませんでした。時間をおいて再度お試しください。";
+  });
+}
+
+/* ---------- INIT ---------- */
+function refreshAll() {
+  fetchISS();
+  fetchSun();
+  fetchNews();
+}
+
+el("refreshBtn").addEventListener("click", function () { refreshAll(); });
+
+tickClock();
+setInterval(tickClock, 1000);
+moonCalc();
+renderEvents();
+drawMap();
+refreshAll();
+setInterval(fetchISS, 10000);
+setInterval(function () { issBlink = !issBlink; drawMap(); }, 600);
+</script>
+</body>
+</html>
