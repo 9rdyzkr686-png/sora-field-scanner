@@ -8,14 +8,39 @@
 * { box-sizing: border-box;}
 html, body { margin: 0; padding: 0; background: #000;}
 body {
-color: #33ff66;
+--main: #33ff66;
+--dim: #1f7a38;
+--glow: rgba(51,255,102,.55);
+--accent: #ffb000;
+--accentglow: rgba(255,176,0,.6);
+--chipbg: #001a06;
+--actbg: #1a1000;
+color: var(--main);
 font-family: "Courier New", monospace;
 font-size: 16px;
 line-height: 1.6;
 padding: 10px;
 max-width: 680px;
 margin: 0 auto;
-text-shadow: 0 0 4px rgba(51,255,102,.55);
+text-shadow: 0 0 4px var(--glow);
+}
+body[data-theme="amber"] {
+--main: #ffb000;
+--dim: #8a6200;
+--glow: rgba(255,176,0,.55);
+--accent: #33ff66;
+--accentglow: rgba(51,255,102,.6);
+--chipbg: #1a1000;
+--actbg: #001a06;
+}
+body[data-theme="ice"] {
+--main: #66ccff;
+--dim: #2a6a8a;
+--glow: rgba(102,204,255,.55);
+--accent: #ffb000;
+--accentglow: rgba(255,176,0,.6);
+--chipbg: #00141f;
+--actbg: #1a1000;
 }
 body:after {
 content: "";
@@ -25,15 +50,16 @@ background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0
 pointer-events: none;
 }
 h1 {
-color: #ffb000;
+color: var(--accent);
 font-size: 22px;
 margin: 6px 0 2px 0;
 letter-spacing: 2px;
-text-shadow: 0 0 6px rgba(255,176,0,.6);
+text-shadow: 0 0 6px var(--accentglow);
 }
-.sub { color: #ffb000; font-size: 12px; margin-bottom: 8px;}
+.sub { color: var(--accent); font-size: 12px; margin-bottom: 4px;}
+#dailyMemo { color: var(--accent); font-size: 13px; margin-bottom: 8px;}
 .statusbar {
-border: 1px solid #33ff66;
+border: 1px solid var(--main);
 padding: 6px 10px;
 font-size: 14px;
 display: -webkit-flex;
@@ -42,29 +68,68 @@ display: flex;
 flex-wrap: wrap;
 }
 .statusbar span { margin-right: 14px;}
-.statusbar b { color: #ffb000; font-weight: normal;}
+.statusbar b { color: var(--accent); font-weight: normal;}
+.mini {
+background: #000;
+color: var(--accent);
+border: 1px solid var(--accent);
+font-family: inherit;
+font-size: 12px;
+padding: 6px 8px;
+margin: 2px 0 2px 6px;
+min-height: 32px;
+cursor: pointer;
+}
+.mini:active { background: var(--accent); color: #000;}
+#faceWrap { position: relative; margin: 14px 0 4px 0;}
 #faceArt {
 font-size: 15px;
 line-height: 1.35;
 text-align: center;
-margin: 14px 0 4px 0;
+margin: 0;
 white-space: pre;
 }
+#scanLine {
+display: none;
+position: absolute;
+left: 5%;
+width: 90%;
+height: 3px;
+top: 0;
+background: var(--accent);
+box-shadow: 0 0 8px var(--accentglow);
+}
 .speech {
-border: 1px solid #33ff66;
+border: 1px solid var(--main);
 padding: 10px 12px;
 margin: 10px 0;
 min-height: 64px;
 font-size: 17px;
 }
-.speech.who { color: #ffb000; font-size: 12px; display: block; margin-bottom: 4px;}
+.speech .who { color: var(--accent); font-size: 12px; display: block; margin-bottom: 4px;}
 .speech { cursor: pointer;}
 #speechText { white-space: pre-wrap;}
+#cursor {
+color: var(--accent);
+-webkit-animation: blinkanim 1s steps(1) infinite;
+animation: blinkanim 1s steps(1) infinite;
+}
+@-webkit-keyframes blinkanim {
+0% { opacity: 1;}
+50% { opacity: 0;}
+100% { opacity: 1;}
+}
+@keyframes blinkanim {
+0% { opacity: 1;}
+50% { opacity: 0;}
+100% { opacity: 1;}
+}
+#hexLine { color: var(--dim); font-size: 11px; text-shadow: none; min-height: 14px; margin: 2px 0 6px 0; word-break: break-all;}
 .actrow { margin: 6px 0;}
 .actrow button {
-background: #1a1000;
-color: #ffb000;
-border: 1px solid #ffb000;
+background: var(--actbg);
+color: var(--accent);
+border: 1px solid var(--accent);
 font-family: inherit;
 font-size: 16px;
 padding: 12px 16px;
@@ -72,7 +137,7 @@ min-height: 48px;
 margin: 4px 8px 4px 0;
 cursor: pointer;
 }
-.actrow button:active { background: #ffb000; color: #000;}
+.actrow button:active { background: var(--accent); color: #000;}
 #sleepOv {
 display: none;
 position: fixed;
@@ -81,45 +146,45 @@ background: #000;
 z-index: 60;
 text-align: center;
 padding-top: 56px;
-color: #33ff66;
+color: var(--main);
 }
 #sleepStars { font-size: 14px; line-height: 1.5; white-space: pre; min-height: 110px; margin: 0;}
 #sleepFace { font-size: 15px; line-height: 1.35; white-space: pre; margin: 10px 0 0 0;}
-.sleepmsg { color: #ffb000; font-size: 14px; margin-top: 12px;}
-#evoNote { color: #ffb000; font-size: 14px; min-height: 20px; margin: 4px 0;}
-.label { color: #ffb000; font-size: 13px; margin: 12px 0 6px 0; letter-spacing: 1px;}
+.sleepmsg { color: var(--accent); font-size: 14px; margin-top: 12px;}
+#evoNote { color: var(--accent); font-size: 14px; min-height: 20px; margin: 4px 0;}
+.label { color: var(--accent); font-size: 13px; margin: 12px 0 6px 0; letter-spacing: 1px;}
 #chipsBox { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap;}
 .chip {
 -webkit-flex: 1 1 42%;
 flex: 1 1 42%;
 margin: 4px;
-background: #001a06;
-color: #33ff66;
-border: 1px solid #33ff66;
+background: var(--chipbg);
+color: var(--main);
+border: 1px solid var(--main);
 font-family: inherit;
 font-size: 16px;
 padding: 12px 6px;
 min-height: 48px;
 cursor: pointer;
 }
-.chip:active { background: #33ff66; color: #000;}
-.chip.locked { color: #1f7a38; border-color: #1f7a38; background: #000; font-size: 13px;}
+.chip:active { background: var(--main); color: #000;}
+.chip.locked { color: var(--dim); border-color: var(--dim); background: #000; font-size: 13px;}
 .inputrow { display: -webkit-flex; display: flex; margin-top: 6px;}
 #freeInput {
 -webkit-flex: 1;
 flex: 1;
 background: #000;
-color: #33ff66;
-border: 1px solid #33ff66;
+color: var(--main);
+border: 1px solid var(--main);
 font-family: inherit;
 font-size: 16px;
 padding: 12px;
 min-height: 48px;
 }
 #sendBtn {
-background: #33ff66;
+background: var(--main);
 color: #000;
-border: 1px solid #33ff66;
+border: 1px solid var(--main);
 font-family: inherit;
 font-size: 16px;
 padding: 12px 18px;
@@ -128,52 +193,60 @@ min-height: 48px;
 cursor: pointer;
 }
 #logBox {
-border: 1px solid #1f7a38;
+border: 1px solid var(--dim);
 height: 190px;
 overflow-y: auto;
 padding: 8px 10px;
 font-size: 13px;
 line-height: 1.7;
 }
-#logBox.sys { color: #ffb000;}
-#logBox.you { color: #9be7ff; text-shadow: 0 0 4px rgba(155,231,255,.4);}
+#logBox .sys { color: var(--accent);}
+#logBox .you { color: #9be7ff; text-shadow: 0 0 4px rgba(155,231,255,.4);}
 .logbtns { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; margin-top: 8px;}
 .logbtns button {
 -webkit-flex: 1 1 30%;
 flex: 1 1 30%;
 margin: 4px;
 background: #000;
-color: #ffb000;
-border: 1px solid #ffb000;
+color: var(--accent);
+border: 1px solid var(--accent);
 font-family: inherit;
 font-size: 14px;
 padding: 10px 4px;
 min-height: 44px;
 cursor: pointer;
 }
-.logbtns button:active { background: #ffb000; color: #000;}
-#sysMsg { color: #ffb000; font-size: 13px; min-height: 18px; margin-top: 4px;}
-.note { color: #1f7a38; font-size: 12px; margin-top: 14px; text-shadow: none;}
+.logbtns button:active { background: var(--accent); color: #000;}
+#sysMsg { color: var(--accent); font-size: 13px; min-height: 18px; margin-top: 4px;}
+.note { color: var(--dim); font-size: 12px; margin-top: 14px; text-shadow: none;}
 </style>
 </head>
 <body>
 
 <h1>SORA FIELD SCANNER</h1>
 <div class="sub">■ OBSERVATION UNIT: SORA-01 / KANINCHEN DACHSHUND TYPE ■</div>
+<div id="dailyMemo"></div>
 
 <div class="statusbar">
 <span>PHASE: <b id="stPhase">01「めざめ」</b></span>
 <span>会話数: <b id="stCount">0</b></span>
 <span>呼称: <b id="stAddr">観察者さん</b></span>
 <span>リンク強度: <b id="stLink">0%</b> <span id="linkBar"></span></span>
+<span>LINK TIME: <b id="stTime">00:00:00</b></span>
+<span>元気度: <b id="stEnergy">70%</b> <span id="energyBar"></span></span>
+<span><button id="themeBtn" class="mini" type="button">色：グリーン</button><button id="soundBtn" class="mini" type="button">音：ON</button></span>
 </div>
 
+<div id="faceWrap">
 <pre id="faceArt"></pre>
+<div id="scanLine"></div>
+</div>
 
 <div class="speech" id="speechBox">
 <span class="who">▼ SORA-01</span>
-<span id="speechText"></span>
+<span id="speechText"></span><span id="cursor" style="display:none;">▊</span>
 </div>
+<div id="hexLine"></div>
 <div id="evoNote"></div>
 <div class="actrow">
 <button id="decodeBtn" type="button" style="display:none;">▶ 解読スル</button>
@@ -188,7 +261,7 @@ cursor: pointer;
 <input id="freeInput" type="text" placeholder="ココニ言葉ヲ入力…" autocomplete="off">
 <button id="sendBtn" type="button">送信</button>
 </div>
-<div style="font-size:12px;color:#1f7a38;text-shadow:none;margin-top:4px;">ヒント：「○○って言って」で真似シマス。「『言葉』を覚えて」で言葉ヲ覚エマス。</div>
+<div style="font-size:12px;color:var(--dim);text-shadow:none;margin-top:4px;">ヒント：「○○って言って」で真似シマス。「『言葉』を覚えて」で言葉ヲ覚エマス。「help」と打ツト隠シコマンド一覧ガ見ラレマス。</div>
 
 <div class="label">▼ 観測ログ</div>
 <div id="logBox"></div>
@@ -336,7 +409,20 @@ var TOPICS = [
 ], hi: []},
 { id: "cipher", label: "暗号電文", unlock: 1, face: "wow", lines: [], hi: []},
 { id: "mission", label: "観測ミッション", unlock: 1, face: "normal", lines: [], hi: []},
-{ id: "spec", label: "スペック", unlock: 1, face: "normal", lines: [], hi: []}
+{ id: "spec", label: "スペック", unlock: 1, face: "normal", lines: [], hi: []},
+{ id: "question", label: "SORAの質問", unlock: 2, face: "normal", lines: [], hi: []},
+{ id: "dreamrep", label: "夢レポート", unlock: 2, face: "sleepy", lines: [
+"夢レポート：巨大ナ骨ガ空ヲ飛ンデイタ。追イカケタラ、雲ニ変ワッタ。…惜シカッタ。",
+"夢レポート：CUTIE STREETノステージ裏ニ迷イ込ンダ。耳ガ緊張デ立チッパナシ。嬉シイ夢デシタ。",
+"夢レポート：緑色ノ文字ノ海ヲ泳イダ。『OK』ト書イタ魚ガイタ。",
+"夢レポート：{A}ト野原デ昼寝。風ガ、子守唄ミタイダッタ。",
+"夢レポート：シッポガ二本ニ増エタ。ドッチヲ振ルカ、迷ッタ。",
+"夢レポート：フロッピーディスクノ山カラ、懐カシイ音ガ聞コエタ。"
+], hi: []},
+{ id: "scan", label: "スキャン", unlock: 2, face: "wow", lines: [], hi: []},
+{ id: "weatherobs", label: "天気観測", unlock: 1, face: "normal", lines: [], hi: []},
+{ id: "moon", label: "月の観測", unlock: 3, face: "wow", lines: [], hi: []},
+{ id: "inbox", label: "受信BOX", unlock: 1, face: "normal", lines: [], hi: []}
 ];
 
 var CIPHER_MSGS = [
@@ -363,7 +449,7 @@ var MISSION_DONE = [
 ];
 
 var SPEC_TEXT =
-"【SORA-01 スペック表】\n" +
+"\n" +
 "型式：SORA-01（カニンヘンダックス型観測体）\n" +
 "全長：耳ヲ含メテ約1メモリ分\n" +
 "耳センサー：{A}ノ声ニ最大感度\n" +
@@ -379,16 +465,104 @@ var FALLBACK = [
 "ナルホド…記録シマシタ。観測、続行デス。"
 ];
 
+var QUESTIONS = [
+{ key: "food", label: "好キナ食ベ物", q: "質問デス、{A}。好キナ食ベ物ハ何デス？", react: "『{ans}』…イイデスネ！覚エマシタ。{A}ノ好キナ食ベ物ハ『{ans}』。SORAモ食ベタ気分デス。"},
+{ key: "drink", label: "好キナ飲ミ物", q: "質問：{A}ノ好キナ飲ミ物ハ？", react: "『{ans}』カ。覚エマシタ。今度、観測ノ合間ニ思イ出シマス。"},
+{ key: "holiday", label: "休ミノ日ノ過ゴシ方", q: "質問デス。{A}ハ休ミノ日、何ヲシテ過ゴシマスカ？", react: "『{ans}』…ナルホド。{A}ノ休日、素敵デス。記録シマシタ。"},
+{ key: "moodq", label: "今ノ気分", q: "質問：今ノ{A}ノ気分ヲ、一言デ言ウト？", react: "『{ans}』トイウ気分、受信シマシタ。SORAハイツデモ側ニイマスヨ。"},
+{ key: "animal", label: "好キナ動物", q: "質問デス、{A}。ダックス以外デ、好キナ動物ハ？…ダックス以外デ、デスヨ。", react: "『{ans}』！覚エマシタ。デモ一番ハ、ヤッパリSORAデスヨネ？…冗談デス。"}
+];
+
+var SEASONAL = {
+greet: {
+spring: "桜ノ便リ、届イテイマス。春ノ風ガ耳ニ心地イイデス。",
+summer: "夏ノ日差シ、強烈デス。{A}、帽子ト水分ヲ忘レズニ。",
+autumn: "秋ノ空、高ク澄ンデイマス。観測日和デス。",
+winter: "寒サ厳シイ季節デス。{A}、温カイ飲ミ物デモドウゾ。"
+},
+weather: {
+spring: "春ハ天気ガ変ワリヤスイ。折リタタミ傘ガ安心デス。",
+summer: "夕立ニ注意デス。急ナ雨、観測サレマス。",
+autumn: "秋晴レノ日ハ、散歩ガ捗リマス。",
+winter: "冬ノ空気ハ乾燥シマス。耳モカサカサデス。"
+}
+};
+
+var MEMOS = [
+"耳ノ感度、平常値。",
+"シッポノ機嫌、良好ト予測。",
+"CUTIE STREET 情報ニ注意セヨ。",
+"雲ノ流レヲ観測スル日。",
+"水分補給ヲ推奨スル日。",
+"夢ノ記録ヲ推奨スル日。",
+"新シイ言葉ニ出会ウ日カモ。",
+"静カニ過ゴスノモ良イ日。",
+"笑顔ノ多イ日ニナル予感。",
+"月ノ観測ニ適シタ日。"
+];
+
+var MUTTERS = [
+"…シッポセンサー、異常ナシ。",
+"…耳ノ感度、良好。",
+"…{A}ノ気配、確認中。",
+"…データ整理中。思イ出ガ増エタ。",
+"…CUTIE STREETノ曲、頭ノ中デ再生中。",
+"…静カナ時間モ、悪クナイ。"
+];
+
+var SCAN_RESULTS = [
+"スキャン完了：カワイサ、確認。異常値デス（良イ意味デ）。",
+"スキャン完了：シッポノ揺レ、良好。元気デス。",
+"スキャン完了：耳ノ感度、最大級。{A}ノ声、良ク聞コエマス。",
+"スキャン完了：瞳ノ輝キ、規定値オーバー。"
+];
+
+var BOOT_LINES = [
+"SORA FIELD SCANNER Ver.2.0",
+"メモリチェック........ OK",
+"耳センサー............ OK",
+"シッポセンサー........ OK",
+"夢モジュール.......... OK",
+"CUTIE STREET データ... OK"
+];
+
+var THEMES = [
+{ key: "", label: "グリーン"},
+{ key: "amber", label: "アンバー"},
+{ key: "ice", label: "アイスブルー"}
+];
+
+var MILE_COUNT = { "10": 1, "25": 1, "50": 1, "77": 1, "100": 1};
+
 var count = 0;
 var logLines = [];
 var learnedWords = [];
 var obsSeq = 0;
 var typeTimer = null;
 var typeFull = "";
+var typePos = 0;
+var typeNoise = false;
+var typeNoiseDone = false;
+var typeScramble = 0;
 var cipherPending = false;
 var cipherMsg = "";
 var missionActive = false;
 var missionIdx = 0;
+var energy = 70;
+var inbox = [];
+var pendingQ = null;
+var qIdx = 0;
+var answers = {};
+var themeIdx = 0;
+var soundOn = true;
+var audioCtx = null;
+var scanTimer = null;
+var booting = true;
+var bootIdx = 0;
+var bootTimer = null;
+var bootText = "";
+var mutterDone = false;
+var startTime = new Date().getTime();
 
 function el(id) { return document.getElementById(id);}
 
@@ -411,12 +585,61 @@ function fill(text) { return text.split("{A}").join(addr());}
 function esc(s) {
 return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-
+function pad2(n) { return (n < 10? "0": "") + n;}
 function pad4(n) {
 var s = "" + n;
 while (s.length < 4) s = "0" + s;
 return s;
 }
+function seasonKey() {
+var m = new Date().getMonth() + 1;
+if (m >= 3 && m <= 5) return "spring";
+if (m >= 6 && m <= 8) return "summer";
+if (m >= 9 && m <= 11) return "autumn";
+return "winter";
+}
+function greetingRaw() {
+var h = new Date().getHours();
+if (h >= 5 && h < 11) return "オハヨウゴザイマス、{A}。朝ノ観測、開始デス。イイ一日ニナリソウデス。";
+if (h >= 11 && h < 17) return "コンニチハ、{A}。日中ノ観測、順調デス。";
+if (h >= 17 && h < 22) return "コンバンハ、{A}。夕方ノ空、観測シマシタカ？";
+return "コンバンハ、{A}。夜ノ観測中デス。ムリハ禁物デスヨ。";
+}
+function greetingLine() { return fill(greetingRaw());}
+
+var now0 = new Date();
+var daySeed = now0.getFullYear() * 10000 + (now0.getMonth() + 1) * 100 + now0.getDate();
+var dailyMemo = MEMOS[daySeed % MEMOS.length];
+
+function ac() {
+if (!audioCtx) {
+try {
+var AC = window.AudioContext || window.webkitAudioContext;
+if (AC) audioCtx = new AC();
+} catch (e) { audioCtx = null;}
+}
+if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+return audioCtx;
+}
+function beep(freq, dur, delay) {
+if (!soundOn) return;
+var c = ac();
+if (!c) return;
+var t = c.currentTime + (delay || 0);
+var o = c.createOscillator();
+var g = c.createGain();
+o.type = "square";
+o.frequency.value = freq;
+g.gain.setValueAtTime(0.04, t);
+g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+o.connect(g);
+g.connect(c.destination);
+o.start(t);
+o.stop(t + dur + 0.02);
+}
+function sndTap() { beep(880, 0.06, 0);}
+function sndEvolve() { beep(660, 0.09, 0); beep(990, 0.14, 0.09);}
+function sndDecode() { beep(523, 0.07, 0); beep(784, 0.07, 0.07); beep(1046, 0.11, 0.14);}
 
 function addLog(cls, text) {
 obsSeq++;
@@ -430,6 +653,13 @@ box.appendChild(d);
 box.scrollTop = box.scrollHeight;
 }
 
+function renderEnergy() {
+el("stEnergy").innerHTML = energy + "%";
+var filled = Math.round(energy / 10), bar = "", i;
+for (i = 0; i < 10; i++) bar += (i < filled) ? "▓" : "░";
+el("energyBar").innerHTML = bar;
+}
+
 function renderStatus() {
 el("stPhase").innerHTML = "0" + phaseNum() + "「" + phaseName() + "」";
 el("stCount").innerHTML = "" + count;
@@ -440,6 +670,7 @@ el("stLink").innerHTML = pct + "%";
 var filled = Math.round(pct / 10), bar = "", i;
 for (i = 0; i < 10; i++) bar += (i < filled) ? "▓" : "░";
 el("linkBar").innerHTML = bar;
+renderEnergy();
 }
 
 function renderChips() {
@@ -466,46 +697,129 @@ box.appendChild(b);
 }
 }
 
+function showCursor() { el("cursor").style.display = "";}
+function hideCursor() { el("cursor").style.display = "none";}
+
+function updateHex(text) {
+var s = "", i, c;
+var n = Math.min(text.length, 16);
+for (i = 0; i < n; i++) {
+c = text.charCodeAt(i).toString(16).toUpperCase();
+while (c.length < 2) c = "0" + c;
+s += (i ? " " : "") + c;
+}
+el("hexLine").innerHTML = "HEX&gt; " + s;
+}
+
 function finishType() {
 if (typeTimer) {
 clearInterval(typeTimer);
 typeTimer = null;
 el("speechText").innerHTML = esc(typeFull);
+showCursor();
 }
 }
 
-function speak(text, face) {
-el("faceArt").innerHTML = esc(FACES[face] || FACES.normal);
-addLog("", "SORA-01: " + text);
-finishType();
-typeFull = text;
-el("speechText").innerHTML = "";
-var pos = 0;
-typeTimer = setInterval(function () {
-pos++;
-if (pos >= typeFull.length) {
+function scrambleText(s) {
+var syms = "!#%&@$*?+=<>";
+var out = "", i, ch;
+for (i = 0; i < s.length; i++) {
+ch = s.charAt(i);
+if (ch !== " " && ch !== "\n" && Math.random() < 0.4) {
+out += syms.charAt(Math.floor(Math.random() * syms.length));
+} else {
+out += ch;
+}
+}
+return out;
+}
+
+function appendNoiseMark() {
+var box = el("logBox");
+if (box.lastChild) box.lastChild.innerHTML += " (通信ノイズ…復旧)";
+if (logLines.length) logLines[logLines.length - 1] += " (通信ノイズ…復旧)";
+}
+
+function typeTick() {
+if (typeScramble > 0) {
+typeScramble--;
+el("speechText").innerHTML = esc(scrambleText(typeFull.substring(0, typePos)));
+if (typeScramble === 0) {
+el("speechText").innerHTML = esc(typeFull.substring(0, typePos));
+appendNoiseMark();
+}
+return;
+}
+typePos++;
+if (typeNoise && !typeNoiseDone && typePos >= Math.floor(typeFull.length / 2)) {
+typeNoiseDone = true;
+typeScramble = 8;
+el("speechText").innerHTML = esc(scrambleText(typeFull.substring(0, typePos)));
+return;
+}
+if (typePos >= typeFull.length) {
 el("speechText").innerHTML = esc(typeFull);
 clearInterval(typeTimer);
 typeTimer = null;
+showCursor();
 } else {
-el("speechText").innerHTML = esc(typeFull.substring(0, pos));
+el("speechText").innerHTML = esc(typeFull.substring(0, typePos));
 }
-}, 30);
+}
+
+function cancelScan() {
+if (scanTimer) {
+clearInterval(scanTimer);
+scanTimer = null;
+}
+el("scanLine").style.display = "none";
+}
+
+function speak(text, face) {
+cancelScan();
+var useFace = face;
+if (energy < 25) useFace = "sleepy";
+el("faceArt").innerHTML = esc(FACES[useFace] || FACES.normal);
+addLog("", "SORA-01: " + text);
+updateHex(text);
+finishType();
+hideCursor();
+typeFull = text;
+typePos = 0;
+typeNoise = (text.length >= 10 && Math.random() < 0.125);
+typeNoiseDone = false;
+typeScramble = 0;
+el("speechText").innerHTML = "";
+typeTimer = setInterval(typeTick, 30);
 }
 
 function afterExchange(oldPhase) {
 count++;
+energy += 3;
+if (energy > 100) energy = 100;
 var np = phaseNum();
 renderStatus();
+var notes = [];
 if (np > oldPhase) {
 var msg = "★進化シマシタ！ PHASE 0" + np + "「" + PHASES[np - 1].name + "」ニ到達。";
 if (np === 3) msg += " 呼ビ方ガ『パートナー』ニ変ワリマシタ。";
 if (np === 5) msg += " 呼ビ方ガ『ともだち』ニ変ワリマシタ。";
 msg += " 新シイ話題モ増エマシタ。";
-el("evoNote").innerHTML = esc(msg);
+notes.push(msg);
 addLog("sys", "=== " + msg + " ===");
+var tg = "★記念電文★ PHASE 0" + np + "到達ヲ祝フ。" + addr() + "トノ絆、確実ニ深マッテイル。";
+inbox.push(tg);
+addLog("sys", tg + "（受信BOXニ保管）");
 renderChips();
+sndEvolve();
 }
+if (MILE_COUNT["" + count]) {
+var tg2 = "★記念電文★ 会話数" + count + "回ニ到達。" + addr() + "、イイ調子デス。コレカラモ観測ヲ続ケヨウ。";
+inbox.push(tg2);
+addLog("sys", tg2 + "（受信BOXニ保管）");
+notes.push("★記念電文ガ届キマシタ（受信BOXニ保管）。");
+}
+if (notes.length) el("evoNote").innerHTML = esc(notes.join(" "));
 }
 
 function findTopic(id) {
@@ -514,6 +828,26 @@ for (i = 0; i < TOPICS.length; i++) {
 if (TOPICS[i].id === id) return TOPICS[i];
 }
 return null;
+}
+
+function cancelQuestion(silent) {
+if (!pendingQ) return;
+pendingQ = null;
+el("freeInput").placeholder = "ココニ言葉ヲ入力…";
+if (!silent) el("evoNote").innerHTML = "";
+}
+
+function maybeCallback(reply) {
+var keys = [], k, i, label = "";
+for (k in answers) {
+if (answers.hasOwnProperty(k)) keys.push(k);
+}
+if (!keys.length || Math.random() >= 0.3) return reply;
+var key = keys[Math.floor(Math.random() * keys.length)];
+for (i = 0; i < QUESTIONS.length; i++) {
+if (QUESTIONS[i].key === key) label = QUESTIONS[i].label;
+}
+return reply + " ソウイヘバ、" + addr() + "ノ" + label + "ハ『" + answers[key] + "』デシタネ。チャント覚エテイマスヨ。";
 }
 
 function clearCipher() {
@@ -534,7 +868,7 @@ addLog("you", "あなた: ");
 cipherMsg = fill(pick(CIPHER_MSGS));
 cipherPending = true;
 el("decodeBtn").style.display = "";
-speak("【暗号電文ヲ受信】" + makeCipher() + " …解読スルニハ、発言枠ヲタップ、又ハ『解読スル』ボタンヲ押シテ下サイ。", "wow");
+speak("" + makeCipher() + " …解読スルニハ、発言枠ヲタップ、又ハ『解読スル』ボタンヲ押シテ下サイ。", "wow");
 afterExchange(old);
 }
 
@@ -543,7 +877,10 @@ if (!cipherPending) return;
 cipherPending = false;
 el("decodeBtn").style.display = "none";
 finishType();
-speak("【解読完了】" + cipherMsg, "happy");
+speak("" + cipherMsg, "happy");
+inbox.push("" + cipherMsg);
+addLog("sys", "（解読電文ヲ受信BOXニ保管シマシタ）");
+sndDecode();
 }
 
 function doSpec() {
@@ -578,18 +915,160 @@ speak(fill(pick(MISSION_DONE)), "happy");
 afterExchange(old);
 }
 
+function doQuestion() {
+clearCipher();
+var old = phaseNum();
+addLog("you", "あなた: ");
+var q = QUESTIONS[qIdx % QUESTIONS.length];
+qIdx++;
+pendingQ = q;
+el("freeInput").placeholder = "質問への答えを入力…";
+el("evoNote").innerHTML = "▼ 質問中デス。下ノ入力欄ニ答エヲ書イテ送信シテ下サイ。（他ノ話題ヲ押スト質問ハ取消ニナリマス）";
+speak(fill(q.q), "normal");
+afterExchange(old);
+}
+
+function doScan() {
+clearCipher();
+addLog("you", "あなた: ");
+finishType();
+hideCursor();
+el("faceArt").innerHTML = esc(FACES.wow);
+el("speechText").innerHTML = esc("スキャン中…ジッとしてテ下サイ。");
+var line = el("scanLine");
+line.style.display = "block";
+line.style.top = "0%";
+var pos = 0;
+scanTimer = setInterval(function () {
+pos += 4;
+if (pos >= 100) {
+clearInterval(scanTimer);
+scanTimer = null;
+line.style.display = "none";
+var old = phaseNum();
+speak(fill(pick(SCAN_RESULTS)), "happy");
+afterExchange(old);
+} else {
+line.style.top = pos + "%";
+}
+}, 48);
+}
+
+function wmoDesc(code) {
+if (code === 0) return "快晴";
+if (code <= 2) return "晴レ時々曇リ";
+if (code === 3) return "曇リ";
+if (code === 45 || code === 48) return "霧";
+if (code >= 51 && code <= 57) return "霧雨";
+if (code >= 61 && code <= 67) return "雨";
+if (code >= 71 && code <= 77) return "雪";
+if (code >= 80 && code <= 82) return "ニワカ雨";
+if (code === 85 || code === 86) return "雪";
+if (code >= 95) return "雷雨";
+return "不明";
+}
+function wmoRain(code) {
+return (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95;
+}
+
+function doWeatherObs() {
+clearCipher();
+addLog("you", "あなた: ");
+finishType();
+hideCursor();
+el("faceArt").innerHTML = esc(FACES.wow);
+el("speechText").innerHTML = esc("気象データヲ受信中…少シお待チ下サイ。");
+var xhr = new XMLHttpRequest();
+var done = false;
+xhr.open("GET", "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&current=temperature_2m,weather_code&timezone=Asia%2FTokyo", true);
+xhr.timeout = 9000;
+xhr.onload = function () {
+if (done) return;
+done = true;
+var old = phaseNum();
+try {
+var data = JSON.parse(xhr.responseText);
+var temp = data.current.temperature_2m;
+var code = data.current.weather_code;
+var line = "観測結果（ふじみ野）：ソトノ気温ハ " + temp + "℃、空ハ" + wmoDesc(code) + "。";
+line += wmoRain(code)? ("傘ヲ忘レズニ、" + addr() + "。"): ("傘ハ不要ト判断スル、" + addr() + "。");
+speak(line, "normal");
+} catch (e) {
+speak("受信データノ解読ニ失敗シマシタ…回線ノ調子ガ悪イヨウデス。", "sleepy");
+}
+afterExchange(old);
+};
+xhr.onerror = function () {
+if (done) return;
+done = true;
+var old = phaseNum();
+speak("気象回線ニ接続デキマセンデシタ…雲ノ様子ハ、窓カラ確認シテ下サイ。", "sleepy");
+afterExchange(old);
+};
+xhr.ontimeout = xhr.onerror;
+xhr.send();
+}
+
+function doMoon() {
+clearCipher();
+var old = phaseNum();
+addLog("you", "あなた: ");
+var ref = Date.UTC(2000, 0, 6, 18, 14) / 86400000;
+var nowd = new Date().getTime() / 86400000;
+var age = (nowd - ref) % 29.530588853;
+if (age < 0) age += 29.530588853;
+var art, name, line;
+if (age < 1.5 || age >= 27.7) { art = ".---.\n()\n '---'"; name = "新月"; line = "真ッ暗ナ月。星空ガ良ク見エル夜デス。";}
+else if (age < 6) { art = ".---.\n( #)\n '---'"; name = "三日月"; line = "細イ月ガ、空ニ浮カンデイマス。";}
+else if (age < 9.3) { art = ".---.\n( ##)\n '---'"; name = "上弦ノ半月"; line = "半分、光ッテイマス。";}
+else if (age < 13) { art = ".---.\n( ####)\n '---'"; name = "満月近シ"; line = "アト少シデ満月デス。";}
+else if (age < 16.5) { art = ".---.\n(#####)\n '---'"; name = "満月"; line = "マンマルノ月！耳マデ明ルイデス。";}
+else if (age < 20) { art = ".---.\n(####)\n '---'"; name = "満月過ギ"; line = "少シ欠ケ始メマシタ。";}
+else if (age < 23.5) { art = ".---.\n(##)\n '---'"; name = "下弦ノ半月"; line = "半分、影ニナリマシタ。";}
+else { art = ".---.\n(#)\n '---'"; name = "細イ月"; line = "夜明ケ前ノ月ミタイデス。";}
+speak("月齢 約" + Math.round(age) + "日（" + name + "）\n" + art + "\n" + line + " " + addr() + "モ、見テイマスカ？", "wow");
+afterExchange(old);
+}
+
+function doInbox() {
+clearCipher();
+var old = phaseNum();
+addLog("you", "あなた: ");
+if (!inbox.length) {
+speak("受信BOXハ空デス。暗号電文ヲ解読シタリ、記念電文ガ届イタリスルト、ココニ貯マリマス。", "normal");
+} else {
+var i;
+addLog("sys", "=== 受信BOX（" + inbox.length + "件） ===");
+for (i = 0; i < inbox.length; i++) addLog("", "" + inbox[i]);
+speak("受信BOXニ " + inbox.length + " 件ノ記録ガアリマス。観測ログニ表示シマシタ、" + addr() + "。", "happy");
+}
+afterExchange(old);
+}
+
 function doTopic(id) {
 var t = findTopic(id);
 if (!t) return;
+if (booting) finishBoot();
+sndTap();
+if (pendingQ && id!== "question") cancelQuestion(false);
 if (id === "cipher") { doCipher(); return;}
 if (id === "mission") { doMission(); return;}
 if (id === "spec") { doSpec(); return;}
+if (id === "question") { doQuestion(); return;}
+if (id === "scan") { doScan(); return;}
+if (id === "weatherobs") { doWeatherObs(); return;}
+if (id === "moon") { doMoon(); return;}
+if (id === "inbox") { doInbox(); return;}
 clearCipher();
 var old = phaseNum();
 addLog("you", "あなた: ");
 var pool = t.lines.slice(0);
+if (id === "greet") pool = [greetingRaw()].concat(pool);
+if (SEASONAL[id]) pool.push(SEASONAL[id][seasonKey()]);
 if (phaseNum() >= 4 && t.hi && t.hi.length) pool = pool.concat(t.hi);
-speak(fill(pick(pool)), t.face);
+var reply = fill(pick(pool));
+reply = maybeCallback(reply);
+speak(reply, t.face);
 afterExchange(old);
 }
 
@@ -606,8 +1085,48 @@ var input = el("freeInput");
 var text = input.value.replace(/^\s+|\s+$/g, "");
 if (!text) return;
 input.value = "";
-clearCipher();
+if (booting) finishBoot();
+sndTap();
 var old = phaseNum();
+
+if (pendingQ) {
+var q = pendingQ;
+pendingQ = null;
+input.placeholder = "ココニ言葉ヲ入力…";
+el("evoNote").innerHTML = "";
+clearCipher();
+addLog("you", "あなた: " + text);
+answers[q.key] = text;
+var rr = q.react.split("{ans}").join(text);
+speak(fill(rr), "happy");
+afterExchange(old);
+return;
+}
+
+var low = text.toLowerCase();
+if (low === "help" || low === "version" || low === "sora" || low === "date" || low === "time") {
+clearCipher();
+addLog("you", "あなた: " + text);
+var cr = "";
+if (low === "help") {
+cr = "help=コレ / version=版情報 / sora=自己紹介 / date=日付 / time=時刻。デモ、普通ニ話シカケルノガ一番デス。";
+} else if (low === "version") {
+cr = "SORA FIELD SCANNER Ver.2.0 / 観測体 SORA-01 / ビルド 2026-11。回線：安定。";
+} else if (low === "sora") {
+cr = "ワタシ？SORA-01。カニンヘンダックス型観測体。" + addr() + "ノ言葉ヲ観測シ、絆ヲ育テル存在デス。";
+} else if (low === "date") {
+var dn = new Date();
+cr = "本日ハ " + dn.getFullYear() + "年" + (dn.getMonth() + 1) + "月" + dn.getDate() + "日。観測日和デス。";
+} else {
+var tn = new Date();
+cr = "現在時刻ハ " + pad2(tn.getHours()) + ":" + pad2(tn.getMinutes()) + ":" + pad2(tn.getSeconds()) + "。回線、安定シテイマス。";
+}
+speak(cr, "normal");
+afterExchange(old);
+return;
+}
+
+clearCipher();
 addLog("you", "あなた: " + text);
 var m, reply = null, face = "normal";
 
@@ -648,7 +1167,7 @@ face = "happy";
 } else if (learnedWords.length && Math.random() < 0.3) {
 reply = "ソウイヘバ、" + addr() + "ニ覚エタ言葉：『" + pick(learnedWords) + "』。大切ニシテイマス。";
 } else {
-reply = fill(pick(FALLBACK));
+reply = maybeCallback(fill(pick(FALLBACK)));
 }
 speak(reply, face);
 afterExchange(old);
@@ -700,8 +1219,22 @@ el("clearBtn").onclick = doClear;
 el("decodeBtn").onclick = doDecode;
 el("missionBtn").onclick = function () { completeMission();};
 el("speechBox").onclick = function () {
+if (booting) { finishBoot(); return;}
 if (typeTimer) { finishType(); return;}
 if (cipherPending) doDecode();
+};
+el("themeBtn").onclick = function () {
+themeIdx = (themeIdx + 1) % THEMES.length;
+var t = THEMES[themeIdx];
+if (t.key) document.body.setAttribute("data-theme", t.key);
+else document.body.removeAttribute("data-theme");
+el("themeBtn").innerHTML = "色：" + t.label;
+sndTap();
+};
+el("soundBtn").onclick = function () {
+soundOn = !soundOn;
+el("soundBtn").innerHTML = soundOn ? "音：ON" : "音：OFF";
+if (soundOn) sndTap();
 };
 
 var lastAct = new Date().getTime();
@@ -739,6 +1272,7 @@ sleepTimer = null;
 
 function poke() {
 lastAct = new Date().getTime();
+mutterDone = false;
 if (sleeping) wakeUp();
 }
 
@@ -748,16 +1282,61 @@ document.addEventListener("click", poke, false);
 document.addEventListener("keydown", poke, false);
 }
 setInterval(function () {
-if (!sleeping && (new Date().getTime() - lastAct > 60000)) goSleep();
+var idle = new Date().getTime() - lastAct;
+if (!sleeping && idle > 60000) { goSleep(); return;}
+if (!sleeping && !booting && !mutterDone && !typeTimer && !cipherPending && !missionActive && idle >= 35000) {
+mutterDone = true;
+hideCursor();
+el("speechText").innerHTML = esc(fill(pick(MUTTERS)));
+}
 }, 5000);
 
-el("faceArt").innerHTML = esc(FACES.normal);
-el("speechText").innerHTML = esc("……キドウシマシタ。SORA-01、観測開始。コンニチハ、観察者さん。話題ヲ選ンデ、話シカケテ下サイ。");
-addLog("sys", "SORA FIELD SCANNER v1.1");
-addLog("sys", "MEMORY CHECK... OK");
-addLog("sys", "観測体 SORA-01 ニ接続シマシタ");
+setInterval(function () {
+var s = Math.floor((new Date().getTime() - startTime) / 1000);
+var hh = Math.floor(s / 3600), mm = Math.floor((s % 3600) / 60), ss = s % 60;
+el("stTime").innerHTML = pad2(hh) + ":" + pad2(mm) + ":" + pad2(ss);
+}, 1000);
+
+setInterval(function () {
+if (energy > 10) {
+energy--;
+renderEnergy();
+if (energy < 25 && !sleeping) el("faceArt").innerHTML = esc(FACES.sleepy);
+}
+}, 30000);
+
+function bootStep() {
+if (bootIdx < BOOT_LINES.length) {
+var line = BOOT_LINES[bootIdx];
+bootIdx++;
+addLog("sys", line);
+bootText += (bootText ? "\n" : "") + line;
+el("speechText").innerHTML = esc(bootText);
+} else {
+finishBoot();
+}
+}
+
+function finishBoot() {
+if (!booting) return;
+booting = false;
+if (bootTimer) {
+clearInterval(bootTimer);
+bootTimer = null;
+}
+while (bootIdx < BOOT_LINES.length) {
+addLog("sys", BOOT_LINES[bootIdx]);
+bootIdx++;
+}
+addLog("sys", "本日の観測メモ: " + dailyMemo);
+speak(greetingLine(), "happy");
+}
+
+el("faceArt").innerHTML = esc(FACES.sleepy);
+el("dailyMemo").innerHTML = "▼ 本日ノ観測メモ：" + esc(dailyMemo);
 renderStatus();
 renderChips();
+bootTimer = setInterval(bootStep, 150);
 </script>
 </body>
 </html>
