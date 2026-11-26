@@ -68,6 +68,25 @@
   .ans { color: #ffb000; display: none; margin-top: 6px; }
   .footer { color: #8fdc9f; font-size: 14px; text-align: center; margin: 18px 0 8px 0; }
   .stat { color: #8fdc9f; font-size: 15px; }
+  pre.aa {
+    font-size: 12px; line-height: 1.25; color: #ffb000;
+    background: #140e00; border: 1px solid #ffb000; border-radius: 8px;
+    padding: 10px; overflow: hidden; white-space: pre-wrap;
+  }
+  .koma {
+    background: #02150a; border: 1px dashed #1d7a3f; border-radius: 8px;
+    padding: 10px; white-space: pre-wrap;
+  }
+  #medCircle {
+    width: 110px; height: 110px; border-radius: 50%;
+    border: 3px solid #00e5ff; background: rgba(0,229,255,0.12);
+    margin: 12px auto; text-align: center; line-height: 110px;
+    color: #00e5ff; font-size: 20px;
+    -webkit-transition: -webkit-transform 0.9s linear;
+    transition: transform 0.9s linear;
+  }
+  input.wide { width: 92%; }
+  #mdText { white-space: pre-wrap; }
 </style>
 </head>
 <body>
@@ -115,6 +134,52 @@
   <h3>◆ CUTIE STREET豆知識</h3>
   <div id="cutieText">読み込み中…</div>
   <button id="cutieNext" type="button">次のをみる</button>
+
+  <h3>◆ 連載ショート小説「星空郵便局のダックス」</h3>
+  <div>全10話。1日1話ずつ新しい話が読めるようになります（読み終わると翌日からまた第1話に戻ります）。</div>
+  <div class="amber" id="nvTitle">読み込み中…</div>
+  <div id="nvText"></div>
+  <button id="nvPrev" type="button">◀ 前の話</button>
+  <button id="nvNext" type="button">次の話 ▶</button>
+  <div class="stat" id="nvStat"></div>
+
+  <h3>◆ 今日の名言</h3>
+  <div id="quoteText">読み込み中…</div>
+  <button id="quoteNext" type="button">次のをみる</button>
+
+  <h3>◆ 今日は何の日（HIMA版）</h3>
+  <div id="dayText">読み込み中…</div>
+  <button id="dayNext" type="button">次のをみる</button>
+
+  <h3>◆ 懐かしの遊び紹介</h3>
+  <div id="playText">読み込み中…</div>
+  <button id="playNext" type="button">次のをみる</button>
+
+  <h3>◆ 懐かしゲーム紹介コラム</h3>
+  <div id="gameColText">読み込み中…</div>
+  <button id="gameColNext" type="button">次のをみる</button>
+
+  <h3>◆ ダックスのアスキーアート</h3>
+  <pre class="aa" id="aaText">読み込み中…</pre>
+  <button id="aaNext" type="button">次のをみる</button>
+
+  <h3>◆ テキスト四コマ劇場</h3>
+  <div class="koma" id="komaText">読み込み中…</div>
+  <button id="komaNext" type="button">次のをみる</button>
+
+  <h3>◆ ダックス川柳</h3>
+  <div class="big" id="senryuText">読み込み中…</div>
+  <button id="senryuNext" type="button">次のをみる</button>
+
+  <h3>◆ オリジナルキャラ占い</h3>
+  <div id="charText">読み込み中…</div>
+  <div class="stat">※日替わりです。明日になると相方キャラが変わります。</div>
+
+  <h3>◆ テーマで一言ごっこ</h3>
+  <div>今日のお題：<span class="amber" id="ikTheme">読み込み中…</span></div>
+  <input type="text" class="wide" id="ikInput" value="">
+  <button id="ikBtn" type="button">発表する</button>
+  <div id="ikMsg">お題に一言どうぞ。ここに表示されるだけの、ゆるいごっこ遊びです。</div>
 </div>
 
 <div class="card">
@@ -162,6 +227,87 @@
   <button id="hlReset" type="button">はじめから</button>
   <div id="hlMsg">「ハイ」か「ロー」を選んでください。同じ数が出たら引き分けで続行です。</div>
   <div class="stat" id="hlStat">連続正解 0 ／ 最高記録 0</div>
+
+  <h3>◆ 四字熟語クイズ</h3>
+  <div id="yjText">読み込み中…</div>
+  <button id="yj0" type="button">　</button>
+  <button id="yj1" type="button">　</button>
+  <button id="yj2" type="button">　</button>
+  <div id="yjMsg">意味に合う四字熟語を選んでください。</div>
+  <div class="stat" id="yjStat">正解 0 ／ 挑戦 0</div>
+  <button id="yjNext" type="button">次の問題</button>
+
+  <h3>◆ ことわざクイズ</h3>
+  <div id="kwText">読み込み中…</div>
+  <button id="kw0" type="button">　</button>
+  <button id="kw1" type="button">　</button>
+  <button id="kw2" type="button">　</button>
+  <div id="kwMsg">意味に合うことわざを選んでください。</div>
+  <div class="stat" id="kwStat">正解 0 ／ 挑戦 0</div>
+  <button id="kwNext" type="button">次の問題</button>
+
+  <h3>◆ 絵文字クイズ</h3>
+  <div class="big" id="emText">読み込み中…</div>
+  <button id="em0" type="button">　</button>
+  <button id="em1" type="button">　</button>
+  <button id="em2" type="button">　</button>
+  <div id="emMsg">絵文字の並びが表す言葉を当ててください。</div>
+  <div class="stat" id="emStat">正解 0 ／ 挑戦 0</div>
+  <button id="emNext" type="button">次の問題</button>
+
+  <h3>◆ 間違い探し</h3>
+  <div id="mdText">読み込み中…</div>
+  <div class="ans" id="mdAns"></div>
+  <button id="mdShow" type="button">答えを見る</button>
+  <button id="mdNext" type="button">次の問題</button>
+
+  <h3>◆ 穴埋め川柳</h3>
+  <div class="big" id="anText">読み込み中…</div>
+  <div class="ans" id="anAns"></div>
+  <button id="anShow" type="button">答えを見る</button>
+  <button id="anNext" type="button">次の問題</button>
+
+  <h3>◆ 伝統色の名前クイズ</h3>
+  <div id="tcText">読み込み中…</div>
+  <button id="tc0" type="button">　</button>
+  <button id="tc1" type="button">　</button>
+  <button id="tc2" type="button">　</button>
+  <div id="tcMsg">説明に合う伝統色の名前を選んでください。</div>
+  <div class="stat" id="tcStat">正解 0 ／ 挑戦 0</div>
+  <button id="tcNext" type="button">次の問題</button>
+
+  <h3>◆ 方言クイズ</h3>
+  <div id="hgText">読み込み中…</div>
+  <button id="hg0" type="button">　</button>
+  <button id="hg1" type="button">　</button>
+  <button id="hg2" type="button">　</button>
+  <div id="hgMsg">方言の意味を選んでください。</div>
+  <div class="stat" id="hgStat">正解 0 ／ 挑戦 0</div>
+  <button id="hgNext" type="button">次の問題</button>
+
+  <h3>◆ 東上線の駅順番クイズ</h3>
+  <div id="tjText">読み込み中…</div>
+  <button id="tj0" type="button">　</button>
+  <button id="tj1" type="button">　</button>
+  <button id="tj2" type="button">　</button>
+  <div id="tjMsg">東武東上線の駅の順番を当ててください。</div>
+  <div class="stat" id="tjStat">正解 0 ／ 挑戦 0</div>
+  <button id="tjNext" type="button">次の問題</button>
+
+  <h3>◆ 昭和の物価クイズ</h3>
+  <div id="bkText">読み込み中…</div>
+  <button id="bk0" type="button">　</button>
+  <button id="bk1" type="button">　</button>
+  <button id="bk2" type="button">　</button>
+  <div id="bkMsg">昭和の頃のお値段を選んでください（目安です）。</div>
+  <div class="stat" id="bkStat">正解 0 ／ 挑戦 0</div>
+  <button id="bkNext" type="button">次の問題</button>
+
+  <h3>◆ 1分瞑想ガイド</h3>
+  <div id="medCircle">準備OK</div>
+  <div id="medText">丸の動きに合わせて、ゆっくり呼吸しましょう。約1分間です。</div>
+  <div class="stat" id="medTime">残り 60秒</div>
+  <button id="medBtn" type="button">スタート</button>
 </div>
 
 <div class="card">
@@ -571,6 +717,351 @@ initOmikuji();
 initDice();
 initHighLow();
 initLinks();
+</script>
+
+<script>
+/* ================= 第3波 追加分 ================= */
+
+/* ---------- 汎用ローテーター ---------- */
+function makeRotator(textId, btnId, arr, startIdx) {
+  var idx = startIdx % arr.length;
+  function show() { el(textId).innerHTML = esc(arr[idx % arr.length]); }
+  show();
+  if (btnId) {
+    el(btnId).onclick = function () { idx = idx + 1; show(); };
+  }
+  return { show: show };
+}
+
+/* ---------- 1. 連載ショート小説 ---------- */
+var NOVEL = [
+  { t: '第1話「夜空行きの手紙」', b: '丘の上の小さな郵便局には、夜だけ開く窓口がありました。局員はカニンヘンダックスのポコ。ある晩、星あてに書かれた手紙が届きます。「流れ星さんへ。ぼくの願いを、落とさず運んでください」。ポコは小さな配達カバンを背負い、夜空への出発を決めました。' },
+  { t: '第2話「月の切手」', b: '夜空へ行くには「月の切手」が必要だと、古いフクロウ局長が教えてくれました。切手は満月の夜、湖のほとりで光るのだそうです。ポコは三日月を見上げながら、満月までの日数を指折り数えました。短い足では湖まで遠いけれど、鼻の利くポコに迷子の心配はありません。' },
+  { t: '第3話「湖畔のともだち」', b: '湖までの道で、ポコは羽を濡らした小さなツバメと出会いました。ポコは体を寄せて、ツバメの羽が乾くまで一緒に待ちます。「ありがとう。恩返しに、空の近道を教えてあげる」。友だちは、旅の何よりの切符かもしれません。' },
+  { t: '第4話「満月の湖」', b: '満月の晩、湖面は鏡のように月を映しました。ポコがそっと前足で水面に触れると、金色の光が集まって、小さな切手の形になりました。月の切手、ゲットです。手紙に貼ると、手紙はふわりと浮かび上がり、「あとは風に聞いて」と言わんばかりに揺れました。' },
+  { t: '第5話「風の駅」', b: 'ツバメの教えてくれた近道の先には、雲の上の「風の駅」がありました。駅員は白いヒゲの山羊。「夜空行きの最終便は、流れ星の通過後じゃよ」。ポコはベンチで流れ星を待ちながら、配達カバンの手紙を何度も確かめました。大切な願いが、折れていないか心配だったのです。' },
+  { t: '第6話「流れ星の背中」', b: '来ました、流れ星。ポコは思い切って光の尾に飛び乗ります。耳が後ろへなびき、世界がキラキラと流れていきました。「落とさず運ぶよ、約束だ」。流れ星は少しだけ速度をゆるめて、ポコの短い足でも掴まっていられるようにしてくれました。優しい星です。' },
+  { t: '第7話「星の郵便受け」', b: '星の郵便受けは、銀色の大きな貝殻でした。ポコが手紙を入れると、中から小さな鈴の音がします。「配達、受け付けました」。すると空のあちこちで、星々がぱちぱちと瞬きました。まるで拍手のようです。ポコの胸は、温かいものでいっぱいになりました。' },
+  { t: '第8話「願いの中身」', b: '帰り道、ポコは考えます。あの手紙の願いは、何だったのでしょう。読んではいけない決まりですが、想像は自由です。「きっと、誰かが誰かを想う願いだ」。そう思うと、夜空が急に近く感じました。願いを運ぶ仕事は、想いを運ぶ仕事なのだと、ポコは知りました。' },
+  { t: '第9話「朝焼けの帰り道」', b: '東の空が白み始めた頃、ポコは丘の郵便局に戻ってきました。局長は黙って温かいミルクを差し出します。「おつかれさん。…星の匂いがするのう」。ポコのカバンには、いつの間にか小さな星の砂がひとつぶ入っていました。配達完了の、しるしです。' },
+  { t: '第10話「次の手紙」', b: 'その夜も、郵便局の窓口は静かに開きました。ポストの底には、新しい手紙。今度は青い封筒です。「宇宙の果ての、あなたへ」。ポコは尻尾を振って、カバンを背負い直しました。星空郵便局の仕事は、今夜も始まります。――おしまい。また次の夜に。' }
+];
+var nvView = 0, nvUnlocked = 1;
+function nvShow() {
+  var ep = NOVEL[nvView];
+  el('nvTitle').innerHTML = esc(ep.t);
+  el('nvText').innerHTML = esc(ep.b);
+  el('nvStat').innerHTML = 'いま読めるのは第' + nvUnlocked + '話まで ／ 表示中：第' + (nvView + 1) + '話';
+}
+function initNovel() {
+  nvUnlocked = (daySeed() % NOVEL.length) + 1;
+  nvView = nvUnlocked - 1;
+  nvShow();
+  el('nvPrev').onclick = function () { if (nvView > 0) { nvView = nvView - 1; nvShow(); } };
+  el('nvNext').onclick = function () {
+    if (nvView < nvUnlocked - 1) { nvView = nvView + 1; nvShow(); }
+    else { el('nvStat').innerHTML = '続きは明日にならないと読めません。明日のお楽しみに！（全10話）'; }
+  };
+}
+
+/* ---------- 7. 今日の名言 ---------- */
+var QUOTES = [
+  '「千里の道も一歩から」――老子の言葉とされる、大きなことも小さな一歩から始まるという教え。',
+  '「笑う門には福来る」――笑いの多い家には自然と幸せがやって来る、という昔からの言い伝え。',
+  '「継続は力なり」――小さなことでも、続けることが一番の力になる。',
+  '「急がば回れ」――急ぐときほど、安全で確実な道を選んだ方が結局は早い。',
+  '「七転び八起き」――何度失敗しても、くじけず立ち上がること。',
+  '「石の上にも三年」――辛抱強く続ければ、やがて実を結ぶ。',
+  '「今日の行いは明日の実り」――HIMA-6の勝手な格言。いい一日は今日の一歩から。',
+  '「休むことも仕事のうち」――HIMA-6の勝手な格言その2。昼寝も立派な予定です。'
+];
+
+/* ---------- 16. 今日は何の日（HIMA版） ---------- */
+var WHATDAY = [
+  '今日は「おやつの日」気分。3時のおやつを、少しだけ豪華にしてみましょう。',
+  '今日は「星を見る日」気分。夜、30秒だけでいいので空を見上げてみてください。',
+  '今日は「手紙の日」気分。短くていいので、誰かに一言メッセージを送ってみましょう。',
+  '今日は「深呼吸の日」気分。窓を開けて、新鮮な空気をひと吸い。',
+  '今日は「ダックスの日」気分。短い足でも全力。今日のやる気はダックス流で。',
+  '今日は「昼寝の日」気分。15分の昼寝は、午後のご褒美です。',
+  '今日は「片付けひとつだけの日」気分。引き出しひとつだけ整えれば合格。',
+  '今日は「ありがとうの日」気分。誰か一人に、ありがとうを言ってみましょう。'
+];
+
+/* ---------- 8. 懐かしの遊び紹介 ---------- */
+var PLAY_INTRO = [
+  'あやとり：一本の紐を指にかけ、形を作る遊び。二人で取り合う「二人あやとり」は、相手の形を崩さず受け取るのがコツです。',
+  'お手玉：小豆や米の入った小さな袋を放って受ける遊び。歌に合わせて投げる地域もありました。手先の器用さが鍛えられます。',
+  'けん玉：玉を皿や剣先で受ける、日本の伝統的な遊び。「大皿」「小皿」「中皿」、慣れたら「もしかめ」に挑戦。',
+  'めんこ：厚紙のカードを地面に叩きつけ、風圧や衝撃で相手のカードを裏返す遊び。下町っ子の定番でした。',
+  'ビー玉：ガラス玉を指ではじいて当て合う遊び。ラムネ瓶の中の玉は、子どもたちの宝物でした。',
+  'おはじき：平たいガラスの玉をはじいて、相手の玉に当てる遊び。色とりどりのおはじきは、見ているだけでもきれいです。',
+  'ゴム跳び：ゴムひもを足にかけ、歌いながら跳び越える遊び。高さが上がるほど難しく、運動にもなりました。',
+  'かんけり：空き缶を蹴って鬼が拾う間にかくれる、鬼ごっこと缶の合体遊び。夕方の公園の風物詩でした。'
+];
+
+/* ---------- 17. 懐かしゲーム紹介コラム ---------- */
+var GAME_COL = [
+  'ファミコン時代（1980年代）：カセットを「フッ」と吹いてから差し込む儀式は、当時の子どもたちの共通体験でした（本当は湿気で逆効果とも言われます）。',
+  'ゲームボーイ時代（1989年〜）：単三電池4本で動く携帯機。通信ケーブルで友だちと対戦・交換するのが一大イベントでした。',
+  '初代プレステ時代（1994年〜）：CD-ROMの大容量で、ムービーシーンが一気に豪華に。メモリーカードの残量管理も腕の見せ所でした。',
+  'アーケード全盛期：100円玉を積んで順番待ち。格闘ゲームの対戦台には、独特の緊張感と熱気がありました。',
+  'ポケベルとテトリス風パズルブーム：落ちものパズルは今も昔も時間泥棒。気づけば1時間、が合言葉です。',
+  '携帯電話のアプリゲーム時代（2000年代）：小さな画面のドット絵ゲームが大流行。待ち受け画面のカスタマイズも楽しみのひとつでした。'
+];
+
+/* ---------- 13. ダックスのアスキーアート ---------- */
+var AA_ART = [
+  '  / \\__\n (    @\\___\n /         O\n/   (_____/\n/_____/   U\n\n（定番のダックス風アート）',
+  ' __      __\n(  \\____/  )\n \\  o  o  /\n  \\______/\n   |    |\n  _|    |_\n\n（おすわりダックス）',
+  '   ___\n  /   \\_____\n |  o       \\\n  \\___  ____/\n      \\/\n  〜〜 散歩中 〜〜',
+  '  (\\_/)\n  ( •ᴗ• )  ←耳が長いのでダックス風\n  / >🍖\n\n（おやつ待ち）'
+];
+
+/* ---------- 15. テキスト四コマ劇場 ---------- */
+var KOMA = [
+  '【四コマ：お散歩】\n1. ポコ「今日は遠くまで行くぞ！」\n2. （てくてく）\n3. ポコ「…まだ家の前だった」\n4. 飼い主「短い足の距離感だね」',
+  '【四コマ：おやつ】\n1. ポコ「おやつの音がした！」\n2. （猛ダッシュ）\n3. ポコ「…袋を開けたのは人間用だった」\n4. 飼い主「はい、君の分もちゃんとあるよ」',
+  '【四コマ：雨の日】\n1. ポコ「散歩いく！」\n2. （窓の外は大雨）\n3. ポコ「…今日は家で穴掘りの練習にする」\n4. （布団に潜って爆睡）',
+  '【四コマ：お留守番】\n1. 飼い主「いってきます」\n2. ポコ「ふーん（しっぽぱたぱた）」\n3. （3時間後）ポコ「まだかな…」\n4. 飼い主「ただいま」ポコ「一生ぶりだ！！」',
+  '【四コマ：新しいおもちゃ】\n1. 飼い主「新しいおもちゃ買ってきたよ」\n2. ポコ「どれどれ…」\n3. （箱で遊び始める）\n4. 飼い主「そっちかーい」'
+];
+
+/* ---------- 20. ダックス川柳 ---------- */
+var SENRYU = [
+  '短い足　今日も地球を　踏みしめる',
+  'おやつ見て　しっぽの回転　ターボつき',
+  '布団にもぐり　穴掘り気分で　おやすみなさい',
+  '雨の日は　散歩よりまず　二度寝かな',
+  '長い胴　自慢の曲線　美ボディよ',
+  '郵便屋さん　今日も吠えたる　番犬だ',
+  'ごはん前　時計より正確　腹時計',
+  '雪の日は　短い足が　埋もれます'
+];
+
+/* ---------- 18. オリジナルキャラ占い ---------- */
+var CHARA = [
+  { n: '相方キャラ：郵便ダックス「ポコ」', c: '今日はポコが相方。届けたい言葉は、しまわずに伝えると吉。' },
+  { n: '相方キャラ：星読みウサギ「ルナ」', c: '今日はルナが相方。夜空を見上げる余裕が、いいアイデアを連れてきます。' },
+  { n: '相方キャラ：昼寝ネコ「スヤ」', c: '今日はスヤが相方。休む勇気が運気を上げます。昼寝は正義。' },
+  { n: '相方キャラ：発明モグラ「ホル」', c: '今日はホルが相方。地道な一掘りが、思わぬ宝物に当たるかも。' },
+  { n: '相方キャラ：お天気カエル「ピョン」', c: '今日はピョンが相方。空模様と気分は連動中。晴れたら外へ、雨なら読書。' },
+  { n: '相方キャラ：旅スズメ「チィ」', c: '今日はチィが相方。近所の小さな冒険が吉。新しい路地を一本どうぞ。' }
+];
+
+/* ---------- 19. テーマで一言ごっこ ---------- */
+var IK_THEMES = ['今日のごはん', '理想の昼寝', 'ダックスへの一言', '明日の天気に一言', '今年の小さな目標', '推しへの一言', '今日のラッキー', '夜食の誘惑に一言'];
+function initIkigomi() {
+  el('ikTheme').innerHTML = esc(IK_THEMES[daySeed() % IK_THEMES.length]);
+  el('ikBtn').onclick = function () {
+    var v = el('ikInput').value.replace(/^\s+|\s+$/g, '');
+    if (!v) { el('ikMsg').innerHTML = '一言、入力してから発表してください。'; return; }
+    el('ikMsg').innerHTML = 'あなたの発表：<span class="big amber">「' + esc(v) + '」</span><br>いい一言です！ 拍手！';
+    el('ikInput').value = '';
+  };
+}
+
+/* ---------- 選択式クイズ汎用エンジン ---------- */
+function makeChoiceQuiz(p, data, startIdx) {
+  var idx = startIdx % data.length, ok = 0, total = 0, answered = false;
+  function stat() { el(p + 'Stat').innerHTML = '正解 ' + ok + ' ／ 挑戦 ' + total; }
+  function show() {
+    var item = data[idx % data.length];
+    answered = false;
+    el(p + 'Text').innerHTML = esc(item.q);
+    el(p + '0').innerHTML = esc(item.c[0]);
+    el(p + '1').innerHTML = esc(item.c[1]);
+    el(p + '2').innerHTML = esc(item.c[2]);
+    stat();
+  }
+  function answer(n) {
+    if (answered) { el(p + 'Msg').innerHTML = 'その問題は回答済みです。「次の問題」へどうぞ。'; return; }
+    answered = true;
+    total = total + 1;
+    var item = data[idx % data.length];
+    if (n === item.a) {
+      ok = ok + 1;
+      el(p + 'Msg').innerHTML = '正解！ ' + esc(item.e || '');
+    } else {
+      el(p + 'Msg').innerHTML = '残念、正解は「' + esc(item.c[item.a]) + '」でした。' + esc(item.e || '');
+    }
+    stat();
+  }
+  el(p + '0').onclick = function () { answer(0); };
+  el(p + '1').onclick = function () { answer(1); };
+  el(p + '2').onclick = function () { answer(2); };
+  el(p + 'Next').onclick = function () { idx = idx + 1; el(p + 'Msg').innerHTML = '次の問題です。'; show(); };
+  show();
+}
+
+/* ---------- 2. 四字熟語クイズ ---------- */
+var YJ_QUIZ = [
+  { q: '「一つのことで二つの利益を得る」ことを表す四字熟語は？', c: ['一石二鳥', '一期一会', '一攫千金'], a: 0, e: '石一つで鳥を二羽、というたとえです。' },
+  { q: '「一度の出会いを大切にする」ことを表す四字熟語は？', c: ['十人十色', '一期一会', '温故知新'], a: 1, e: '茶道の心得としても有名です。' },
+  { q: '「昔のことを学び、新しい知識を得る」ことを表す四字熟語は？', c: ['馬耳東風', '七転八起', '温故知新'], a: 2, e: '論語の言葉が元になっています。' },
+  { q: '「何度失敗してもくじけず立ち上がる」ことを表す四字熟語は？', c: ['七転八起', '一石二鳥', '十人十色'], a: 0, e: 'だるまさんの精神ですね。' },
+  { q: '「人それぞれ好みや考えが違う」ことを表す四字熟語は？', c: ['一期一会', '十人十色', '馬耳東風'], a: 1, e: '十人いれば十通りの色、という意味です。' },
+  { q: '「人の意見を聞き流して気にしない」ことを表す四字熟語は？', c: ['温故知新', '一攫千金', '馬耳東風'], a: 2, e: '馬の耳に春風、というたとえです。' }
+];
+
+/* ---------- 3. ことわざクイズ ---------- */
+var KW_QUIZ = [
+  { q: '「行動すれば思わぬ出来事に会う」という意味のことわざは？', c: ['犬も歩けば棒に当たる', '猫に小判', '猿も木から落ちる'], a: 0, e: '良い意味でも悪い意味でも使われます。' },
+  { q: '「得意なことでも失敗することがある」という意味のことわざは？', c: ['石の上にも三年', '猿も木から落ちる', '急がば回れ'], a: 1, e: '木登り上手の猿でも、というたとえです。' },
+  { q: '「辛抱して続ければ実を結ぶ」という意味のことわざは？', c: ['笑う門には福来る', '猫に小判', '石の上にも三年'], a: 2, e: '冷たい石も三年座れば温まる、が由来です。' },
+  { q: '「急ぐときほど確実な道を選ぶ方が早い」という意味のことわざは？', c: ['急がば回れ', '犬も歩けば棒に当たる', '猿も木から落ちる'], a: 0, e: '琵琶湖の船と陸路の話が由来とされます。' },
+  { q: '「価値のわからない人に貴重なものをあげても無駄」という意味のことわざは？', c: ['石の上にも三年', '猫に小判', '笑う門には福来る'], a: 1, e: '豚に真珠、とも言います。' },
+  { q: '「いつも笑顔の家には幸せが来る」という意味のことわざは？', c: ['急がば回れ', '猫に小判', '笑う門には福来る'], a: 2, e: '笑いの絶えない家庭は明るい、という教えです。' }
+];
+
+/* ---------- 4. 絵文字クイズ ---------- */
+var EM_QUIZ = [
+  { q: '🌸🍡', c: ['花より団子', '月より団子', '花と団子屋'], a: 0, e: '風流より実質、のたとえです。' },
+  { q: '🐢🐇🏃', c: ['うさぎとかめ', 'かめとうさぎの散歩', '動物オリンピック'], a: 0, e: 'コツコツ進むかめが勝つお話。' },
+  { q: '🚀🌕', c: ['月旅行', '星空散歩', '宇宙ごはん'], a: 0, e: 'ロケットで月へ、です。' },
+  { q: '🐶🦴', c: ['犬と骨', '猫と魚', '鳥と虫'], a: 0, e: 'ダックスの大好物コンビ。' },
+  { q: '☔🌂🏠', c: ['雨の日のおうち時間', '雪の日の散歩', '晴れの日の洗濯'], a: 0, e: '雨・傘・家、の並びでした。' },
+  { q: '🍛🥄😋', c: ['カレーライス', 'オムライス', 'チャーハン'], a: 0, e: 'カレーにスプーンで「おいしい」の顔。' }
+];
+
+/* ---------- 9. 伝統色クイズ ---------- */
+var TC_QUIZ = [
+  { q: '藍染めの深い青色。日本の伝統的な染め物の色といえば？', c: ['藍色', '群青色', '浅葱色'], a: 0, e: '「ジャパンブルー」とも呼ばれます。' },
+  { q: '山吹の花のような、明るい黄色に少し赤みを帯びた色は？', c: ['藤色', '山吹色', '萌葱色'], a: 1, e: '黄金色に近い、華やかな色です。' },
+  { q: '葱の葉のような、鮮やかな黄緑色は？', c: ['浅葱色', '藍色', '萌葱色'], a: 2, e: '若々しい春の色です。' },
+  { q: '藤の花のような、淡い青紫色は？', c: ['藤色', '蘇芳色', '群青色'], a: 0, e: '平安時代から愛された優しい色。' },
+  { q: '蘇芳という木で染めた、少し黒みのある赤色は？', c: ['山吹色', '蘇芳色', '萌葱色'], a: 1, e: '落ち着いた深い赤です。' },
+  { q: 'ラピスラズリから作られた、鮮やかな濃い青色は？', c: ['浅葱色', '藤色', '群青色'], a: 2, e: '昔は金より高価な絵の具でした。' }
+];
+
+/* ---------- 10. 方言クイズ ---------- */
+var HG_QUIZ = [
+  { q: '北海道の方言「なまら」の意味は？', c: ['とても', 'ゆっくり', 'たくさん'], a: 0, e: '「なまら寒い」＝「とても寒い」。' },
+  { q: '沖縄の言葉「なんくるないさ」の意味は？', c: ['いただきます', 'なんとかなるさ', 'さようなら'], a: 1, e: '前向きな沖縄の合言葉です。' },
+  { q: '関西の言葉「おおきに」の意味は？', c: ['大きな声で', 'すみません', 'ありがとう'], a: 2, e: '感謝を伝える温かい言葉です。' },
+  { q: '名古屋の方言「でら」の意味は？', c: ['とても', 'あとで', 'だれか'], a: 0, e: '「でらうまい」＝「とてもおいしい」。' },
+  { q: '岡山の方言「ぼっけえ」の意味は？', c: ['ぼんやり', 'すごい', '眠たい'], a: 1, e: '「ぼっけえ大きい」などで使います。' },
+  { q: '福岡の方言「好いとう」の意味は？', c: ['好ましい', '空いている', '好きだ'], a: 2, e: '「好いとうよ」は告白の言葉としても有名。' }
+];
+
+/* ---------- 11. 東上線の駅順番クイズ ---------- */
+var TJ_QUIZ = [
+  { q: '池袋から川越方面へ。成増の次の駅は？', c: ['和光市', '下赤塚', '朝霞'], a: 0, e: '成増→和光市の順です。' },
+  { q: 'ふじみ野から川越方面へ。次の駅は？', c: ['鶴瀬', '上福岡', 'みずほ台'], a: 1, e: 'ふじみ野→上福岡→新河岸→川越、と進みます。' },
+  { q: '志木から池袋方面へ。次の駅は？', c: ['柳瀬川', '朝霞', '朝霞台'], a: 2, e: '志木→朝霞台→朝霞の順です。' },
+  { q: '和光市から川越方面へ。次の駅は？', c: ['朝霞', '成増', '志木'], a: 0, e: '和光市→朝霞→朝霞台→志木、と進みます。' },
+  { q: '上福岡から川越方面へ。次の駅は？', c: ['ふじみ野', '新河岸', '川越'], a: 1, e: '上福岡→新河岸→川越です。' },
+  { q: '川越のひとつ手前（池袋寄り）の駅は？', c: ['上福岡', 'ふじみ野', '新河岸'], a: 2, e: '川越の隣は新河岸です。' }
+];
+
+/* ---------- 12. 昭和の物価クイズ ---------- */
+var BK_QUIZ = [
+  { q: '昭和40年代、銭湯の入浴料はだいたいどれくらい？（目安）', c: ['30円くらい', '300円くらい', '1000円くらい'], a: 0, e: '時代とともに少しずつ上がっていきました。' },
+  { q: '昭和50年頃、週刊少年マンガ誌1冊の値段は？（目安）', c: ['50円くらい', '150円くらい', '500円くらい'], a: 1, e: '当時の子どもたちの大切なお小遣いの使い道でした。' },
+  { q: '昭和40年代、ラーメン1杯の値段は？（目安）', c: ['50円くらい', '300円くらい', '100〜150円くらい'], a: 2, e: '今と比べると、時代の変化を感じます。' },
+  { q: '昭和の駄菓子屋、子どもが握りしめていたお金は？（目安）', c: ['10円玉', '1000円札', '5000円札'], a: 0, e: '10円で買えるお菓子がずらりと並んでいました。' },
+  { q: '昭和50年代、映画館の入場料はだいたい？（目安）', c: ['3000円くらい', '1000円前後', '100円くらい'], a: 1, e: '邦画・洋画の二本立て上映も多かった時代です。' },
+  { q: '昭和40年代、はがき1枚の郵便料金は？（目安）', c: ['85円', '50円', '10円くらい'], a: 2, e: '年賀はがきも安かった時代です。' }
+];
+
+/* ---------- 5. 間違い探し ---------- */
+var MD_QUIZ = [
+  { q: 'A：ダックスは短い足で元気に走った。\nB：ダックスは長い足で元気に走った。', a: '「短い」が「長い」に変わっています。ダックスは短い足が正解！' },
+  { q: 'A：今夜は満月がきれいに見えた。\nB：今夜は満月がきれいに見えた。', a: '実はまったく同じ文。間違いなしでした！' },
+  { q: 'A：駅前のパン屋で食パンを買った。\nB：駅前のパン屋で食パンを売った。', a: '「買った」が「売った」に変わっています。' },
+  { q: 'A：宇宙ステーションは地球を約90分で一周する。\nB：宇宙ステーションは地球を約90分で二周する。', a: '「一周」が「二周」に変わっています。' },
+  { q: 'A：おみくじで大吉が出て嬉しかった。\nB：おみくじで大凶が出て嬉しかった。', a: '「大吉」が「大凶」に変わっています。' },
+  { q: 'A：ふじみ野から川越まで電車で行った。\nB：ふじみ野から川越まで電車で帰った。', a: '「行った」が「帰った」に変わっています。' }
+];
+
+/* ---------- 6. 穴埋め川柳 ---------- */
+var AN_QUIZ = [
+  { q: 'おやつ見て　○○○○○○　ターボつき', a: 'しっぽの回転（ダックス川柳コーナーより）' },
+  { q: '短い足　○○○○○　踏みしめる', a: '今日も地球を' },
+  { q: '雨の日は　散歩よりまず　○○○○', a: '二度寝かな' },
+  { q: 'ごはん前　○○○○○○　腹時計', a: '時計より正確' },
+  { q: '雪の日は　○○○○　埋もれます', a: '短い足が' },
+  { q: '郵便屋さん　○○○○○○　番犬だ', a: '今日も吠えたる' }
+];
+
+/* ---------- 答え表示式クイズ（間違い探し・穴埋め） ---------- */
+function makeAnsQuiz(textId, ansId, showId, nextId, data, startIdx) {
+  var idx = startIdx % data.length;
+  function show() {
+    el(textId).innerHTML = esc(data[idx % data.length].q);
+    el(ansId).innerHTML = '答え：' + esc(data[idx % data.length].a);
+    el(ansId).style.display = 'none';
+  }
+  show();
+  el(showId).onclick = function () {
+    var a = el(ansId);
+    a.style.display = (a.style.display === 'block') ? 'none' : 'block';
+  };
+  el(nextId).onclick = function () { idx = idx + 1; show(); };
+}
+
+/* ---------- 14. 1分瞑想ガイド ---------- */
+var medTimer = null, medLeft = 60, medPhase = 0;
+function medStop(done) {
+  if (medTimer !== null) { clearInterval(medTimer); medTimer = null; }
+  el('medBtn').innerHTML = 'スタート';
+  el('medCircle').style.webkitTransform = 'scale(1)';
+  el('medCircle').style.transform = 'scale(1)';
+  el('medCircle').innerHTML = done ? 'おつかれさま' : '準備OK';
+  el('medText').innerHTML = done ? '1分間、おつかれさまでした。気持ちが少し軽くなっていれば幸いです。' : '丸の動きに合わせて、ゆっくり呼吸しましょう。約1分間です。';
+  el('medTime').innerHTML = '残り 60秒';
+}
+function initMeditation() {
+  el('medBtn').onclick = function () {
+    if (medTimer !== null) { medStop(false); return; }
+    medLeft = 60; medPhase = 0;
+    el('medBtn').innerHTML = 'ストップ';
+    el('medCircle').innerHTML = '吸って…';
+    el('medCircle').style.webkitTransform = 'scale(1.35)';
+    el('medCircle').style.transform = 'scale(1.35)';
+    medTimer = setInterval(function () {
+      medPhase = medPhase + 1;
+      if (medPhase % 40 === 0) {
+        var inhale = (medPhase / 40) % 2 === 0;
+        el('medCircle').style.webkitTransform = inhale ? 'scale(1.35)' : 'scale(1)';
+        el('medCircle').style.transform = inhale ? 'scale(1.35)' : 'scale(1)';
+        el('medCircle').innerHTML = inhale ? '吐いて…' : '吸って…';
+      }
+      if (medPhase % 10 === 0) {
+        medLeft = 60 - medPhase / 10;
+        el('medTime').innerHTML = '残り ' + medLeft + '秒';
+        if (medLeft <= 0) { medStop(true); }
+      }
+    }, 100);
+  };
+}
+
+/* ---------- 起動（第3波） ---------- */
+function initWave3() {
+  var s = daySeed();
+  initNovel();
+  makeRotator('quoteText', 'quoteNext', QUOTES, s);
+  makeRotator('dayText', 'dayNext', WHATDAY, s);
+  makeRotator('playText', 'playNext', PLAY_INTRO, s);
+  makeRotator('gameColText', 'gameColNext', GAME_COL, s);
+  makeRotator('aaText', 'aaNext', AA_ART, s);
+  makeRotator('komaText', 'komaNext', KOMA, s);
+  makeRotator('senryuText', 'senryuNext', SENRYU, s);
+  var ch = CHARA[s % CHARA.length];
+  el('charText').innerHTML = '<span class="amber">' + esc(ch.n) + '</span><br>' + esc(ch.c);
+  initIkigomi();
+  makeChoiceQuiz('yj', YJ_QUIZ, s);
+  makeChoiceQuiz('kw', KW_QUIZ, s);
+  makeChoiceQuiz('em', EM_QUIZ, s);
+  makeChoiceQuiz('tc', TC_QUIZ, s);
+  makeChoiceQuiz('hg', HG_QUIZ, s);
+  makeChoiceQuiz('tj', TJ_QUIZ, s);
+  makeChoiceQuiz('bk', BK_QUIZ, s);
+  makeAnsQuiz('mdText', 'mdAns', 'mdShow', 'mdNext', MD_QUIZ, s);
+  makeAnsQuiz('anText', 'anAns', 'anShow', 'anNext', AN_QUIZ, s);
+  initMeditation();
+}
+initWave3();
 </script>
 </body>
 </html>

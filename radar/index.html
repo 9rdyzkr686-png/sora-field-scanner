@@ -19,15 +19,19 @@
   h1 { font-size:22px; color:#33ffee; letter-spacing:2px; text-shadow:0 0 8px rgba(51,255,238,.7); }
   h1 .amber { color:#ffb000; text-shadow:0 0 8px rgba(255,176,0,.7); }
   .desc { font-size:14px; color:#9fe8b0; margin:4px 0 2px; line-height:1.5; }
-  .center-line { font-size:15px; color:#ffb000; margin-bottom:10px; }
+  .center-line { font-size:15px; color:#ffb000; margin-bottom:4px; }
+  #fujiLine { font-size:14px; color:#33ffee; margin-bottom:10px; }
   .panel { border:1px solid #1d7a3a; background:rgba(0,30,10,.35); padding:8px; margin-bottom:10px; }
   .panel-title { font-size:13px; color:#33ffee; letter-spacing:2px; border-bottom:1px solid #1d7a3a; padding-bottom:4px; margin-bottom:8px; }
+  .ctl-label { font-size:12px; color:#33ffee; letter-spacing:1px; margin:8px 0 4px; }
+  .ctl-label:first-child { margin-top:0; }
   .btnrow { display:flex; gap:6px; flex-wrap:wrap; }
   button {
     flex:1 1 0; min-height:48px; background:#021a08; color:#33ff66;
     border:1px solid #33ff66; font-family:inherit; font-size:16px; cursor:pointer;
     padding:6px 2px;
   }
+  button.small { min-height:44px; font-size:14px; }
   button.active { background:#33ff66; color:#000; font-weight:bold; }
   button:active { background:#0d4d20; color:#c8ffd6; }
   #pauseBtn { flex:0 0 100%; border-color:#ffb000; color:#ffb000; }
@@ -38,6 +42,7 @@
     font-size:16px; color:#ffb000; margin-top:4px; min-height:44px; line-height:1.5;
     border:1px dashed #7a5a00; padding:6px 8px; background:rgba(40,26,0,.35);
   }
+  #alertLine { font-size:15px; color:#ff8a80; margin-top:6px; min-height:22px; line-height:1.5; letter-spacing:1px; }
   .trow {
     display:block; width:100%; text-align:left; flex:none;
     border:1px solid #14532a; background:rgba(0,24,8,.5); color:#c8ffd6;
@@ -48,7 +53,36 @@
   .trow .dr { color:#ffb000; }
   .trow.sel { border-color:#ffb000; background:rgba(50,32,0,.5); }
   .empty { font-size:15px; color:#9fe8b0; padding:8px 0; }
+  .legend { font-size:14px; color:#9fe8b0; margin-bottom:8px; }
+  .hidden { display:none; }
+  #reportText, #quizText { font-size:15px; line-height:1.7; color:#c8ffd6; white-space:pre-wrap; }
   footer { font-size:13px; color:#5f9a6c; margin-top:14px; line-height:1.6; }
+  /* ---- night mode ---- */
+  body.night { color:#ff7a6b; }
+  body.night h1 { color:#ff5040; text-shadow:0 0 8px rgba(255,80,64,.7); }
+  body.night h1 .amber { color:#ff9a5c; text-shadow:0 0 8px rgba(255,154,92,.7); }
+  body.night .desc, body.night .empty, body.night .legend { color:#e8a09a; }
+  body.night .center-line { color:#ff9a5c; }
+  body.night #fujiLine { color:#ff8a70; }
+  body.night .panel { border-color:#7a1d12; background:rgba(30,0,0,.35); }
+  body.night .panel-title { color:#ff8a70; border-color:#7a1d12; }
+  body.night .ctl-label { color:#ff8a70; }
+  body.night button { background:#1a0302; color:#ff7a6b; border-color:#ff5040; }
+  body.night button.active { background:#ff5040; color:#000; }
+  body.night button:active { background:#4d0d02; color:#ffd6c8; }
+  body.night #pauseBtn { border-color:#ff9a5c; color:#ff9a5c; }
+  body.night #pauseBtn.active { background:#ff9a5c; color:#000; }
+  body.night canvas { background:#0a0101; border-color:#7a1d12; }
+  body.night #statusLine { color:#ff8a70; }
+  body.night #detailLine { color:#ff9a5c; border-color:#7a3a00; background:rgba(40,10,0,.35); }
+  body.night #alertLine { color:#ff5040; }
+  body.night .trow { border-color:#531d14; background:rgba(24,2,0,.5); color:#ffd6c8; }
+  body.night .trow .nm { color:#ff7a6b; }
+  body.night .trow .ds { color:#ff8a70; }
+  body.night .trow .dr { color:#ff9a5c; }
+  body.night .trow.sel { border-color:#ff9a5c; background:rgba(50,10,0,.5); }
+  body.night #reportText, body.night #quizText { color:#ffd6c8; }
+  body.night footer { color:#9a5f56; }
 </style>
 </head>
 <body>
@@ -57,6 +91,7 @@
 <h1>RDR-6 <span class="amber">周辺探査レーダー</span></h1>
 <p class="desc">スイープが周囲を探査し、ランドマークを探知します。リストをタップすると、その光点をマークします。</p>
 <p class="center-line">中心：ふじみ野市</p>
+<div id="fujiLine">富士山視程：--</div>
 
 <div class="panel">
   <div class="panel-title">RANGE SELECT / 探知範囲</div>
@@ -66,66 +101,211 @@
     <button type="button" class="rbtn" data-r="40">40km</button>
     <button type="button" class="rbtn" data-r="100">100km</button>
   </div>
+  <div class="ctl-label">SWEEP SPEED / 回転速度</div>
+  <div class="btnrow">
+    <button type="button" class="sbtn small" data-s="1.5">ゆっくり</button>
+    <button type="button" class="sbtn small active" data-s="3">標準</button>
+    <button type="button" class="sbtn small" data-s="6">高速</button>
+  </div>
+  <div class="ctl-label">RINGS / 探知リング</div>
+  <div class="btnrow">
+    <button type="button" class="gbtn small" data-g="2">2重</button>
+    <button type="button" class="gbtn small" data-g="3">3重</button>
+    <button type="button" class="gbtn small active" data-g="4">4重</button>
+  </div>
   <div class="btnrow" style="margin-top:6px;">
     <button type="button" id="pauseBtn">■ スイープ停止</button>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">SECTOR FILTER / 方面フィルター</div>
+  <div class="btnrow">
+    <button type="button" class="fbtn small active" data-f="all">すべて</button>
+    <button type="button" class="fbtn small" data-f="kawagoe">川越方面</button>
+    <button type="button" class="fbtn small" data-f="tokyo">東京方面</button>
+    <button type="button" class="fbtn small" data-f="tokorozawa">所沢方面</button>
+    <button type="button" class="fbtn small" data-f="omiya">大宮方面</button>
   </div>
 </div>
 
 <canvas id="radar" width="640" height="640"></canvas>
 <div id="statusLine">探知中： --件 / 全--件　スイープ方位： 000°</div>
 <div id="detailLine">探知リストの項目をタップすると詳細を表示します。</div>
+<div id="alertLine"></div>
+
+<div class="panel">
+  <div class="panel-title">SYSTEM / 機能</div>
+  <div class="btnrow">
+    <button type="button" class="small" id="sndBtn">探知音：OFF</button>
+    <button type="button" class="small" id="voiceBtn">読み上げ：OFF</button>
+    <button type="button" class="small" id="nightBtn">夜間：OFF</button>
+  </div>
+  <div class="btnrow" style="margin-top:6px;">
+    <button type="button" class="small" id="distBtn">距離：通常</button>
+    <button type="button" class="small" id="measureBtn">測距：OFF</button>
+    <button type="button" class="small" id="demoBtn">デモ：OFF</button>
+  </div>
+  <div class="btnrow" style="margin-top:6px;">
+    <button type="button" class="small" id="quizBtn">地名クイズ</button>
+    <button type="button" class="small" id="reportBtn">探知レポート</button>
+    <button type="button" class="small" id="zukanBtn">未確認図鑑</button>
+  </div>
+</div>
+
+<div class="panel hidden" id="quizPanel">
+  <div class="panel-title">QUIZ / 地名当てクイズ</div>
+  <div id="quizText"></div>
+  <div id="quizChoices" style="margin-top:8px;"></div>
+</div>
+
+<div class="panel hidden" id="reportPanel">
+  <div class="panel-title">REPORT / 本日の探知レポート</div>
+  <div id="reportText"></div>
+  <div class="btnrow" style="margin-top:8px;">
+    <button type="button" class="small" id="reportClose">閉じる</button>
+  </div>
+</div>
+
+<div class="panel hidden" id="zukanPanel">
+  <div class="panel-title">ARCHIVE / 未確認信号の図鑑</div>
+  <div id="zukanList"></div>
+  <div class="btnrow" style="margin-top:8px;">
+    <button type="button" class="small" id="zukanClose">閉じる</button>
+  </div>
+</div>
 
 <div class="panel" style="margin-top:10px;">
   <div class="panel-title">CONTACT LIST / 探知リスト</div>
+  <div class="legend"><span style="color:#4da6ff;">●</span>駅　<span style="color:#33ff66;">●</span>自然　<span style="color:#ffe14d;">●</span>施設</div>
   <div id="listBox"></div>
 </div>
 
 <footer>
-  ※ 位置・距離・方角は概算です（娯楽用レーダー）。<br>
+  ※ 位置・距離・方角は概算です（娯楽用レーダー）。富士山の視程や季節演出は演出です。<br>
+  季節演出：<span id="seasonLine">--</span><br>
   RDR-6 SURROUNDINGS SCANNER — OFFLINE MODE / ALL DATA ON BOARD
 </footer>
 
 <script>
 var CENTER_LAT = 35.8795, CENTER_LON = 139.5197;
 var TARGETS = [
-  { name:"ふじみ野駅", lat:35.8608, lon:139.5233, note:"東武東上線" },
-  { name:"上福岡駅", lat:35.8733, lon:139.5119, note:"東武東上線" },
-  { name:"鶴瀬駅", lat:35.8453, lon:139.5417, note:"東武東上線" },
-  { name:"みずほ台駅", lat:35.8376, lon:139.5497, note:"東武東上線" },
-  { name:"川越駅", lat:35.9072, lon:139.4829, note:"JR・東武" },
-  { name:"本川越駅", lat:35.9133, lon:139.4797, note:"西武新宿線" },
-  { name:"新河岸駅", lat:35.8887, lon:139.4972, note:"東武東上線" },
-  { name:"川越氷川神社", lat:35.9268, lon:139.4885, note:"縁結びの神社" },
-  { name:"ららぽーと富士見", lat:35.8573, lon:139.5454, note:"ショッピングモール" },
-  { name:"ベルーナドーム", lat:35.7683, lon:139.4206, note:"西武ライオンズ本拠地" },
-  { name:"所沢駅", lat:35.786, lon:139.472, note:"西武池袋線・新宿線" },
-  { name:"航空公園", lat:35.799, lon:139.470, note:"日本初の飛行場跡" },
-  { name:"狭山湖", lat:35.761, lon:139.429, note:"山口貯水池" },
-  { name:"さいたまスーパーアリーナ", lat:35.8949, lon:139.6303, note:"" },
-  { name:"大宮駅", lat:35.9063, lon:139.6239, note:"" },
-  { name:"入間基地", lat:35.8419, lon:139.4106, note:"航空自衛隊" },
-  { name:"池袋駅", lat:35.7289, lon:139.7104, note:"" },
-  { name:"新宿駅", lat:35.690, lon:139.700, note:"巨大ターミナル" },
-  { name:"東京ドーム", lat:35.706, lon:139.752, note:"野球・コンサート" },
-  { name:"東京スカイツリー", lat:35.7101, lon:139.8107, note:"高さ634m" },
-  { name:"横浜駅", lat:35.466, lon:139.622, note:"" },
-  { name:"千葉駅", lat:35.613, lon:140.114, note:"" },
-  { name:"富士山", lat:35.3606, lon:138.7274, note:"標高3776m" }
+  { name:"ふじみ野駅", lat:35.8608, lon:139.5233, note:"東武東上線", cat:"st" },
+  { name:"上福岡駅", lat:35.8733, lon:139.5119, note:"東武東上線", cat:"st" },
+  { name:"鶴瀬駅", lat:35.8453, lon:139.5417, note:"東武東上線", cat:"st" },
+  { name:"みずほ台駅", lat:35.8376, lon:139.5497, note:"東武東上線", cat:"st" },
+  { name:"川越駅", lat:35.9072, lon:139.4829, note:"JR・東武", cat:"st" },
+  { name:"本川越駅", lat:35.9133, lon:139.4797, note:"西武新宿線", cat:"st" },
+  { name:"新河岸駅", lat:35.8887, lon:139.4972, note:"東武東上線", cat:"st" },
+  { name:"川越氷川神社", lat:35.9268, lon:139.4885, note:"縁結びの神社", cat:"fc" },
+  { name:"ららぽーと富士見", lat:35.8573, lon:139.5454, note:"ショッピングモール", cat:"fc" },
+  { name:"ベルーナドーム", lat:35.7683, lon:139.4206, note:"西武ライオンズ本拠地", cat:"fc", elev:"標高約37m" },
+  { name:"所沢駅", lat:35.786, lon:139.472, note:"西武池袋線・新宿線", cat:"st" },
+  { name:"航空公園", lat:35.799, lon:139.470, note:"日本初の飛行場跡", cat:"nt" },
+  { name:"狭山湖", lat:35.761, lon:139.429, note:"山口貯水池", cat:"nt", elev:"標高約120m" },
+  { name:"さいたまスーパーアリーナ", lat:35.8949, lon:139.6303, note:"", cat:"fc" },
+  { name:"大宮駅", lat:35.9063, lon:139.6239, note:"", cat:"st" },
+  { name:"入間基地", lat:35.8419, lon:139.4106, note:"航空自衛隊", cat:"fc", elev:"標高約124m" },
+  { name:"池袋駅", lat:35.7289, lon:139.7104, note:"", cat:"st" },
+  { name:"新宿駅", lat:35.690, lon:139.700, note:"巨大ターミナル", cat:"st" },
+  { name:"東京ドーム", lat:35.706, lon:139.752, note:"野球・コンサート", cat:"fc" },
+  { name:"東京スカイツリー", lat:35.7101, lon:139.8107, note:"高さ634m", cat:"fc", elev:"高さ634m" },
+  { name:"横浜駅", lat:35.466, lon:139.622, note:"", cat:"st" },
+  { name:"千葉駅", lat:35.613, lon:140.114, note:"", cat:"st" },
+  { name:"富士山", lat:35.3606, lon:138.7274, note:"標高3776m", cat:"nt", elev:"標高3776m" }
 ];
+var CAT_RGB = { st:"77,166,255", nt:"51,255,102", fc:"255,225,77" };
+var CAT_HEX = { st:"#4da6ff", nt:"#33ff66", fc:"#ffe14d" };
+var CAT_NAME = { st:"駅", nt:"自然", fc:"施設" };
 var WINDS = ["北","北北東","北東","東北東","東","東南東","南東","南南東","南","南南西","南西","西南西","西","西北西","北西","北北西"];
+var PAL_N = { bg:"#010a03", ring:"rgba(51,255,102,0.35)", cross:"rgba(51,255,102,0.25)", tick:"rgba(51,255,102,0.5)", label:"#33ffee", sweep:"51,255,102", sweepHead:"rgba(180,255,200,0.95)", center:"#ffb000" };
+var PAL_R = { bg:"#0a0101", ring:"rgba(255,80,60,0.35)", cross:"rgba(255,80,60,0.25)", tick:"rgba(255,80,60,0.5)", label:"#ff8a70", sweep:"255,90,70", sweepHead:"rgba(255,200,180,0.95)", center:"#ff5040" };
+var PAL = PAL_N;
+var FILTERS = {
+  kawagoe: { from:285, to:360 },
+  tokyo: { from:95, to:185 },
+  tokorozawa: { from:185, to:265 },
+  omiya: { from:25, to:95 }
+};
+var CHATTER = [
+  "周辺に異常なし。哨戒を継続中。",
+  "防衛圏内は静穏。スイープ正常。",
+  "基地より通達：本日も観測日和。",
+  "哨戒記録を更新した。異常なし。",
+  "レーダー感度良好。全方位を監視中。"
+];
 
 var rangeKm = 15;
 var sweep = 0, prevSweep = 0, running = true;
+var sweepSpeed = 3;
+var ringCount = 4;
 var hlIndex = -1, hlUntil = 0;
 var mystery = null;
 var nextMysteryAt = new Date().getTime() + 15000 + Math.random() * 20000;
+var mysteryLog = [];
+var sndOn = false, voiceOn = false, nightOn = false;
+var distDigits = 1;
+var measureOn = false, measurePt = null;
+var demoOn = false, demoRangeAt = 0, demoHlAt = 0;
+var dirFilter = null;
+var litSet = {}, litDate = "";
+var lastAlertAt = 0, nextChatterAt = new Date().getTime() + 40000;
+var fujiVis = 0, nextFujiAt = new Date().getTime() + 50000;
+var meteor = null, nextMeteorAt = new Date().getTime() + 20000 + Math.random() * 30000;
+var quiz = null, quizScore = 0, quizTotal = 0;
+var AC = null;
 
 var cv = document.getElementById("radar");
 var ctx = cv.getContext("2d");
 var statusEl = document.getElementById("statusLine");
 var detailEl = document.getElementById("detailLine");
+var alertEl = document.getElementById("alertLine");
 var listEl = document.getElementById("listBox");
 var pauseBtn = document.getElementById("pauseBtn");
+var fujiEl = document.getElementById("fujiLine");
+
+function pad2(n) { return (n < 10 ? "0" : "") + n; }
+function fmtDist(d) { return d.toFixed(distDigits); }
+function todayKey() {
+  var d = new Date();
+  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+}
+function timeStr() {
+  var d = new Date();
+  return pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds());
+}
+function passDir(t) {
+  if (!dirFilter) return true;
+  return t.bearing >= dirFilter.from && t.bearing < dirFilter.to;
+}
+function fujiAlpha() {
+  if (fujiVis === 0) return 1;
+  if (fujiVis === 1) return 0.45;
+  return 0.12;
+}
+function fujiVisText() {
+  if (fujiVis === 0) return "良好（くっきり見える）";
+  if (fujiVis === 1) return "うっすら（かすんで見える）";
+  return "不良（今日は雲の向こう）";
+}
+function setAlert(txt) {
+  alertEl.innerHTML = txt;
+  lastAlertAt = new Date().getTime();
+}
+
+/* seasonal particles */
+var MONTH = new Date().getMonth();
+var SEASON_NAME, SEASON_RGB;
+if (MONTH === 11 || MONTH <= 1) { SEASON_NAME = "雪"; SEASON_RGB = "255,255,255"; }
+else if (MONTH <= 4) { SEASON_NAME = "桜"; SEASON_RGB = "255,170,200"; }
+else if (MONTH <= 7) { SEASON_NAME = "雨"; SEASON_RGB = "120,180,255"; }
+else { SEASON_NAME = "紅葉"; SEASON_RGB = "255,150,60"; }
+document.getElementById("seasonLine").innerHTML = SEASON_NAME;
+var particles = [];
+var pi;
+for (pi = 0; pi < 26; pi++) {
+  particles.push({ x: Math.random() * 640, y: Math.random() * 640, v: 0.3 + Math.random() * 0.8, s: 1.5 + Math.random() * 2, o: Math.random() * 6.28 });
+}
 
 function compute(t) {
   var dx = (t.lon - CENTER_LON) * Math.cos(CENTER_LAT * Math.PI / 180);
@@ -138,17 +318,27 @@ function compute(t) {
 }
 var i;
 for (i = 0; i < TARGETS.length; i++) compute(TARGETS[i]);
+var FUJI_IDX = TARGETS.length - 1;
 
 function inRangeCount() {
   var n = 0, j;
-  for (j = 0; j < TARGETS.length; j++) if (TARGETS[j].dist <= rangeKm) n++;
+  for (j = 0; j < TARGETS.length; j++) if (TARGETS[j].dist <= rangeKm && passDir(TARGETS[j])) n++;
   return n;
+}
+function litCount() {
+  var n = 0, k;
+  for (k in litSet) { if (litSet.hasOwnProperty(k)) n++; }
+  return n;
+}
+
+function isQuizHidden(idx) {
+  return quiz && !quiz.answered && idx === quiz.idx;
 }
 
 function buildList() {
   listEl.innerHTML = "";
   var arr = [], j;
-  for (j = 0; j < TARGETS.length; j++) if (TARGETS[j].dist <= rangeKm) arr.push(j);
+  for (j = 0; j < TARGETS.length; j++) if (TARGETS[j].dist <= rangeKm && passDir(TARGETS[j])) arr.push(j);
   arr.sort(function (a, b) { return TARGETS[a].dist - TARGETS[b].dist; });
   if (arr.length === 0) {
     var e = document.createElement("div");
@@ -163,59 +353,114 @@ function buildList() {
       var b = document.createElement("button");
       b.type = "button";
       b.className = "trow" + (idx === hlIndex ? " sel" : "");
-      b.innerHTML = "<span class=\"nm\">" + t.name + "</span>　<span class=\"ds\">" +
-        t.dist.toFixed(1) + "km</span>　<span class=\"dr\">" + t.wind + "</span>";
+      var nm = isQuizHidden(idx) ? "？？？" : t.name;
+      var extra = "";
+      if (idx === FUJI_IDX) extra = "（視程：" + (fujiVis === 0 ? "良好" : (fujiVis === 1 ? "うっすら" : "不良")) + "）";
+      b.innerHTML = "<span style=\"color:" + CAT_HEX[t.cat] + ";\">●</span> <span class=\"nm\">" + nm + "</span>　<span class=\"ds\">" +
+        fmtDist(t.dist) + "km</span>　<span class=\"dr\">" + t.wind + "</span>" + extra;
       b.onclick = function () { highlight(idx); };
       listEl.appendChild(b);
     })(arr[j]);
   }
 }
 
+function speakName(t) {
+  if (!voiceOn) return;
+  try {
+    if (!window.speechSynthesis) return;
+    var u = new SpeechSynthesisUtterance(t.name + "、" + t.dist.toFixed(1) + "キロメートル、" + t.wind + "の方向");
+    u.lang = "ja-JP";
+    u.rate = 1.05;
+    u.pitch = 0.6;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  } catch (e) { /* ignore */ }
+}
+
 function highlight(idx) {
   hlIndex = idx;
   hlUntil = new Date().getTime() + 4000;
   var t = TARGETS[idx];
-  detailEl.innerHTML = "◎ " + t.name + " ／ " + t.dist.toFixed(1) + "km ／ 方角：" + t.wind +
-    "（" + Math.round(t.bearing) + "°）" + (t.note ? " ／ " + t.note : "");
+  if (isQuizHidden(idx)) {
+    detailEl.innerHTML = "◎ クイズ対象の信号です。名前を当ててください。／ " + fmtDist(t.dist) + "km ／ 方角：" + t.wind + "（" + Math.round(t.bearing) + "°）";
+  } else {
+    detailEl.innerHTML = "◎ " + t.name + " ／ " + fmtDist(t.dist) + "km ／ 方角：" + t.wind +
+      "（" + Math.round(t.bearing) + "°）／ " + CAT_NAME[t.cat] +
+      (t.elev ? " ／ " + t.elev : "") + (t.note ? " ／ " + t.note : "");
+    speakName(t);
+  }
   TARGETS[idx].bright = 1;
+  litSet[idx] = true;
   buildList();
+}
+
+function beep(freq) {
+  if (!sndOn) return;
+  try {
+    var ACtor = window.AudioContext || window.webkitAudioContext;
+    if (!ACtor) return;
+    if (!AC) AC = new ACtor();
+    if (AC.state === "suspended" && AC.resume) AC.resume();
+    var o = AC.createOscillator(), g = AC.createGain();
+    o.type = "sine";
+    o.frequency.value = freq;
+    var t0 = AC.currentTime;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.35);
+    o.connect(g);
+    g.connect(AC.destination);
+    o.start(t0);
+    o.stop(t0 + 0.4);
+  } catch (e) { /* ignore */ }
 }
 
 function spawnMystery(nowT) {
   var d = 2 + Math.random() * Math.max(3, rangeKm * 0.85);
   mystery = { bearing: Math.random() * 360, dist: d, until: nowT + 6000 };
+  var w = WINDS[Math.round(mystery.bearing / 22.5) % 16];
+  mysteryLog.push({ time: timeStr(), bearing: mystery.bearing, dist: d, wind: w });
+  setAlert("⚠ 警戒レベル上昇！ 未確認信号が防衛圏内に接近中（" + w + " 約" + fmtDist(d) + "km）");
   if (hlIndex < 0 || nowT >= hlUntil) {
-    var w = WINDS[Math.round(mystery.bearing / 22.5) % 16];
     detailEl.innerHTML = "⚠ 未確認信号を探知！ 方角：" + w + "（" + Math.round(mystery.bearing) +
-      "°）／ 約" + mystery.dist.toFixed(1) + "km — 識別不能… まもなく消滅します";
+      "°）／ 約" + fmtDist(mystery.dist) + "km — 識別不能… まもなく消滅します";
   }
 }
 
 function draw() {
   var W = 640, C = 320, R = 300;
-  ctx.fillStyle = "#010a03";
+  ctx.fillStyle = PAL.bg;
   ctx.fillRect(0, 0, W, W);
   var k, a, x, y;
+  var now = new Date().getTime();
+
+  /* seasonal particles (background) */
+  var pp;
+  for (pp = 0; pp < particles.length; pp++) {
+    var pt = particles[pp];
+    ctx.fillStyle = "rgba(" + SEASON_RGB + ",0.45)";
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.s, 0, Math.PI * 2); ctx.fill();
+  }
 
   /* rings */
-  ctx.strokeStyle = "rgba(51,255,102,0.35)";
+  ctx.strokeStyle = PAL.ring;
   ctx.lineWidth = 1;
-  ctx.fillStyle = "rgba(51,255,238,0.8)";
+  ctx.fillStyle = PAL.label;
   ctx.font = "15px monospace";
-  for (k = 1; k <= 4; k++) {
+  for (k = 1; k <= ringCount; k++) {
     ctx.beginPath();
-    ctx.arc(C, C, R * k / 4, 0, Math.PI * 2);
+    ctx.arc(C, C, R * k / ringCount, 0, Math.PI * 2);
     ctx.stroke();
-    var label = (rangeKm * k / 4);
+    var label = (rangeKm * k / ringCount);
     var lt = (label % 1 === 0) ? String(label) : label.toFixed(1);
-    ctx.fillText(lt + "km", C + 4, C - R * k / 4 + 15);
+    ctx.fillText(lt + "km", C + 4, C - R * k / ringCount + 15);
   }
   /* cross */
-  ctx.strokeStyle = "rgba(51,255,102,0.25)";
+  ctx.strokeStyle = PAL.cross;
   ctx.beginPath(); ctx.moveTo(C - R, C); ctx.lineTo(C + R, C); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(C, C - R); ctx.lineTo(C, C + R); ctx.stroke();
   /* bearing ticks */
-  ctx.strokeStyle = "rgba(51,255,102,0.5)";
+  ctx.strokeStyle = PAL.tick;
   for (a = 0; a < 360; a += 15) {
     var rad = a * Math.PI / 180;
     var len = (a % 90 === 0) ? 16 : 8;
@@ -224,18 +469,41 @@ function draw() {
     ctx.lineTo(C + Math.sin(rad) * R, C - Math.cos(rad) * R);
     ctx.stroke();
   }
-  ctx.fillStyle = "#33ffee";
+  ctx.fillStyle = PAL.label;
   ctx.font = "bold 22px monospace";
   ctx.fillText("N", C - 7, C - R - 6);
   ctx.fillText("S", C - 7, C + R + 24);
   ctx.fillText("E", C + R + 6, C + 7);
   ctx.fillText("W", C - R - 24, C + 7);
 
+  /* out-of-range direction arrows */
+  var oi;
+  for (oi = 0; oi < TARGETS.length; oi++) {
+    var ot = TARGETS[oi];
+    if (ot.dist <= rangeKm || !passDir(ot)) continue;
+    var obr = ot.bearing * Math.PI / 180;
+    var oax = C + Math.sin(obr) * (R - 12), oay = C - Math.cos(obr) * (R - 12);
+    var oa = (ot === TARGETS[FUJI_IDX]) ? fujiAlpha() : 0.75;
+    ctx.fillStyle = "rgba(" + CAT_RGB[ot.cat] + "," + (0.8 * oa).toFixed(2) + ")";
+    ctx.save();
+    ctx.translate(oax, oay);
+    ctx.rotate(obr);
+    ctx.beginPath();
+    ctx.moveTo(0, -9); ctx.lineTo(6, 5); ctx.lineTo(-6, 5); ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    if (oi === FUJI_IDX) {
+      ctx.fillStyle = "rgba(200,255,214," + (0.9 * oa).toFixed(2) + ")";
+      ctx.font = "13px monospace";
+      ctx.fillText("富士山はあっち", C + Math.sin(obr) * (R - 44) - 38, C - Math.cos(obr) * (R - 44) + 4);
+    }
+  }
+
   /* sweep trail */
   var s;
   for (s = 0; s < 28; s++) {
     var ta = (sweep - s * 1.4) * Math.PI / 180;
-    ctx.strokeStyle = "rgba(51,255,102," + (0.14 * (1 - s / 28)).toFixed(3) + ")";
+    ctx.strokeStyle = "rgba(" + PAL.sweep + "," + (0.14 * (1 - s / 28)).toFixed(3) + ")";
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(C, C);
@@ -243,7 +511,7 @@ function draw() {
     ctx.stroke();
   }
   var sa = sweep * Math.PI / 180;
-  ctx.strokeStyle = "rgba(180,255,200,0.95)";
+  ctx.strokeStyle = PAL.sweepHead;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(C, C);
@@ -251,22 +519,41 @@ function draw() {
   ctx.stroke();
 
   /* center */
-  ctx.fillStyle = "#ffb000";
+  ctx.fillStyle = PAL.center;
   ctx.beginPath(); ctx.arc(C, C, 4, 0, Math.PI * 2); ctx.fill();
 
+  /* measure point */
+  if (measurePt) {
+    ctx.strokeStyle = "#ff5252";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(C, C); ctx.lineTo(measurePt.x, measurePt.y); ctx.stroke();
+    ctx.beginPath(); ctx.arc(measurePt.x, measurePt.y, 8, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(measurePt.x - 13, measurePt.y); ctx.lineTo(measurePt.x + 13, measurePt.y);
+    ctx.moveTo(measurePt.x, measurePt.y - 13); ctx.lineTo(measurePt.x, measurePt.y + 13);
+    ctx.stroke();
+  }
+
   /* targets */
-  var now = new Date().getTime();
   for (k = 0; k < TARGETS.length; k++) {
     var t = TARGETS[k];
-    if (t.dist > rangeKm) continue;
+    if (t.dist > rangeKm || !passDir(t)) continue;
     var br = t.bearing * Math.PI / 180;
     var rr = t.dist / rangeKm * R;
     x = C + Math.sin(br) * rr;
     y = C - Math.cos(br) * rr;
     var alpha = 0.22 + 0.78 * t.bright;
-    ctx.fillStyle = "rgba(255,176,0," + alpha.toFixed(2) + ")";
+    if (k === FUJI_IDX) alpha = alpha * fujiAlpha();
+    ctx.fillStyle = "rgba(" + CAT_RGB[t.cat] + "," + alpha.toFixed(2) + ")";
     ctx.beginPath(); ctx.arc(x, y, 5 + 3 * t.bright, 0, Math.PI * 2); ctx.fill();
-    if (t.bright > 0.55) {
+    if (isQuizHidden(k)) {
+      ctx.strokeStyle = "#33ffee";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 13 + 3 * Math.sin(now / 200), 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = "#33ffee";
+      ctx.font = "bold 15px monospace";
+      ctx.fillText("?", x + 10, y + 5);
+    } else if (t.bright > 0.55) {
       ctx.fillStyle = "rgba(200,255,214," + ((t.bright - 0.55) * 1.6).toFixed(2) + ")";
       ctx.font = "14px monospace";
       ctx.fillText(t.name, x + 10, y + 4);
@@ -297,30 +584,113 @@ function draw() {
     ctx.font = "bold 14px monospace";
     ctx.fillText("？未確認", mx + 10, my + 4);
   }
+
+  /* meteor */
+  if (meteor) {
+    var age = now - meteor.t0;
+    if (age <= 900) {
+      var hx = meteor.x0 + meteor.vx * age;
+      var hy = meteor.y0 + meteor.vy * age;
+      var fade = 1 - age / 900;
+      var grad = ctx.createLinearGradient(hx - meteor.vx * 160, hy - meteor.vy * 160, hx, hy);
+      grad.addColorStop(0, "rgba(180,240,255,0)");
+      grad.addColorStop(1, "rgba(220,250,255," + (0.9 * fade).toFixed(2) + ")");
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(hx - meteor.vx * 160, hy - meteor.vy * 160);
+      ctx.lineTo(hx, hy);
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255," + (0.95 * fade).toFixed(2) + ")";
+      ctx.beginPath(); ctx.arc(hx, hy, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+}
+
+function setRange(km) {
+  rangeKm = km;
+  var q;
+  for (q = 0; q < rbtns.length; q++) {
+    rbtns[q].className = "rbtn" + (parseInt(rbtns[q].getAttribute("data-r"), 10) === km ? " active" : "");
+  }
+  endQuiz();
+  buildList();
 }
 
 function tick() {
   var nowT = new Date().getTime();
+  if (todayKey() !== litDate) { litDate = todayKey(); litSet = {}; }
   if (mystery && nowT >= mystery.until) {
     mystery = null;
     nextMysteryAt = nowT + 20000 + Math.random() * 30000;
   }
   if (running && !mystery && nowT >= nextMysteryAt) spawnMystery(nowT);
+  if (running && !meteor && nowT >= nextMeteorAt) {
+    meteor = { x0: 120 + Math.random() * 380, y0: 40 + Math.random() * 120, vx: (Math.random() < 0.5 ? -1 : 1) * (0.25 + Math.random() * 0.2), vy: 0.18 + Math.random() * 0.12, t0: nowT };
+    nextMeteorAt = nowT + 25000 + Math.random() * 45000;
+  }
+  if (meteor && nowT - meteor.t0 > 900) meteor = null;
+  if (nowT >= nextFujiAt) {
+    var fr = Math.random();
+    fujiVis = fr < 0.45 ? 0 : (fr < 0.8 ? 1 : 2);
+    nextFujiAt = nowT + 50000;
+    fujiEl.innerHTML = "富士山視程：" + fujiVisText() + "（演出）";
+    buildList();
+  }
+  if (nowT >= nextChatterAt) {
+    if (nowT - lastAlertAt > 15000) setAlert(CHATTER[Math.floor(Math.random() * CHATTER.length)]);
+    nextChatterAt = nowT + 40000;
+  }
+  var pp2;
+  for (pp2 = 0; pp2 < particles.length; pp2++) {
+    var pt2 = particles[pp2];
+    pt2.y += pt2.v;
+    pt2.x += Math.sin(nowT / 900 + pt2.o) * 0.3;
+    if (pt2.y > 645) { pt2.y = -5; pt2.x = Math.random() * 640; }
+  }
+  if (demoOn) {
+    if (nowT >= demoRangeAt) {
+      var seq = [5, 15, 40, 100];
+      var ni = seq.indexOf(rangeKm);
+      setRange(seq[(ni + 1) % seq.length]);
+      demoRangeAt = nowT + 12000;
+    }
+    if (nowT >= demoHlAt) {
+      var pool = [], dj;
+      for (dj = 0; dj < TARGETS.length; dj++) if (TARGETS[dj].dist <= rangeKm && passDir(TARGETS[dj])) pool.push(dj);
+      if (pool.length > 0) highlight(pool[Math.floor(Math.random() * pool.length)]);
+      demoHlAt = nowT + 7000;
+    }
+  }
   if (running) {
     prevSweep = sweep;
-    sweep = (sweep + 3) % 360;
-    var j;
+    sweep = (sweep + sweepSpeed) % 360;
+    var j, pinged = false;
     for (j = 0; j < TARGETS.length; j++) {
+      if (TARGETS[j].dist > rangeKm || !passDir(TARGETS[j])) continue;
       var b = TARGETS[j].bearing;
       var crossed;
       if (prevSweep < sweep) crossed = (b >= prevSweep && b < sweep);
       else crossed = (b >= prevSweep || b < sweep);
-      if (crossed) TARGETS[j].bright = 1;
+      if (crossed) {
+        TARGETS[j].bright = 1;
+        litSet[j] = true;
+        if (sndOn && !pinged) {
+          var ratio = TARGETS[j].dist / rangeKm;
+          var f = 1500 - ratio * 900;
+          if (f < 500) f = 500;
+          beep(f);
+          pinged = true;
+        }
+        if (Math.random() < 0.3 && nowT - lastAlertAt > 4000) {
+          setAlert("防衛圏内に反応：" + (isQuizHidden(j) ? "クイズ対象の信号" : TARGETS[j].name) + "を探知。哨戒を継続。");
+        }
+      }
     }
     var sd = Math.floor(sweep);
     var sTxt = (sd < 10 ? "00" : (sd < 100 ? "0" : "")) + sd;
     statusEl.innerHTML = "探知中： " + inRangeCount() + "件 / 全" + TARGETS.length +
-      "件　スイープ方位： " + sTxt + "°";
+      "件　スイープ方位： " + sTxt + "°　本日探知： " + litCount() + "件";
   }
   var k2;
   for (k2 = 0; k2 < TARGETS.length; k2++) {
@@ -334,14 +704,174 @@ function tick() {
   draw();
 }
 
+/* ---- quiz ---- */
+var quizPanel = document.getElementById("quizPanel");
+var quizText = document.getElementById("quizText");
+var quizChoices = document.getElementById("quizChoices");
+function endQuiz() {
+  if (quiz) { quiz = null; quizPanel.className = "panel hidden"; buildList(); }
+}
+function startQuiz() {
+  var pool = [], j;
+  for (j = 0; j < TARGETS.length; j++) if (TARGETS[j].dist <= rangeKm && passDir(TARGETS[j])) pool.push(j);
+  if (pool.length < 3) {
+    quizPanel.className = "panel";
+    quizText.innerHTML = "クイズには探知対象が3件以上必要です。範囲を広げてください。";
+    quizChoices.innerHTML = "";
+    quiz = null;
+    return;
+  }
+  var idx = pool[Math.floor(Math.random() * pool.length)];
+  var others = [];
+  while (others.length < 2) {
+    var c = pool[Math.floor(Math.random() * pool.length)];
+    if (c !== idx && others.indexOf(c) < 0) others.push(c);
+  }
+  var choices = [idx, others[0], others[1]];
+  var si;
+  for (si = choices.length - 1; si > 0; si--) {
+    var sj = Math.floor(Math.random() * (si + 1));
+    var tmp = choices[si]; choices[si] = choices[sj]; choices[sj] = tmp;
+  }
+  quiz = { idx: idx, choices: choices, answered: false };
+  TARGETS[idx].bright = 1;
+  hlIndex = idx;
+  hlUntil = new Date().getTime() + 60000;
+  renderQuiz();
+  buildList();
+}
+function renderQuiz() {
+  quizPanel.className = "panel";
+  var t = TARGETS[quiz.idx];
+  if (!quiz.answered) {
+    quizText.innerHTML = "光っている「？」の信号はどこでしょう？\nヒント： " + fmtDist(t.dist) + "km ／ 方角 " + t.wind + " ／ 分類：" + CAT_NAME[t.cat] +
+      "\nスコア： " + quizScore + " / " + quizTotal;
+  }
+  quizChoices.innerHTML = "";
+  var ci;
+  for (ci = 0; ci < quiz.choices.length; ci++) {
+    (function (cIdx) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "trow";
+      b.innerHTML = "<span class=\"nm\">" + TARGETS[cIdx].name + "</span>";
+      b.onclick = function () { answerQuiz(cIdx); };
+      quizChoices.appendChild(b);
+    })(quiz.choices[ci]);
+  }
+}
+function answerQuiz(cIdx) {
+  if (!quiz || quiz.answered) return;
+  quiz.answered = true;
+  quizTotal++;
+  var t = TARGETS[quiz.idx];
+  if (cIdx === quiz.idx) {
+    quizScore++;
+    quizText.innerHTML = "◎ 正解！ " + t.name + "でした。\nスコア： " + quizScore + " / " + quizTotal;
+    setAlert("識別成功：" + t.name + " をデータベースに登録した。");
+  } else {
+    quizText.innerHTML = "× 不正解… 正解は " + t.name + " でした。\nスコア： " + quizScore + " / " + quizTotal;
+  }
+  quizChoices.innerHTML = "";
+  var nb = document.createElement("button");
+  nb.type = "button";
+  nb.className = "trow";
+  nb.innerHTML = "<span class=\"nm\">次の問題</span>";
+  nb.onclick = function () { startQuiz(); };
+  quizChoices.appendChild(nb);
+  var eb = document.createElement("button");
+  eb.type = "button";
+  eb.className = "trow";
+  eb.innerHTML = "<span class=\"nm\">クイズ終了</span>";
+  eb.onclick = function () { endQuiz(); };
+  quizChoices.appendChild(eb);
+  hlUntil = new Date().getTime() + 4000;
+  buildList();
+}
+
+/* ---- report / zukan ---- */
+function buildReport() {
+  var lines = [];
+  var d = new Date();
+  lines.push("=== " + d.getFullYear() + "/" + pad2(d.getMonth() + 1) + "/" + pad2(d.getDate()) + " " + timeStr() + " 探知レポート ===");
+  lines.push("探知済み： " + litCount() + "件（現在範囲内 " + inRangeCount() + "件 / 全" + TARGETS.length + "件）");
+  var lit = [], j;
+  for (j = 0; j < TARGETS.length; j++) if (litSet[j]) lit.push(j);
+  lit.sort(function (a2, b2) { return TARGETS[a2].dist - TARGETS[b2].dist; });
+  if (lit.length === 0) {
+    lines.push("まだ探知記録がありません。スイープを回してみてください。");
+  } else {
+    for (j = 0; j < lit.length; j++) {
+      var t = TARGETS[lit[j]];
+      lines.push("・" + t.name + " ／ " + fmtDist(t.dist) + "km ／ " + t.wind + "（" + Math.round(t.bearing) + "°）" + (t.elev ? " ／ " + t.elev : ""));
+    }
+    lines.push("最も近い探知： " + TARGETS[lit[0]].name + "（" + fmtDist(TARGETS[lit[0]].dist) + "km）");
+    lines.push("最も遠い探知： " + TARGETS[lit[lit.length - 1]].name + "（" + fmtDist(TARGETS[lit[lit.length - 1]].dist) + "km）");
+  }
+  lines.push("未確認信号との遭遇： " + mysteryLog.length + "回");
+  lines.push("富士山視程： " + fujiVisText() + "（演出）");
+  document.getElementById("reportText").innerHTML = lines.join("\n");
+  document.getElementById("reportPanel").className = "panel";
+}
+function buildZukan() {
+  var box = document.getElementById("zukanList");
+  box.innerHTML = "";
+  if (mysteryLog.length === 0) {
+    var e = document.createElement("div");
+    e.className = "empty";
+    e.innerHTML = "まだ未確認信号に出会っていません。スイープを続けると、たまに現れます。";
+    box.appendChild(e);
+  } else {
+    var j;
+    for (j = 0; j < mysteryLog.length; j++) {
+      (function (n, m) {
+        var row = document.createElement("div");
+        row.className = "trow";
+        row.innerHTML = "<span class=\"nm\">未確認信号 No." + (n + 1) + "</span>　<span class=\"ds\">" + m.time + "</span><br>" +
+          "方角：" + m.wind + "（" + Math.round(m.bearing) + "°）／ 約" + fmtDist(m.dist) + "km — 識別不能のまま消滅";
+        box.appendChild(row);
+      })(j, mysteryLog[j]);
+    }
+  }
+  document.getElementById("zukanPanel").className = "panel";
+}
+
+/* ---- controls ---- */
 var rbtns = document.getElementsByClassName("rbtn");
 var ri;
 for (ri = 0; ri < rbtns.length; ri++) {
-  rbtns[ri].onclick = function () {
-    rangeKm = parseInt(this.getAttribute("data-r"), 10);
+  rbtns[ri].onclick = function () { setRange(parseInt(this.getAttribute("data-r"), 10)); };
+}
+var sbtns = document.getElementsByClassName("sbtn");
+var sbi;
+for (sbi = 0; sbi < sbtns.length; sbi++) {
+  sbtns[sbi].onclick = function () {
+    sweepSpeed = parseFloat(this.getAttribute("data-s"));
     var q;
-    for (q = 0; q < rbtns.length; q++) rbtns[q].className = "rbtn";
-    this.className = "rbtn active";
+    for (q = 0; q < sbtns.length; q++) sbtns[q].className = "sbtn small";
+    this.className = "sbtn small active";
+  };
+}
+var gbtns = document.getElementsByClassName("gbtn");
+var gbi;
+for (gbi = 0; gbi < gbtns.length; gbi++) {
+  gbtns[gbi].onclick = function () {
+    ringCount = parseInt(this.getAttribute("data-g"), 10);
+    var q;
+    for (q = 0; q < gbtns.length; q++) gbtns[q].className = "gbtn small";
+    this.className = "gbtn small active";
+  };
+}
+var fbtns = document.getElementsByClassName("fbtn");
+var fbi;
+for (fbi = 0; fbi < fbtns.length; fbi++) {
+  fbtns[fbi].onclick = function () {
+    var key = this.getAttribute("data-f");
+    dirFilter = (key === "all") ? null : FILTERS[key];
+    var q;
+    for (q = 0; q < fbtns.length; q++) fbtns[q].className = "fbtn small";
+    this.className = "fbtn small active";
+    endQuiz();
     buildList();
   };
 }
@@ -352,6 +882,85 @@ pauseBtn.onclick = function () {
   pauseBtn.className = running ? "" : "active";
 };
 
+var sndBtn = document.getElementById("sndBtn");
+sndBtn.onclick = function () {
+  sndOn = !sndOn;
+  sndBtn.innerHTML = "探知音：" + (sndOn ? "ON" : "OFF");
+  sndBtn.className = "small" + (sndOn ? " active" : "");
+  if (sndOn) beep(1200);
+};
+var voiceBtn = document.getElementById("voiceBtn");
+voiceBtn.onclick = function () {
+  voiceOn = !voiceOn;
+  voiceBtn.innerHTML = "読み上げ：" + (voiceOn ? "ON" : "OFF");
+  voiceBtn.className = "small" + (voiceOn ? " active" : "");
+  if (!voiceOn) { try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* ignore */ } }
+};
+var nightBtn = document.getElementById("nightBtn");
+nightBtn.onclick = function () {
+  nightOn = !nightOn;
+  document.body.className = nightOn ? "night" : "";
+  PAL = nightOn ? PAL_R : PAL_N;
+  nightBtn.innerHTML = "夜間：" + (nightOn ? "ON" : "OFF");
+  nightBtn.className = "small" + (nightOn ? " active" : "");
+};
+var distBtn = document.getElementById("distBtn");
+distBtn.onclick = function () {
+  distDigits = (distDigits === 1) ? 2 : 1;
+  distBtn.innerHTML = "距離：" + (distDigits === 2 ? "詳細" : "通常");
+  distBtn.className = "small" + (distDigits === 2 ? " active" : "");
+  buildList();
+};
+var measureBtn = document.getElementById("measureBtn");
+measureBtn.onclick = function () {
+  measureOn = !measureOn;
+  if (!measureOn) measurePt = null;
+  measureBtn.innerHTML = "測距：" + (measureOn ? "ON" : "OFF");
+  measureBtn.className = "small" + (measureOn ? " active" : "");
+  if (measureOn) detailEl.innerHTML = "測距モード：レーダー画面をタップすると、中心からの距離と方角を測ります。";
+};
+var demoBtn = document.getElementById("demoBtn");
+demoBtn.onclick = function () {
+  demoOn = !demoOn;
+  demoBtn.innerHTML = "デモ：" + (demoOn ? "ON" : "OFF");
+  demoBtn.className = "small" + (demoOn ? " active" : "");
+  if (demoOn) {
+    if (!running) pauseBtn.onclick();
+    var nowT = new Date().getTime();
+    demoRangeAt = nowT + 12000;
+    demoHlAt = nowT + 3000;
+    setAlert("デモモード開始。自動で哨戒を演示します。");
+  }
+};
+document.getElementById("quizBtn").onclick = function () {
+  if (quiz) endQuiz(); else startQuiz();
+};
+document.getElementById("reportBtn").onclick = function () { buildReport(); };
+document.getElementById("reportClose").onclick = function () {
+  document.getElementById("reportPanel").className = "panel hidden";
+};
+document.getElementById("zukanBtn").onclick = function () { buildZukan(); };
+document.getElementById("zukanClose").onclick = function () {
+  document.getElementById("zukanPanel").className = "panel hidden";
+};
+
+cv.onclick = function (e) {
+  if (!measureOn) return;
+  var rect = cv.getBoundingClientRect();
+  var px = (e.clientX - rect.left) * 640 / rect.width;
+  var py = (e.clientY - rect.top) * 640 / rect.height;
+  var dx = px - 320, dy = py - 320;
+  var r = Math.sqrt(dx * dx + dy * dy);
+  if (r > 300) { dx = dx / r * 300; dy = dy / r * 300; r = 300; }
+  var dkm = r / 300 * rangeKm;
+  var brg = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
+  measurePt = { x: 320 + dx, y: 320 + dy };
+  var w = WINDS[Math.round(brg / 22.5) % 16];
+  detailEl.innerHTML = "📐 測距結果：中心から " + fmtDist(dkm) + "km ／ 方角：" + w + "（" + Math.round(brg) + "°）";
+};
+
+litDate = todayKey();
+fujiEl.innerHTML = "富士山視程：" + fujiVisText() + "（演出）";
 buildList();
 draw();
 setInterval(tick, 50);

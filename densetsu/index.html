@@ -149,6 +149,76 @@
     font-size: 17px;
   }
   .links a:active { background: #2a1a4d; }
+  .filterlabel { color: #c9a0ff; font-size: 14px; margin: 10px 0 4px 0; }
+  .night-card {
+    border: 2px solid #7a1030;
+    background: #160510;
+    padding: 14px 12px;
+    box-shadow: 0 0 16px rgba(176,48,64,0.5);
+  }
+  .paperhead {
+    display: none;
+    text-align: center;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+    color: #141210;
+    background: #e9e2cf;
+    padding: 10px 8px;
+    margin-bottom: 12px;
+    font-size: 21px;
+    letter-spacing: 4px;
+    border: 2px double #8a7f63;
+  }
+  .paper .paperhead { display: block; }
+  .paper .card {
+    background: #e9e2cf;
+    color: #26221a;
+    border-color: #8a7f63;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  }
+  .paper .card-name { color: #141210; }
+  .paper .meta { color: #5a5344; }
+  .paper .summary { color: #26221a; }
+  .paper .detail { color: #3a352a; border-top-color: #8a7f63; }
+  .paper .tag { border-color: #7a1030; color: #7a1030; }
+  .paper .fear { color: #8a5a00; }
+  .paper .votecount { color: #5a5344; }
+  .votebtn { min-height: 40px; padding: 6px 10px; font-size: 14px; margin: 0 6px 6px 0; }
+  .votebtn.on { background: #5b2a86; color: #ffffff; border-color: #c9a0ff; }
+  .votecount { color: #c9a0ff; font-size: 14px; display: block; margin-top: 2px; }
+  .votelabel { color: #c9a0ff; font-size: 14px; margin: 10px 0 4px 0; }
+  .speakbtn { width: 100%; margin-top: 8px; }
+  .bingo { text-align: center; }
+  .bcell {
+    display: inline-block;
+    width: 23%;
+    min-height: 68px;
+    margin: 0.5%;
+    vertical-align: top;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 6px 2px;
+    background: #171029;
+    color: #b9f4cd;
+    border: 1px solid #5b2a86;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .bcell.hit { background: #b03040; color: #ffffff; border-color: #ff8fa0; }
+  .diagq { border: 1px solid #33255a; padding: 10px; margin-bottom: 10px; background: #0d0a18; }
+  .diagq p { margin: 0 0 8px 0; }
+  .diagbtn { min-height: 44px; padding: 8px 18px; margin-right: 8px; }
+  .diagbtn.on { background: #5b2a86; color: #ffffff; border-color: #c9a0ff; }
+  .result { color: #ffe3e8; font-size: 17px; white-space: pre-line; }
+  .mapwrap { text-align: center; }
+  canvas#mapCanvas { background: #0a0812; border: 1px solid #3a2a5e; max-width: 100%; }
+  .routestep { display: block; width: 100%; margin-bottom: 8px; text-align: left; }
+  .calrow { border-bottom: 1px dotted #33255a; padding: 8px 2px; }
+  .calrow:last-child { border-bottom: none; }
+  .calmonth { color: #ff8fa0; font-size: 19px; display: inline-block; min-width: 56px; }
+  .stagebox { border: 2px solid #b03040; background: #140a12; padding: 14px 12px; }
+  .itemcard { border: 1px solid #33255a; background: #0d0a18; padding: 10px 12px; margin-bottom: 10px; }
+  .itemname { color: #e8dcff; font-size: 18px; margin: 0 0 2px 0; }
+  .itemcard p { margin: 0; }
   footer {
     color: #8a93a8;
     font-size: 13px;
@@ -206,14 +276,124 @@
     <p class="today-name" id="todayName"></p>
     <p class="meta" id="todayMeta"></p>
     <p class="today-text" id="todayText"></p>
+    <button class="speakbtn" id="todaySpeakBtn" type="button">▶ 声で聞く（ロボット声）</button>
   </div>
 </section>
 
 <section>
+  <h2>■ 今夜の一話</h2>
+  <p class="status" id="nightNote"></p>
+  <div class="night-card" id="nightCard" style="display:none;">
+    <p class="today-name" id="nightName"></p>
+    <p class="meta" id="nightMeta"></p>
+    <p class="today-text" id="nightText"></p>
+    <button class="speakbtn" id="nightSpeakBtn" type="button">▶ 声で聞く（ロボット声）</button>
+  </div>
+</section>
+
+<section id="archiveSection">
   <h2>■ 定番アーカイブ</h2>
   <button id="randomBtn" type="button" style="width:100%;margin-bottom:12px;">ランダムで1話ひらく</button>
+  <button id="paperBtn" type="button" style="width:100%;margin-bottom:12px;">新聞モードで読む</button>
+  <div class="paperhead" id="paperHead">伝 説 新 聞 ― 号 外 ―</div>
+  <p class="filterlabel">分類で絞り込む</p>
   <div class="chips" id="filterBox"></div>
+  <p class="filterlabel">地域で絞り込む（舞台・発祥とされる地域）</p>
+  <div class="chips" id="regionBox"></div>
+  <p class="filterlabel">年代で絞り込む（噂が広まった時代）</p>
+  <div class="chips" id="eraBox"></div>
   <div id="archiveBox"></div>
+</section>
+
+<section>
+  <h2>■ 舞台マップ</h2>
+  <p class="intro">伝説の舞台・発祥とされる地域の簡易マップです。赤い丸をタップすると、その地域の伝説に絞り込んでアーカイブを開きます。数字は収蔵数です。</p>
+  <div class="mapwrap"><canvas id="mapCanvas" width="340" height="400"></canvas></div>
+  <p class="status" id="mapNote">「全国」が舞台の伝説は、日本のどこででも起こりうる話として収蔵されています。</p>
+</section>
+
+<section>
+  <h2>■ おすすめ読書ルート</h2>
+  <p class="intro">観測所がすすめる読み順です。ボタンを押すと、その話をアーカイブで開きます。</p>
+  <div id="routeBox"></div>
+</section>
+
+<section>
+  <h2>■ 学校の七不思議コンプリート</h2>
+  <p class="intro">どこの学校でも語られる、あの七つ。あなたの学校にも、きっと全部そろっています。</p>
+  <div id="sevenBox"></div>
+</section>
+
+<section>
+  <h2>■ 怖くない都市伝説（ほのぼの）</h2>
+  <p class="intro">不思議だけど、怖くない。むしろ少し温かい、そんな伝説のコーナーです。怖い話が苦手な方はこちらをどうぞ。</p>
+  <div id="honoBox"></div>
+</section>
+
+<section>
+  <h2>■ 「真相」解説コーナー</h2>
+  <p class="intro">有名な噂の「元ネタ」や広まった仕組みを、観測所なりに検証するコーナーです。知ると怖さ半分、面白さ倍増。</p>
+  <div id="shinsoBox"></div>
+</section>
+
+<section>
+  <h2>■ 地域差バリエーション比較</h2>
+  <p class="intro">同じ伝説でも、土地が変われば細部が変わる。その違いを比べるのも都市伝説の楽しみのひとつです。</p>
+  <div id="variaBox"></div>
+</section>
+
+<section>
+  <h2>■ 登場アイテム図鑑</h2>
+  <p class="intro">伝説に欠かせない小道具たち。どの話に登場したかと一緒に収蔵します。</p>
+  <div id="itemBox"></div>
+</section>
+
+<section>
+  <h2>■ 身近度診断</h2>
+  <p class="intro">あなたの暮らしと都市伝説の距離を測る、ジョーク診断です。各問いに「はい／いいえ」で答えてください。</p>
+  <div id="diagBox"></div>
+  <button id="diagBtn" type="button" style="width:100%;">診断する</button>
+  <p class="result" id="diagResult" style="margin-top:10px;"></p>
+</section>
+
+<section>
+  <h2>■ 都市伝説ビンゴ</h2>
+  <p class="intro">経験したこと・知っていることにタップで印をつけて、縦・横・斜めのどれかをそろえよう。</p>
+  <div class="bingo" id="bingoBox"></div>
+  <p class="status" id="bingoStatus"></p>
+  <button id="bingoShuffle" type="button" style="width:100%;">カードをシャッフルする</button>
+</section>
+
+<section>
+  <h2>■ 都市伝説カレンダー</h2>
+  <p class="intro">月ごとに、伝説にまつわる出来事や季節の話題を集めました。</p>
+  <div id="calBox"></div>
+</section>
+
+<section>
+  <h2>■ クーの創作都市伝説</h2>
+  <p class="intro">観測所の管理人クーが書き下ろした、完全オリジナルの新作伝説です。ここでしか読めません。</p>
+  <div id="originalBox"></div>
+</section>
+
+<section>
+  <h2>■ 耐性テスト読み物</h2>
+  <p class="intro">少しずつ怖くなる五段階の短い話です。怖くなったら、途中で閉じて大丈夫です。それも立派な「耐性」のうちです。</p>
+  <div class="stagebox">
+    <p class="meta" id="taiseiLevel">耐性レベル 0 / 5</p>
+    <h3 id="taiseiTitle">まだ始まっていません</h3>
+    <p class="today-text" id="taiseiText">準備ができたら、下のボタンで第一段階を開いてください。</p>
+    <button id="taiseiNext" type="button" style="width:100%;margin-top:10px;">第一段階を開く</button>
+    <button id="taiseiReset" type="button" style="width:100%;margin-top:8px;display:none;">最初からやり直す</button>
+  </div>
+</section>
+
+<section>
+  <h2>■ コラム：都市伝説と未解決事件の違い</h2>
+  <p>都市伝説と未解決事件は、どちらも「謎めいた話」として並べて語られることがありますが、中身はまったく別物です。</p>
+  <p>都市伝説は、語り手が次々に代替わりしていく物語です。「友だちの友だちが体験した」という形で広まり、出典は最後まで分からないまま、土地や時代に合わせて少しずつ姿を変えていきます。そこにいるのは特定の誰かではなく、「誰にでも起こりうる」という仕掛けそのものです。だから都市伝説は、怖がったり笑ったりするための娯楽として楽しむのが正解です。</p>
+  <p>一方、未解決事件は現実の出来事です。実在の被害者と、その人生を変えられてしまった家族がいます。情報提供を呼びかける警察の発表や、報道による記録が積み重なっていて、「物語」として消費していいものではありません。面白半分で犯人探しをしたり、根拠のない噂を広めたりすることは、関係者を傷つける行為にもなります。</p>
+  <p>見分け方のコツはひとつだけ。「その話、誰が・いつ・どこで起きたと、確かめることができるか」。確かめられないものは伝説として楽しみ、確かめられるものは現実として敬意を持って接する。この観測所が扱うのは、あくまで前者――娯楽としての物語だけです。</p>
 </section>
 
 <section class="links">
@@ -356,11 +536,62 @@ var LEGENDS = [
     cat: "電話・ネット",
     summary: "夢の中で鳴った電話に出ると、自分の声で「明日のあの電話には、出るな」と警告される。翌日、本当に同じ番号から着信があって――夢と現実がつながる現代怪談。",
     detail: "眠っているはずなのに、電話の着信音がはっきり聞こえる。夢の中で電話に出ると、聞こえてきたのは自分自身の声だった。\n「明日、知らない番号から電話がかかる。あれには、出るな」\n目が覚めても夢の感触は妙に生々しく、そして翌日の同じ時刻、本当に見覚えのない番号から着信が鳴る、というのがこの話の筋だ。\n出なかった者は、その後何事もなく過ごしたが、着信履歴だけが不気妙に残ったという。\n出てしまった者の結末は語り手によって違い、無言電話だった、夢と同じ自分の声だった、など、どれも後味が悪い。\nスマートフォンの着信画面が当たり前になった今だからこそ効いてくる、夢と現実の境界の怪談である。"
+  },
+  {
+    name: "ブラッディ・マリー",
+    fear: 4,
+    cat: "家",
+    region: "海外",
+    era: "昭和",
+    summary: "真夜中の浴室で、鏡に向かって名前を唱えると、血まみれの女が鏡の中に現れる。欧米で古くから伝わる、鏡を使った呼び出しの儀式。",
+    detail: "やり方は世界中でほぼ共通している。深夜、明かりを消した浴室に一人で入り、鏡に向かって「ブラッディ・マリー」と3回（13回という説もある）唱えるのだ。\nすると鏡の中に、血にまみれた女性の姿が浮かび上がり、こちらを睨みつけるという。\n中には、鏡から這い出てくる、悲鳴と共に消える、といった派手な結末を語る地域もある。\n元をたどれば、鏡を使った未来占いの民間風習が変化したものだとも言われている。\n日本でも「鏡の前で名前を呼ぶ遊び」として紹介され、肝試しの定番になった。\n唱える勇気がある人も、最後まで鏡を見ていられる人は少ないという。"
+  },
+  {
+    name: "スレンダーマン",
+    fear: 5,
+    cat: "電話・ネット",
+    region: "海外",
+    era: "平成",
+    summary: "背が高く、のっぺらぼうの顔に黒いスーツ。森や公園の写真の片隅に写り込む男。ネットの創作コンテストから生まれ、世界中に広まった異色の伝説。",
+    detail: "2009年、海外のネット掲示板で「心霊写真を作ろう」という創作コンテストが開かれた。\nそこに投稿されたのが、子どもの集団の後ろに立つ、異様に手足の長いスーツ姿の男の合成写真だった。\n名前はスレンダーマン。「痩せた男」の意味である。\n作り物だと分かっているはずの存在が、その後、目撃談、小説、ゲーム、映画へと増殖し、本物の都市伝説と同じ広まり方を見せた。\n「写真の片隅に写っている」という設定が秀逸で、古い写真を見るたびに探してしまう人は多い。\n生まれ年と生まれた場所がはっきり分かっている、珍しい都市伝説でもある。"
+  },
+  {
+    name: "ジェフ・ザ・キラー",
+    fear: 4,
+    cat: "電話・ネット",
+    region: "海外",
+    era: "平成",
+    summary: "白い顔に、黒く縁取られた大きな目。夜、ベッドのそばに立って「眠りなさい」と囁くという、海外のネット怪談（クリーピーパスタ）の代表選手。",
+    detail: "発端は、海外サイトに投稿された一枚の不気味な顔写真だった。\n真っ白な顔、笑いすぎるほど大きく開いた口、まぶたのない目。その写真に「ジェフ・ザ・キラー」という名前と物語が付けられ、世界中に拡散した。\n物語の中のジェフは、夜になると家に忍び込み、目を覚ました住人に「ゴー・トゥ・スリープ（眠りなさい）」と囁くという。\n日本語圏でも翻訳され、イラストや動画が大量に作られた時期がある。\n写真の出どころについては諸説あり、今も議論が続いていること自体が、この伝説の燃料になっている。\nスレンダーマンと並び、「ネット生まれの怪異」が国境を越える速さを見せつけた存在である。"
+  },
+  {
+    name: "モモ",
+    fear: 3,
+    cat: "電話・ネット",
+    region: "海外",
+    era: "平成",
+    summary: "鳥のような顔の女性の画像とともに、メッセージアプリで危険な「課題」が出されるという噂。実際は彫刻作品の写真が独り歩きした、現代型デマの見本。",
+    detail: "2018年頃、メッセージアプリを通じて、不気味な女性の画像のアカウントから連絡が来て、危険な指示を出される、という噂が世界中で広まった。\nしかしあの画像は、もともと日本の造形作家が制作した彫刻作品の写真である。本人とは無関係なところで切り取られ、噂の顔として使われてしまった。\n学校や自治体が注意喚起を出し、ニュースにもなったが、噂の実体は「噂そのもの」だったというのが大方の結論である。\n怖い画像＋身近なアプリ＋「拡散して」という煽り。この組み合わせがどれほど速く広まるかを示した事件として、メディアの読み方を考える教材にもなっている。\n伝説の「真相」コーナーと合わせて読むと、この話の面白さがよく分かる。"
   }
 ];
 
 var CATS = ["すべて", "学校", "駅・電車", "電話・ネット", "道路", "家"];
 var currentCat = "すべて";
+
+/* 既存18話分の地域（舞台・発祥とされる地域）と年代（噂が広まった時代）。
+   19話目以降の収蔵話は、各データに region / era を直接持っている。 */
+var LEGEND_REGIONS = ["中部", "全国", "北海道", "関東", "全国", "中部", "全国", "全国", "全国", "全国", "全国", "全国", "全国", "全国", "全国", "全国", "全国", "全国"];
+var LEGEND_ERAS = ["昭和", "昭和", "平成", "平成", "昭和", "平成", "昭和", "平成", "平成", "昭和", "平成", "平成", "平成", "昭和", "昭和", "平成", "昭和", "令和"];
+var li;
+for (li = 0; li < LEGENDS.length; li++) {
+  if (!LEGENDS[li].region && LEGEND_REGIONS[li]) { LEGENDS[li].region = LEGEND_REGIONS[li]; }
+  if (!LEGENDS[li].era && LEGEND_ERAS[li]) { LEGENDS[li].era = LEGEND_ERAS[li]; }
+}
+
+var REGIONS = ["すべて", "北海道", "東北", "関東", "中部", "関西", "中国・四国", "九州・沖縄", "海外", "全国"];
+var ERAS = ["すべて", "昭和", "平成", "令和"];
+var currentRegion = "すべて";
+var currentEra = "すべて";
 
 function el(id) { return document.getElementById(id); }
 
@@ -383,32 +614,40 @@ function initHeader() {
   el("dateLine").textContent = d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日（" + wd[d.getDay()] + "）の観測記録";
 }
 
+var todayIdx = 0;
+
 function initToday() {
   var idx = dayOfYear(new Date()) % LEGENDS.length;
+  todayIdx = idx;
   var L = LEGENDS[idx];
   el("todayName").textContent = L.name;
-  el("todayMeta").textContent = "怖さレベル " + stars(L.fear) + "　分類：" + L.cat;
+  el("todayMeta").textContent = "怖さレベル " + stars(L.fear) + "　分類：" + L.cat + "　舞台：" + (L.region || "全国") + "　年代：" + (L.era || "");
   el("todayText").textContent = L.detail;
 }
 
-function buildChips() {
-  var box = el("filterBox");
+function buildChipRow(box, list, current, set) {
   box.innerHTML = "";
   var i;
-  for (i = 0; i < CATS.length; i++) {
-    (function (cat) {
+  for (i = 0; i < list.length; i++) {
+    (function (v) {
       var b = document.createElement("button");
       b.type = "button";
-      b.className = "chip" + (cat === currentCat ? " on" : "");
-      b.textContent = cat;
+      b.className = "chip" + (v === current ? " on" : "");
+      b.textContent = v;
       b.onclick = function () {
-        currentCat = cat;
+        set(v);
         buildChips();
         renderArchive();
       };
       box.appendChild(b);
-    })(CATS[i]);
+    })(list[i]);
   }
+}
+
+function buildChips() {
+  buildChipRow(el("filterBox"), CATS, currentCat, function (v) { currentCat = v; });
+  buildChipRow(el("regionBox"), REGIONS, currentRegion, function (v) { currentRegion = v; });
+  buildChipRow(el("eraBox"), ERAS, currentEra, function (v) { currentEra = v; });
 }
 
 function renderArchive() {
@@ -419,6 +658,8 @@ function renderArchive() {
   for (i = 0; i < LEGENDS.length; i++) {
     (function (L, idx) {
       if (currentCat !== "すべて" && L.cat !== currentCat) { return; }
+      if (currentRegion !== "すべて" && L.region !== currentRegion) { return; }
+      if (currentEra !== "すべて" && L.era !== currentEra) { return; }
       count++;
       var card = document.createElement("div");
       card.className = "card";
@@ -440,6 +681,18 @@ function renderArchive() {
       tag.className = "tag";
       tag.textContent = L.cat;
       meta.appendChild(tag);
+      if (L.region) {
+        var rtag = document.createElement("span");
+        rtag.className = "tag";
+        rtag.textContent = L.region;
+        meta.appendChild(rtag);
+      }
+      if (L.era) {
+        var etag = document.createElement("span");
+        etag.className = "tag";
+        etag.textContent = L.era;
+        meta.appendChild(etag);
+      }
       card.appendChild(meta);
 
       var sum = document.createElement("p");
@@ -467,20 +720,64 @@ function renderArchive() {
       };
       card.appendChild(btn);
 
+      var speakBtn = document.createElement("button");
+      speakBtn.type = "button";
+      speakBtn.className = "speakbtn";
+      speakBtn.textContent = "▶ 声で聞く（ロボット声）";
+      speakBtn.onclick = function () {
+        toggleSpeak("card" + idx, L.name + "。 " + String(L.detail).split("\n").join(" "), speakBtn);
+      };
+      card.appendChild(speakBtn);
+
+      var vlabel = document.createElement("p");
+      vlabel.className = "votelabel";
+      vlabel.textContent = "怖さの読者投票（ごっこ）";
+      card.appendChild(vlabel);
+
+      var vrow = document.createElement("div");
+      var vlabels = ["怖かった", "ふつう", "平気"];
+      var vk;
+      for (vk = 0; vk < 3; vk++) {
+        (function (kind) {
+          var vb = document.createElement("button");
+          vb.type = "button";
+          vb.className = "votebtn" + (votesData.mine[idx] === kind ? " on" : "");
+          vb.textContent = vlabels[kind];
+          vb.onclick = function () {
+            voteFor(idx, kind);
+            var sib = vrow.childNodes;
+            var j;
+            for (j = 0; j < sib.length; j++) {
+              if (sib[j].className && sib[j].className.indexOf("votebtn") === 0) {
+                sib[j].className = "votebtn" + (votesData.mine[idx] === (j) ? " on" : "");
+              }
+            }
+            vcount.textContent = countsText(idx);
+          };
+          vrow.appendChild(vb);
+        })(vk);
+      }
+      var vcount = document.createElement("span");
+      vcount.className = "votecount";
+      vcount.textContent = countsText(idx);
+      vrow.appendChild(vcount);
+      card.appendChild(vrow);
+
       box.appendChild(card);
     })(LEGENDS[i], i);
   }
   if (count === 0) {
     var p = document.createElement("p");
     p.className = "status";
-    p.textContent = "この分類の伝説はまだ収蔵されていません。";
+    p.textContent = "この条件の伝説はまだ収蔵されていません。";
     box.appendChild(p);
   }
 }
 
-function randomStory() {
-  var idx = Math.floor(Math.random() * LEGENDS.length);
+function openCard(idx) {
   currentCat = "すべて";
+  currentRegion = "すべて";
+  currentEra = "すべて";
   buildChips();
   renderArchive();
   var card = el("card" + idx);
@@ -491,13 +788,18 @@ function randomStory() {
   for (i = 0; i < card.childNodes.length; i++) {
     var node = card.childNodes[i];
     if (node.className === "detail" || node.className === "detail open") { det = node; }
-    if (node.tagName === "BUTTON") { btn = node; }
+    if (node.tagName === "BUTTON" && node.className === "togglebtn" && !btn) { btn = node; }
   }
   if (det && det.className !== "detail open") {
     det.className = "detail open";
     if (btn) { btn.textContent = "とじる ▲"; }
   }
   if (card.scrollIntoView) { card.scrollIntoView(); }
+}
+
+function randomStory() {
+  var idx = Math.floor(Math.random() * LEGENDS.length);
+  openCard(idx);
 }
 
 var FEED_A = "https://www.bing.com/news/search?q=%E9%83%BD%E5%B8%82%E4%BC%9D%E8%AA%AC&format=rss";
@@ -583,12 +885,754 @@ function loadAllFeeds() {
   loadFeed(FEED_YT_D, "ytDList", "ytDStatus", "retryYtD", 3, "TOLAND VLOG");
 }
 
+/* ===== 音声読み上げ（ロボット声） ===== */
+var speakingKey = null;
+var speakBtnMap = {};
+
+function stopSpeak() {
+  if ("speechSynthesis" in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+  if (speakingKey && speakBtnMap[speakingKey]) {
+    speakBtnMap[speakingKey].textContent = "▶ 声で聞く（ロボット声）";
+  }
+  speakingKey = null;
+}
+
+function toggleSpeak(key, text, btn) {
+  if (!("speechSynthesis" in window) || !window.SpeechSynthesisUtterance) {
+    btn.textContent = "この端末では音声が使えません";
+    return;
+  }
+  if (speakingKey === key) { stopSpeak(); return; }
+  stopSpeak();
+  try {
+    var u = new window.SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 0.4;
+    u.rate = 0.95;
+    speakingKey = key;
+    speakBtnMap[key] = btn;
+    btn.textContent = "■ 読み上げを止める";
+    u.onend = function () {
+      if (speakingKey === key) {
+        btn.textContent = "▶ 声で聞く（ロボット声）";
+        speakingKey = null;
+      }
+    };
+    u.onerror = u.onend;
+    window.speechSynthesis.speak(u);
+  } catch (e) {
+    btn.textContent = "音声の再生に失敗しました";
+    speakingKey = null;
+  }
+}
+
+/* ===== 怖さの読者投票（localStorageに保存） ===== */
+function lsGet(k) {
+  try { return window.localStorage.getItem(k); } catch (e) { return null; }
+}
+function lsSet(k, v) {
+  try { window.localStorage.setItem(k, v); } catch (e) {}
+}
+
+var votesData = { counts: {}, mine: {} };
+
+function loadVotes() {
+  var s = lsGet("densetsuVotes");
+  if (s) {
+    try {
+      var v = JSON.parse(s);
+      if (v && v.counts && v.mine) { votesData = v; }
+    } catch (e) {}
+  }
+}
+function saveVotes() { lsSet("densetsuVotes", JSON.stringify(votesData)); }
+
+function countsText(idx) {
+  var c = votesData.counts[idx] || [0, 0, 0];
+  return "みんなの投票：怖かった " + c[0] + " ・ ふつう " + c[1] + " ・ 平気 " + c[2];
+}
+
+function voteFor(idx, kind) {
+  var c = votesData.counts[idx] || [0, 0, 0];
+  var m = votesData.mine[idx];
+  if (m === kind) { return; }
+  if (typeof m === "number" && c[m] > 0) { c[m]--; }
+  c[kind]++;
+  votesData.counts[idx] = c;
+  votesData.mine[idx] = kind;
+  saveVotes();
+}
+
+/* ===== 今夜の一話 ===== */
+var nightIdx = -1;
+
+function initNight() {
+  var h = new Date().getHours();
+  var isNight = (h >= 20 || h < 5);
+  if (isNight) {
+    nightIdx = (dayOfYear(new Date()) + 3) % LEGENDS.length;
+    var L = LEGENDS[nightIdx];
+    el("nightNote").textContent = "時刻は夜。観測所の明かりが落ち、今夜の一話が姿を現しました。";
+    el("nightName").textContent = L.name;
+    el("nightMeta").textContent = "怖さレベル " + stars(L.fear) + "　分類：" + L.cat + "　舞台：" + (L.region || "全国") + "　年代：" + (L.era || "");
+    el("nightText").textContent = L.detail;
+    el("nightCard").style.display = "block";
+  } else {
+    nightIdx = -1;
+    el("nightNote").textContent = "「今夜の一話」は、夜8時から朝5時のあいだだけ現れます。今はまだ、扉の向こうで眠っています。";
+    el("nightCard").style.display = "none";
+  }
+}
+
+/* ===== 新聞モード ===== */
+var paperOn = false;
+function togglePaper() {
+  paperOn = !paperOn;
+  el("archiveSection").className = paperOn ? "paper" : "";
+  el("paperBtn").textContent = paperOn ? "通常モードに戻す" : "新聞モードで読む";
+}
+
+/* ===== 汎用カード（ほのぼの・創作など） ===== */
+function simpleCard(L, keyPrefix) {
+  var card = document.createElement("div");
+  card.className = "card";
+  var name = document.createElement("p");
+  name.className = "card-name";
+  name.textContent = L.name;
+  card.appendChild(name);
+  var sum = document.createElement("p");
+  sum.className = "summary";
+  sum.textContent = L.summary;
+  card.appendChild(sum);
+  var det = document.createElement("div");
+  det.className = "detail";
+  det.textContent = L.detail;
+  card.appendChild(det);
+  var btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "togglebtn";
+  btn.textContent = "くわしく読む ▼";
+  btn.onclick = function () {
+    if (det.className === "detail open") {
+      det.className = "detail";
+      btn.textContent = "くわしく読む ▼";
+    } else {
+      det.className = "detail open";
+      btn.textContent = "とじる ▲";
+    }
+  };
+  card.appendChild(btn);
+  var speakBtn = document.createElement("button");
+  speakBtn.type = "button";
+  speakBtn.className = "speakbtn";
+  speakBtn.textContent = "▶ 声で聞く（ロボット声）";
+  speakBtn.onclick = function () {
+    toggleSpeak(keyPrefix + L.name, L.name + "。 " + String(L.detail).split("\n").join(" "), speakBtn);
+  };
+  card.appendChild(speakBtn);
+  return card;
+}
+
+/* ===== 学校の七不思議 ===== */
+var NANAFUSHIGI = [
+  { name: "一、トイレの花子さん", text: "3番目の個室をノックすると、中から返事が返ってくる。七不思議の筆頭であり、このアーカイブにも収蔵されている大定番。" },
+  { name: "二、音楽室のベートーベン", text: "壁の肖像画の目が動く、夕方に誰もいない音楽室からピアノの音がする。作曲家たちが放課後の演奏を聴いている、という説もある。" },
+  { name: "三、理科室の人体模型", text: "夜のあいだに理科室を歩き回り、朝には違う場所に立っている。自分の失くした部品を探しているのだという。" },
+  { name: "四、十三段目の階段", text: "普段は12段しかないはずの階段が、ある夜だけ13段に増えている。増えた段を踏んだ者は、翌朝まで階段を降りられないとも言われる。" },
+  { name: "五、プールの幽霊", text: "夏の夜、誰もいないはずのプールで水音がする。飛び込み台の上に人影が立っていた、という目撃談は全国共通の夏の風物詩。" },
+  { name: "六、夜に歩く二宮金次郎像", text: "校庭の像が夜中に歩き回る。朝、像の足元に土がついていた、読んでいる本のページが進んでいた、という報告が各地にある。" },
+  { name: "七、校舎裏の井戸", text: "使われなくなった井戸には蓋がされ、「決して覗くな」と言い伝えられる。水面に映るのは自分の顔ではない、というのが定番の落ちである。" }
+];
+
+function renderSeven() {
+  var box = el("sevenBox");
+  box.innerHTML = "";
+  var i;
+  for (i = 0; i < NANAFUSHIGI.length; i++) {
+    var d = document.createElement("div");
+    d.className = "itemcard";
+    var n = document.createElement("p");
+    n.className = "itemname";
+    n.textContent = NANAFUSHIGI[i].name;
+    d.appendChild(n);
+    var t = document.createElement("p");
+    t.textContent = NANAFUSHIGI[i].text;
+    d.appendChild(t);
+    box.appendChild(d);
+  }
+}
+
+/* ===== 怖くない都市伝説（ほのぼの） ===== */
+var HONOBONO = [
+  {
+    name: "座敷わらし",
+    summary: "古い屋敷の座敷に現れる、子どもの姿の座敷わらし。姿を見た家は栄えると言われる、珍しい「ありがたい」タイプの伝説。",
+    detail: "座敷わらしは、東北地方を中心に語られる、家に福を運ぶ存在である。\n現れるのは5、6歳ほどの子どもで、着物を着て、家の中を走り回ったり、寝ている人の布団に入ってきたりする。\n気配はしても姿はめったに見えず、足音や笑い声、置いたはずのおもちゃの位置が変わっている、といった形で存在を知らせる。\n座敷わらしのいる家は栄え、逆に去ってしまうと家が衰える、とも言われる。\nだから家の人たちは、わらしの好物のお菓子を供え、大切に迎え入れてきたという。\n怖くないどころか、「うちにも来てほしい」と願われる、都市伝説界の人気者である。"
+  },
+  {
+    name: "河童の恩返し",
+    summary: "川でいたずらをして捕まった河童を逃がしてやると、翌日から玄関先に川魚や薬草が届くようになった、という恩返しの昔話ふう伝説。",
+    detail: "川辺で遊ぶ子どもたちが、相撲を挑んできた河童を取り押さえた。\n頭の皿の水がこぼれて動けなくなった河童は、「放してくれれば、二度と悪さはしない」と約束したという。\n情けをかけて放してやると、その翌朝から、家の玄関先に新鮮な川魚や、熱さましの薬草が置かれるようになった。\n誰の姿も見えない届け物はしばらく続き、やがて家の者は、川にきゅうりを供えるようになった。\n河童はきゅうりが大好物。恩返しへの、お返しのつもりだったのだろう。\n「河童に相撲を挑まれたら、水をこぼさず投げ飛ばせ」といった教訓とセットで、今も川の近くの町で語られている。"
+  },
+  {
+    name: "帰り道を迎えに来る犬",
+    summary: "夜勤帰りの道を、途中まで迎えに来てくれる足音。引っ越しで離れたはずの老犬が、今も飼い主の帰りを待っているのだという、切なくて温かい話。",
+    detail: "深夜の帰り道、人気のない坂道で、後ろから「トコトコ」という小さな足音がついてくる。\n振り返っても誰もいない。けれど足音は、怖がる様子もなく、家までの半分ほどの道のりを、決まって同じ場所までついてくるのだという。\n語り手の家では昔、老犬を飼っていた。引っ越しで遠く離れた後も、犬は門の前で帰りを待つのが日課だった。\n足音が止まるのは、昔の家の門があった場所の手前。そこで待つのが、あの犬の習慣だった場所である。\n姿は見えなくても、迎えに来てくれている。そう思うと、夜道が少しだけ寂しくなくなる。\n不思議な話の中でも、「ありがとう」と言いたくなるタイプの伝説である。"
+  }
+];
+
+function renderHonobono() {
+  var box = el("honoBox");
+  box.innerHTML = "";
+  var i;
+  for (i = 0; i < HONOBONO.length; i++) {
+    box.appendChild(simpleCard(HONOBONO[i], "hono"));
+  }
+}
+
+/* ===== 「真相」解説 ===== */
+var SHINSO = [
+  {
+    title: "口裂け女の「真相」：噂が走る速さの実験場",
+    text: "1979年、岐阜県から広まったとされる口裂け女の噂は、新聞やテレビが取り上げるたびに増殖し、数か月で全国の小学校を席巻した。塾通いの子どもが増えた時代背景、集団下校やパトロールといった大人の反応が、噂に「本物らしさ」を与えたと言われる。いま研究の世界では、情報がどう広まるかを示す格好の事例として扱われている。ちなみに、マスク姿が日常になった現代では、そもそも出会っても違和感がないのが、この伝説のいちばんの弱点かもしれない。"
+  },
+  {
+    title: "コックリさんの「真相」：指は誰が動かしたのか",
+    text: "十円玉がひとりでに動く理由は、「イデオモーター効果」という現象で説明されることが多い。人は、強く意識すると、自分でも気づかないうちに微細な筋肉の動きを起こしてしまう。参加者全員の「こう答えてほしい」という気持ちが指先に集まり、十円玉を押し合う。その結果が、まるで霊の答えのように見えるのだ。つまりコックリさんの答えは、参加者みんなの気持ちの総意。そう考えると、少しだけ微笑ましい。"
+  },
+  {
+    title: "人面犬の「真相」：ブームの余波と見間違い",
+    text: "人面犬が話題になったのは、口裂け女ブームの熱が残る頃のこと。ゴミ置き場をあさる野良犬の顔が、夕闇の中で人の顔に見えた、という目撃談が、新聞やワイドショーを通じて一気に広まった。特定の犬種は、正面から見ると顔つきが人間に似て見えることもある。噂の形が先に広まると、人はその形に合うものを見つけやすくなる。人面犬は、そんな「見方の伝染」を教えてくれる伝説でもある。"
+  },
+  {
+    title: "きさらぎ駅の「真相」：作り話と分かっていても怖い",
+    text: "きさらぎ駅は、ネット掲示板への実況書き込みという形式で生まれた。書き込み主のその後は今も不明だが、文章の構成や展開の巧みさから、創作であるという見方が強い。それでもこの話が廃れないのは、「実況」という形式が、読む者を目撃者にしてしまうからだと言われる。その後も「異世界に行った」という実況形式の怪談は生まれ続けており、きさらぎ駅はジャンルそのものの元祖として、今も読み継がれている。"
+  }
+];
+
+function renderShinso() {
+  var box = el("shinsoBox");
+  box.innerHTML = "";
+  var i;
+  for (i = 0; i < SHINSO.length; i++) {
+    var d = document.createElement("div");
+    d.className = "itemcard";
+    var n = document.createElement("p");
+    n.className = "itemname";
+    n.textContent = SHINSO[i].title;
+    d.appendChild(n);
+    var t = document.createElement("p");
+    t.textContent = SHINSO[i].text;
+    d.appendChild(t);
+    box.appendChild(d);
+  }
+}
+
+/* ===== 地域差バリエーション比較 ===== */
+var VARIA = [
+  {
+    title: "口裂け女の地域差",
+    rows: [
+      ["中部（岐阜など）", "発祥とされる土地。逃げ方として「飴玉を落とすと、拾っている間に逃げられる」がよく語られる。女の好物はベッコウ飴だとも。"],
+      ["関東", "「ポマード、ポマード、ポマード」と3回唱えると逃げられる、という呪文型が定番。整髪料の名前が呪文になる不思議さも人気の理由。"],
+      ["関西", "飴ではなく「こんにゃく」が効く、犬の鳴き真似をすると怯む、など食文化と笑いの色が濃いバリエーションが語られる。"],
+      ["九州", "坂道では女の足が遅くなる、ニンニクの匂いを嫌う、など地形や食に結びついた逃げ方が各地で言い伝えられている。"]
+    ]
+  },
+  {
+    title: "トイレの花子さんの地域差",
+    rows: [
+      ["関東", "3番目の個室、赤いスカートのおかっぱ頭、というのが標準形。「はーい」という返事の間合いまで含めて語られる。"],
+      ["東北", "舞台が4番目の個室になる地域がある。数え方の違いひとつで、肝試しの難易度が上がるのが面白いところ。"],
+      ["関西", "花子さんではなく「ヨシコさん」と呼ぶ、という地域差が語られる。名前が変わると、怖さより親しみが勝つという声も。"],
+      ["九州", "扉を開けても誰もおらず、代わりに天井から声がする、という姿を見せない型が語られる地域がある。"]
+    ]
+  }
+];
+
+function renderVaria() {
+  var box = el("variaBox");
+  box.innerHTML = "";
+  var i, j;
+  for (i = 0; i < VARIA.length; i++) {
+    var h = document.createElement("h3");
+    h.textContent = "◆ " + VARIA[i].title;
+    box.appendChild(h);
+    for (j = 0; j < VARIA[i].rows.length; j++) {
+      var d = document.createElement("div");
+      d.className = "itemcard";
+      var n = document.createElement("p");
+      n.className = "itemname";
+      n.textContent = VARIA[i].rows[j][0];
+      d.appendChild(n);
+      var t = document.createElement("p");
+      t.textContent = VARIA[i].rows[j][1];
+      d.appendChild(t);
+      box.appendChild(d);
+    }
+  }
+}
+
+/* ===== 登場アイテム図鑑 ===== */
+var ITEMS = [
+  { name: "赤い紙と青い紙", legend: "赤い紙、青い紙", note: "選んではいけない二択そのもの。紙がない時代のトイレの不安が、そのまま怪談の形になった小道具。" },
+  { name: "十円玉", legend: "コックリさん", note: "指を添えるだけで占いの道具になる、日本でいちばん身近な降霊アイテム。お帰りいただくまで指を離すのは厳禁。" },
+  { name: "鏡", legend: "ブラッディ・マリー", note: "自分の顔が映るはずの場所に、別の何かが映る。怪談の小道具として世界共通の王様。" },
+  { name: "公衆電話", legend: "さとるくん", note: "自分の携帯に電話をかける、という手順の要。街から公衆電話が減った今、この伝説は成立しにくくなりつつある。" },
+  { name: "携帯電話・スマートフォン", legend: "メリーさん／夢の警告電話", note: "知らない番号からの着信という、現代人の共通の小さな恐怖を増幅させる道具。伝説は時代の道具で更新される。" },
+  { name: "ぬいぐるみと塩水", legend: "ひとりかくれんぼ", note: "綿を抜いて赤い糸で縫い直したぬいぐるみが鬼役。終わらせるための塩水を口に含む、という手順の厳密さが恐怖を演出する。" },
+  { name: "お札と塩と仏像", legend: "八尺様", note: "一晩閉じこもるための防衛セット。声に応えてはいけない、扉を開けてはいけない、という我慢比べの道具立て。" },
+  { name: "マスク", legend: "口裂け女", note: "口元を隠すための必需品だったはずが、伝説の中では「外す瞬間」の恐怖の装置になった。時代が変わり、今では日常の風景。" },
+  { name: "人体模型", legend: "理科室の人体模型", note: "内臓が取り外せる半身の模型。夜に歩く理由は「足りない部品探し」と語られる、学校怪談の重鎮。" },
+  { name: "麦わら帽子と白いワンピース", legend: "八尺様", note: "夏の帰省シーズンに現れる怪異の正装。のどかな風景との落差が、この伝説の怖さを作っている。" },
+  { name: "ピアノと肖像画", legend: "音楽室のベートーベン", note: "誰もいない音楽室の音と、目が動く肖像画。音の出る小道具と、見る小道具の二段構え。" }
+];
+
+function renderItems() {
+  var box = el("itemBox");
+  box.innerHTML = "";
+  var i;
+  for (i = 0; i < ITEMS.length; i++) {
+    var d = document.createElement("div");
+    d.className = "itemcard";
+    var n = document.createElement("p");
+    n.className = "itemname";
+    n.textContent = ITEMS[i].name;
+    var tag = document.createElement("span");
+    tag.className = "tag";
+    tag.textContent = ITEMS[i].legend;
+    n.appendChild(tag);
+    d.appendChild(n);
+    var t = document.createElement("p");
+    t.textContent = ITEMS[i].note;
+    d.appendChild(t);
+    box.appendChild(d);
+  }
+}
+
+/* ===== おすすめ読書ルート ===== */
+var ROUTES = [
+  { title: "初心者コース（やさしい順）", desc: "まずは怖さ控えめの名作から。都市伝説の世界の歩き方を覚えるコースです。", steps: [3, 1, 13, 0] },
+  { title: "ネット怪談コース", desc: "掲示板とスマホから生まれた、新しい時代の伝説をたどるコースです。", steps: [5, 8, 12, 17] },
+  { title: "上級者コース（怖い順）", desc: "心の準備をしてからどうぞ。観測所いちばんの怖さを集めたコースです。", steps: [2, 7, 10, 11] }
+];
+
+function renderRoutes() {
+  var box = el("routeBox");
+  box.innerHTML = "";
+  var i, j;
+  for (i = 0; i < ROUTES.length; i++) {
+    (function (R) {
+      var h = document.createElement("h3");
+      h.textContent = "◆ " + R.title;
+      box.appendChild(h);
+      var d = document.createElement("p");
+      d.className = "intro";
+      d.textContent = R.desc;
+      box.appendChild(d);
+      for (j = 0; j < R.steps.length; j++) {
+        (function (idx, order) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.className = "routestep";
+          b.textContent = (order + 1) + ". " + LEGENDS[idx].name + " を開く";
+          b.onclick = function () { openCard(idx); };
+          box.appendChild(b);
+        })(R.steps[j], j);
+      }
+    })(ROUTES[i]);
+  }
+}
+
+/* ===== 都市伝説カレンダー ===== */
+var CAL = [
+  { m: "1月", title: "きさらぎ駅の月", text: "2004年1月、掲示板に「きさらぎ駅」の実況書き込みがあったとされる月。ネット怪談の歴史が動き出した月として、観測所では記念月扱いです。" },
+  { m: "2月", title: "節分と鬼の話", text: "豆まきで追い払われる鬼ですが、昔話の中の鬼には、恩返しをする者や約束を守る者もいます。怖いだけが鬼の顔ではありません。" },
+  { m: "3月", title: "卒業と語り継ぎの季節", text: "卒業する先輩から後輩へ、学校の七不思議が引き継がれる季節。怪談はこうして、学校という場所に住み続けます。" },
+  { m: "4月", title: "新学期、七不思議の布教月", text: "新入生が真っ先に教わるのが、学校の七不思議と花子さんの個室の番号。新しい語り手が増える、伝説の繁殖期です。" },
+  { m: "5月", title: "コックリさんのブーム", text: "1970年代、コックリさんが全国の学校で大流行した頃と重なる季節。占い遊びが「やってはいけない遊び」に格上げされた時期です。" },
+  { m: "6月", title: "口裂け女が全国区になった頃", text: "1979年の初夏、口裂け女の噂は新聞やテレビに載るほどの社会現象になりました。夕暮れの通学路が、いちばんざわついた季節です。" },
+  { m: "7月", title: "怪談シーズン開幕", text: "テレビも雑誌も怪談特集を始める頃。くねくねの舞台である夏の田んぼも、青々と茂り始めます。見るな、考えてはいけません。" },
+  { m: "8月", title: "お盆と肝試し", text: "お盆、墓参り、肝試し。プールの幽霊も八尺様の帰省怪談も、この季節がいちばん似合います。夜更かしにはご注意を。" },
+  { m: "9月", title: "二学期の怪談リバイバル", text: "夏休みに仕入れた怖い話が、教室で一斉に流通する月。夏の体験談は、少し盛られて語られるのがお約束です。" },
+  { m: "10月", title: "ハロウィンと海外伝説", text: "ブラッディ・マリーやスレンダーマンなど、海外生まれの伝説が日本でも話題になりやすい月。鏡の前の儀式はほどほどに。" },
+  { m: "11月", title: "文化祭と学校怪談", text: "文化祭のお化け屋敷づくりで、学校怪談の知識が総動員される季節。作る側に回ると、怖さの仕組みが見えてきます。" },
+  { m: "12月", title: "大掃除と人形供養", text: "大掃除で押し入れから出てくる古い人形。メリーさんの話を思い出す頃です。人形は捨てる前に、供養の習慣がある地域もあります。" }
+];
+
+function renderCal() {
+  var box = el("calBox");
+  box.innerHTML = "";
+  var i;
+  for (i = 0; i < CAL.length; i++) {
+    var row = document.createElement("div");
+    row.className = "calrow";
+    var m = document.createElement("span");
+    m.className = "calmonth";
+    m.textContent = CAL[i].m;
+    row.appendChild(m);
+    row.appendChild(document.createTextNode(CAL[i].title));
+    var t = document.createElement("p");
+    t.style.margin = "4px 0 0 0";
+    t.textContent = CAL[i].text;
+    row.appendChild(t);
+    box.appendChild(row);
+  }
+}
+
+/* ===== クーの創作都市伝説 ===== */
+var ORIGINALS = [
+  {
+    name: "明日の天気予報",
+    summary: "深夜のラジオで流れる天気予報が、ある夜から「あなたの明日」を予報し始める。傘の要るなしではなく、会う人、落とす物、かかる電話まで――クー書き下ろしの新作。",
+    detail: "深夜、眠れない夜にラジオをつけると、ちょうど天気予報の時間だった。\n「明日、あなたの町は晴れ。洗濯物は昼までに乾くでしょう」\nそこまでは普通だった。だが予報は続いた。\n「午前中、あなたは鍵を二度探します。見つかるのは、昨日と同じポケットです。夕方、久しぶりの人から連絡が来ます。返事は、すぐにしないほうがいいでしょう」\n翌日、予報はすべて当たっていた。鍵も、連絡も、その内容までも。\nそれから毎晩、眠れない夜にだけ、あの予報が流れるようになった。予報の声は穏やかで、親切で、一度も外れたことがない。\nだからこそ怖いのだ。明日の予報が、こう言った夜のことは。\n「明日、あなたの町は雨。このラジオを聴いているあなたは――明日、ここにはいません」\nその夜、ラジオの電池を抜いた人は多いはずだ。だが天気予報は、電池を抜いても止まらなかった、というところまでがこの話の決まり文句である。\n※この物語はクーの創作です。あなたの明日の天気は、いつも通りの予報でご確認ください。"
+  },
+  {
+    name: "終電の置き手紙",
+    summary: "終電の決まった座席に、毎晩置かれている手紙。宛名は「昨日のあなたへ」。返事を書いてしまった人の話を、クーが書き下ろしました。",
+    detail: "終電の、車両のいちばん後ろの席。そこには毎晩、小さな手紙が置かれているという。\n封筒には宛名だけが書かれている。「昨日のあなたへ」\n中身は他愛のない日記だ。今日あった小さな出来事、明日の天気への文句、飼い猫の自慢。ただし、日付はいつも「昨日」で、書かれている出来事は、読んだ本人の昨日の出来事とそっくりだった。\n駅員に聞いても、心当たりはないという。防犯カメラには、手紙を置く人物は映っていない。正確には、手紙は「最初から置いてある」ようにしか映らないのだという。\nある夜、常連の乗客が、つい返事を書いてしまった。自分の今日の出来事と、ささやかな質問を。「あなたは誰ですか」\n翌晩、座席にあった手紙の宛名は、こう変わっていた。\n「明日のあなたへ」\n中身には、彼の今日の出来事が、彼の知らないはずの細部まで書かれていた。そして最後に一行。\n「質問の答え合わせは、明日。楽しみにしていてください」\nその乗客は今も終電に乗っている。返事が気になって、やめられないのだそうだ。\n※この物語はクーの創作です。終電で手紙を見つけても、返事はほどほどに。"
+  }
+];
+
+function renderOriginals() {
+  var box = el("originalBox");
+  box.innerHTML = "";
+  var i;
+  for (i = 0; i < ORIGINALS.length; i++) {
+    box.appendChild(simpleCard(ORIGINALS[i], "orig"));
+  }
+}
+
+/* ===== 身近度診断 ===== */
+var DIAG_QS = [
+  { q: "夜道を一人で歩くことがよくある", near: "口裂け女、テケテケ" },
+  { q: "学校や古い建物に行く機会がある", near: "トイレの花子さん、学校の七不思議" },
+  { q: "知らない番号からの電話に、つい出てしまう", near: "メリーさん、さとるくん" },
+  { q: "部屋にぬいぐるみや人形を置いている", near: "ひとりかくれんぼ、メリーさん" },
+  { q: "鏡の前で、名前を唱えてみたくなることがある", near: "ブラッディ・マリー" },
+  { q: "夢の中で、知らない駅にいたことがある", near: "きさらぎ駅、猿夢" }
+];
+var diagAns = [-1, -1, -1, -1, -1, -1];
+
+function renderDiag() {
+  var box = el("diagBox");
+  box.innerHTML = "";
+  var i;
+  for (i = 0; i < DIAG_QS.length; i++) {
+    (function (idx) {
+      var d = document.createElement("div");
+      d.className = "diagq";
+      var p = document.createElement("p");
+      p.textContent = "Q" + (idx + 1) + ". " + DIAG_QS[idx].q;
+      d.appendChild(p);
+      var by = document.createElement("button");
+      by.type = "button";
+      by.className = "diagbtn" + (diagAns[idx] === 1 ? " on" : "");
+      by.textContent = "はい";
+      by.onclick = function () { diagAns[idx] = 1; renderDiag(); };
+      d.appendChild(by);
+      var bn = document.createElement("button");
+      bn.type = "button";
+      bn.className = "diagbtn" + (diagAns[idx] === 0 ? " on" : "");
+      bn.textContent = "いいえ";
+      bn.onclick = function () { diagAns[idx] = 0; renderDiag(); };
+      d.appendChild(bn);
+      box.appendChild(d);
+    })(i);
+  }
+}
+
+function judgeDiag() {
+  var i;
+  var score = 0;
+  var nearList = [];
+  for (i = 0; i < DIAG_QS.length; i++) {
+    if (diagAns[i] === -1) {
+      el("diagResult").textContent = "まだ答えていない質問があります。全部答えてから診断してください。";
+      return;
+    }
+    if (diagAns[i] === 1) {
+      score++;
+      nearList.push(DIAG_QS[i].near);
+    }
+  }
+  var pct = Math.round(score / DIAG_QS.length * 100);
+  var verdict;
+  if (score <= 1) {
+    verdict = "あなたは伝説から遠い場所にいます。観測所の窓から眺めるのが、いちばん安全で楽しい距離です。";
+  } else if (score <= 3) {
+    verdict = "少しだけ伝説が近づいています。夜道と知らない番号には、ほどほどの警戒をどうぞ。";
+  } else if (score <= 5) {
+    verdict = "かなり伝説の圏内です。あなたの日常は、そのまま怪談の舞台設定になりえます。";
+  } else {
+    verdict = "伝説のど真ん中に立っています。もはや語る側ではなく、語られる側です。観測所から表彰状を贈ります（ジョークです）。";
+  }
+  var txt = "身近度：" + pct + "%（はい " + score + " / " + DIAG_QS.length + "）\n" + verdict;
+  if (nearList.length > 0) {
+    txt += "\nあなたに近い伝説：" + nearList.join("／");
+  }
+  el("diagResult").textContent = txt;
+}
+
+/* ===== 都市伝説ビンゴ ===== */
+var BINGO_ITEMS = [
+  "花子さんを呼ぶ遊びを知っている",
+  "コックリさんをしたことがある",
+  "口裂け女の噂を聞いた",
+  "きさらぎ駅の話を読んだ",
+  "メリーさんの電話を知っている",
+  "「ぽぽぽ」という笑い声を真似した",
+  "ひとりかくれんぼの話を聞いた",
+  "心霊スポットの話で盛り上がった",
+  "学校の階段の段数を数えた",
+  "人体模型が少し怖かった",
+  "知らない番号の着信に怯えた",
+  "夢で知らない電車に乗った",
+  "田んぼの白い影が気になった",
+  "鏡の前で名前を呼ぶ遊びを知っている",
+  "公衆電話を使ったことがある",
+  "夜のトイレが少し怖かった"
+];
+var bingoOrder = [];
+var bingoHit = [];
+
+function shuffleBingo() {
+  var i;
+  bingoOrder = [];
+  bingoHit = [];
+  for (i = 0; i < BINGO_ITEMS.length; i++) {
+    bingoOrder.push(i);
+    bingoHit.push(false);
+  }
+  for (i = bingoOrder.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = bingoOrder[i];
+    bingoOrder[i] = bingoOrder[j];
+    bingoOrder[j] = tmp;
+  }
+  renderBingo();
+}
+
+function bingoLines() {
+  return [
+    [0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15],
+    [0, 4, 8, 12], [1, 5, 9, 13], [2, 6, 10, 14], [3, 7, 11, 15],
+    [0, 5, 10, 15], [3, 6, 9, 12]
+  ];
+}
+
+function renderBingo() {
+  var box = el("bingoBox");
+  box.innerHTML = "";
+  var i;
+  for (i = 0; i < bingoOrder.length; i++) {
+    (function (pos) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "bcell" + (bingoHit[pos] ? " hit" : "");
+      b.textContent = BINGO_ITEMS[bingoOrder[pos]];
+      b.onclick = function () {
+        bingoHit[pos] = !bingoHit[pos];
+        renderBingo();
+      };
+      box.appendChild(b);
+    })(i);
+  }
+  var lines = bingoLines();
+  var done = 0;
+  var reach = 0;
+  var li2, ci, cnt;
+  for (li2 = 0; li2 < lines.length; li2++) {
+    cnt = 0;
+    for (ci = 0; ci < 4; ci++) {
+      if (bingoHit[lines[li2][ci]]) { cnt++; }
+    }
+    if (cnt === 4) { done++; }
+    else if (cnt === 3) { reach++; }
+  }
+  var hits = 0;
+  for (i = 0; i < bingoHit.length; i++) { if (bingoHit[i]) { hits++; } }
+  var msg = "印：" + hits + " / 16";
+  if (done > 0) { msg += "　🎉 ビンゴ " + done + " 本成立！"; }
+  else if (reach > 0) { msg += "　リーチ " + reach + " 本！"; }
+  el("bingoStatus").textContent = msg;
+}
+
+/* ===== 耐性テスト読み物 ===== */
+var TAISEI = [
+  {
+    title: "第一段階：夜の廊下",
+    text: "夜の学校の廊下は、昼間より長く感じる。歩くたびに、自分の足音が少しだけ遅れて、もう一人分聞こえる気がする。気のせいだと思えるうちは、まだ大丈夫。この段階は、ただの「気のせい」の話です。"
+  },
+  {
+    title: "第二段階：止まった時計",
+    text: "廊下の時計は、3時7分で止まっていた。さっき通り過ぎた教室の時計も、3時7分だった。学校中の時計が同じ時刻で止まるのは、管理がずさんなだけかもしれない。ただ、秒針の音だけは、どこからか聞こえ続けている。"
+  },
+  {
+    title: "第三段階：鏡の中の廊下",
+    text: "トイレの鏡に映る廊下は、今いる廊下と少しだけ違っていた。窓の数がひとつ多い。数え直すと、現実の廊下も窓がひとつ増えていた気がして、もう一度数える勇気が出ない。このあたりから、引き返す人のほうが多いそうです。"
+  },
+  {
+    title: "第四段階：内線電話",
+    text: "職員室の電話が鳴った。内線だ。受話器を取ると、自分の声が聞こえた。「まだ廊下にいるの？　もうすぐ、こっちの番だよ」。内線の相手は、学校の中にしかいないはずである。自分は、今、どこから電話をかけているのだろう。"
+  },
+  {
+    title: "第五段階：最後の一文",
+    text: "ここまで読めたあなたへ。耐性テストは合格です。最後にひとつだけ。この文章を読んでいる間、後ろで小さな物音がしませんでしたか。――しませんでしたね。きっと、気のせいです。"
+  }
+];
+var taiseiStage = 0;
+
+function renderTaisei() {
+  el("taiseiLevel").textContent = "耐性レベル " + taiseiStage + " / 5";
+  if (taiseiStage === 0) {
+    el("taiseiTitle").textContent = "まだ始まっていません";
+    el("taiseiText").textContent = "準備ができたら、下のボタンで第一段階を開いてください。";
+    el("taiseiNext").textContent = "第一段階を開く";
+    el("taiseiNext").style.display = "block";
+    el("taiseiReset").style.display = "none";
+  } else {
+    var S = TAISEI[taiseiStage - 1];
+    el("taiseiTitle").textContent = S.title;
+    el("taiseiText").textContent = S.text;
+    if (taiseiStage >= 5) {
+      el("taiseiNext").style.display = "none";
+      el("taiseiReset").style.display = "block";
+    } else {
+      el("taiseiNext").textContent = "次の段階へ進む（第" + (taiseiStage + 1) + "段階）";
+      el("taiseiNext").style.display = "block";
+      el("taiseiReset").style.display = "block";
+    }
+  }
+}
+
+/* ===== 舞台マップ ===== */
+var LAND_DOTS = [
+  [238, 28], [256, 30], [268, 48], [246, 58], [232, 84], [224, 108],
+  [218, 136], [214, 164], [208, 190], [196, 196], [178, 192], [164, 200],
+  [148, 208], [134, 218], [122, 228], [108, 232], [94, 238], [82, 246],
+  [98, 258], [108, 262], [70, 262], [56, 282], [44, 296], [36, 318],
+  [30, 352], [30, 366]
+];
+var MAP_POINTS = [
+  { region: "北海道", x: 252, y: 44 },
+  { region: "東北", x: 224, y: 118 },
+  { region: "関東", x: 214, y: 192 },
+  { region: "中部", x: 166, y: 200 },
+  { region: "関西", x: 124, y: 226 },
+  { region: "中国・四国", x: 84, y: 242 },
+  { region: "九州・沖縄", x: 44, y: 298 },
+  { region: "海外", x: 292, y: 322 }
+];
+
+function regionCount(region) {
+  var n = 0;
+  var i;
+  for (i = 0; i < LEGENDS.length; i++) {
+    if (LEGENDS[i].region === region) { n++; }
+  }
+  return n;
+}
+
+function initMap() {
+  var canvas = el("mapCanvas");
+  if (!canvas || !canvas.getContext) { return; }
+  var ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#0a0812";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  var i;
+  ctx.fillStyle = "#2a4d3a";
+  for (i = 0; i < LAND_DOTS.length; i++) {
+    ctx.beginPath();
+    ctx.arc(LAND_DOTS[i][0], LAND_DOTS[i][1], 3, 0, Math.PI * 2, false);
+    ctx.fill();
+  }
+  ctx.font = "12px monospace";
+  for (i = 0; i < MAP_POINTS.length; i++) {
+    var p = MAP_POINTS[i];
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 8, 0, Math.PI * 2, false);
+    ctx.fillStyle = "#b03040";
+    ctx.fill();
+    ctx.strokeStyle = "#ff8fa0";
+    ctx.stroke();
+    ctx.fillStyle = "#b9f4cd";
+    var label = p.region + "(" + regionCount(p.region) + ")";
+    if (p.x >= 240) {
+      ctx.fillText(label, p.x - 14 - ctx.measureText(label).width, p.y + 4);
+    } else {
+      ctx.fillText(label, p.x + 14, p.y + 4);
+    }
+  }
+  canvas.onclick = function (ev) {
+    var rect = canvas.getBoundingClientRect();
+    var sx = canvas.width / rect.width;
+    var sy = canvas.height / rect.height;
+    var mx = (ev.clientX - rect.left) * sx;
+    var my = (ev.clientY - rect.top) * sy;
+    var best = null;
+    var bestD = 40;
+    var j;
+    for (j = 0; j < MAP_POINTS.length; j++) {
+      var dx = mx - MAP_POINTS[j].x;
+      var dy = my - MAP_POINTS[j].y;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      if (d < bestD) { bestD = d; best = MAP_POINTS[j]; }
+    }
+    if (best) {
+      currentRegion = best.region;
+      currentCat = "すべて";
+      currentEra = "すべて";
+      buildChips();
+      renderArchive();
+      el("mapNote").textContent = "「" + best.region + "」の伝説 " + regionCount(best.region) + " 件に絞り込みました（アーカイブを確認してください）。";
+      var sec = el("archiveSection");
+      if (sec && sec.scrollIntoView) { sec.scrollIntoView(); }
+    }
+  };
+}
+
 function init() {
   initHeader();
+  loadVotes();
   initToday();
+  initNight();
   buildChips();
   renderArchive();
+  renderSeven();
+  renderHonobono();
+  renderShinso();
+  renderVaria();
+  renderItems();
+  renderRoutes();
+  renderCal();
+  renderOriginals();
+  renderDiag();
+  shuffleBingo();
+  renderTaisei();
+  initMap();
   el("randomBtn").onclick = randomStory;
+  el("paperBtn").onclick = togglePaper;
+  el("todaySpeakBtn").onclick = function () {
+    var L = LEGENDS[todayIdx];
+    toggleSpeak("today", L.name + "。 " + String(L.detail).split("\n").join(" "), el("todaySpeakBtn"));
+  };
+  el("nightSpeakBtn").onclick = function () {
+    if (nightIdx < 0) { return; }
+    var L = LEGENDS[nightIdx];
+    toggleSpeak("night", L.name + "。 " + String(L.detail).split("\n").join(" "), el("nightSpeakBtn"));
+  };
+  el("diagBtn").onclick = judgeDiag;
+  el("bingoShuffle").onclick = shuffleBingo;
+  el("taiseiNext").onclick = function () {
+    if (taiseiStage < 5) { taiseiStage++; renderTaisei(); }
+  };
+  el("taiseiReset").onclick = function () {
+    taiseiStage = 0;
+    renderTaisei();
+  };
   el("retryA").onclick = function () {
     loadFeed(FEED_A, "feedAList", "feedAStatus", "retryA", 6, "話題の見出し");
   };

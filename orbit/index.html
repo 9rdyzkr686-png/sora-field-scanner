@@ -69,6 +69,18 @@ canvas { display: block; width: 100%; background: #000a10; border: 1px solid #0e
 .planet-cmt { font-size: 13px; color: #7fb8a8; }
 .note { font-size: 12px; color: #ffb000; margin-top: 4px; }
 #triviaText { font-size: 16px; min-height: 48px; color: #eafff8; }
+.txt-item { padding: 5px 0; border-bottom: 1px dashed #0e5a4a; font-size: 15px; }
+.txt-item:last-child { border-bottom: none; }
+.txt-item .hd { color: #33ff66; }
+.bar-row { margin: 7px 0; font-size: 14px; }
+.bar { background: #33ff66; height: 10px; margin-top: 2px; }
+.mw-wrap { overflow: hidden; }
+.mw-cell { float: left; width: 25%; text-align: center; padding: 5px 0; border: 1px solid #0e5a4a; font-size: 13px; color: #7fb8a8; }
+.mw-cell .mw-sym { display: block; font-size: 18px; color: #eafff8; }
+.mw-now { background: #03251d; color: #33ff66; }
+#seaList { font-size: 13px; color: #7fb8a8; margin-top: 6px; line-height: 1.7; }
+.season-now { color: #ffb000; }
+#moonMapCanvas { height: auto; }
 button {
   display: block; width: 100%; min-height: 48px; margin: 4px 0 10px 0;
   background: #03251d; color: #33ff66; border: 1px solid #33ff66;
@@ -117,6 +129,12 @@ button:active { background: #33ff66; color: #000; }
 </div>
 
 <div class="panel">
+  <div class="panel-title">ISS PASS <span class="jp">次回通過予報（ふじみ野）</span></div>
+  <div id="issPassList"><div class="event-item">ISSデータ受信後に計算します。</div></div>
+  <div class="note">※ 軌道周期（約93分）などから計算した概算・目安です。実際の見え方は、天気・空の明るさ・正確な軌道によって大きく変わります。暗い空で太陽光を反射している時に肉眼で見えます。</div>
+</div>
+
+<div class="panel">
   <div class="panel-title">MOON <span class="jp">月齢・月相</span></div>
   <div class="moon-wrap">
     <canvas id="moonCanvas" width="110" height="110"></canvas>
@@ -127,6 +145,14 @@ button:active { background: #33ff66; color: #000; }
       <div class="v" id="moonName">---</div>
     </div>
   </div>
+  <div class="row" style="margin-top:8px;">
+    <div class="cell"><div class="k">次の満月 NEXT FULL MOON</div><div class="v" style="font-size:16px;" id="nextFull">---</div></div>
+    <div class="cell"><div class="k">次の新月 NEXT NEW MOON</div><div class="v" style="font-size:16px;" id="nextNew">---</div></div>
+  </div>
+  <div class="panel-title" style="margin-top:12px;">MOON MAP <span class="jp">月面マップ（海の名前）</span></div>
+  <canvas id="moonMapCanvas" width="320" height="320"></canvas>
+  <div id="seaList"></div>
+  <div class="note">※ 地球から見える表側の模式図です。暗い部分が「海」と呼ばれる平原です。</div>
 </div>
 
 <div class="panel">
@@ -139,14 +165,184 @@ button:active { background: #33ff66; color: #000; }
 </div>
 
 <div class="panel">
+  <div class="panel-title">SUN <span class="jp">太陽データ（計算値）</span></div>
+  <div class="row">
+    <div class="cell"><div class="k">地球〜太陽の距離</div><div class="v" id="sunDist">---</div></div>
+    <div class="cell"><div class="k">太陽光が届く時間</div><div class="v" id="sunLight">---</div></div>
+  </div>
+  <div class="row">
+    <div class="cell"><div class="k">昼の長さ（ふじみ野）</div><div class="v" id="dayLength">---</div></div>
+    <div class="cell"><div class="k">1天文単位（1AU）</div><div class="v">1.496<small>億km</small></div></div>
+  </div>
+  <div class="note">※ 距離は地球の楕円軌道からの近似計算です。1月ごろ最も近く（約1.471億km）、7月ごろ最も遠く（約1.521億km）なります。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">NOW COUNTER <span class="jp">今この瞬間カウンター</span></div>
+  <div class="k">ページを開いてからの経過</div>
+  <div class="v" id="nowElapsed">0<small>秒</small></div>
+  <div class="row">
+    <div class="cell"><div class="k">地球の公転で進んだ距離</div><div class="v" style="font-size:18px;" id="nowOrbit">0 <small>km</small></div></div>
+    <div class="cell"><div class="k">地球の自転で動いた距離</div><div class="v" style="font-size:18px;" id="nowSpin">0 <small>km</small></div></div>
+  </div>
+  <div class="row">
+    <div class="cell"><div class="k">太陽系が銀河を進んだ距離</div><div class="v" style="font-size:18px;" id="nowGalaxy">0 <small>km</small></div></div>
+    <div class="cell"><div class="k">その間に光が進んだ距離</div><div class="v" style="font-size:18px;" id="nowLight">0 <small>km</small></div></div>
+  </div>
+  <div class="note">※ 公転 約29.8km/秒、自転（ふじみ野の緯度）約0.38km/秒、銀河公転 約230km/秒、光 約299,792km/秒で計算しています。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">LIGHT SPEED <span class="jp">光の速さ体感</span></div>
+  <div class="event-item">ISS（上空約420km）まで <span class="event-days" id="ltIss">---</span></div>
+  <div class="event-item">静止衛星（高度35,786km）まで <span class="event-days" id="ltGeo">---</span></div>
+  <div class="event-item">月まで（現在の距離で計算） <span class="event-days" id="ltMoon">---</span></div>
+  <div class="event-item">太陽まで（現在の距離で計算） <span class="event-days" id="ltSun">---</span></div>
+  <div class="note">※ 光の速さは秒速299,792km。月と太陽は現在の距離から計算した概算です。電波も光と同じ速さなので、通信の遅れもこの時間だけあります。</div>
+</div>
+
+<div class="panel">
   <div class="panel-title">PLANETS <span class="jp">惑星パネル（今夜見えるか）</span></div>
   <div id="planetList"></div>
   <div class="note">※ 判定と方角は概算・目安です。惑星の実際の位置は日々変わります。</div>
 </div>
 
 <div class="panel">
+  <div class="panel-title">DISTANCE QUIZ <span class="jp">惑星までの距離感クイズ</span></div>
+  <div id="quizQ" style="font-size:17px; min-height:26px;">読み込み中…</div>
+  <div id="quizChoices"></div>
+  <div class="msg" id="quizMsg"></div>
+  <button id="quizNextBtn">次の問題 NEXT</button>
+</div>
+
+<div class="panel">
   <div class="panel-title">ASTRO EVENTS <span class="jp">今後の天文イベント</span></div>
   <div id="eventsList"></div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">METEOR GUIDE <span class="jp">流星群の観測ガイド</span></div>
+  <div class="txt-item"><span class="hd">方角：</span>放射点（流れ星が飛び出して見える中心）を中心に全天。放射点が高いほどたくさん見える。特定の方角だけでなく、空全体をぼんやり眺めるのがコツ。</div>
+  <div class="txt-item"><span class="hd">時間帯：</span>深夜〜明け方が基本。夜半前は数が少なく、明け方に近づくほど増える（地球の進む側の空になるため）。</div>
+  <div class="txt-item"><span class="hd">持ち物：</span>レジャーシートかリクライニングチェア、防寒具、赤色ライト（暗順応を壊さない）、温かい飲み物。双眼鏡は不要、肉眼がいちばん。</div>
+  <div class="txt-item"><span class="hd">コツ：</span>月明かりのある夜は不利。15分ほど暗闇に目を慣らし、スマホは見ない。街明かりから離れるほど好条件。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">ECLIPSES <span class="jp">日食・月食カレンダー（日本で見えるもの）</span></div>
+  <div class="event-item">2027年7月19日 未明 <span class="event-days">半影月食</span><div class="planet-cmt">月がほんのり暗くなる。全国で観察可。</div></div>
+  <div class="event-item">2028年7月7日 未明 <span class="event-days">部分月食</span><div class="planet-cmt">月の一部が地球の影に入る。全国で観察可。</div></div>
+  <div class="event-item">2029年1月1日 未明 <span class="event-days">皆既月食</span><div class="planet-cmt">2028年12月31日深夜から年越しの皆既月食。月が赤銅色に染まる。</div></div>
+  <div class="event-item">2030年6月1日 <span class="event-days">金環日食</span><div class="planet-cmt">北海道などで金のリング状の日食。全国で部分日食。観察には専用グラス必須。</div></div>
+  <div class="event-item">2030年6月16日 未明 <span class="event-days">部分月食</span><div class="planet-cmt">全国で観察可。</div></div>
+  <div class="event-item">2035年9月2日 <span class="event-days">皆既日食</span><div class="planet-cmt">北陸〜関東北部などで皆既日食。全国で部分日食。日本では大注目の日。</div></div>
+  <div class="note">※ 日時は日本時間の概略です。詳しい時刻・見える地域は天文年鑑などでご確認ください。日食を裸眼で直接見るのは危険です。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">CONSTELLATIONS <span class="jp">季節の星座早見</span></div>
+  <div id="seasonList"></div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">MILKY WAY <span class="jp">天の川の見頃カレンダー</span></div>
+  <div class="mw-wrap" id="mwGrid"></div>
+  <div class="note">※ 日本（本州）での目安です。夏が最盛期で、冬の天の川は淡い姿。実際の見え方は月明かりと天気に大きく左右されます。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">FAR SIDE OF THE MOON <span class="jp">月の裏側コーナー</span></div>
+  <div class="txt-item">月は自転と公転の周期が同じ（潮汐固定）ため、地球からは常に同じ面しか見えない。裏側は人類にとって長く未知の世界だった。</div>
+  <div class="txt-item">1959年、ソ連の探査機ルナ3号が初めて裏側を撮影。2019年には中国の嫦娥4号が、人類初の月の裏側への着陸に成功した。</div>
+  <div class="txt-item">裏側は表側と景色が違う。「海」と呼ばれる暗い平原がほとんどなく、クレーターだらけで、地殻も厚いと考えられている。</div>
+  <div class="txt-item">地球の電波ノイズが届かないため、将来は電波望遠鏡の設置場所として期待されている。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">SATELLITES <span class="jp">人工衛星の基礎知識</span></div>
+  <div class="txt-item"><span class="hd">スターリンク：</span>高度約550kmを飛ぶ通信衛星の大編隊（コンステレーション）。数千機が連携して世界中にインターネットを届ける。夕方に列になって光る姿が見えることも。</div>
+  <div class="txt-item"><span class="hd">GPS衛星：</span>高度約2万km。4機以上の電波を受けると自分の位置が分かる。スマホの地図もこの衛星のおかげ。</div>
+  <div class="txt-item"><span class="hd">気象衛星ひまわり：</span>高度約3万6千kmの静止軌道から日本を常時撮影。天気予報の雲画像はこれ。</div>
+  <div class="txt-item"><span class="hd">通信・放送衛星：</span>静止軌道（約3万6千km）で地球の自転と同調し、空の一点に止まって見える。</div>
+  <div class="txt-item"><span class="hd">地球観測衛星：</span>低軌道から地表を撮影。「だいち」シリーズなどが災害監視や地図作りに活躍。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">SIZE COMPARISON <span class="jp">宇宙ステーション大きさ比較</span></div>
+  <div class="bar-row">ISS 全長 約109m<div class="bar" style="width:100%;"></div></div>
+  <div class="bar-row">サッカーコート（国際試合）105m<div class="bar" style="width:96%;"></div></div>
+  <div class="bar-row">自由の女神（台座込み）約93m<div class="bar" style="width:85%;"></div></div>
+  <div class="bar-row">旅客機 ボーイング777 全長 約74m<div class="bar" style="width:68%;"></div></div>
+  <div class="bar-row">新幹線 1両 約25m<div class="bar" style="width:23%;"></div></div>
+  <div class="bar-row">日本実験棟「きぼう」約11m<div class="bar" style="width:10%;"></div></div>
+  <div class="txt-item">ISSの質量は約420トン。人が住める与圧空間は大型旅客機の客室なみの広さで、太陽電池パネルを広げた横幅は約73mある。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">ROCKETS <span class="jp">ロケット図鑑</span></div>
+  <div class="txt-item"><span class="hd">H3（日本）：</span>全長約63m。日本の次世代主力ロケット。低コストと信頼性の両立を目指す。</div>
+  <div class="txt-item"><span class="hd">H-IIA（日本）：</span>全長約53m。長年日本の宇宙開発を支えたベテラン。</div>
+  <div class="txt-item"><span class="hd">ファルコン9（米国）：</span>全長約70m。1段目が地上に戻って再使用できるのが革命的。</div>
+  <div class="txt-item"><span class="hd">ファルコン・ヘビー（米国）：</span>全長約70m。ファルコン9を3本束ねた重量級。</div>
+  <div class="txt-item"><span class="hd">スターシップ（米国）：</span>全長約121m。史上最大級のロケット。月・火星への有人飛行を目指す。</div>
+  <div class="txt-item"><span class="hd">アリアン6（欧州）：</span>全長約62m。欧州の主力ロケット。</div>
+  <div class="txt-item"><span class="hd">長征5号（中国）：</span>全長約57m。宇宙ステーション建設などに使う大型機。</div>
+  <div class="txt-item"><span class="hd">ソユーズ（ロシア）：</span>全長約46m。1960年代の設計の流れをくむ、人類史上最も多く飛んだロケットの家系。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">SPACE FOOD <span class="jp">宇宙食ギャラリー</span></div>
+  <div class="txt-item"><span class="hd">宇宙日本食：</span>白いご飯、ラーメン、羊羹、緑茶、サバの味噌煮など。和食も認証を受けてISSに届けられている。</div>
+  <div class="txt-item"><span class="hd">トルティーヤ：</span>パンはくずが飛び散るため、宇宙ではトルティーヤが定番の主食ラップ。</div>
+  <div class="txt-item"><span class="hd">飲み物：</span>粉末をパウチで溶かしてストローで飲む。炭酸はゲップの都合で避けられがち。</div>
+  <div class="txt-item"><span class="hd">調味料：</span>塩とこしょうは飛び散らないよう液体。タバスコなどの辛いソースは味覚が鈍る宇宙で人気。</div>
+  <div class="txt-item"><span class="hd">フリーズドライ・アイス：</span>お土産品で有名だが、実際のISSでは通常のアイスクリームが届くこともある。</div>
+  <div class="txt-item"><span class="hd">味覚の変化：</span>無重力では体液が頭に寄り、鼻が詰まったように感じて味が薄く感じると言われる。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">HISTORY <span class="jp">宇宙飛行の歴史年表</span></div>
+  <div class="txt-item"><span class="hd">1957年：</span>スプートニク1号、人類初の人工衛星。</div>
+  <div class="txt-item"><span class="hd">1961年：</span>ガガーリン、人類初の宇宙飛行。「地球は青かった」。</div>
+  <div class="txt-item"><span class="hd">1965年：</span>レオーノフ、初の宇宙遊泳。</div>
+  <div class="txt-item"><span class="hd">1969年：</span>アポロ11号、人類初の月面着陸。</div>
+  <div class="txt-item"><span class="hd">1971年：</span>初の宇宙ステーション、サリュート1号。</div>
+  <div class="txt-item"><span class="hd">1981年：</span>スペースシャトル初飛行。再使用型の時代へ。</div>
+  <div class="txt-item"><span class="hd">1990年：</span>ハッブル宇宙望遠鏡打ち上げ。</div>
+  <div class="txt-item"><span class="hd">1998年：</span>ISS（国際宇宙ステーション）の建設開始。</div>
+  <div class="txt-item"><span class="hd">2008年：</span>日本実験棟「きぼう」がISSに取り付けられる。</div>
+  <div class="txt-item"><span class="hd">2010年：</span>小惑星探査機「はやぶさ」が地球に帰還。</div>
+  <div class="txt-item"><span class="hd">2020年：</span>「はやぶさ2」帰還。民間企業による初の有人宇宙飛行も。</div>
+  <div class="txt-item"><span class="hd">2024年：</span>日本の小型月着陸実証機SLIMが月面着陸に成功。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">A DAY ON THE ISS <span class="jp">ISSの船内の一日</span></div>
+  <div class="txt-item"><span class="hd">06:00 起床：</span>UTC（世界時）基準で一日が始まる。その日の予定確認と朝の会議。</div>
+  <div class="txt-item"><span class="hd">午前：</span>科学実験やステーションのメンテナンス作業。地上の管制と常に連絡を取り合う。</div>
+  <div class="txt-item"><span class="hd">13:00ごろ 昼食：</span>各国の宇宙食が並ぶ。食事は仲間との大切な交流時間。</div>
+  <div class="txt-item"><span class="hd">午後：</span>実験の続きと、約2時間の運動。無重力で弱る筋肉と骨を守るため、専用器具で毎日トレーニングする。</div>
+  <div class="txt-item"><span class="hd">夕方〜夜：</span>夕食と自由時間。窓から地球の写真を撮るのが人気の過ごし方。</div>
+  <div class="txt-item"><span class="hd">21:30 就寝：</span>寝袋を壁に固定して眠る。1日に16回も日の出と日の入りがある世界の一日が終わる。</div>
+  <div class="txt-item"><span class="hd">豆知識：</span>トイレは吸引式。水は貴重で、汗や尿も浄化して再利用する。シャワーはなく体を拭いて済ませる。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">SPACE DEBRIS <span class="jp">宇宙ごみ（デブリ）コーナー</span></div>
+  <div class="txt-item">使い終わったロケットや衛星の破片など、10cm以上のデブリが約3万個以上も追跡されている。1cm級のものは100万個とも言われる。</div>
+  <div class="txt-item">デブリ同士の相対速度は最大で秒速約15kmにもなる。小さな破片でも、宇宙船にとっては大砲の弾のような脅威。</div>
+  <div class="txt-item"><span class="hd">ケスラー症候群：</span>衝突で生まれた破片が次の衝突を呼ぶ連鎖状態。そうなると軌道が長期間使えなくなる恐れがある。</div>
+  <div class="txt-item"><span class="hd">対策：</span>役目を終えた衛星を大気圏で燃やす設計、デブリ除去衛星の実験（日本のELSA-dなど）、世界中のレーダーによる監視が進められている。</div>
+  <div class="txt-item">ISSも年に数回、デブリを避けるために軌道を少し変える回避マヌーバを行っている。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">NAKED-EYE GUIDE <span class="jp">望遠鏡なし観測ガイド</span></div>
+  <div class="txt-item"><span class="hd">暗順応：</span>目が暗闇に慣れるまで15〜20分かかる。その間、明るい光やスマホ画面を見ないのが最大のコツ。</div>
+  <div class="txt-item"><span class="hd">場所と日：</span>街明かりから離れ、月明かりのない夜を選ぶ。月齢パネルで新月ごろを狙うと好条件。</div>
+  <div class="txt-item"><span class="hd">肉眼で見えるもの：</span>ISSや人工衛星の通過、流れ星、金星・木星などの明るい惑星、天の川、すばる（プレアデス星団）、条件が良ければアンドロメダ銀河も。</div>
+  <div class="txt-item"><span class="hd">姿勢：</span>レジャーシートに寝転ぶと首が疲れず、空全体を眺められる。冬は防寒を万全に。</div>
+  <div class="txt-item"><span class="hd">ライト：</span>足元を照らすなら赤いライト。普通の懐中電灯は暗順応をリセットしてしまう。</div>
 </div>
 
 <div class="panel">
@@ -163,7 +359,7 @@ button:active { background: #33ff66; color: #000; }
 
 <div class="footer">
   DATA SOURCES: wheretheiss.at / Open-Meteo / sorae.info<br>
-  ORBIT-6 v1.1 — 観測地：埼玉県ふじみ野市 (35.8795, 139.5197)
+  ORBIT-6 v1.2 — 観測地：埼玉県ふじみ野市 (35.8795, 139.5197)
 </div>
 
 <script>
@@ -171,6 +367,9 @@ var LAT = 35.8795;
 var LON = 139.5197;
 var issTrail = [];
 var issBlink = true;
+var issPrev = null;
+var issLast = null;
+var pageStart = Date.now();
 
 function el(id) { return document.getElementById(id); }
 
@@ -191,6 +390,7 @@ function tickClock() {
   var jst = pad2(jstDate.getUTCHours()) + ":" + pad2(jstDate.getUTCMinutes()) + ":" + pad2(jstDate.getUTCSeconds());
   el("utcClock").innerHTML = utc;
   el("jstClock").innerHTML = jst;
+  updateNow();
 }
 
 /* ---------- ISS ---------- */
@@ -254,9 +454,13 @@ function fetchISS() {
     el("issVel").innerHTML = Math.round(parseFloat(d.velocity)) + " <small>km/h</small>";
     el("issVis").innerHTML = (d.visibility === "eclipsed") ? "地球の影" : "日照中";
     el("issMsg").innerHTML = "受信OK " + new Date().toLocaleTimeString("ja-JP");
+    issPrev = issLast;
+    issLast = { lat: lat, lon: lon };
     issTrail.push({ lat: lat, lon: lon });
     if (issTrail.length > 20) { issTrail.shift(); }
     drawMap();
+    computePasses();
+    el("ltIss").innerHTML = "光で約" + (parseFloat(d.altitude) / 299792.458 * 1000).toFixed(2) + "ミリ秒";
   }, function () {
     el("issMsg").innerHTML = "ISSデータを取得できませんでした。次回更新で再試行します。";
   });
@@ -273,6 +477,12 @@ function moonCalc() {
   var idx = Math.floor(((age + synodic / 16) % synodic) / (synodic / 8));
   el("moonAge").innerHTML = age.toFixed(1) + " <small>日</small>";
   el("moonName").innerHTML = names[idx];
+  var toFull = (synodic / 2 - age + synodic) % synodic;
+  var toNew = (synodic - age) % synodic;
+  var fDate = new Date(Date.now() + toFull * 86400000);
+  var nDate = new Date(Date.now() + toNew * 86400000);
+  el("nextFull").innerHTML = (fDate.getMonth() + 1) + "月" + fDate.getDate() + "日ごろ <small>あと" + Math.ceil(toFull) + "日</small>";
+  el("nextNew").innerHTML = (nDate.getMonth() + 1) + "月" + nDate.getDate() + "日ごろ <small>あと" + Math.ceil(toNew) + "日</small>";
   drawMoon(age / synodic);
 }
 
@@ -323,6 +533,10 @@ function fetchSun() {
     var ss = d.daily.sunset[0];
     el("sunriseT").innerHTML = sr.substring(11, 16);
     el("sunsetT").innerHTML = ss.substring(11, 16);
+    var srMin = parseInt(sr.substring(11, 13), 10) * 60 + parseInt(sr.substring(14, 16), 10);
+    var ssMin = parseInt(ss.substring(11, 13), 10) * 60 + parseInt(ss.substring(14, 16), 10);
+    var dl = ssMin - srMin;
+    el("dayLength").innerHTML = Math.floor(dl / 60) + "時間" + (dl % 60) + "分";
     el("sunMsg").innerHTML = "";
   }, function () {
     el("sunMsg").innerHTML = "太陽データを取得できませんでした。";
@@ -461,21 +675,281 @@ function nextTrivia() {
   showTrivia();
 }
 
+/* ---------- ISS PASS PREDICTION （概算） ---------- */
+/* 現在位置を起点に、円軌道モデル（周期約92.9分・軌道傾斜角51.6度）で48時間先まで簡易伝播し、
+   ふじみ野に近づく通過を拾う。あくまで概算・目安。 */
+function computePasses() {
+  if (!issLast) { return; }
+  var A = 51.64;            // 軌道傾斜角 = 緯度の最大値
+  var T = 92.9;             // 公転周期（分）
+  var w = 360 / T;          // 1分あたりの軌道上の移動（度）
+  var lonRate = w + 360 / 1436.4; // 地球の自転込みの対地経度変化（西向き・度/分）
+  var s = issLast.lat / A;
+  if (s > 1) { s = 1; }
+  if (s < -1) { s = -1; }
+  var base = Math.asin(s) * 180 / Math.PI;
+  var asc = true;
+  if (issPrev) { asc = issLast.lat >= issPrev.lat; }
+  var th0 = asc ? base : 180 - base;
+  var passes = [];
+  var inPass = false, minD = 1e9, minT = 0;
+  var t, lat, lon, dlon, dx, dy, distKm, gamma, sg, elev, i, p, dt;
+  for (t = 2; t <= 2880; t += 2) {
+    lat = A * Math.sin((th0 + w * t) * Math.PI / 180);
+    lon = issLast.lon - lonRate * t;
+    while (lon > 180) { lon -= 360; }
+    while (lon < -180) { lon += 360; }
+    dlon = lon - LON;
+    if (dlon > 180) { dlon -= 360; }
+    if (dlon < -180) { dlon += 360; }
+    dx = dlon * Math.cos((lat + LAT) / 2 * Math.PI / 180);
+    dy = lat - LAT;
+    distKm = Math.sqrt(dx * dx + dy * dy) * 111.19;
+    if (distKm < 1500) {
+      if (!inPass) { inPass = true; minD = distKm; minT = t; }
+      else if (distKm < minD) { minD = distKm; minT = t; }
+    } else if (inPass) {
+      inPass = false;
+      gamma = minD / 6371;
+      sg = Math.sin(gamma);
+      if (sg < 0.01) { sg = 0.01; }
+      elev = Math.atan((Math.cos(gamma) - 6371 / 6791) / sg) * 180 / Math.PI;
+      if (elev > 3) { passes.push({ t: minT, d: minD, e: elev }); }
+      if (passes.length >= 3) { break; }
+    }
+  }
+  if (passes.length === 0) {
+    el("issPassList").innerHTML = '<div class="event-item">48時間以内に近づく通過は計算できませんでした。</div>';
+    return;
+  }
+  var html = "";
+  for (i = 0; i < passes.length; i++) {
+    p = passes[i];
+    dt = new Date(Date.now() + p.t * 60000);
+    html += '<div class="event-item">' + (dt.getMonth() + 1) + "月" + dt.getDate() + "日 " +
+      pad2(dt.getHours()) + ":" + pad2(dt.getMinutes()) +
+      'ごろ <span class="event-days">最大仰角 約' + Math.round(p.e) + "° / 最接近 約" + Math.round(p.d) + "km（概算）</span></div>";
+  }
+  el("issPassList").innerHTML = html;
+}
+
+/* ---------- MOON MAP ---------- */
+var SEAS = [
+  { n: "嵐の大洋", x: 0.22, y: 0.52, rx: 0.13, ry: 0.20, d: "最大の海。西側に広がる暗い平原" },
+  { n: "雨の海", x: 0.30, y: 0.27, rx: 0.09, ry: 0.075, d: "北西部の大きな丸い海" },
+  { n: "湿りの海", x: 0.26, y: 0.68, rx: 0.045, ry: 0.04, d: "南西の小さな海" },
+  { n: "雲の海", x: 0.38, y: 0.73, rx: 0.06, ry: 0.05, d: "南部の海" },
+  { n: "晴れの海", x: 0.60, y: 0.29, rx: 0.075, ry: 0.065, d: "北東部の丸い海" },
+  { n: "静かの海", x: 0.66, y: 0.44, rx: 0.09, ry: 0.075, d: "アポロ11号が着陸した海" },
+  { n: "豊かの海", x: 0.77, y: 0.56, rx: 0.055, ry: 0.075, d: "東部の縦長い海" },
+  { n: "神酒の海", x: 0.68, y: 0.59, rx: 0.038, ry: 0.033, d: "静かの海の南の小さな海" },
+  { n: "危難の海", x: 0.81, y: 0.29, rx: 0.05, ry: 0.042, d: "東の縁にある独立した丸い海" },
+  { n: "蒸気の海", x: 0.49, y: 0.41, rx: 0.038, ry: 0.028, d: "中央部の小さな海" }
+];
+
+function drawMoonMap() {
+  var cv = el("moonMapCanvas");
+  var ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height;
+  var cx = W / 2, cy = H / 2, r = W / 2 - 6;
+  var i, s2, px, py;
+  ctx.fillStyle = "#000a10";
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#232d33";
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "rgba(77,255,210,0.6)";
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  for (i = 0; i < SEAS.length; i++) {
+    s2 = SEAS[i];
+    ctx.fillStyle = "#486a86";
+    ctx.beginPath();
+    ctx.ellipse(cx + (s2.x - 0.5) * 2 * r, cy + (s2.y - 0.5) * 2 * r, s2.rx * 2 * r, s2.ry * 2 * r, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = "#4dffd2";
+  ctx.font = "11px monospace";
+  ctx.textAlign = "center";
+  for (i = 0; i < SEAS.length; i++) {
+    s2 = SEAS[i];
+    px = cx + (s2.x - 0.5) * 2 * r;
+    py = cy + (s2.y - 0.5) * 2 * r;
+    ctx.fillText(s2.n, px, py + 3);
+  }
+  var html = "";
+  for (i = 0; i < SEAS.length; i++) {
+    html += "・" + SEAS[i].n + "：" + SEAS[i].d + "<br>";
+  }
+  el("seaList").innerHTML = html;
+}
+
+/* ---------- SUN / MOON DISTANCE （近似計算） ---------- */
+function daysSinceJ2000() {
+  return Date.now() / 86400000 - 10957.5;
+}
+
+function sunDistanceAU() {
+  var d = daysSinceJ2000();
+  var g = (357.529 + 0.98560028 * d) % 360 * Math.PI / 180;
+  return 1.00014 - 0.01671 * Math.cos(g) - 0.00014 * Math.cos(2 * g);
+}
+
+function moonDistanceKm() {
+  var d = daysSinceJ2000();
+  var Mm = (134.963 + 13.064993 * d) * Math.PI / 180;
+  var Dm = (297.850 + 12.190749 * d) * Math.PI / 180;
+  return 385000.6 - 20905 * Math.cos(Mm) - 3699 * Math.cos(2 * Dm - Mm) - 2956 * Math.cos(2 * Dm);
+}
+
+function renderSun() {
+  var au = sunDistanceAU();
+  var km = au * 149597870.7;
+  var sec = km / 299792.458;
+  var lt = Math.floor(sec / 60) + "分" + Math.round(sec % 60) + "秒";
+  el("sunDist").innerHTML = au.toFixed(4) + " <small>AU（約" + (km / 100000000).toFixed(3) + "億km）</small>";
+  el("sunLight").innerHTML = "約" + lt;
+  el("ltSun").innerHTML = "光で約" + lt;
+}
+
+function renderLight() {
+  el("ltGeo").innerHTML = "光で約" + (35786 / 299792.458).toFixed(3) + "秒";
+  var md = moonDistanceKm();
+  el("ltMoon").innerHTML = "光で約" + (md / 299792.458).toFixed(2) + "秒（距離 約" + Math.round(md / 1000) + "万km）";
+}
+
+/* ---------- NOW COUNTER ---------- */
+function fmtNum(n) {
+  return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function updateNow() {
+  var s = (Date.now() - pageStart) / 1000;
+  el("nowElapsed").innerHTML = fmtNum(s) + "<small>秒</small>";
+  el("nowOrbit").innerHTML = fmtNum(s * 29.78) + " <small>km</small>";
+  el("nowSpin").innerHTML = fmtNum(s * 0.377) + " <small>km</small>";
+  el("nowGalaxy").innerHTML = fmtNum(s * 230) + " <small>km</small>";
+  el("nowLight").innerHTML = fmtNum(s * 299792) + " <small>km</small>";
+}
+
+/* ---------- SEASONAL CONSTELLATIONS ---------- */
+var SEASONS = [
+  { name: "春 SPRING", list: "北斗七星（おおぐま座）／春の大曲線：北斗七星の柄のカーブをのばすと、うしかい座アークトゥルス→おとめ座スピカへ届く／しし座" },
+  { name: "夏 SUMMER", list: "夏の大三角：こと座ベガ・わし座アルタイル・はくちょう座デネブ／さそり座アンタレス（南の空の赤い星）／いて座の方向に天の川の中心" },
+  { name: "秋 AUTUMN", list: "秋の四辺形（ペガスス座）／アンドロメダ座（条件が良ければ肉眼でアンドロメダ銀河）／カシオペヤ座のW字" },
+  { name: "冬 WINTER", list: "冬の大三角：オリオン座ベテルギウス・おおいぬ座シリウス・こいぬ座プロキオン／おうし座のすばる（プレアデス星団）" }
+];
+
+function renderSeasons() {
+  var m = new Date().getMonth() + 1;
+  var cur = 3;
+  if (m >= 3 && m <= 5) { cur = 0; }
+  else if (m >= 6 && m <= 8) { cur = 1; }
+  else if (m >= 9 && m <= 11) { cur = 2; }
+  var html = "", i;
+  for (i = 0; i < SEASONS.length; i++) {
+    html += '<div class="txt-item"><span class="hd">' + SEASONS[i].name + "</span>" +
+      (i === cur ? ' <span class="season-now">← 今の季節</span>' : "") +
+      "<br>" + SEASONS[i].list + "</div>";
+  }
+  el("seasonList").innerHTML = html;
+}
+
+/* ---------- MILKY WAY CALENDAR ---------- */
+var MW = [
+  ["1月", "△"], ["2月", "△"], ["3月", "○"], ["4月", "◎"],
+  ["5月", "◎"], ["6月", "○"], ["7月", "◎"], ["8月", "◎"],
+  ["9月", "◎"], ["10月", "○"], ["11月", "△"], ["12月", "△"]
+];
+
+function renderMilkyWay() {
+  var cur = new Date().getMonth();
+  var html = "", i;
+  for (i = 0; i < MW.length; i++) {
+    html += '<div class="mw-cell' + (i === cur ? " mw-now" : "") + '">' + MW[i][0] +
+      '<span class="mw-sym">' + MW[i][1] + "</span></div>";
+  }
+  el("mwGrid").innerHTML = html;
+}
+
+/* ---------- DISTANCE QUIZ ---------- */
+var QUIZ = [
+  { q: "月までの距離はおよそ？", c: ["約38万km", "約4万km", "約380万km"], a: 0, e: "光の速さでも約1.3秒かかる距離。" },
+  { q: "ISS（国際宇宙ステーション）の高度はおよそ？", c: ["約4,200km", "約420km", "約36,000km"], a: 1, e: "東京〜名古屋ほどの高さを、秒速約7.7kmで飛んでいる。" },
+  { q: "静止衛星（ひまわり等）の高度はおよそ？", c: ["約3,600km", "約36万km", "約3万6千km"], a: 2, e: "地球の直径の約3倍もの高さ。だから空に止まって見える。" },
+  { q: "太陽までの距離はおよそ？", c: ["約1億5千万km", "約1,500万km", "約15億km"], a: 0, e: "これが1天文単位（1AU）。光で約8分20秒。" },
+  { q: "月の光が地球に届く時間はおよそ？", c: ["約13秒", "約1.3秒", "約0.1秒"], a: 1, e: "今見ている月は、約1.3秒前の月の姿。" },
+  { q: "地球から火星までの距離（最も近い時）はおよそ？", c: ["約550万km", "約5億km", "約5,500万km"], a: 2, e: "それでも光で約3分。遠い時は4億km近くまで離れる。" },
+  { q: "地球から金星までの距離（最も近い時）はおよそ？", c: ["約4,000万km", "約4億km", "約400万km"], a: 0, e: "金星は地球に最も近づく惑星。光で約2分。" },
+  { q: "ISSの飛ぶ速さはおよそ？", c: ["秒速約77km", "秒速約7.7km", "秒速約0.77km"], a: 1, e: "マッハ約23。約93分で地球を1周する。" }
+];
+var quizPos = 0, quizScore = 0, quizAnswered = false, quizDone = false;
+
+function renderQuiz() {
+  if (quizPos >= QUIZ.length) {
+    quizDone = true;
+    el("quizQ").innerHTML = "結果：" + QUIZ.length + "問中 " + quizScore + "問正解！";
+    el("quizChoices").innerHTML = "";
+    el("quizMsg").innerHTML = (quizScore === QUIZ.length) ? "完璧な距離感だ。その調子で管制を頼む。" : "おつかれさま。NEXTボタンでもう一度挑戦できる。";
+    return;
+  }
+  var q = QUIZ[quizPos];
+  el("quizQ").innerHTML = "Q" + (quizPos + 1) + ". " + q.q;
+  var html = "", i;
+  for (i = 0; i < q.c.length; i++) {
+    html += '<button type="button" onclick="quizAnswer(' + i + ')">' + q.c[i] + "</button>";
+  }
+  el("quizChoices").innerHTML = html;
+  el("quizMsg").innerHTML = "スコア " + quizScore + " / " + quizPos + "問";
+  quizAnswered = false;
+}
+
+function quizAnswer(i) {
+  if (quizAnswered || quizDone) { return; }
+  quizAnswered = true;
+  var q = QUIZ[quizPos];
+  if (i === q.a) {
+    quizScore++;
+    el("quizMsg").innerHTML = "正解！ " + q.e;
+  } else {
+    el("quizMsg").innerHTML = "不正解。正解は「" + q.c[q.a] + "」。 " + q.e;
+  }
+}
+
+function quizNext() {
+  if (quizDone) {
+    quizPos = 0; quizScore = 0; quizDone = false;
+    renderQuiz();
+  } else if (quizAnswered) {
+    quizPos++;
+    renderQuiz();
+  } else {
+    el("quizMsg").innerHTML = "まず答えを選んでください。";
+  }
+}
+
 /* ---------- INIT ---------- */
 function refreshAll() {
   fetchISS();
   fetchSun();
   fetchNews();
+  renderSun();
+  renderLight();
 }
 
 el("refreshBtn").addEventListener("click", function () { refreshAll(); });
 el("triviaBtn").addEventListener("click", function () { nextTrivia(); });
+el("quizNextBtn").addEventListener("click", function () { quizNext(); });
 
 tickClock();
 setInterval(tickClock, 1000);
 moonCalc();
+drawMoonMap();
 renderPlanets();
 renderEvents();
+renderSeasons();
+renderMilkyWay();
+renderSun();
+renderLight();
+renderQuiz();
 showTrivia();
 drawMap();
 refreshAll();
