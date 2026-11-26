@@ -145,6 +145,7 @@
     <button type="button" class="small" id="distBtn">距離：通常</button>
     <button type="button" class="small" id="measureBtn">測距：OFF</button>
     <button type="button" class="small" id="demoBtn">デモ：OFF</button>
+    <button type="button" class="small" id="scaleBtn">スケール：通常</button>
   </div>
   <div class="btnrow" style="margin-top:6px;">
     <button type="button" class="small" id="quizBtn">地名クイズ</button>
@@ -236,6 +237,9 @@ var CHATTER = [
 ];
 
 var rangeKm = 15;
+var scaleMode = "linear";
+function distToR(d) { var f = d / rangeKm; if (f > 1) f = 1; if (scaleMode === "sqrt") f = Math.sqrt(f); return f * 300; }
+function rToDist(px) { var f = px / 300; if (scaleMode === "sqrt") f = f * f; return f * rangeKm; }
 var sweep = 0, prevSweep = 0, running = true;
 var sweepSpeed = 3;
 var ringCount = 4;
@@ -451,7 +455,7 @@ function draw() {
     ctx.beginPath();
     ctx.arc(C, C, R * k / ringCount, 0, Math.PI * 2);
     ctx.stroke();
-    var label = (rangeKm * k / ringCount);
+    var label = rToDist(R * k / ringCount);
     var lt = (label % 1 === 0) ? String(label) : label.toFixed(1);
     ctx.fillText(lt + "km", C + 4, C - R * k / ringCount + 15);
   }
@@ -539,7 +543,7 @@ function draw() {
     var t = TARGETS[k];
     if (t.dist > rangeKm || !passDir(t)) continue;
     var br = t.bearing * Math.PI / 180;
-    var rr = t.dist / rangeKm * R;
+    var rr = distToR(t.dist);
     x = C + Math.sin(br) * rr;
     y = C - Math.cos(br) * rr;
     var alpha = 0.22 + 0.78 * t.bright;
@@ -571,7 +575,7 @@ function draw() {
   /* mystery signal */
   if (mystery && mystery.dist <= rangeKm) {
     var mb = mystery.bearing * Math.PI / 180;
-    var mr = mystery.dist / rangeKm * R;
+    var mr = distToR(mystery.dist);
     var mx = C + Math.sin(mb) * mr;
     var my = C - Math.cos(mb) * mr;
     var pulse = 0.6 + 0.4 * Math.sin(now / 180);
@@ -615,6 +619,11 @@ function setRange(km) {
   }
   endQuiz();
   buildList();
+  if (km === 100) {
+    scaleMode = "sqrt";
+    syncScaleBtn();
+    detailEl.innerHTML = "100kmでは中心が混み合うため、自動で『圧縮スケール』に切り替えました。近くの目標が広がって表示されます。";
+  }
 }
 
 function tick() {
@@ -911,6 +920,15 @@ distBtn.onclick = function () {
   distBtn.className = "small" + (distDigits === 2 ? " active" : "");
   buildList();
 };
+var scaleBtn = document.getElementById("scaleBtn");
+function syncScaleBtn() {
+  scaleBtn.innerHTML = "スケール：" + (scaleMode === "sqrt" ? "圧縮" : "通常");
+  scaleBtn.className = "small" + (scaleMode === "sqrt" ? " active" : "");
+}
+scaleBtn.onclick = function () {
+  scaleMode = (scaleMode === "sqrt") ? "linear" : "sqrt";
+  syncScaleBtn();
+};
 var measureBtn = document.getElementById("measureBtn");
 measureBtn.onclick = function () {
   measureOn = !measureOn;
@@ -952,7 +970,7 @@ cv.onclick = function (e) {
   var dx = px - 320, dy = py - 320;
   var r = Math.sqrt(dx * dx + dy * dy);
   if (r > 300) { dx = dx / r * 300; dy = dy / r * 300; r = 300; }
-  var dkm = r / 300 * rangeKm;
+  var dkm = rToDist(r);
   var brg = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
   measurePt = { x: 320 + dx, y: 320 + dy };
   var w = WINDS[Math.round(brg / 22.5) % 16];
