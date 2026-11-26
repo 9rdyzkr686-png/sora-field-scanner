@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DENSETSU-6 都市伝説アーカイブ</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #07060b;
+    color: #b9f4cd;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 17px;
+    line-height: 1.6;
+    padding: 12px 12px 40px 12px;
+    -webkit-text-size-adjust: 100%;
+  }
+  .scan {
+    position: fixed; left: 0; top: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, rgba(0,0,0,0) 3px, rgba(0,0,0,0) 4px);
+    z-index: 50;
+  }
+  header {
+    border: 2px solid #5b2a86;
+    background: #0d0a18;
+    padding: 16px 14px;
+    margin-bottom: 16px;
+    box-shadow: 0 0 18px rgba(122,79,208,0.35) inset;
+  }
+  h1 {
+    margin: 0 0 4px 0;
+    font-size: 26px;
+    color: #e8dcff;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px rgba(176,48,64,0.8), 0 0 16px rgba(122,79,208,0.8);
+  }
+  .subtitle { color: #ff8fa0; font-size: 15px; margin: 0 0 8px 0; }
+  .dateline { color: #57ff8a; font-size: 15px; margin: 0 0 8px 0; }
+  .intro { color: #9fd8b2; font-size: 15px; margin: 0; }
+  section {
+    border: 1px solid #3a2a5e;
+    background: #0a0812;
+    padding: 14px 12px;
+    margin-bottom: 16px;
+  }
+  h2 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    color: #d9c8ff;
+    border-bottom: 1px dashed #5b2a86;
+    padding-bottom: 6px;
+    letter-spacing: 1px;
+  }
+  h3 {
+    margin: 14px 0 6px 0;
+    font-size: 17px;
+    color: #ffb3c0;
+  }
+  h3:first-of-type { margin-top: 0; }
+  .status { color: #8a93a8; font-size: 14px; min-height: 20px; }
+  .status.err { color: #ff8fa0; }
+  ul.news { list-style: none; margin: 0; padding: 0; }
+  ul.news li {
+    border-bottom: 1px dotted #33255a;
+    padding: 10px 2px;
+  }
+  ul.news li:last-child { border-bottom: none; }
+  ul.news a {
+    color: #b9f4cd;
+    text-decoration: none;
+    display: block;
+    min-height: 48px;
+  }
+  ul.news a:active { color: #57ff8a; }
+  .ndate { color: #c9a0ff; font-size: 13px; display: block; }
+  button {
+    font-family: inherit;
+    font-size: 16px;
+    background: #171029;
+    color: #57ff8a;
+    border: 1px solid #5b2a86;
+    padding: 12px 18px;
+    min-height: 48px;
+    cursor: pointer;
+  }
+  button:active { background: #2a1a4d; }
+  .retrybtn { display: none; margin-top: 8px; }
+  .today-card {
+    border: 2px solid #b03040;
+    background: #140a12;
+    padding: 14px 12px;
+    box-shadow: 0 0 14px rgba(176,48,64,0.35);
+  }
+  .today-name { font-size: 22px; color: #ffe3e8; margin: 0 0 4px 0; }
+  .meta { color: #c9a0ff; font-size: 14px; margin: 0 0 8px 0; }
+  .fear { color: #ffb02e; }
+  .today-text { color: #b9f4cd; margin: 0; white-space: pre-line; }
+  .chips { margin-bottom: 12px; }
+  .chip {
+    display: inline-block;
+    margin: 0 6px 8px 0;
+    padding: 12px 14px;
+    min-height: 48px;
+    font-size: 15px;
+  }
+  .chip.on {
+    background: #5b2a86;
+    color: #ffffff;
+    border-color: #c9a0ff;
+  }
+  .card {
+    border: 1px solid #33255a;
+    background: #0d0a18;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  .card-name { font-size: 19px; color: #e8dcff; margin: 0 0 2px 0; }
+  .card .meta { margin-bottom: 6px; }
+  .tag {
+    display: inline-block;
+    border: 1px solid #b03040;
+    color: #ff8fa0;
+    padding: 1px 8px;
+    font-size: 13px;
+    margin-left: 6px;
+  }
+  .summary { margin: 0 0 8px 0; color: #b9f4cd; }
+  .detail {
+    display: none;
+    border-top: 1px dotted #5b2a86;
+    padding-top: 8px;
+    margin-top: 4px;
+    color: #9fd8b2;
+    white-space: pre-line;
+  }
+  .detail.open { display: block; }
+  .togglebtn { width: 100%; }
+  .links a {
+    display: block;
+    border: 1px solid #5b2a86;
+    background: #171029;
+    color: #57ff8a;
+    text-decoration: none;
+    padding: 14px 12px;
+    min-height: 48px;
+    margin-bottom: 10px;
+    font-size: 17px;
+  }
+  .links a:active { background: #2a1a4d; }
+  footer {
+    color: #8a93a8;
+    font-size: 13px;
+    border-top: 1px dashed #3a2a5e;
+    padding-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="scan"></div>
+
+<header>
+  <h1>DENSETSU-6</h1>
+  <p class="subtitle">都市伝説アーカイブ</p>
+  <p class="dateline" id="dateLine"></p>
+  <p class="intro">最新の話題と、語り継がれる定番伝説を集めた観測所。都市伝説は、娯楽として楽しむための物語です。</p>
+</header>
+
+<section>
+  <h2>■ 最新トピック</h2>
+  <h3>◆ 話題の見出し</h3>
+  <p class="status" id="feedAStatus">読み込み中…</p>
+  <ul class="news" id="feedAList"></ul>
+  <button class="retrybtn" id="retryA" type="button">再試行する</button>
+  <h3>◆ 怪談寄りの見出し</h3>
+  <p class="status" id="feedBStatus">読み込み中…</p>
+  <ul class="news" id="feedBList"></ul>
+  <button class="retrybtn" id="retryB" type="button">再試行する</button>
+</section>
+
+<section>
+  <h2>■ 今日の都市伝説</h2>
+  <div class="today-card">
+    <p class="today-name" id="todayName"></p>
+    <p class="meta" id="todayMeta"></p>
+    <p class="today-text" id="todayText"></p>
+  </div>
+</section>
+
+<section>
+  <h2>■ 定番アーカイブ</h2>
+  <div class="chips" id="filterBox"></div>
+  <div id="archiveBox"></div>
+</section>
+
+<section class="links">
+  <h2>■ 姉妹観測所へのリンク</h2>
+  <a href="https://9rdyzkr686-png.github.io/iPhone6-board/">情報ボード</a>
+  <a href="https://9rdyzkr686-png.github.io/sora-field-scanner/">SORA</a>
+  <a href="https://9rdyzkr686-png.github.io/sora-field-scanner/orbit/">ORBIT-6</a>
+  <a href="https://9rdyzkr686-png.github.io/sora-field-scanner/radar/">RDR-6</a>
+</section>
+
+<footer>
+  <p>掲載している伝説は、語り継がれてきた物語を娯楽として紹介するものです。実在の人物・場所とは関係ありません。夜中に一人で読みすぎないようご注意ください。</p>
+  <p>データ出典：Bing News（rss2json 経由）</p>
+</footer>
+
+<script>
+var LEGENDS = [
+  {
+    name: "口裂け女",
+    fear: 4,
+    cat: "道路",
+    summary: "夕暮れの路地で、マスクをした女が「私、きれい？」と聞いてくる。どう答えても恐ろしい目に遭うという、昭和の終わりに日本中を震え上がらせた伝説。",
+    detail: "学校帰りの子どもたちの前に、大きなマスクで顔を隠した女が現れる。\n「私、きれい？」と聞かれ、「きれい」と答えると女はマスクを外す。\nその口は耳まで大きく裂けていて、「これでもきれい？」と迫ってくるのだという。\n「普通」と答えても、ポマードと3回唱えても、諸説ある逃げ方だけが各地で微妙に違って語られた。\n女は100メートルを6秒で走るとも言われ、飴玉を落とすと拾っている間に逃げられるとも。\n社会現象になり、集団下校やパトロールが行われた地域もあったという、都市伝説の王道である。"
+  },
+  {
+    name: "トイレの花子さん",
+    fear: 3,
+    cat: "学校",
+    summary: "学校のトイレの3番目の個室をノックして呼びかけると、中から返事が返ってくる。全国の小学校で語り継がれる、学校の怪談の代表格。",
+    detail: "女子トイレの、手前から3番目の個室。\n扉を3回ノックして「花子さん、遊びましょう」と声をかけると、「はーい」と小さな返事が聞こえるという。\n扉を開けると、赤いスカートのおかっぱ頭の女の子が立っている、というのが定番の形だ。\n地域によっては、引きずり込まれる、逆に姿が見えない、4番目が危ないなど、細部がさまざまに変化する。\n昼休みや放課後、肝試し気分で試した経験がある人も多いはず。\n学校という身近な場所だからこそ、何十年も語り継がれてきた伝説である。"
+  },
+  {
+    name: "テケテケ",
+    fear: 5,
+    cat: "駅・電車",
+    summary: "下半身を失った女性の霊が、両腕だけで猛スピードで追いかけてくる。テケテケという音が聞こえたら、もう逃げ遅れかもしれないという話。",
+    detail: "雪の夜、線路に落ちて列車にひかれ、下半身を失った女性がいたという。\nその霊は腕の力だけで地面を這い、テケテケ、テケテケと音を立てて近づいてくる。\n驚くのはその速さで、自動車並みのスピードで追いかけてくるとされる。\n目撃した者は数日以内に同じ目に遭う、という条件が付く語りも多い。\n似た存在に「カシマさん」があり、こちらは話を聞いた者のところへ電話で質問しに来ると言われる。\n音の名前で呼ばれる怪異は多く、その不気味な響きが恐怖を増幅させている。"
+  },
+  {
+    name: "人面犬",
+    fear: 3,
+    cat: "道路",
+    summary: "犬の体に人間の顔を持つ生き物が、ゴミ置き場や路地に現れる。人語を話し、話しかけると生意気な返事を返してくるという不思議な伝説。",
+    detail: "夜のゴミ捨て場をあさる犬をよく見ると、その顔はどう見ても人間のおじさんの顔だった。\n驚いて声をかけると、「うるさい」「放っておいてくれ」などと人間の言葉で言い返すという。\n高速道路では、車と並んで時速100キロで走る人面犬の目撃談も語られた。\n口裂け女ブームの余波で広まったとされ、新聞やテレビでも取り上げられた時期がある。\n恐ろしいというより、どこか間抜けで憎めない存在として語られることが多い。\n見かけても、そっとしておいてあげるのが一番だと言われている。"
+  },
+  {
+    name: "コックリさん",
+    fear: 4,
+    cat: "学校",
+    summary: "十円玉に指を添え、コックリさんを呼び出して質問する占いの遊び。途中でやめると祟られる、という戒めとセットで広まった学校の定番。",
+    detail: "五十音を書いた紙の上に十円玉を置き、参加者全員が指を添える。\n「コックリさん、コックリさん、おいでください」と唱えると、十円玉がひとりでに動き出すという。\n質問には文字をたどって答えてくれるが、お帰りいただくまでは絶対に指を離してはいけない。\n途中でやめると祟られる、赤い文字で名前を書かれる、といった注意書きが恐怖を演出した。\n実際は、無意識に指が動いてしまう現象として説明されることが多い。\nそれでも深夜の教室で試すには、十分すぎるほど怖い遊びである。"
+  },
+  {
+    name: "きさらぎ駅",
+    fear: 4,
+    cat: "駅・電車",
+    summary: "電車に乗っていたはずが、存在しないはずの「きさらぎ駅」に降りてしまった。掲示板への実況書き込みから生まれた、ネット発の代表的伝説。",
+    detail: "2004年頃、ネット掲示板に「いつもの電車が、知らない駅に停まった」という実況の書き込みが始まった。\n駅名は「きさらぎ駅」。時刻表にも地図にも載っていない駅で、周囲には何もないという。\n投稿者は心配する閲覧者たちの助言を受けながら、暗い道を歩き、太鼓の音や鈴の音に怯えていく。\nやがて「迎えに行く」という不審な人物が現れ、投稿は途絶えてしまった、という形で語られる。\n真偽は今も不明だが、実況形式の臨場感が新しい怪談の形を作った。\nその後も各地で「異世界駅」の報告が続く、ネット時代の古典である。"
+  },
+  {
+    name: "赤い紙、青い紙",
+    fear: 3,
+    cat: "学校",
+    summary: "学校のトイレで用を足した後、「赤い紙か、青い紙か」と声が聞こえる。どちらを選んでも恐ろしい結末が待つ、究極の二択の怪談。",
+    detail: "昔の学校のトイレには紙がなく、用を済ませた子どもが困っていると、天井から声がしたという。\n「赤い紙と青い紙、どちらがほしい？」\n赤い紙を選ぶと血まみれになり、青い紙を選ぶと血を抜かれて青ざめる、というのが有名な結末だ。\n「黄色い紙」と答えて助かった、という機転の利いた派生も語られる。\n個室という密室で、選択肢のない質問を突きつけられる理不尽さが、この話の怖さの核である。\n花子さんと並び、トイレ怪談の双璧として今も語り継がれている。"
+  },
+  {
+    name: "猿夢",
+    fear: 5,
+    cat: "駅・電車",
+    summary: "夢の中で「サル電車」に乗り、車内放送の警告を破ると現実でも命を落とす。夢を題材にしたネット怪談の中でも、特に完成度が高いと評判の話。",
+    detail: "疲れて眠ったはずが、気がつくと見知らぬ電車の中にいた、という夢を見る話である。\n車内では猿のような乗客たちがじっとこちらを見ていて、やがて放送が流れる。\n「次ハ〇〇、次ハ〇〇。ソコデ降リルト、死ヌヨ」\n放送の警告を無視して駅で降りてしまうと、夢から覚めた後も体調を崩し、やがて……という筋書きだ。\nこの話を知ってしまったこと自体が「夢を見る条件」になる、という締めくくりも語られる。\n読んだ夜に限って電車の夢を見そうになる、後味の悪さが人気の理由である。"
+  },
+  {
+    name: "くねくね",
+    fear: 4,
+    cat: "道路",
+    summary: "夏の田んぼの向こうで、白い人影がくねくねと揺れている。あれが何か分かってしまうと、二度と正気に戻れないという田舎の怪談。",
+    detail: "真夏の田舎道。稲穂の向こうに、白い人型の何かが立っている。\nそれは風もないのに、くねくねと不自然に体を揺らし続けているという。\n遠目には案山子にも見えるが、案山子はあんなふうには動かない。\n伝説では、あの正体を「理解してしまった」者は精神に異常をきたすとされる。\nだから年寄りたちは口をそろえて言うのだ。「あれを見ても、考えるな。そのまま忘れろ」と。\n双眼鏡で覗くのも厳禁だという、好奇心そのものを封じるタイプの怖い話である。"
+  },
+  {
+    name: "メリーさん",
+    fear: 4,
+    cat: "電話・ネット",
+    summary: "捨てられた人形から電話がかかってくる。「あたしメリーさん。今、あなたの後ろにいるの」段階を追って近づいてくる恐怖の代名詞。",
+    detail: "古くなった西洋人形を捨てた少女のもとに、知らない番号から電話がかかってきた。\n「あたしメリーさん。今、ゴミ捨て場にいるの」\nその後も電話は続き、「今、あなたの家の前にいるの」「今、玄関にいるの」と、人形は着実に近づいてくる。\nそして最後の電話は、「今、あなたの後ろにいるの」。\n電話という身近な道具と、少しずつ距離が詰まる演出が、時代を超えて効き続けている。\nスマートフォンの時代になっても、知らない番号からの着信は少しだけ怖いものである。"
+  },
+  {
+    name: "八尺様",
+    fear: 5,
+    cat: "家",
+    summary: "身長八尺（約2.4メートル）の女性の霊が、田舎の集落に現れる。「ぽぽぽ」という笑い声が聞こえたら、狙われた子どもは二度と外に出られない。",
+    detail: "田舎の祖父母の家に帰省した少年が、庭先で奇妙な笑い声を聞いた。\n「ぽ、ぽぽぽ、ぽぽ……」\n生垣の向こうから現れたのは、白いワンピースに麦わら帽子をかぶった、異様に背の高い女だった。\n八尺様に魅入られた子どもは、数日のうちに連れ去られてしまうという。\n逃れるには、お札を貼った部屋に塩と仏像と共に一晩閉じこもり、決して声に応えたり扉を開けたりしてはならない。\n助かっても、その土地には二度と戻れないという結末まで含めて語られる長編怪談である。"
+  },
+  {
+    name: "ひとりかくれんぼ",
+    fear: 5,
+    cat: "家",
+    summary: "深夜3時、ぬいぐるみと二人でかくれんぼをする降霊術めいた遊び。絶対に見つかってはいけない、見つけてもすぐに終わらせなければならないという。",
+    detail: "用意するのは、綿を抜いて赤い糸で縫い直したぬいぐるみと、自分の爪や髪、そして塩水。\n深夜3時、ぬいぐるみに名前をつけて鬼にし、「最初は○○が鬼だから」と告げて包丁で刺し、自分は塩水を口に含んで隠れる。\nやがて家の中で物音がし始め、テレビのチャンネルが勝手に変わるなどの現象が起きるとされる。\n終わらせるには、ぬいぐるみを見つけて塩水を吹きかけ、「私の勝ち」と3回言わなければならない。\n途中でやめることも、外出することも厳禁という厳しいルールが、数多くの体験談を生んだ。\n言うまでもないが、これは物語の中の遊び。真似をしてはいけない、という注釈と共に語られる伝説である。"
+  }
+];
+
+var CATS = ["すべて", "学校", "駅・電車", "電話・ネット", "道路", "家"];
+var currentCat = "すべて";
+
+function el(id) { return document.getElementById(id); }
+
+function stars(n) {
+  var s = "";
+  var i;
+  for (i = 0; i < 5; i++) { s += (i < n) ? "★" : "☆"; }
+  return s;
+}
+
+function dayOfYear(d) {
+  var start = new Date(d.getFullYear(), 0, 0);
+  var diff = d - start;
+  return Math.floor(diff / 86400000);
+}
+
+function initHeader() {
+  var d = new Date();
+  var wd = ["日", "月", "火", "水", "木", "金", "土"];
+  el("dateLine").textContent = d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日（" + wd[d.getDay()] + "）の観測記録";
+}
+
+function initToday() {
+  var idx = dayOfYear(new Date()) % LEGENDS.length;
+  var L = LEGENDS[idx];
+  el("todayName").textContent = L.name;
+  el("todayMeta").textContent = "怖さレベル " + stars(L.fear) + "　分類：" + L.cat;
+  el("todayText").textContent = L.detail;
+}
+
+function buildChips() {
+  var box = el("filterBox");
+  box.innerHTML = "";
+  var i;
+  for (i = 0; i < CATS.length; i++) {
+    (function (cat) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (cat === currentCat ? " on" : "");
+      b.textContent = cat;
+      b.onclick = function () {
+        currentCat = cat;
+        buildChips();
+        renderArchive();
+      };
+      box.appendChild(b);
+    })(CATS[i]);
+  }
+}
+
+function renderArchive() {
+  var box = el("archiveBox");
+  box.innerHTML = "";
+  var i;
+  var count = 0;
+  for (i = 0; i < LEGENDS.length; i++) {
+    (function (L) {
+      if (currentCat !== "すべて" && L.cat !== currentCat) { return; }
+      count++;
+      var card = document.createElement("div");
+      card.className = "card";
+
+      var name = document.createElement("p");
+      name.className = "card-name";
+      name.textContent = L.name;
+      card.appendChild(name);
+
+      var meta = document.createElement("p");
+      meta.className = "meta";
+      var fearSpan = document.createElement("span");
+      fearSpan.className = "fear";
+      fearSpan.textContent = stars(L.fear);
+      meta.appendChild(document.createTextNode("怖さレベル "));
+      meta.appendChild(fearSpan);
+      var tag = document.createElement("span");
+      tag.className = "tag";
+      tag.textContent = L.cat;
+      meta.appendChild(tag);
+      card.appendChild(meta);
+
+      var sum = document.createElement("p");
+      sum.className = "summary";
+      sum.textContent = L.summary;
+      card.appendChild(sum);
+
+      var det = document.createElement("div");
+      det.className = "detail";
+      det.textContent = L.detail;
+      card.appendChild(det);
+
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "togglebtn";
+      btn.textContent = "くわしく読む ▼";
+      btn.onclick = function () {
+        if (det.className === "detail open") {
+          det.className = "detail";
+          btn.textContent = "くわしく読む ▼";
+        } else {
+          det.className = "detail open";
+          btn.textContent = "とじる ▲";
+        }
+      };
+      card.appendChild(btn);
+
+      box.appendChild(card);
+    })(LEGENDS[i]);
+  }
+  if (count === 0) {
+    var p = document.createElement("p");
+    p.className = "status";
+    p.textContent = "この分類の伝説はまだ収蔵されていません。";
+    box.appendChild(p);
+  }
+}
+
+var FEED_A = "https://www.bing.com/news/search?q=%E9%83%BD%E5%B8%82%E4%BC%9D%E8%AA%AC&format=rss";
+var FEED_B = "https://www.bing.com/news/search?q=%E9%83%BD%E5%B8%82%E4%BC%9D%E8%AA%AC%20%E6%80%AA%E8%AB%87&format=rss";
+
+function renderFeed(listEl, items, max) {
+  listEl.innerHTML = "";
+  var n = Math.min(items.length, max);
+  var i;
+  for (i = 0; i < n; i++) {
+    var it = items[i];
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = it.link || "#";
+    var dateSpan = document.createElement("span");
+    dateSpan.className = "ndate";
+    dateSpan.textContent = (it.pubDate ? String(it.pubDate).substring(0, 10) : "");
+    a.appendChild(dateSpan);
+    a.appendChild(document.createTextNode(it.title || "（無題）"));
+    li.appendChild(a);
+    listEl.appendChild(li);
+  }
+  return n;
+}
+
+function loadFeed(feedUrl, listId, statusId, retryId, max, label) {
+  var statusEl = el(statusId);
+  var listEl = el(listId);
+  var retryEl = el(retryId);
+  statusEl.className = "status";
+  statusEl.textContent = "読み込み中…";
+  retryEl.style.display = "none";
+  var apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feedUrl);
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", apiUrl, true);
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    var ok = false;
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (data && data.status === "ok" && data.items && data.items.length > 0) {
+          var n = renderFeed(listEl, data.items, max);
+          statusEl.textContent = label + "：" + n + "件を取得";
+          ok = true;
+        }
+      } catch (e) {
+        ok = false;
+      }
+    }
+    if (!ok) {
+      listEl.innerHTML = "";
+      statusEl.className = "status err";
+      statusEl.textContent = "見出しを取得できませんでした。電波の届く場所で再試行してください。";
+      retryEl.style.display = "inline-block";
+    }
+  };
+  xhr.onerror = function () {
+    listEl.innerHTML = "";
+    statusEl.className = "status err";
+    statusEl.textContent = "見出しを取得できませんでした。電波の届く場所で再試行してください。";
+    retryEl.style.display = "inline-block";
+  };
+  try {
+    xhr.send(null);
+  } catch (e2) {
+    statusEl.className = "status err";
+    statusEl.textContent = "見出しを取得できませんでした。";
+    retryEl.style.display = "inline-block";
+  }
+}
+
+function loadAllFeeds() {
+  loadFeed(FEED_A, "feedAList", "feedAStatus", "retryA", 6, "話題の見出し");
+  loadFeed(FEED_B, "feedBList", "feedBStatus", "retryB", 5, "怪談寄りの見出し");
+}
+
+function init() {
+  initHeader();
+  initToday();
+  buildChips();
+  renderArchive();
+  el("retryA").onclick = function () {
+    loadFeed(FEED_A, "feedAList", "feedAStatus", "retryA", 6, "話題の見出し");
+  };
+  el("retryB").onclick = function () {
+    loadFeed(FEED_B, "feedBList", "feedBStatus", "retryB", 5, "怪談寄りの見出し");
+  };
+  loadAllFeeds();
+}
+
+init();
+</script>
+</body>
+</html>
