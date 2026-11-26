@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>RDR-6 周辺探査レーダー</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { background:#000; }
+  body {
+    color:#33ff66; font-family:"Courier New", monospace;
+    padding:10px 10px 20px; max-width:640px; margin:0 auto;
+    position:relative;
+  }
+  #scan {
+    position:fixed; left:0; top:0; right:0; bottom:0; pointer-events:none; z-index:50;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 3px);
+  }
+  h1 { font-size:22px; color:#33ffee; letter-spacing:2px; text-shadow:0 0 8px rgba(51,255,238,.7); }
+  h1 .amber { color:#ffb000; text-shadow:0 0 8px rgba(255,176,0,.7); }
+  .desc { font-size:14px; color:#9fe8b0; margin:4px 0 2px; line-height:1.5; }
+  .center-line { font-size:15px; color:#ffb000; margin-bottom:10px; }
+  .panel { border:1px solid #1d7a3a; background:rgba(0,30,10,.35); padding:8px; margin-bottom:10px; }
+  .panel-title { font-size:13px; color:#33ffee; letter-spacing:2px; border-bottom:1px solid #1d7a3a; padding-bottom:4px; margin-bottom:8px; }
+  .btnrow { display:flex; gap:6px; flex-wrap:wrap; }
+  button {
+    flex:1 1 0; min-height:48px; background:#021a08; color:#33ff66;
+    border:1px solid #33ff66; font-family:inherit; font-size:16px; cursor:pointer;
+    padding:6px 2px;
+  }
+  button.active { background:#33ff66; color:#000; font-weight:bold; }
+  button:active { background:#0d4d20; color:#c8ffd6; }
+  #pauseBtn { flex:0 0 100%; border-color:#ffb000; color:#ffb000; }
+  #pauseBtn.active { background:#ffb000; color:#000; }
+  canvas { display:block; width:100%; height:auto; background:#010a03; border:1px solid #1d7a3a; }
+  #statusLine { font-size:16px; color:#33ffee; margin-top:8px; min-height:22px; letter-spacing:1px; }
+  #detailLine {
+    font-size:16px; color:#ffb000; margin-top:4px; min-height:44px; line-height:1.5;
+    border:1px dashed #7a5a00; padding:6px 8px; background:rgba(40,26,0,.35);
+  }
+  .trow {
+    display:block; width:100%; text-align:left; flex:none;
+    border:1px solid #14532a; background:rgba(0,24,8,.5); color:#c8ffd6;
+    font-size:16px; min-height:48px; padding:10px 8px; margin-bottom:6px; line-height:1.4;
+  }
+  .trow .nm { color:#33ff66; font-weight:bold; }
+  .trow .ds { color:#33ffee; }
+  .trow .dr { color:#ffb000; }
+  .trow.sel { border-color:#ffb000; background:rgba(50,32,0,.5); }
+  .empty { font-size:15px; color:#9fe8b0; padding:8px 0; }
+  footer { font-size:13px; color:#5f9a6c; margin-top:14px; line-height:1.6; }
+</style>
+</head>
+<body>
+<div id="scan"></div>
+
+<h1>RDR-6 <span class="amber">周辺探査レーダー</span></h1>
+<p class="desc">スイープが周囲を探査し、ランドマークを探知します。リストをタップすると、その光点をマークします。</p>
+<p class="center-line">中心：ふじみ野市</p>
+
+<div class="panel">
+  <div class="panel-title">RANGE SELECT / 探知範囲</div>
+  <div class="btnrow">
+    <button type="button" class="rbtn" data-r="5">5km</button>
+    <button type="button" class="rbtn active" data-r="15">15km</button>
+    <button type="button" class="rbtn" data-r="40">40km</button>
+    <button type="button" class="rbtn" data-r="100">100km</button>
+  </div>
+  <div class="btnrow" style="margin-top:6px;">
+    <button type="button" id="pauseBtn">■ スイープ停止</button>
+  </div>
+</div>
+
+<canvas id="radar" width="640" height="640"></canvas>
+<div id="statusLine">探知中： --件 / 全--件　スイープ方位： 000°</div>
+<div id="detailLine">探知リストの項目をタップすると詳細を表示します。</div>
+
+<div class="panel" style="margin-top:10px;">
+  <div class="panel-title">CONTACT LIST / 探知リスト</div>
+  <div id="listBox"></div>
+</div>
+
+<footer>
+  ※ 位置・距離・方角は概算です（娯楽用レーダー）。<br>
+  RDR-6 SURROUNDINGS SCANNER — OFFLINE MODE / ALL DATA ON BOARD
+</footer>
+
+<script>
+var CENTER_LAT = 35.8795, CENTER_LON = 139.5197;
+var TARGETS = [
+  { name:"ふじみ野駅", lat:35.8608, lon:139.5233, note:"東武東上線" },
+  { name:"上福岡駅", lat:35.8733, lon:139.5119, note:"東武東上線" },
+  { name:"鶴瀬駅", lat:35.8453, lon:139.5417, note:"東武東上線" },
+  { name:"みずほ台駅", lat:35.8376, lon:139.5497, note:"東武東上線" },
+  { name:"川越駅", lat:35.9072, lon:139.4829, note:"JR・東武" },
+  { name:"本川越駅", lat:35.9133, lon:139.4797, note:"西武新宿線" },
+  { name:"新河岸駅", lat:35.8887, lon:139.4972, note:"東武東上線" },
+  { name:"川越氷川神社", lat:35.9268, lon:139.4885, note:"縁結びの神社" },
+  { name:"ららぽーと富士見", lat:35.8573, lon:139.5454, note:"ショッピングモール" },
+  { name:"ベルーナドーム", lat:35.7683, lon:139.4206, note:"西武ライオンズ本拠地" },
+  { name:"さいたまスーパーアリーナ", lat:35.8949, lon:139.6303, note:"" },
+  { name:"大宮駅", lat:35.9063, lon:139.6239, note:"" },
+  { name:"入間基地", lat:35.8419, lon:139.4106, note:"航空自衛隊" },
+  { name:"池袋駅", lat:35.7289, lon:139.7104, note:"" },
+  { name:"東京スカイツリー", lat:35.7101, lon:139.8107, note:"高さ634m" },
+  { name:"富士山", lat:35.3606, lon:138.7274, note:"標高3776m" }
+];
+var WINDS = ["北","北北東","北東","東北東","東","東南東","南東","南南東","南","南南西","南西","西南西","西","西北西","北西","北北西"];
+
+var rangeKm = 15;
+var sweep = 0, prevSweep = 0, running = true;
+var hlIndex = -1, hlUntil = 0;
+
+var cv = document.getElementById("radar");
+var ctx = cv.getContext("2d");
+var statusEl = document.getElementById("statusLine");
+var detailEl = document.getElementById("detailLine");
+var listEl = document.getElementById("listBox");
+var pauseBtn = document.getElementById("pauseBtn");
+
+function compute(t) {
+  var dx = (t.lon - CENTER_LON) * Math.cos(CENTER_LAT * Math.PI / 180);
+  var dy = t.lat - CENTER_LAT;
+  t.dist = Math.sqrt(dx * dx + dy * dy) * 111.19;
+  var b = Math.atan2(dx, dy) * 180 / Math.PI;
+  t.bearing = (b + 360) % 360;
+  t.wind = WINDS[Math.round(t.bearing / 22.5) % 16];
+  t.bright = 0;
+}
+var i;
+for (i = 0; i < TARGETS.length; i++) compute(TARGETS[i]);
+
+function inRangeCount() {
+  var n = 0, j;
+  for (j = 0; j < TARGETS.length; j++) if (TARGETS[j].dist <= rangeKm) n++;
+  return n;
+}
+
+function buildList() {
+  listEl.innerHTML = "";
+  var arr = [], j;
+  for (j = 0; j < TARGETS.length; j++) if (TARGETS[j].dist <= rangeKm) arr.push(j);
+  arr.sort(function (a, b) { return TARGETS[a].dist - TARGETS[b].dist; });
+  if (arr.length === 0) {
+    var e = document.createElement("div");
+    e.className = "empty";
+    e.innerHTML = "範囲内に探知対象がありません。";
+    listEl.appendChild(e);
+    return;
+  }
+  for (j = 0; j < arr.length; j++) {
+    (function (idx) {
+      var t = TARGETS[idx];
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "trow" + (idx === hlIndex ? " sel" : "");
+      b.innerHTML = "<span class=\"nm\">" + t.name + "</span>　<span class=\"ds\">" +
+        t.dist.toFixed(1) + "km</span>　<span class=\"dr\">" + t.wind + "</span>";
+      b.onclick = function () { highlight(idx); };
+      listEl.appendChild(b);
+    })(arr[j]);
+  }
+}
+
+function highlight(idx) {
+  hlIndex = idx;
+  hlUntil = new Date().getTime() + 4000;
+  var t = TARGETS[idx];
+  detailEl.innerHTML = "◎ " + t.name + " ／ " + t.dist.toFixed(1) + "km ／ 方角：" + t.wind +
+    "（" + Math.round(t.bearing) + "°）" + (t.note ? " ／ " + t.note : "");
+  TARGETS[idx].bright = 1;
+  buildList();
+}
+
+function draw() {
+  var W = 640, C = 320, R = 300;
+  ctx.fillStyle = "#010a03";
+  ctx.fillRect(0, 0, W, W);
+  var k, a, x, y;
+
+  /* rings */
+  ctx.strokeStyle = "rgba(51,255,102,0.35)";
+  ctx.lineWidth = 1;
+  ctx.fillStyle = "rgba(51,255,238,0.8)";
+  ctx.font = "15px monospace";
+  for (k = 1; k <= 4; k++) {
+    ctx.beginPath();
+    ctx.arc(C, C, R * k / 4, 0, Math.PI * 2);
+    ctx.stroke();
+    var label = (rangeKm * k / 4);
+    var lt = (label % 1 === 0) ? String(label) : label.toFixed(1);
+    ctx.fillText(lt + "km", C + 4, C - R * k / 4 + 15);
+  }
+  /* cross */
+  ctx.strokeStyle = "rgba(51,255,102,0.25)";
+  ctx.beginPath(); ctx.moveTo(C - R, C); ctx.lineTo(C + R, C); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(C, C - R); ctx.lineTo(C, C + R); ctx.stroke();
+  /* bearing ticks */
+  ctx.strokeStyle = "rgba(51,255,102,0.5)";
+  for (a = 0; a < 360; a += 15) {
+    var rad = a * Math.PI / 180;
+    var len = (a % 90 === 0) ? 16 : 8;
+    ctx.beginPath();
+    ctx.moveTo(C + Math.sin(rad) * (R - len), C - Math.cos(rad) * (R - len));
+    ctx.lineTo(C + Math.sin(rad) * R, C - Math.cos(rad) * R);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#33ffee";
+  ctx.font = "bold 22px monospace";
+  ctx.fillText("N", C - 7, C - R - 6);
+  ctx.fillText("S", C - 7, C + R + 24);
+  ctx.fillText("E", C + R + 6, C + 7);
+  ctx.fillText("W", C - R - 24, C + 7);
+
+  /* sweep trail */
+  var s;
+  for (s = 0; s < 28; s++) {
+    var ta = (sweep - s * 1.4) * Math.PI / 180;
+    ctx.strokeStyle = "rgba(51,255,102," + (0.14 * (1 - s / 28)).toFixed(3) + ")";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(C, C);
+    ctx.lineTo(C + Math.sin(ta) * R, C - Math.cos(ta) * R);
+    ctx.stroke();
+  }
+  var sa = sweep * Math.PI / 180;
+  ctx.strokeStyle = "rgba(180,255,200,0.95)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(C, C);
+  ctx.lineTo(C + Math.sin(sa) * R, C - Math.cos(sa) * R);
+  ctx.stroke();
+
+  /* center */
+  ctx.fillStyle = "#ffb000";
+  ctx.beginPath(); ctx.arc(C, C, 4, 0, Math.PI * 2); ctx.fill();
+
+  /* targets */
+  var now = new Date().getTime();
+  for (k = 0; k < TARGETS.length; k++) {
+    var t = TARGETS[k];
+    if (t.dist > rangeKm) continue;
+    var br = t.bearing * Math.PI / 180;
+    var rr = t.dist / rangeKm * R;
+    x = C + Math.sin(br) * rr;
+    y = C - Math.cos(br) * rr;
+    var alpha = 0.22 + 0.78 * t.bright;
+    ctx.fillStyle = "rgba(255,176,0," + alpha.toFixed(2) + ")";
+    ctx.beginPath(); ctx.arc(x, y, 5 + 3 * t.bright, 0, Math.PI * 2); ctx.fill();
+    if (t.bright > 0.55) {
+      ctx.fillStyle = "rgba(200,255,214," + ((t.bright - 0.55) * 1.6).toFixed(2) + ")";
+      ctx.font = "14px monospace";
+      ctx.fillText(t.name, x + 10, y + 4);
+    }
+    if (k === hlIndex && now < hlUntil) {
+      ctx.strokeStyle = "#ff5252";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255,82,82,0.5)";
+      ctx.stroke();
+    }
+  }
+}
+
+function tick() {
+  if (running) {
+    prevSweep = sweep;
+    sweep = (sweep + 3) % 360;
+    var j;
+    for (j = 0; j < TARGETS.length; j++) {
+      var b = TARGETS[j].bearing;
+      var crossed;
+      if (prevSweep < sweep) crossed = (b >= prevSweep && b < sweep);
+      else crossed = (b >= prevSweep || b < sweep);
+      if (crossed) TARGETS[j].bright = 1;
+    }
+    var sd = Math.floor(sweep);
+    var sTxt = (sd < 10 ? "00" : (sd < 100 ? "0" : "")) + sd;
+    statusEl.innerHTML = "探知中： " + inRangeCount() + "件 / 全" + TARGETS.length +
+      "件　スイープ方位： " + sTxt + "°";
+  }
+  var k2;
+  for (k2 = 0; k2 < TARGETS.length; k2++) {
+    TARGETS[k2].bright = TARGETS[k2].bright * 0.985;
+    if (TARGETS[k2].bright < 0.01) TARGETS[k2].bright = 0.01;
+  }
+  if (hlIndex >= 0 && new Date().getTime() >= hlUntil) {
+    hlIndex = -1;
+    buildList();
+  }
+  draw();
+}
+
+var rbtns = document.getElementsByClassName("rbtn");
+var ri;
+for (ri = 0; ri < rbtns.length; ri++) {
+  rbtns[ri].onclick = function () {
+    rangeKm = parseInt(this.getAttribute("data-r"), 10);
+    var q;
+    for (q = 0; q < rbtns.length; q++) rbtns[q].className = "rbtn";
+    this.className = "rbtn active";
+    buildList();
+  };
+}
+
+pauseBtn.onclick = function () {
+  running = !running;
+  pauseBtn.innerHTML = running ? "■ スイープ停止" : "▶ スイープ再開";
+  pauseBtn.className = running ? "" : "active";
+};
+
+buildList();
+draw();
+setInterval(tick, 50);
+</script>
+</body>
+</html>
