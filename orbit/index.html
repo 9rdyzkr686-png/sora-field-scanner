@@ -141,7 +141,7 @@ button:active { background: #33ff66; color: #000; }
 </div>
 
 <div class="footer">
-  DATA SOURCES: wheretheiss.at / Open-Meteo / Google News<br>
+  DATA SOURCES: wheretheiss.at / Open-Meteo / sorae.info<br>
   ORBIT-6 v1.0 — 観測地：埼玉県ふじみ野市 (35.8795, 139.5197)
 </div>
 
@@ -342,7 +342,7 @@ function renderEvents() {
 
 /* ---------- SPACE NEWS ---------- */
 function fetchNews() {
-  var rss = "https://news.google.com/rss/search?q=%E5%AE%87%E5%AE%99%20%E6%8E%A2%E6%9F%BB&hl=ja&gl=JP&ceid=JP:ja";
+  var rss = "https://sorae.info/feed";
   var url = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rss);
   getJSON(url, function (d) {
     if (!d.items || d.items.length === 0) {
