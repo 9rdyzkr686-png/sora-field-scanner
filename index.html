@@ -425,6 +425,7 @@ var TOPICS = [
 "夢レポート：フロッピーディスクノ山カラ、懐カシイ音ガ聞コエタ。"
 ], hi: []},
 { id: "scan", label: "スキャン", unlock: 2, face: "wow", lines: [], hi: []},
+{ id: "devscan", label: "端末スキャン", unlock: 1, face: "wow", lines: [], hi: []},
 { id: "weatherobs", label: "天気観測", unlock: 1, face: "normal", lines: [], hi: []},
 { id: "moon", label: "月の観測", unlock: 3, face: "wow", lines: [], hi: []},
 { id: "inbox", label: "受信BOX", unlock: 1, face: "normal", lines: [], hi: []},
@@ -645,6 +646,9 @@ var storyIdx = 0;
 var kuchiguse = "";
 var waveTimer = null;
 var waveIdx = 0;
+var devScanning = false;
+var devTimer = null;
+var devSink = 0;
 
 function el(id) { return document.getElementById(id);}
 
@@ -1151,6 +1155,206 @@ line.style.top = pos + "%";
 }, 48);
 }
 
+function startDevAnim() {
+var line = el("scanLine");
+var pos = 0;
+line.style.display = "block";
+line.style.top = "0%";
+if (devTimer) clearInterval(devTimer);
+devTimer = setInterval(function () {
+pos += 4;
+if (pos >= 100) pos = 0;
+line.style.top = pos + "%";
+line.style.display = "block";
+}, 48);
+}
+
+function stopDevAnim() {
+if (devTimer) {
+clearInterval(devTimer);
+devTimer = null;
+}
+el("scanLine").style.display = "none";
+}
+
+function devProgress(text) {
+finishType();
+hideCursor();
+el("speechText").innerHTML = esc(text);
+}
+
+function parseUA() {
+var ua = navigator.userAgent || "";
+if (!ua) return null;
+var dev = "";
+if (ua.indexOf("iPhone") >= 0) dev = "iPhone";
+else if (ua.indexOf("iPad") >= 0) dev = "iPad";
+else if (ua.indexOf("iPod") >= 0) dev = "iPod";
+var m = ua.match(/OS (\d+)_(\d+)(?:_(\d+))?/);
+var os = "";
+if (m) os = "iOS " + m[1] + "." + m[2] + (m[3] ? "." + m[3] : "");
+if (dev || os) return (dev ? dev : "端末不明") + (os ? " / " + os : "");
+return ua.length > 60 ? ua.substring(0, 60) + "…" : ua;
+}
+
+function measureCpu() {
+try {
+var t0 = new Date().getTime();
+var x = 0, i;
+for (i = 0; i < 2000000; i++) {
+x += (i % 7) * 1.5 + x * 0.0000001;
+}
+devSink = x;
+return new Date().getTime() - t0;
+} catch (e) {
+return null;
+}
+}
+
+function cpuGrade(ms) {
+if (ms < 150) return "高速";
+if (ms < 500) return "良好";
+return "ゆったり";
+}
+
+function pingOnce(cb) {
+var xhr = new XMLHttpRequest();
+var t0 = new Date().getTime();
+var done = false;
+function fin(v) {
+if (done) return;
+done = true;
+cb(v);
+}
+try {
+xhr.open("GET", "https://9rdyzkr686-png.github.io/sora-field-scanner/__ping__?t=" + new Date().getTime(), true);
+xhr.timeout = 6000;
+xhr.onreadystatechange = function () {
+if (xhr.readyState === 2) fin(new Date().getTime() - t0);
+};
+xhr.onload = function () { fin(new Date().getTime() - t0); };
+xhr.onerror = function () { fin(null); };
+xhr.ontimeout = function () { fin(null); };
+xhr.send();
+} catch (e) {
+fin(null);
+}
+}
+
+function measurePing(n, acc, cb) {
+if (n >= 3) {
+if (!acc.length) { cb(null); return; }
+var sum = 0, i;
+for (i = 0; i < acc.length; i++) sum += acc[i];
+cb(Math.round(sum / acc.length));
+return;
+}
+pingOnce(function (ms) {
+if (ms !== null) acc.push(ms);
+measurePing(n + 1, acc, cb);
+});
+}
+
+function measureSpeed(cb) {
+var xhr = new XMLHttpRequest();
+var t0 = new Date().getTime();
+var done = false;
+function fin(v) {
+if (done) return;
+done = true;
+cb(v);
+}
+try {
+xhr.open("GET", "https://9rdyzkr686-png.github.io/iPhone6-board/?t=" + new Date().getTime(), true);
+xhr.responseType = "text";
+xhr.timeout = 15000;
+xhr.onload = function () {
+var sec = (new Date().getTime() - t0) / 1000;
+var bytes = 0;
+try { bytes = xhr.responseText ? xhr.responseText.length : 0; } catch (e) { bytes = 0; }
+if (!bytes || sec <= 0) { fin(null); return; }
+fin({ mbps: bytes * 8 / sec / 1000000, kb: Math.round(bytes / 1024) });
+};
+xhr.onerror = function () { fin(null); };
+xhr.ontimeout = function () { fin(null); };
+xhr.send();
+} catch (e) {
+fin(null);
+}
+}
+
+function doDevScan() {
+clearCipher();
+var old = phaseNum();
+addLog("you", "あなた: ");
+devScanning = true;
+finishType();
+hideCursor();
+el("faceArt").innerHTML = esc(FACES.wow);
+startDevAnim();
+addLog("sys", "=== 端末スキャン開始 ===");
+devProgress("端末スキャン中…ジッとしてテ下サイ。");
+var res = { screen: null, ua: null, online: null, ping: null, speed: null, cpu: null };
+try {
+res.screen = screen.width + " × " + screen.height + "（CSS px）／ピクセル倍率 " + (window.devicePixelRatio || 1);
+} catch (e) { res.screen = null; }
+res.ua = parseUA();
+try {
+res.online = navigator.onLine ? "オンライン" : "オフライン";
+} catch (e) { res.online = null; }
+setTimeout(function () {
+if (!devScanning) return;
+devProgress("演算速度ヲ測定中…");
+res.cpu = measureCpu();
+devProgress("応答速度ヲ測定中…");
+addLog("sys", "応答速度ヲ測定中…");
+measurePing(0, [], function (avg) {
+res.ping = avg;
+devProgress("通信速度ヲ測定中…");
+addLog("sys", "通信速度ヲ測定中…");
+measureSpeed(function (sp) {
+res.speed = sp;
+finishDevScan(old, res);
+});
+});
+}, 30);
+}
+
+function finishDevScan(old, res) {
+stopDevAnim();
+devScanning = false;
+addLog("sys", "=== 端末スキャン結果 ===");
+addLog("", "画面：" + (res.screen ? res.screen : "測定失敗"));
+addLog("", "端末/OS：" + (res.ua ? res.ua : "測定失敗"));
+addLog("", "接続状態：" + (res.online ? res.online : "測定失敗"));
+addLog("", "応答速度：" + (res.ping !== null ? ("平均 " + res.ping + "ms") : "測定失敗"));
+addLog("", "通信速度：" + (res.speed ? ("約 " + res.speed.mbps.toFixed(1) + " Mbps（目安／受信 " + res.speed.kb + "KB）") : "測定失敗"));
+addLog("", "演算速度：" + (res.cpu !== null ? (res.cpu + "ms（評価：" + cpuGrade(res.cpu) + "）") : "測定失敗"));
+addLog("sys", "=== スキャン終了 ===");
+var fails = 0;
+if (!res.screen) fails++;
+if (!res.ua) fails++;
+if (!res.online) fails++;
+if (res.ping === null) fails++;
+if (!res.speed) fails++;
+if (res.cpu === null) fails++;
+var verdict, vface = "happy";
+if (fails >= 3) {
+verdict = "測定失敗ガ多カッタ…回線ヤ端末ノ調子ヲ確認シテ、モウ一度ヤッテミテクレ、" + addr() + "。";
+vface = "sleepy";
+} else if (res.speed && res.speed.mbps >= 10 && res.cpu !== null && res.cpu < 150) {
+verdict = "端末ノ反応、良好。観測ニ最適ダ、" + addr() + "。";
+} else if (res.ping !== null && res.ping > 800) {
+verdict = "応答ハ遅メダガ、観測ハ可能ダ。ユックリ行コウ、" + addr() + "。";
+} else if (res.speed && res.speed.mbps < 2) {
+verdict = "通信ハ遅メダガ、観測ハ可能ダ、" + addr() + "。";
+} else {
+verdict = "スキャン完了。コノ端末、観測ニ十分使エル、" + addr() + "。";
+}
+speak(verdict, vface);
+afterExchange(old);
+}
+
 function wmoDesc(code) {
 if (code === 0) return "快晴";
 if (code <= 2) return "晴レ時々曇リ";
@@ -1415,6 +1619,11 @@ return null;
 function doTopic(id) {
 var t = findTopic(id);
 if (!t) return;
+if (devScanning) {
+goSpeech();
+speak("今スキャン中ダ、待ッテクレ、" + addr() + "。終ワルマデ少シ待ッテ下サイ。", "wow");
+return;
+}
 goSpeech();
 if (booting) finishBoot();
 sndTap();
@@ -1426,6 +1635,7 @@ if (id === "mission") { doMission(); return;}
 if (id === "spec") { doSpec(); return;}
 if (id === "question") { doQuestion(); return;}
 if (id === "scan") { doScan(); return;}
+if (id === "devscan") { doDevScan(); return;}
 if (id === "weatherobs") { doWeatherObs(); return;}
 if (id === "news") { doNews(false); return;}
 if (id === "moon") { doMoon(); return;}
@@ -1457,6 +1667,11 @@ return false;
 }
 
 function doSend() {
+if (devScanning) {
+goSpeech();
+speak("今スキャン中ダ、待ッテクレ、" + addr() + "。終ワルマデ少シ待ッテ下サイ。", "wow");
+return;
+}
 var input = el("freeInput");
 var text = input.value.replace(/^\s+|\s+$/g, "");
 if (!text) return;
@@ -1692,8 +1907,8 @@ document.addEventListener("keydown", poke, false);
 }
 setInterval(function () {
 var idle = new Date().getTime() - lastAct;
-if (!sleeping && idle > 60000) { goSleep(); return;}
-if (!sleeping && !booting && !mutterDone && !typeTimer && !cipherPending && !missionActive && idle >= 35000) {
+if (!sleeping && !devScanning && idle > 60000) { goSleep(); return;}
+if (!sleeping && !booting && !devScanning && !mutterDone && !typeTimer && !cipherPending && !missionActive && idle >= 35000) {
 mutterDone = true;
 hideCursor();
 el("speechText").innerHTML = esc(fill(pick(MUTTERS)));
