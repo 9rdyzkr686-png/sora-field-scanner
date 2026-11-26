@@ -60,6 +60,15 @@ canvas { display: block; width: 100%; background: #000a10; border: 1px solid #0e
 .event-days { color: #ffb000; font-size: 14px; }
 .news-date { color: #7fb8a8; font-size: 13px; }
 .news-item a { color: #4dffd2; text-decoration: none; }
+.planet-item { padding: 5px 0; border-bottom: 1px dashed #0e5a4a; font-size: 16px; }
+.planet-item:last-child { border-bottom: none; }
+.planet-dir { color: #7fb8a8; font-size: 14px; }
+.planet-vis2 { color: #33ff66; }
+.planet-vis1 { color: #ffb000; }
+.planet-vis0 { color: #5f8a7d; }
+.planet-cmt { font-size: 13px; color: #7fb8a8; }
+.note { font-size: 12px; color: #ffb000; margin-top: 4px; }
+#triviaText { font-size: 16px; min-height: 48px; color: #eafff8; }
 button {
   display: block; width: 100%; min-height: 48px; margin: 4px 0 10px 0;
   background: #03251d; color: #33ff66; border: 1px solid #33ff66;
@@ -130,6 +139,12 @@ button:active { background: #33ff66; color: #000; }
 </div>
 
 <div class="panel">
+  <div class="panel-title">PLANETS <span class="jp">惑星パネル（今夜見えるか）</span></div>
+  <div id="planetList"></div>
+  <div class="note">※ 判定と方角は概算・目安です。惑星の実際の位置は日々変わります。</div>
+</div>
+
+<div class="panel">
   <div class="panel-title">ASTRO EVENTS <span class="jp">今後の天文イベント</span></div>
   <div id="eventsList"></div>
 </div>
@@ -140,9 +155,15 @@ button:active { background: #33ff66; color: #000; }
   <div class="msg" id="newsMsg">ニュース取得中…</div>
 </div>
 
+<div class="panel">
+  <div class="panel-title">SPACE TRIVIA <span class="jp">宇宙の雑学</span></div>
+  <div id="triviaText"></div>
+  <button id="triviaBtn">次の雑学 NEXT</button>
+</div>
+
 <div class="footer">
   DATA SOURCES: wheretheiss.at / Open-Meteo / sorae.info<br>
-  ORBIT-6 v1.0 — 観測地：埼玉県ふじみ野市 (35.8795, 139.5197)
+  ORBIT-6 v1.1 — 観測地：埼玉県ふじみ野市 (35.8795, 139.5197)
 </div>
 
 <script>
@@ -308,26 +329,76 @@ function fetchSun() {
   });
 }
 
+/* ---------- PLANETS ---------- */
+/* 月ごとの [方角の目安, 見えやすさ 0=見にくい 1=条件が良ければ 2=見える]（概算モデル） */
+var PLANETS = [
+  { name: "金星 VENUS", cmt: "宵の明星・明けの明星。全天でいちばん明るい惑星。", months: [
+    ["夕方・西の空", 2], ["夕方・西の空", 2], ["夕方・西の空", 1], ["明け方・東の空", 1],
+    ["明け方・東の空", 2], ["明け方・東の空", 2], ["明け方・東の空", 1], ["太陽に近く見にくい", 0],
+    ["夕方・西の空", 1], ["夕方・西の空", 2], ["夕方・西の空", 2], ["夕方・西の空", 1]
+  ] },
+  { name: "火星 MARS", cmt: "赤く輝く星。地球に近づく年ほど明るく大きく見える。", months: [
+    ["夜半・南の空", 2], ["夜半・南の空", 2], ["夜・南西の空", 1], ["夕方・西の空", 1],
+    ["夕方・西の空", 0], ["太陽に近く見にくい", 0], ["明け方・東の空", 0], ["明け方・東の空", 1],
+    ["夜半前・東の空", 1], ["夜・東の空", 2], ["夜・南東の空", 2], ["夜半・南の空", 2]
+  ] },
+  { name: "木星 JUPITER", cmt: "夜空の王様。双眼鏡でも4つのガリレオ衛星が見える。", months: [
+    ["夜・南東の空", 2], ["夜半・南の空", 2], ["夜半・南の空", 1], ["夜・南西の空", 1],
+    ["夕方・西の空", 0], ["太陽に近く見にくい", 0], ["明け方・東の空", 1], ["明け方・東の空", 1],
+    ["夜半前・東の空", 2], ["夜・東の空", 2], ["夜・南東の空", 2], ["夜・南東の空", 2]
+  ] },
+  { name: "土星 SATURN", cmt: "環がトレードマーク。小型望遠鏡で環の形が分かる。", months: [
+    ["夕方・西の空", 1], ["太陽に近く見にくい", 0], ["太陽に近く見にくい", 0], ["明け方・東の空", 1],
+    ["明け方・東の空", 1], ["夜半前・東の空", 2], ["夜・東の空", 2], ["夜・南東の空", 2],
+    ["夜半・南の空", 2], ["夜・南の空", 1], ["夜・南西の空", 1], ["夕方・西の空", 1]
+  ] }
+];
+
+function renderPlanets() {
+  var m = new Date().getMonth();
+  var visText = ["× 見にくい", "○ 条件が良ければ", "◎ 見える"];
+  var html = "";
+  var i, p, e;
+  for (i = 0; i < PLANETS.length; i++) {
+    p = PLANETS[i];
+    e = p.months[m];
+    html += '<div class="planet-item">' + p.name +
+      ' <span class="planet-vis' + e[1] + '">' + visText[e[1]] + "</span>" +
+      ' <span class="planet-dir">' + e[0] + "</span>" +
+      '<div class="planet-cmt">' + p.cmt + "</div></div>";
+  }
+  el("planetList").innerHTML = html;
+}
+
 /* ---------- ASTRO EVENTS ---------- */
+/* 毎年恒例の流星群（月・日で定義し、今年と来年の分を自動生成する） */
 var ASTRO_EVENTS = [
-  { date: "2026-12-14", name: "ふたご座流星群 極大" },
-  { date: "2027-01-03", name: "しぶんぎ座流星群 極大" },
-  { date: "2027-04-22", name: "こと座流星群 極大" },
-  { date: "2027-05-06", name: "みずがめ座η流星群 極大" },
-  { date: "2027-08-13", name: "ペルセウス座流星群 極大" }
+  { m: 1, d: 3, name: "しぶんぎ座流星群 極大" },
+  { m: 4, d: 22, name: "こと座流星群 極大" },
+  { m: 5, d: 6, name: "みずがめ座η流星群 極大" },
+  { m: 7, d: 30, name: "みずがめ座δ流星群 極大" },
+  { m: 8, d: 13, name: "ペルセウス座流星群 極大" },
+  { m: 10, d: 21, name: "オリオン座流星群 極大" },
+  { m: 11, d: 17, name: "しし座流星群 極大" },
+  { m: 12, d: 14, name: "ふたご座流星群 極大" }
 ];
 
 function renderEvents() {
   var today = new Date();
   today.setHours(0, 0, 0, 0);
   var items = [];
-  var i, parts, dt, diff;
+  var i, y, dt, diff;
   for (i = 0; i < ASTRO_EVENTS.length; i++) {
-    parts = ASTRO_EVENTS[i].date.split("-");
-    dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-    diff = Math.round((dt.getTime() - today.getTime()) / 86400000);
-    if (diff >= 0) {
-      items.push({ name: ASTRO_EVENTS[i].name, date: ASTRO_EVENTS[i].date, diff: diff });
+    for (y = today.getFullYear(); y <= today.getFullYear() + 1; y++) {
+      dt = new Date(y, ASTRO_EVENTS[i].m - 1, ASTRO_EVENTS[i].d);
+      diff = Math.round((dt.getTime() - today.getTime()) / 86400000);
+      if (diff >= 0) {
+        items.push({
+          name: ASTRO_EVENTS[i].name,
+          date: y + "-" + pad2(ASTRO_EVENTS[i].m) + "-" + pad2(ASTRO_EVENTS[i].d),
+          diff: diff
+        });
+      }
     }
   }
   items.sort(function (a, b) { return a.diff - b.diff; });
@@ -364,6 +435,32 @@ function fetchNews() {
   });
 }
 
+/* ---------- SPACE TRIVIA ---------- */
+var TRIVIA = [
+  "ISSは約90分で地球を1周する。乗組員は1日に16回、日の出と日の入りを見る。",
+  "月は毎年およそ3.8cmずつ地球から遠ざかっている。",
+  "金星では、1日の長さが1年の長さより長い。",
+  "土星は水より軽い。入れる水槽があれば浮かんでしまうほど。",
+  "月に残された宇宙飛行士の足跡は、風がないため100万年残ると言われる。",
+  "木星の大赤斑は、地球がすっぽり入るほど大きな嵐の渦。",
+  "太陽の光が地球に届くまで、約8分20秒かかる。",
+  "中性子星は、角砂糖1つ分で約10億トンもの重さになる。",
+  "宇宙空間では音が伝わらない。爆発しても無音。",
+  "火星のオリンポス山は太陽系最大の火山。高さはエベレストの約2.5倍。",
+  "ISSの太陽電池パネルを広げると、サッカー場ほどの大きさになる。",
+  "月の裏側を初めて撮影したのは、1959年のソ連の探査機ルナ3号。"
+];
+var triviaIdx = Math.floor(Math.random() * TRIVIA.length);
+
+function showTrivia() {
+  el("triviaText").innerHTML = TRIVIA[triviaIdx];
+}
+
+function nextTrivia() {
+  triviaIdx = (triviaIdx + 1) % TRIVIA.length;
+  showTrivia();
+}
+
 /* ---------- INIT ---------- */
 function refreshAll() {
   fetchISS();
@@ -372,11 +469,14 @@ function refreshAll() {
 }
 
 el("refreshBtn").addEventListener("click", function () { refreshAll(); });
+el("triviaBtn").addEventListener("click", function () { nextTrivia(); });
 
 tickClock();
 setInterval(tickClock, 1000);
 moonCalc();
+renderPlanets();
 renderEvents();
+showTrivia();
 drawMap();
 refreshAll();
 setInterval(fetchISS, 10000);

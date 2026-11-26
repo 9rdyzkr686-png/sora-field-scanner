@@ -98,11 +98,18 @@ var TARGETS = [
   { name:"川越氷川神社", lat:35.9268, lon:139.4885, note:"縁結びの神社" },
   { name:"ららぽーと富士見", lat:35.8573, lon:139.5454, note:"ショッピングモール" },
   { name:"ベルーナドーム", lat:35.7683, lon:139.4206, note:"西武ライオンズ本拠地" },
+  { name:"所沢駅", lat:35.786, lon:139.472, note:"西武池袋線・新宿線" },
+  { name:"航空公園", lat:35.799, lon:139.470, note:"日本初の飛行場跡" },
+  { name:"狭山湖", lat:35.761, lon:139.429, note:"山口貯水池" },
   { name:"さいたまスーパーアリーナ", lat:35.8949, lon:139.6303, note:"" },
   { name:"大宮駅", lat:35.9063, lon:139.6239, note:"" },
   { name:"入間基地", lat:35.8419, lon:139.4106, note:"航空自衛隊" },
   { name:"池袋駅", lat:35.7289, lon:139.7104, note:"" },
+  { name:"新宿駅", lat:35.690, lon:139.700, note:"巨大ターミナル" },
+  { name:"東京ドーム", lat:35.706, lon:139.752, note:"野球・コンサート" },
   { name:"東京スカイツリー", lat:35.7101, lon:139.8107, note:"高さ634m" },
+  { name:"横浜駅", lat:35.466, lon:139.622, note:"" },
+  { name:"千葉駅", lat:35.613, lon:140.114, note:"" },
   { name:"富士山", lat:35.3606, lon:138.7274, note:"標高3776m" }
 ];
 var WINDS = ["北","北北東","北東","東北東","東","東南東","南東","南南東","南","南南西","南西","西南西","西","西北西","北西","北北西"];
@@ -110,6 +117,8 @@ var WINDS = ["北","北北東","北東","東北東","東","東南東","南東","
 var rangeKm = 15;
 var sweep = 0, prevSweep = 0, running = true;
 var hlIndex = -1, hlUntil = 0;
+var mystery = null;
+var nextMysteryAt = new Date().getTime() + 15000 + Math.random() * 20000;
 
 var cv = document.getElementById("radar");
 var ctx = cv.getContext("2d");
@@ -170,6 +179,16 @@ function highlight(idx) {
     "（" + Math.round(t.bearing) + "°）" + (t.note ? " ／ " + t.note : "");
   TARGETS[idx].bright = 1;
   buildList();
+}
+
+function spawnMystery(nowT) {
+  var d = 2 + Math.random() * Math.max(3, rangeKm * 0.85);
+  mystery = { bearing: Math.random() * 360, dist: d, until: nowT + 6000 };
+  if (hlIndex < 0 || nowT >= hlUntil) {
+    var w = WINDS[Math.round(mystery.bearing / 22.5) % 16];
+    detailEl.innerHTML = "⚠ 未確認信号を探知！ 方角：" + w + "（" + Math.round(mystery.bearing) +
+      "°）／ 約" + mystery.dist.toFixed(1) + "km — 識別不能… まもなく消滅します";
+  }
 }
 
 function draw() {
@@ -261,9 +280,32 @@ function draw() {
       ctx.stroke();
     }
   }
+
+  /* mystery signal */
+  if (mystery && mystery.dist <= rangeKm) {
+    var mb = mystery.bearing * Math.PI / 180;
+    var mr = mystery.dist / rangeKm * R;
+    var mx = C + Math.sin(mb) * mr;
+    var my = C - Math.cos(mb) * mr;
+    var pulse = 0.6 + 0.4 * Math.sin(now / 180);
+    ctx.fillStyle = "rgba(51,255,238," + pulse.toFixed(2) + ")";
+    ctx.beginPath(); ctx.arc(mx, my, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(51,255,238,0.7)";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(mx, my, 12 + 4 * Math.sin(now / 180), 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = "#33ffee";
+    ctx.font = "bold 14px monospace";
+    ctx.fillText("？未確認", mx + 10, my + 4);
+  }
 }
 
 function tick() {
+  var nowT = new Date().getTime();
+  if (mystery && nowT >= mystery.until) {
+    mystery = null;
+    nextMysteryAt = nowT + 20000 + Math.random() * 30000;
+  }
+  if (running && !mystery && nowT >= nextMysteryAt) spawnMystery(nowT);
   if (running) {
     prevSweep = sweep;
     sweep = (sweep + 3) % 360;

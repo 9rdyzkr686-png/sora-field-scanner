@@ -111,6 +111,10 @@
   <h3>◆ ダジャレ</h3>
   <div id="jokeText">読み込み中…</div>
   <button id="jokeNext" type="button">次のをみる</button>
+
+  <h3>◆ CUTIE STREET豆知識</h3>
+  <div id="cutieText">読み込み中…</div>
+  <button id="cutieNext" type="button">次のをみる</button>
 </div>
 
 <div class="card">
@@ -149,6 +153,15 @@
   </div>
   <button id="diceBtn" type="button">ふる</button>
   <div id="diceMsg">ボタンを押すとサイコロをふります。</div>
+
+  <h3>◆ ハイ＆ロー</h3>
+  <div>今のカード：<span class="big amber" id="hlCard">？</span></div>
+  <div>次のカード（1〜13）は、今のカードより高い？ 低い？</div>
+  <button id="hlHigh" type="button">▲ ハイ（高い）</button>
+  <button id="hlLow" type="button">▼ ロー（低い）</button>
+  <button id="hlReset" type="button">はじめから</button>
+  <div id="hlMsg">「ハイ」か「ロー」を選んでください。同じ数が出たら引き分けで続行です。</div>
+  <div class="stat" id="hlStat">連続正解 0 ／ 最高記録 0</div>
 </div>
 
 <div class="card">
@@ -212,7 +225,15 @@ var DAX = [
   '吠え声は体に似合わず大きめ。巣穴の中から飼い主に合図するためでした。',
   '腰に負担がかかりやすい犬種。高い所からの飛び降りには要注意です。',
   '穴掘りが大好き。庭に穴があったら、だいたいダックスの仕業です。',
-  'イギリスのビクトリア女王が愛したことでも有名な犬種です。'
+  'イギリスのビクトリア女王が愛したことでも有名な犬種です。',
+  '嗅覚は人間の数千万倍とも言われます。鼻で世界を読んでいるようなものです。',
+  'ヘルニア予防には体重管理が大事。おやつのあげすぎは腰への負担になります。',
+  'ダックスにはスタンダード、ミニチュア、カニンヘンの3サイズがあります。',
+  '被毛もロング、スムース、ワイヤーの3タイプ。組み合わせで印象がガラリと変わります。',
+  '寝るときは布団に潜り込む子が多め。穴ぐらで寝ていた習性の名残です。',
+  '平均寿命は12〜16年ほど。小型犬の中でも長生きな部類です。',
+  '「ダックス」は英語圏での愛称。本来の読みは「ダックスフント」です。',
+  '猟犬らしく勇敢で、体より大きな相手にも物怖じしない性格の子が多いです。'
 ];
 var SPACE_TRIVIA = [
   '国際宇宙ステーションは約90分で地球を1周。1日に16回も日の出が見られます。',
@@ -226,7 +247,15 @@ var SPACE_TRIVIA = [
   '木星の大赤斑は、少なくとも300年以上続いている巨大な嵐です。',
   '宇宙服1着のお値段は、およそ10億円以上とも言われます。',
   '月面の足跡は風がないため、何百万年も残り続けると言われます。',
-  '銀河系には少なくとも1000億個以上の星があると考えられています。'
+  '銀河系には少なくとも1000億個以上の星があると考えられています。',
+  '宇宙空間は完全な無音。爆発が起きても音は伝わりません。',
+  '火星の夕焼けは青っぽく見えます。地球とは逆の色合いです。',
+  '太陽系で一番高い山は火星のオリンポス山。エベレストの約3倍の高さです。',
+  '宇宙飛行士の身長は、宇宙にいる間2〜5cmほど伸びると言われます。',
+  '月の裏側は地球からは決して見えません。自転と公転の周期が同じだからです。',
+  '流れ星の正体は、宇宙のチリが大気で燃える現象。大きさは砂粒ほどです。',
+  '土星の環は氷の粒の集まり。厚さは意外と薄く、数十メートルほどとも言われます。',
+  '地球の自転は少しずつ遅くなっていて、1日の長さはごくわずかに伸び続けています。'
 ];
 var RIDDLES = [
   { q: 'パンはパンでも、食べられないパンはなーんだ？', a: 'フライパン' },
@@ -238,7 +267,13 @@ var RIDDLES = [
   { q: '夜になると出てきて、朝になると消えるものはなーんだ？', a: '星' },
   { q: '買ったときは黒くて、使うと赤くなり、捨てるときは灰色になるものは？', a: '木炭' },
   { q: '世界の真ん中にいる虫はなーんだ？', a: '蚊（「せかい」の真ん中の文字は「か」）' },
-  { q: '上から読んでも、下から読んでも同じになる食べ物はなーんだ？', a: 'トマト' }
+  { q: '上から読んでも、下から読んでも同じになる食べ物はなーんだ？', a: 'トマト' },
+  { q: '叩けば叩くほど小さくなるものはなーんだ？', a: '釘（くぎ）' },
+  { q: '逆さまにすると数字が増えるものはなーんだ？', a: '6（逆さまにすると9になる）' },
+  { q: '割らないと使えないものはなーんだ？', a: '卵' },
+  { q: '手も足もないのに、世界中を旅できるものはなーんだ？', a: '手紙（切手）' },
+  { q: '朝は4本足、昼は2本足、夜は3本足になるものはなーんだ？', a: '人間（赤ちゃん→大人→杖をつく老人）' },
+  { q: '飲めば飲むほど喉が渇くものはなーんだ？', a: '塩水（海水）' }
 ];
 var JOKES = [
   '布団が吹っ飛んだ。',
@@ -252,10 +287,28 @@ var JOKES = [
   'ロケット発射！ 気分も打ち上がっていく。',
   'サイコロを振ったら、目が回った。',
   'おみくじで大吉。気分は上々、犬も喜ぶ。',
-  'カレーは辛いが、人生は甘くしたい。'
+  'カレーは辛いが、人生は甘くしたい。',
+  '犬の散歩に行ったら、運も付いてきた。',
+  '柿を食べて、過去の失敗もカキ消した。',
+  '時計を見たら、トキメキの時間だった。',
+  '梨を食べたら、悩みもナシになった。',
+  '電車に乗ったら、気持ちも乗ってきた。',
+  '雨が降っても、心は晴れ。アメだけに飴をなめよう。',
+  'イクラはいくらあっても嬉しい。',
+  '靴下を履いたら、気分もクツロゲた。'
+];
+var CUTIE_FACTS = [
+  'CUTIE STREETは、ASOBISYSTEMのプロジェクト「KAWAII LAB.」から2024年にデビューしたアイドルグループです。',
+  'グループ名はファンの間では「キュースト」と略して呼ばれることが多いです。',
+  '楽曲「かわいいだけじゃだめですか？」は、SNSの動画をきっかけに大きく広まった代表曲として知られています。',
+  'コンセプトは日本の「KAWAII」を世界へ届けること。衣装やビジュアルもポップでカラフルな世界観が特徴です。',
+  'アイドルのライブでは、曲に合わせてファンが声を出す「コール」や、ペンライトを振る応援文化があります。',
+  'メンバーごとにイメージカラーが決まっているグループが多く、ファンは推しの色のペンライトを持つのが定番です。',
+  '「推し活」という言葉が広まったように、ライブや配信、SNSで応援する楽しみ方が今のアイドル文化の中心になっています。',
+  '新曲が出ると、振り付けを真似して踊る動画がSNSにたくさん投稿されるのも、最近のアイドルシーンの風景です。'
 ];
 
-var daxIdx = 0, spaceIdx = 0, riddleIdx = 0, jokeIdx = 0;
+var daxIdx = 0, spaceIdx = 0, riddleIdx = 0, jokeIdx = 0, cutieIdx = 0;
 function showReading() {
   el('daxText').innerHTML = esc(DAX[daxIdx % DAX.length]);
   el('spaceText').innerHTML = esc(SPACE_TRIVIA[spaceIdx % SPACE_TRIVIA.length]);
@@ -263,6 +316,7 @@ function showReading() {
   el('riddleAns').innerHTML = '答え：' + esc(RIDDLES[riddleIdx % RIDDLES.length].a);
   el('riddleAns').style.display = 'none';
   el('jokeText').innerHTML = esc(JOKES[jokeIdx % JOKES.length]);
+  el('cutieText').innerHTML = esc(CUTIE_FACTS[cutieIdx % CUTIE_FACTS.length]);
 }
 function initReading() {
   var s = daySeed();
@@ -270,10 +324,12 @@ function initReading() {
   spaceIdx = s % SPACE_TRIVIA.length;
   riddleIdx = s % RIDDLES.length;
   jokeIdx = s % JOKES.length;
+  cutieIdx = s % CUTIE_FACTS.length;
   showReading();
   el('daxNext').onclick = function () { daxIdx = daxIdx + 1; showReading(); };
   el('spaceNext').onclick = function () { spaceIdx = spaceIdx + 1; showReading(); };
   el('jokeNext').onclick = function () { jokeIdx = jokeIdx + 1; showReading(); };
+  el('cutieNext').onclick = function () { cutieIdx = cutieIdx + 1; showReading(); };
   el('riddleNext').onclick = function () { riddleIdx = riddleIdx + 1; showReading(); };
   el('riddleShow').onclick = function () {
     var a = el('riddleAns');
@@ -456,6 +512,46 @@ function initDice() {
   };
 }
 
+/* ---------- ハイ＆ロー ---------- */
+var hlNow = 0, hlStreak = 0, hlBest = 0;
+function hlDraw() { return Math.floor(Math.random() * 13) + 1; }
+function hlStat() {
+  el('hlStat').innerHTML = '連続正解 ' + hlStreak + ' ／ 最高記録 ' + hlBest;
+}
+function hlNewGame() {
+  hlNow = hlDraw();
+  hlStreak = 0;
+  el('hlCard').innerHTML = hlNow;
+  el('hlMsg').innerHTML = '新しいカードは ' + hlNow + ' です。次のカードは高い？ 低い？';
+  hlStat();
+}
+function hlPlay(guessHigh) {
+  var next = hlDraw();
+  var msg;
+  if (next === hlNow) {
+    msg = '次のカードは ' + next + '。同じ数で引き分け！ 連続記録はそのまま続行です。';
+  } else if ((next > hlNow) === guessHigh) {
+    hlStreak = hlStreak + 1;
+    if (hlStreak > hlBest) { hlBest = hlStreak; }
+    msg = '次のカードは ' + next + '。正解！ ' + hlStreak + '連続正解です！';
+    if (hlStreak === 5) { msg += ' 5連勝、すごい！'; }
+    if (hlStreak === 10) { msg += ' 10連勝！ もう達人レベルです！'; }
+  } else {
+    msg = '次のカードは ' + next + '。残念、はずれ… 連続記録は ' + hlStreak + ' でストップ。最高記録 ' + hlBest + ' を目指して再挑戦！';
+    hlStreak = 0;
+  }
+  hlNow = next;
+  el('hlCard').innerHTML = hlNow;
+  el('hlMsg').innerHTML = esc(msg);
+  hlStat();
+}
+function initHighLow() {
+  el('hlHigh').onclick = function () { hlPlay(true); };
+  el('hlLow').onclick = function () { hlPlay(false); };
+  el('hlReset').onclick = hlNewGame;
+  hlNewGame();
+}
+
 /* ---------- リンク ---------- */
 function initLinks() {
   el('linkBoard').onclick = function () { location.href = 'https://9rdyzkr686-png.github.io/iPhone6-board/'; };
@@ -473,6 +569,7 @@ initGuess();
 initJanken();
 initOmikuji();
 initDice();
+initHighLow();
 initLinks();
 </script>
 </body>
