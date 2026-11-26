@@ -2277,8 +2277,12 @@ if (aiMode && !aiBusy) { aiSend(text, old); return; }
 doCanned(text, old);
 }
 
-function aiFail(text, old) {
+function aiFail(text, old, quota) {
+if (quota) {
+el("evoNote").innerHTML = "AI回線は本日の無料枠を使い切ったようです（毎朝9時リセット）。通常回線で応答しました。";
+} else {
 el("evoNote").innerHTML = "AI回線が混み合っています。通常回線で応答しました。";
+}
 doCanned(text, old);
 }
 
@@ -2290,24 +2294,12 @@ hideCursor();
 el("faceArt").innerHTML = esc(FACES.wow);
 el("speechText").innerHTML = esc("AI回線で通信中…");
 var prompt = "あなたは観測生物SORA-01。1980年代パソコン風のレトロな端末口調で、日本語で短く（100文字以内）答えてください。相手は観察者の小野さんです。質問：" + text;
-var xhr = new XMLHttpRequest();
-var done = false;
-function fail() {
-if (done) return;
-done = true;
-aiBusy = false;
-aiFail(text, old);
-}
-try {
-xhr.open("GET", "https://text.pollinations.ai/" + encodeURIComponent(prompt), true);
-xhr.timeout = 20000;
-xhr.onload = function () {
-if (done) return;
-var body = "";
-try { body = xhr.responseText || ""; } catch (e) { body = ""; }
-body = body.replace(/^\s+|\s+$/g, "");
-if (xhr.status === 200 && body && body.indexOf("Free limit reached") !== 0) {
-done = true;
+var url = "https://text.pollinations.ai/" + encodeURIComponent(prompt);
+var finished = false;
+var retried = false;
+function finishOk(body) {
+if (finished) return;
+finished = true;
 aiBusy = false;
 if (body.length > 280) body = body.substring(0, 280);
 addLog("you", "あなた: " + text);
@@ -2315,16 +2307,60 @@ collectWords(text);
 speakTag = "[AI回線]";
 speak(body, "normal");
 afterExchange(old);
+}
+function finishFail(quota) {
+if (finished) return;
+finished = true;
+aiBusy = false;
+aiFail(text, old, quota);
+}
+function failOrRetry() {
+if (finished) return;
+if (!retried) {
+retried = true;
+el("speechText").innerHTML = esc("AI回線で通信中…（再試行中）");
+setTimeout(attempt, 2000);
 } else {
-fail();
+finishFail(false);
+}
+}
+function attempt() {
+if (finished) return;
+var xhr = new XMLHttpRequest();
+var settled = false;
+try {
+xhr.open("GET", url, true);
+xhr.timeout = 45000;
+xhr.onload = function () {
+if (settled || finished) return;
+settled = true;
+var body = "";
+try { body = xhr.responseText || ""; } catch (e) { body = ""; }
+body = body.replace(/^\s+|\s+$/g, "");
+if (body && body.indexOf("Free limit reached") === 0) {
+finishFail(true);
+} else if (xhr.status === 200 && body) {
+finishOk(body);
+} else {
+failOrRetry();
 }
 };
-xhr.onerror = fail;
-xhr.ontimeout = fail;
+xhr.onerror = function () {
+if (settled || finished) return;
+settled = true;
+failOrRetry();
+};
+xhr.ontimeout = function () {
+if (settled || finished) return;
+settled = true;
+failOrRetry();
+};
 xhr.send();
 } catch (e) {
-fail();
+failOrRetry();
 }
+}
+attempt();
 }
 
 function doCanned(text, old) {

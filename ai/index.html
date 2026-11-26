@@ -136,6 +136,7 @@
 var API_BASE = "https://text.pollinations.ai/";
 var GREETING = "こんにちは、小野さん。AI-6です。何でも聞いてください。";
 var FAIL_MSG = "AI回線が混み合っています。少し待って、もう一度送ってみてください。";
+var QUOTA_MSG = "本日の無料枠（1日100回）を使い切ったようです。毎朝9時にリセットされます。";
 
 var MODES = {
   normal:  { label: "ふつう",       inst: "あなたは親切なAIアシスタントです。丁寧で簡潔に答えてください。" },
@@ -251,7 +252,7 @@ function buildPrompt(userText) {
   else limit = "300文字以内で答えてください。";
   var p = inst + COMMON_RULES + limit;
   var i, h;
-  var from = Math.max(0, history.length - 6);
+  var from = Math.max(0, history.length - 3);
   if (from < history.length) {
     p += " これまでの会話：";
     for (i = from; i < history.length; i++) {
@@ -275,18 +276,43 @@ function sendMessage(text) {
   thinkMsg.className = "msg thinking";
 
   var done = false;
-  function fail() {
+  var retried = false;
+  var retrying = false;
+  var elapsed = 0;
+  var waitTimer = setInterval(function () {
+    elapsed += 1;
+    thinkMsg.innerHTML = "考え中… " + elapsed + "秒" + (retrying ? "（再試行中）" : "");
+  }, 1000);
+
+  function stopWait() {
+    if (waitTimer) { clearInterval(waitTimer); waitTimer = null; }
+  }
+  function finalFail(msg) {
     if (done) return;
     done = true;
+    stopWait();
     thinkMsg.className = "msg error";
-    thinkMsg.innerHTML = esc(FAIL_MSG);
+    thinkMsg.innerHTML = esc(msg);
     sending = false;
     sendBtn.disabled = false;
     scrollToBottom();
   }
+  function failOrRetry(isQuota) {
+    if (done) return;
+    if (isQuota) { finalFail(QUOTA_MSG); return; }
+    if (!retried) {
+      retried = true;
+      retrying = true;
+      thinkMsg.innerHTML = "考え中… " + elapsed + "秒（再試行中）";
+      setTimeout(function () { if (!done) attempt(); }, 2000);
+    } else {
+      finalFail(FAIL_MSG);
+    }
+  }
   function succeed(reply) {
     if (done) return;
     done = true;
+    stopWait();
     thinkMsg.className = "msg";
     history.push({ u: text, a: reply });
     if (history.length > 12) history.shift();
@@ -295,25 +321,28 @@ function sendMessage(text) {
     startTyping(thinkMsg, reply);
     speak(reply);
   }
-
-  try {
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", API_BASE + encodeURIComponent(buildPrompt(text)), true);
-    xhr.timeout = 30000;
-    xhr.onreadystatechange = function () {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status !== 200) { fail(); return; }
-      var body = (xhr.responseText || "").replace(/^\s+|\s+$/g, "");
-      if (!body) { fail(); return; }
-      if (body.indexOf("Free limit reached") === 0) { fail(); return; }
-      succeed(body);
-    };
-    xhr.ontimeout = function () { fail(); };
-    xhr.onerror = function () { fail(); };
-    xhr.send(null);
-  } catch (e) {
-    fail();
+  function attempt() {
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", API_BASE + encodeURIComponent(buildPrompt(text)), true);
+      xhr.timeout = 60000;
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        if (done) return;
+        if (xhr.status !== 200) { failOrRetry(false); return; }
+        var body = (xhr.responseText || "").replace(/^\s+|\s+$/g, "");
+        if (!body) { failOrRetry(false); return; }
+        if (body.indexOf("Free limit reached") === 0) { failOrRetry(true); return; }
+        succeed(body);
+      };
+      xhr.ontimeout = function () { failOrRetry(false); };
+      xhr.onerror = function () { failOrRetry(false); };
+      xhr.send(null);
+    } catch (e) {
+      failOrRetry(false);
+    }
   }
+  attempt();
 }
 
 sendBtn.onclick = function () { sendMessage(inputBox.value); };
