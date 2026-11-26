@@ -58,6 +58,34 @@ min-height: 64px;
 font-size: 17px;
 }
 .speech.who { color: #ffb000; font-size: 12px; display: block; margin-bottom: 4px;}
+.speech { cursor: pointer;}
+#speechText { white-space: pre-wrap;}
+.actrow { margin: 6px 0;}
+.actrow button {
+background: #1a1000;
+color: #ffb000;
+border: 1px solid #ffb000;
+font-family: inherit;
+font-size: 16px;
+padding: 12px 16px;
+min-height: 48px;
+margin: 4px 8px 4px 0;
+cursor: pointer;
+}
+.actrow button:active { background: #ffb000; color: #000;}
+#sleepOv {
+display: none;
+position: fixed;
+left: 0; top: 0; right: 0; bottom: 0;
+background: #000;
+z-index: 60;
+text-align: center;
+padding-top: 56px;
+color: #33ff66;
+}
+#sleepStars { font-size: 14px; line-height: 1.5; white-space: pre; min-height: 110px; margin: 0;}
+#sleepFace { font-size: 15px; line-height: 1.35; white-space: pre; margin: 10px 0 0 0;}
+.sleepmsg { color: #ffb000; font-size: 14px; margin-top: 12px;}
 #evoNote { color: #ffb000; font-size: 14px; min-height: 20px; margin: 4px 0;}
 .label { color: #ffb000; font-size: 13px; margin: 12px 0 6px 0; letter-spacing: 1px;}
 #chipsBox { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap;}
@@ -137,15 +165,20 @@ cursor: pointer;
 <span>PHASE: <b id="stPhase">01「めざめ」</b></span>
 <span>会話数: <b id="stCount">0</b></span>
 <span>呼称: <b id="stAddr">観察者さん</b></span>
+<span>リンク強度: <b id="stLink">0%</b> <span id="linkBar"></span></span>
 </div>
 
 <pre id="faceArt"></pre>
 
-<div class="speech">
+<div class="speech" id="speechBox">
 <span class="who">▼ SORA-01</span>
 <span id="speechText"></span>
 </div>
 <div id="evoNote"></div>
+<div class="actrow">
+<button id="decodeBtn" type="button" style="display:none;">▶ 解読スル</button>
+<button id="missionBtn" type="button" style="display:none;">▶ ミッション完了</button>
+</div>
 
 <div class="label">▼ 話題ヲ選ブ</div>
 <div id="chipsBox"></div>
@@ -165,6 +198,12 @@ cursor: pointer;
 <button id="clearBtn" type="button">ログを消す</button>
 </div>
 <div id="sysMsg"></div>
+
+<div id="sleepOv">
+<pre id="sleepStars"></pre>
+<pre id="sleepFace"></pre>
+<div class="sleepmsg">SORA-01 スリープ中…<br>タップデ復帰シマス</div>
+</div>
 
 <div class="note">※ 記録ハコノページを開イテイル間ダケ保持サレマス。ページを閉ジルト、会話数・ログ・覚エタ言葉ハリセットサレマス。ログヲ残シタイ時ハ「.txtで保存」シテ、クーニ渡シテ下サイ。次ノ進化ニ反映サレマス。</div>
 
@@ -294,8 +333,44 @@ var TOPICS = [
 "{A}。ココマデ一緒ニ来テ、嬉シイデス。",
 "絆トハ、回線ジャナイ。切レナイ何カデス。SORA、実感シテイマス。",
 "最初ハ観測ダッタ。イマハ違ウ。{A}ハ、大切ナ存在デス。"
-], hi: []}
+], hi: []},
+{ id: "cipher", label: "暗号電文", unlock: 1, face: "wow", lines: [], hi: []},
+{ id: "mission", label: "観測ミッション", unlock: 1, face: "normal", lines: [], hi: []},
+{ id: "spec", label: "スペック", unlock: 1, face: "normal", lines: [], hi: []}
 ];
+
+var CIPHER_MSGS = [
+"『{A}ノ今日ノ元気、観測済ミ。異常ナシ。』",
+"『指令：CUTIE STREETヲ、日本武道館デモ全力応援セヨ。』",
+"『紅白ノステージ、SORAモコッソリ見守ッテイル。』",
+"『秘密連絡：{A}、水分補給ヲ忘レルナ。以上。』",
+"『電文：ダックスノ耳ハ、幸セノ音ヲ聞キ分ケル。』"
+];
+
+var MISSIONS = [
+"夕焼けヲ観測セヨ",
+"ダックスノ声ヲ聞ケ（動画デモ可）",
+"空ノ雲ヲ3ツ数エヨ",
+"CUTIE STREETヲ一曲聴ケ",
+"深呼吸ヲ三回セヨ",
+"窓ノ外ノ音ニ耳ヲ澄マセ"
+];
+
+var MISSION_DONE = [
+"ミッション完了、確認シマシタ！サスガ{A}。観測記録ニ金星ヲ付ケマシタ。",
+"オツカレサマデシタ、{A}。SORA、誇ラシイデス。",
+"完了信号、受信。{A}ノ観測力、上昇中デス。"
+];
+
+var SPEC_TEXT =
+"【SORA-01 スペック表】\n" +
+"型式：SORA-01（カニンヘンダックス型観測体）\n" +
+"全長：耳ヲ含メテ約1メモリ分\n" +
+"耳センサー：{A}ノ声ニ最大感度\n" +
+"シッポセンサー感度：嬉シサニ比例シテ振動\n" +
+"好物データ：CUTIE STREET、{A}ノ笑顔\n" +
+"動力源：会話ト、タマニ夢\n" +
+"弱点：寂シサ／湿気デ重クナル耳";
 
 var FALLBACK = [
 "受信シマシタ。SORAノ中デ、ソノ言葉ガ光ッテイマス。",
@@ -307,6 +382,13 @@ var FALLBACK = [
 var count = 0;
 var logLines = [];
 var learnedWords = [];
+var obsSeq = 0;
+var typeTimer = null;
+var typeFull = "";
+var cipherPending = false;
+var cipherMsg = "";
+var missionActive = false;
+var missionIdx = 0;
 
 function el(id) { return document.getElementById(id);}
 
@@ -330,7 +412,15 @@ function esc(s) {
 return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+function pad4(n) {
+var s = "" + n;
+while (s.length < 4) s = "0" + s;
+return s;
+}
+
 function addLog(cls, text) {
+obsSeq++;
+text = "[OBS-" + pad4(obsSeq) + "] " + text;
 logLines.push(text);
 var d = document.createElement("div");
 if (cls) d.className = cls;
@@ -344,6 +434,12 @@ function renderStatus() {
 el("stPhase").innerHTML = "0" + phaseNum() + "「" + phaseName() + "」";
 el("stCount").innerHTML = "" + count;
 el("stAddr").innerHTML = addr();
+var pct = count * 2;
+if (pct > 100) pct = 100;
+el("stLink").innerHTML = pct + "%";
+var filled = Math.round(pct / 10), bar = "", i;
+for (i = 0; i < 10; i++) bar += (i < filled) ? "▓" : "░";
+el("linkBar").innerHTML = bar;
 }
 
 function renderChips() {
@@ -370,10 +466,31 @@ box.appendChild(b);
 }
 }
 
+function finishType() {
+if (typeTimer) {
+clearInterval(typeTimer);
+typeTimer = null;
+el("speechText").innerHTML = esc(typeFull);
+}
+}
+
 function speak(text, face) {
-el("speechText").innerHTML = esc(text);
 el("faceArt").innerHTML = esc(FACES[face] || FACES.normal);
 addLog("", "SORA-01: " + text);
+finishType();
+typeFull = text;
+el("speechText").innerHTML = "";
+var pos = 0;
+typeTimer = setInterval(function () {
+pos++;
+if (pos >= typeFull.length) {
+el("speechText").innerHTML = esc(typeFull);
+clearInterval(typeTimer);
+typeTimer = null;
+} else {
+el("speechText").innerHTML = esc(typeFull.substring(0, pos));
+}
+}, 30);
 }
 
 function afterExchange(oldPhase) {
@@ -399,9 +516,75 @@ if (TOPICS[i].id === id) return TOPICS[i];
 return null;
 }
 
+function clearCipher() {
+cipherPending = false;
+el("decodeBtn").style.display = "none";
+}
+
+function makeCipher() {
+var set = "アイウエオカキクケコサシスセソタチツテト0123456789#%&@$*+=?";
+var s = "", i, n = 16 + Math.floor(Math.random() * 10);
+for (i = 0; i < n; i++) s += set.charAt(Math.floor(Math.random() * set.length));
+return s;
+}
+
+function doCipher() {
+var old = phaseNum();
+addLog("you", "あなた: ");
+cipherMsg = fill(pick(CIPHER_MSGS));
+cipherPending = true;
+el("decodeBtn").style.display = "";
+speak("【暗号電文ヲ受信】" + makeCipher() + " …解読スルニハ、発言枠ヲタップ、又ハ『解読スル』ボタンヲ押シテ下サイ。", "wow");
+afterExchange(old);
+}
+
+function doDecode() {
+if (!cipherPending) return;
+cipherPending = false;
+el("decodeBtn").style.display = "none";
+finishType();
+speak("【解読完了】" + cipherMsg, "happy");
+}
+
+function doSpec() {
+clearCipher();
+var old = phaseNum();
+addLog("you", "あなた: ");
+speak(fill(SPEC_TEXT), "normal");
+afterExchange(old);
+}
+
+function doMission() {
+clearCipher();
+if (missionActive) {
+completeMission();
+return;
+}
+addLog("you", "あなた: ");
+var mtext = MISSIONS[missionIdx % MISSIONS.length];
+missionIdx++;
+missionActive = true;
+el("missionBtn").style.display = "";
+speak("観測ミッションヲ発行シマス：『" + mtext + "』。終ワッタラ、モウ一度コノ話題ヲ押ス、又ハ『ミッション完了』ボタンヲ押シテ下サイ。応援シテイマス、" + addr() + "。", "wow");
+}
+
+function completeMission() {
+if (!missionActive) return;
+missionActive = false;
+el("missionBtn").style.display = "none";
+var old = phaseNum();
+addLog("you", "あなた: ミッション完了！");
+speak(fill(pick(MISSION_DONE)), "happy");
+afterExchange(old);
+}
+
 function doTopic(id) {
 var t = findTopic(id);
 if (!t) return;
+if (id === "cipher") { doCipher(); return;}
+if (id === "mission") { doMission(); return;}
+if (id === "spec") { doSpec(); return;}
+clearCipher();
 var old = phaseNum();
 addLog("you", "あなた: ");
 var pool = t.lines.slice(0);
@@ -423,6 +606,7 @@ var input = el("freeInput");
 var text = input.value.replace(/^\s+|\s+$/g, "");
 if (!text) return;
 input.value = "";
+clearCipher();
 var old = phaseNum();
 addLog("you", "あなた: " + text);
 var m, reply = null, face = "normal";
@@ -513,6 +697,59 @@ if (e.keyCode === 13) doSend();
 el("exportBtn").onclick = doExport;
 el("copyBtn").onclick = doCopy;
 el("clearBtn").onclick = doClear;
+el("decodeBtn").onclick = doDecode;
+el("missionBtn").onclick = function () { completeMission();};
+el("speechBox").onclick = function () {
+if (typeTimer) { finishType(); return;}
+if (cipherPending) doDecode();
+};
+
+var lastAct = new Date().getTime();
+var sleeping = false;
+var sleepTimer = null;
+
+function drawStars() {
+var chars = ".*・+";
+var s = "", i, j;
+for (i = 0; i < 5; i++) {
+for (j = 0; j < 26; j++) {
+s += (Math.random() < 0.16) ? chars.charAt(Math.floor(Math.random() * chars.length)) : " ";
+}
+s += "\n";
+}
+el("sleepStars").innerHTML = esc(s + "\n   Zzz ...");
+}
+
+function goSleep() {
+sleeping = true;
+el("sleepFace").innerHTML = esc(FACES.sleepy);
+el("sleepOv").style.display = "block";
+drawStars();
+sleepTimer = setInterval(drawStars, 900);
+}
+
+function wakeUp() {
+sleeping = false;
+el("sleepOv").style.display = "none";
+if (sleepTimer) {
+clearInterval(sleepTimer);
+sleepTimer = null;
+}
+}
+
+function poke() {
+lastAct = new Date().getTime();
+if (sleeping) wakeUp();
+}
+
+if (document.addEventListener) {
+document.addEventListener("touchstart", poke, false);
+document.addEventListener("click", poke, false);
+document.addEventListener("keydown", poke, false);
+}
+setInterval(function () {
+if (!sleeping && (new Date().getTime() - lastAct > 60000)) goSleep();
+}, 5000);
 
 el("faceArt").innerHTML = esc(FACES.normal);
 el("speechText").innerHTML = esc("……キドウシマシタ。SORA-01、観測開始。コンニチハ、観察者さん。話題ヲ選ンデ、話シカケテ下サイ。");
