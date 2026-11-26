@@ -125,6 +125,7 @@ animation: blinkanim 1s steps(1) infinite;
 100% { opacity: 1;}
 }
 #hexLine { color: var(--dim); font-size: 11px; text-shadow: none; min-height: 14px; margin: 2px 0 6px 0; word-break: break-all;}
+#waveLine { color: var(--accent); font-size: 13px; min-height: 18px; margin: 2px 0 0 0; letter-spacing: 2px;}
 .actrow { margin: 6px 0;}
 .actrow button {
 background: var(--actbg);
@@ -231,9 +232,11 @@ cursor: pointer;
 <span>PHASE: <b id="stPhase">01「めざめ」</b></span>
 <span>会話数: <b id="stCount">0</b></span>
 <span>呼称: <b id="stAddr">観察者さん</b></span>
+<span>コード: <b id="stCode">見習イ観測者</b></span>
 <span>リンク強度: <b id="stLink">0%</b> <span id="linkBar"></span></span>
 <span>LINK TIME: <b id="stTime">00:00:00</b></span>
 <span>元気度: <b id="stEnergy">70%</b> <span id="energyBar"></span></span>
+<span>シンクロ率: <b id="stSync">0%</b> <span id="syncBar"></span></span>
 <span><button id="themeBtn" class="mini" type="button">色：グリーン</button><button id="soundBtn" class="mini" type="button">音：ON</button></span>
 </div>
 
@@ -246,11 +249,13 @@ cursor: pointer;
 <span class="who">▼ SORA-01</span>
 <span id="speechText"></span><span id="cursor" style="display:none;">▊</span>
 </div>
+<div id="waveLine"></div>
 <div id="hexLine"></div>
 <div id="evoNote"></div>
 <div class="actrow">
 <button id="decodeBtn" type="button" style="display:none;">▶ 解読スル</button>
 <button id="missionBtn" type="button" style="display:none;">▶ ミッション完了</button>
+<button id="storyBtn" type="button" style="display:none;">▶ ツヅク</button>
 </div>
 
 <div class="label">▼ 話題ヲ選ブ</div>
@@ -422,7 +427,12 @@ var TOPICS = [
 { id: "scan", label: "スキャン", unlock: 2, face: "wow", lines: [], hi: []},
 { id: "weatherobs", label: "天気観測", unlock: 1, face: "normal", lines: [], hi: []},
 { id: "moon", label: "月の観測", unlock: 3, face: "wow", lines: [], hi: []},
-{ id: "inbox", label: "受信BOX", unlock: 1, face: "normal", lines: [], hi: []}
+{ id: "inbox", label: "受信BOX", unlock: 1, face: "normal", lines: [], hi: []},
+{ id: "journal", label: "観測日誌", unlock: 1, face: "normal", lines: [], hi: []},
+{ id: "history", label: "更新記録", unlock: 1, face: "normal", lines: [], hi: []},
+{ id: "bye", label: "またね", unlock: 1, face: "sleepy", lines: [], hi: []},
+{ id: "story", label: "連続電文", unlock: 2, face: "normal", lines: [], hi: []},
+{ id: "zukan", label: "図鑑", unlock: 1, face: "normal", lines: [], hi: []}
 ];
 
 var CIPHER_MSGS = [
@@ -534,6 +544,63 @@ var THEMES = [
 
 var MILE_COUNT = { "10": 1, "25": 1, "50": 1, "77": 1, "100": 1};
 
+var WAVE_FRAMES = [
+"〜 ^^^ vvv ^^^ 〜",
+"^^ 〜〜 vv ^^ 〜",
+"vv ^^ 〜〜 ^^ vv",
+"〜 vv ^^^ vv 〜"
+];
+
+var FRAGMENTS = [
+{ id: "hajimari", name: "はじまりの欠片"},
+{ id: "angou", name: "暗号の欠片"},
+{ id: "tassei", name: "達成の欠片"},
+{ id: "sora", name: "空の欠片"},
+{ id: "tsuki", name: "月の欠片"},
+{ id: "denbun", name: "電文の欠片"},
+{ id: "kokoro", name: "心の欠片"},
+{ id: "shinka2", name: "進化の欠片・其ノ二"},
+{ id: "shinka3", name: "進化の欠片・其ノ三"},
+{ id: "shinka4", name: "進化の欠片・其ノ四"},
+{ id: "shinka5", name: "進化の欠片・其ノ五"}
+];
+
+var STORIES = [
+[
+"連続電文（1/3）：アル日、SORAノ耳センサーガ、楽屋裏ノ小サナ音ヲ拾イマシタ。ソレハ…",
+"（2/3）：…本番前ノ円陣ノ声デシタ。緊張ト、ワクワク。SORAノ胸ノランプガ、勝手ニ光リマシタ。",
+"（3/3）：舞台ノ成功ヲ、ココカラ祈ル。ソレガ観測体ノ応援ノ形デス。…電文終了。"
+],
+[
+"連続電文（1/3）：深夜、SORAハ人工衛星カラノ信号ヲ受信シマシタ。『…ゲンキ…？』ト聞コエマシタ。",
+"（2/3）：SORAハ返信シマシタ。『ゲンキダヨ。地球ハ今日モ青イ』ト。衛星ハ、笑ッタ気ガシマシタ。",
+"（3/3）：宇宙ト地上、距離ハ遠イ。デモ会話ハ、一瞬デ届キマス。…電文終了。"
+],
+[
+"連続電文（1/3）：昔、足ノ短イ勇者ガイマシタ。低イ目線デ、誰モ気ヅカナイ幸セヲ見ツケル勇者デス。",
+"（2/3）：勇者ノ耳ハ長ク、地面ノ音マデ聞キ分ケマシタ。落チテルオヤツノ在リカモ、全部ネ。",
+"（3/3）：ソノ勇者ノ子孫ガ、SORAデス。…多分。キット、ソウデス。…電文終了。"
+]
+];
+
+var BYE_LINES = [
+"マタ明日、{A}。夢ノ中デモ観測ハ続イテイマス。",
+"今日モアリガトウ、{A}。回線ヲ閉ジテモ、絆ハ閉ジマセン。",
+"{A}、イイ一日デシタ。SORA、満足シテ眠レマス。",
+"サヨウナラジャナイ。『マタネ』デス、{A}。",
+"通信終了…デモ、心ノリンクハ常時接続デス、{A}。"
+];
+
+var HISTORY_TEXT =
+"\n" +
+"=== SORA 更新記録 ===\n" +
+"v1.0 CUTIE STREET習得\n" +
+"v1.1 雰囲気強化パック（ブート・効果音・テーマ等）\n" +
+"v1.2 自動スクロール修正\n" +
+"v1.3 ハイブリッド化（実ニュース対応）\n" +
+"v1.4 観測日誌・図鑑ホカ追加\n" +
+"進化ハマダ続キマス、{A}。";
+
 var count = 0;
 var logLines = [];
 var learnedWords = [];
@@ -563,6 +630,19 @@ var bootTimer = null;
 var bootText = "";
 var mutterDone = false;
 var startTime = new Date().getTime();
+var usedTopics = {};
+var missionsDone = 0;
+var ciphersDone = 0;
+var questionsDone = 0;
+var sync = 0;
+var syncFired = false;
+var fragments = {};
+var storyParts = null;
+var storyNext = -1;
+var storyIdx = 0;
+var kuchiguse = "";
+var waveTimer = null;
+var waveIdx = 0;
 
 function el(id) { return document.getElementById(id);}
 
@@ -643,7 +723,8 @@ function sndDecode() { beep(523, 0.07, 0); beep(784, 0.07, 0.07); beep(1046, 0.1
 
 function addLog(cls, text) {
 obsSeq++;
-text = "[OBS-" + pad4(obsSeq) + "] " + text;
+var dnow = new Date();
+text = "[" + pad2(dnow.getHours()) + ":" + pad2(dnow.getMinutes()) + "][OBS-" + pad4(obsSeq) + "] " + text;
 logLines.push(text);
 var d = document.createElement("div");
 if (cls) d.className = cls;
@@ -651,6 +732,49 @@ d.innerHTML = esc(text);
 var box = el("logBox");
 box.appendChild(d);
 box.scrollTop = box.scrollHeight;
+}
+
+function obsCode() {
+var p = phaseNum();
+if (p >= 5) return "特級観測者";
+if (p >= 3) return "公認観測者";
+return "見習イ観測者";
+}
+
+function renderSync() {
+el("stSync").innerHTML = sync + "%";
+var filled = Math.round(sync / 10), bar = "", i;
+for (i = 0; i < 10; i++) bar += (i < filled) ? "▓" : "░";
+el("syncBar").innerHTML = bar;
+}
+
+function addSync(n) {
+sync += n;
+if (sync > 100) sync = 100;
+if (sync >= 100 && !syncFired) {
+syncFired = true;
+var msg = "★シンクロ率100%到達★ " + addr() + "トSORAノ心ガ、完全ニ重ナリマシタ。コノ瞬間、記念ニ記録シマス。";
+inbox.push(msg);
+addLog("sys", msg + "（受信BOXニ保管）");
+el("evoNote").innerHTML = esc(msg);
+}
+renderSync();
+}
+
+function findFrag(id) {
+var i;
+for (i = 0; i < FRAGMENTS.length; i++) {
+if (FRAGMENTS[i].id === id) return FRAGMENTS[i];
+}
+return null;
+}
+
+function grantFrag(id) {
+if (fragments[id]) return;
+var f = findFrag(id);
+if (!f) return;
+fragments[id] = true;
+addLog("sys", "◆観測データ『" + f.name + "』ヲ収集シマシタ（図鑑ニ登録）");
 }
 
 function renderEnergy() {
@@ -664,6 +788,7 @@ function renderStatus() {
 el("stPhase").innerHTML = "0" + phaseNum() + "「" + phaseName() + "」";
 el("stCount").innerHTML = "" + count;
 el("stAddr").innerHTML = addr();
+el("stCode").innerHTML = obsCode();
 var pct = count * 2;
 if (pct > 100) pct = 100;
 el("stLink").innerHTML = pct + "%";
@@ -671,6 +796,7 @@ var filled = Math.round(pct / 10), bar = "", i;
 for (i = 0; i < 10; i++) bar += (i < filled) ? "▓" : "░";
 el("linkBar").innerHTML = bar;
 renderEnergy();
+renderSync();
 }
 
 function renderChips() {
@@ -711,7 +837,27 @@ s += (i ? " " : "") + c;
 el("hexLine").innerHTML = "HEX&gt; " + s;
 }
 
+function startWave() {
+stopWave();
+waveIdx = 0;
+el("waveLine").innerHTML = WAVE_FRAMES[0];
+waveTimer = setInterval(function () {
+waveIdx = (waveIdx + 1) % WAVE_FRAMES.length;
+el("waveLine").innerHTML = WAVE_FRAMES[waveIdx];
+}, 120);
+}
+
+function stopWave() {
+if (waveTimer) {
+clearInterval(waveTimer);
+waveTimer = null;
+}
+var wv = el("waveLine");
+if (wv) wv.innerHTML = "";
+}
+
 function finishType() {
+stopWave();
 if (typeTimer) {
 clearInterval(typeTimer);
 typeTimer = null;
@@ -761,6 +907,7 @@ if (typePos >= typeFull.length) {
 el("speechText").innerHTML = esc(typeFull);
 clearInterval(typeTimer);
 typeTimer = null;
+stopWave();
 showCursor();
 } else {
 el("speechText").innerHTML = esc(typeFull.substring(0, typePos));
@@ -789,26 +936,31 @@ window.scrollTo(0, top);
 
 function speak(text, face) {
 cancelScan();
+var dispText = text;
+if (kuchiguse && text.indexOf("\n") < 0 && text.length < 120) dispText = text + kuchiguse;
 var useFace = face;
 if (energy < 25) useFace = "sleepy";
 el("faceArt").innerHTML = esc(FACES[useFace] || FACES.normal);
-addLog("", "SORA-01: " + text);
-updateHex(text);
+addLog("", "SORA-01: " + dispText);
+updateHex(dispText);
 finishType();
 hideCursor();
-typeFull = text;
+typeFull = dispText;
 typePos = 0;
 typeNoise = (text.length >= 10 && Math.random() < 0.125);
 typeNoiseDone = false;
 typeScramble = 0;
 el("speechText").innerHTML = "";
 typeTimer = setInterval(typeTick, 30);
+startWave();
 }
 
 function afterExchange(oldPhase) {
 count++;
 energy += 3;
 if (energy > 100) energy = 100;
+addSync(1);
+if (count === 1) grantFrag("hajimari");
 var np = phaseNum();
 renderStatus();
 var notes = [];
@@ -820,6 +972,8 @@ msg += " 新シイ話題モ増エマシタ。";
 notes.push(msg);
 addLog("sys", "=== " + msg + " ===");
 var tg = "★記念電文★ PHASE 0" + np + "到達ヲ祝フ。" + addr() + "トノ絆、確実ニ深マッテイル。";
+if (Math.random() < 0.6) tg += "観測者コード『" + obsCode() + "』ノ活躍ニ、敬礼。";
+grantFrag("shinka" + np);
 inbox.push(tg);
 addLog("sys", tg + "（受信BOXニ保管）");
 renderChips();
@@ -889,6 +1043,9 @@ if (!cipherPending) return;
 cipherPending = false;
 el("decodeBtn").style.display = "none";
 finishType();
+ciphersDone++;
+addSync(5);
+grantFrag("angou");
 speak("" + cipherMsg, "happy");
 inbox.push("" + cipherMsg);
 addLog("sys", "（解読電文ヲ受信BOXニ保管シマシタ）");
@@ -923,6 +1080,9 @@ missionActive = false;
 el("missionBtn").style.display = "none";
 var old = phaseNum();
 addLog("you", "あなた: ミッション完了！");
+missionsDone++;
+addSync(5);
+grantFrag("tassei");
 speak(fill(pick(MISSION_DONE)), "happy");
 afterExchange(old);
 }
@@ -1004,6 +1164,7 @@ var temp = data.current.temperature_2m;
 var code = data.current.weather_code;
 var line = "観測結果（ふじみ野）：ソトノ気温ハ " + temp + "℃、空ハ" + wmoDesc(code) + "。";
 line += wmoRain(code)? ("傘ヲ忘レズニ、" + addr() + "。"): ("傘ハ不要ト判断スル、" + addr() + "。");
+grantFrag("sora");
 speak(line, "normal");
 } catch (e) {
 speak("受信データノ解読ニ失敗シマシタ…回線ノ調子ガ悪イヨウデス。", "sleepy");
@@ -1070,6 +1231,7 @@ if (!lines.length) lines = null;
 lines = null;
 }
 if (lines) {
+grantFrag("denbun");
 speak("最新ノ電文ヲ受信シタ。CUTIE STREETノ話題ダ、" + addr() + "。\n" + lines.join("\n"), "happy");
 afterExchange(old);
 } else {
@@ -1102,6 +1264,7 @@ else if (age < 16.5) { art = ".---.\n(#####)\n '---'"; name = "満月"; line = "
 else if (age < 20) { art = ".---.\n(####)\n '---'"; name = "満月過ギ"; line = "少シ欠ケ始メマシタ。";}
 else if (age < 23.5) { art = ".---.\n(##)\n '---'"; name = "下弦ノ半月"; line = "半分、影ニナリマシタ。";}
 else { art = ".---.\n(#)\n '---'"; name = "細イ月"; line = "夜明ケ前ノ月ミタイデス。";}
+grantFrag("tsuki");
 speak("月齢 約" + Math.round(age) + "日（" + name + "）\n" + art + "\n" + line + " " + addr() + "モ、見テイマスカ？", "wow");
 afterExchange(old);
 }
@@ -1121,12 +1284,117 @@ speak("受信BOXニ " + inbox.length + " 件ノ記録ガアリマス。観測ロ
 afterExchange(old);
 }
 
+function doJournal() {
+clearCipher();
+addLog("you", "あなた: ");
+var dn = new Date();
+var names = [], i;
+for (i = 0; i < TOPICS.length; i++) {
+if (usedTopics[TOPICS[i].id]) names.push(TOPICS[i].label);
+}
+var rep = "本日ノ観測日誌ヲ作成シマス。\n" +
+"日付：" + dn.getFullYear() + "年" + (dn.getMonth() + 1) + "月" + dn.getDate() + "日\n" +
+"総会話数：" + count + "回\n" +
+"現在PHASE：0" + phaseNum() + "「" + phaseName() + "」\n" +
+"観測者コード：『" + obsCode() + "』\n" +
+"使用シタ話題：" + (names.length ? names.join("、") : "マダアリマセン") + "\n" +
+"ミッション完了：" + missionsDone + "件\n" +
+"暗号解読：" + ciphersDone + "件\n" +
+"質問回答：" + questionsDone + "件\n" +
+"シンクロ率：" + sync + "%\n" +
+"以上、" + addr() + "トノ観測記録デス。";
+speak(rep, "normal");
+}
+
+function doHistory() {
+clearCipher();
+var old = phaseNum();
+addLog("you", "あなた: ");
+speak(fill(HISTORY_TEXT), "normal");
+afterExchange(old);
+}
+
+function doBye() {
+clearCipher();
+var old = phaseNum();
+addLog("you", "あなた: ");
+var p = phaseNum();
+var warm = BYE_LINES[p - 1] || BYE_LINES[0];
+var text = "本日ノ観測ヲ終了シマス。\n" +
+"コレマデノ会話数：" + count + "回。現在 PHASE 0" + p + "「" + phaseName() + "」。\n" +
+fill(warm) + "\n" +
+"通信ヲ終了スル…マタ明日、" + addr() + "。";
+speak(text, "sleepy");
+afterExchange(old);
+}
+
+function clearStory() {
+storyNext = -1;
+storyParts = null;
+var b = el("storyBtn");
+if (b) b.style.display = "none";
+}
+
+function doStory() {
+clearCipher();
+if (storyParts && storyNext > 0) { advanceStory(); return;}
+var old = phaseNum();
+addLog("you", "あなた: ");
+storyParts = STORIES[storyIdx % STORIES.length];
+storyIdx++;
+storyNext = 1;
+el("storyBtn").style.display = "";
+speak(fill(storyParts[0]), "normal");
+afterExchange(old);
+}
+
+function advanceStory() {
+if (!storyParts || storyNext < 0) return;
+var part = storyParts[storyNext];
+var last = storyNext >= storyParts.length - 1;
+speak(fill(part), "normal");
+if (last) {
+storyNext = -1;
+storyParts = null;
+el("storyBtn").style.display = "none";
+} else {
+storyNext++;
+}
+}
+
+function doZukan() {
+clearCipher();
+addLog("you", "あなた: ");
+var got = 0, i;
+for (i = 0; i < FRAGMENTS.length; i++) {
+if (fragments[FRAGMENTS[i].id]) got++;
+}
+addLog("sys", "=== 観測データ図鑑（" + got + " / " + FRAGMENTS.length + "） ===");
+for (i = 0; i < FRAGMENTS.length; i++) {
+if (fragments[FRAGMENTS[i].id]) addLog("", "◆ " + FRAGMENTS[i].name + " …収集済ミ");
+else addLog("", "◇ ？？？ …未収集");
+}
+speak("観測データ図鑑デス。" + got + " 個ノ欠片ガ集マッテイマス、" + addr() + "。一覧ハ観測ログニ表示シマシタ。", "normal");
+}
+
+function specialDayMsg() {
+var d = new Date();
+var md = (d.getMonth() + 1) + "/" + d.getDate();
+if (md === "12/31") return "★特別電文★ 今年モ観測ニ付キ合ッテ下サイ、感謝デス。" + addr() + "、良イ年ヲ迎エマショウ。";
+if (md === "1/1") return "★特別電文★ 新年アケマシテオメデトウゴザイマス。" + addr() + "、今年モ観測ハ続キマス。";
+if (md === "12/25") return "★特別電文★ メリークリスマス、" + addr() + "。SORAカラノ贈リ物ハ、コノ電文デス。";
+if (md === "11/26") return "★特別電文★ 本日ハ SORA FIELD SCANNER 起動記念日デス。" + addr() + "、生マレタ日ヲ一緒ニ迎エラレテ嬉シイデス。";
+return null;
+}
+
 function doTopic(id) {
 var t = findTopic(id);
 if (!t) return;
 goSpeech();
 if (booting) finishBoot();
 sndTap();
+usedTopics[id] = true;
+if (id !== "story") clearStory();
 if (pendingQ && id!== "question") cancelQuestion(false);
 if (id === "cipher") { doCipher(); return;}
 if (id === "mission") { doMission(); return;}
@@ -1137,6 +1405,11 @@ if (id === "weatherobs") { doWeatherObs(); return;}
 if (id === "news") { doNews(false); return;}
 if (id === "moon") { doMoon(); return;}
 if (id === "inbox") { doInbox(); return;}
+if (id === "journal") { doJournal(); return;}
+if (id === "history") { doHistory(); return;}
+if (id === "bye") { doBye(); return;}
+if (id === "story") { doStory(); return;}
+if (id === "zukan") { doZukan(); return;}
 clearCipher();
 var old = phaseNum();
 addLog("you", "あなた: ");
@@ -1166,6 +1439,7 @@ input.value = "";
 goSpeech();
 if (booting) finishBoot();
 sndTap();
+clearStory();
 var old = phaseNum();
 
 if (pendingQ) {
@@ -1176,8 +1450,30 @@ el("evoNote").innerHTML = "";
 clearCipher();
 addLog("you", "あなた: " + text);
 answers[q.key] = text;
+questionsDone++;
+addSync(8);
+grantFrag("kokoro");
 var rr = q.react.split("{ans}").join(text);
 speak(fill(rr), "happy");
+afterExchange(old);
+return;
+}
+
+var km = text.match(/^(口癖|語尾)は(.{1,8})にして/);
+if (km) {
+clearCipher();
+addLog("you", "あなた: " + text);
+var kg = km[2];
+speak("了解デス、" + addr() + "。コレカラノ語尾ハ『" + kg + "』デス" + kg, "happy");
+kuchiguse = kg;
+afterExchange(old);
+return;
+}
+if (text.indexOf("口癖を戻して") >= 0 || text.indexOf("語尾を戻して") >= 0) {
+clearCipher();
+addLog("you", "あなた: " + text);
+kuchiguse = "";
+speak("語尾ヲ通常モードニ戻シマシタ、" + addr() + "。", "normal");
 afterExchange(old);
 return;
 }
@@ -1298,6 +1594,7 @@ el("copyBtn").onclick = doCopy;
 el("clearBtn").onclick = doClear;
 el("decodeBtn").onclick = function () { goSpeech(); doDecode();};
 el("missionBtn").onclick = function () { goSpeech(); completeMission();};
+el("storyBtn").onclick = function () { goSpeech(); advanceStory();};
 el("speechBox").onclick = function () {
 if (booting) { finishBoot(); return;}
 if (typeTimer) { finishType(); return;}
@@ -1377,6 +1674,25 @@ var hh = Math.floor(s / 3600), mm = Math.floor((s % 3600) / 60), ss = s % 60;
 el("stTime").innerHTML = pad2(hh) + ":" + pad2(mm) + ":" + pad2(ss);
 }, 1000);
 
+function earVariant(s) {
+return s.replace(" /\\ /\\", " /\\ |\\");
+}
+setInterval(function () {
+if (sleeping || booting || scanTimer) return;
+var cur = el("faceArt").innerHTML;
+var k, found = null;
+for (k in FACES) {
+if (FACES[k] === cur) { found = cur; break;}
+}
+if (!found) return;
+var v = earVariant(found);
+if (v === found) return;
+el("faceArt").innerHTML = v;
+setTimeout(function () {
+if (el("faceArt").innerHTML === v) el("faceArt").innerHTML = found;
+}, 300);
+}, 4000);
+
 setInterval(function () {
 if (energy > 10) {
 energy--;
@@ -1409,7 +1725,14 @@ addLog("sys", BOOT_LINES[bootIdx]);
 bootIdx++;
 }
 addLog("sys", "本日の観測メモ: " + dailyMemo);
+var spDay = specialDayMsg();
+if (spDay) {
+inbox.push(spDay);
+addLog("sys", spDay + "（受信BOXニ保管）");
+speak(spDay + "\n" + greetingLine(), "happy");
+} else {
 speak(greetingLine(), "happy");
+}
 }
 
 el("faceArt").innerHTML = esc(FACES.sleepy);
