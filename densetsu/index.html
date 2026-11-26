@@ -180,6 +180,27 @@
 </section>
 
 <section>
+  <h2>■ YouTube新着動画</h2>
+  <p class="intro">タップするとYouTubeが開きます（Safariで再生）</p>
+  <h3>◆ Naokiman Show</h3>
+  <p class="status" id="ytAStatus">読み込み中…</p>
+  <ul class="news" id="ytAList"></ul>
+  <button class="retrybtn" id="retryYtA" type="button">再試行する</button>
+  <h3>◆ コヤッキースタジオ</h3>
+  <p class="status" id="ytBStatus">読み込み中…</p>
+  <ul class="news" id="ytBList"></ul>
+  <button class="retrybtn" id="retryYtB" type="button">再試行する</button>
+  <h3>◆ Mr.都市伝説 関暁夫</h3>
+  <p class="status" id="ytCStatus">読み込み中…</p>
+  <ul class="news" id="ytCList"></ul>
+  <button class="retrybtn" id="retryYtC" type="button">再試行する</button>
+  <h3>◆ TOLAND VLOG</h3>
+  <p class="status" id="ytDStatus">読み込み中…</p>
+  <ul class="news" id="ytDList"></ul>
+  <button class="retrybtn" id="retryYtD" type="button">再試行する</button>
+</section>
+
+<section>
   <h2>■ 今日の都市伝説</h2>
   <div class="today-card">
     <p class="today-name" id="todayName"></p>
@@ -204,7 +225,7 @@
 
 <footer>
   <p>掲載している伝説は、語り継がれてきた物語を娯楽として紹介するものです。実在の人物・場所とは関係ありません。夜中に一人で読みすぎないようご注意ください。</p>
-  <p>データ出典：Bing News（rss2json 経由）</p>
+  <p>データ出典：Bing News、YouTube（rss2json 経由）</p>
 </footer>
 
 <script>
@@ -415,6 +436,10 @@ function renderArchive() {
 
 var FEED_A = "https://www.bing.com/news/search?q=%E9%83%BD%E5%B8%82%E4%BC%9D%E8%AA%AC&format=rss";
 var FEED_B = "https://www.bing.com/news/search?q=%E9%83%BD%E5%B8%82%E4%BC%9D%E8%AA%AC%20%E6%80%AA%E8%AB%87&format=rss";
+var FEED_YT_A = "https://www.youtube.com/feeds/videos.xml?channel_id=UC4lN5sizuJraSHqy99xTy6Q";
+var FEED_YT_B = "https://www.youtube.com/feeds/videos.xml?channel_id=UCmjOmXcwVXN3SOnW7tCO3vQ";
+var FEED_YT_C = "https://www.youtube.com/feeds/videos.xml?channel_id=UCo7QD2F0sVgkHSDV1TfAV7A";
+var FEED_YT_D = "https://www.youtube.com/feeds/videos.xml?channel_id=UCDvZpvrjCMfNDMasZEmkFuQ";
 
 function renderFeed(listEl, items, max) {
   listEl.innerHTML = "";
@@ -486,6 +511,10 @@ function loadFeed(feedUrl, listId, statusId, retryId, max, label) {
 function loadAllFeeds() {
   loadFeed(FEED_A, "feedAList", "feedAStatus", "retryA", 6, "話題の見出し");
   loadFeed(FEED_B, "feedBList", "feedBStatus", "retryB", 5, "怪談寄りの見出し");
+  loadFeed(FEED_YT_A, "ytAList", "ytAStatus", "retryYtA", 3, "Naokiman Show");
+  loadFeed(FEED_YT_B, "ytBList", "ytBStatus", "retryYtB", 3, "コヤッキースタジオ");
+  loadFeed(FEED_YT_C, "ytCList", "ytCStatus", "retryYtC", 3, "Mr.都市伝説 関暁夫");
+  loadFeed(FEED_YT_D, "ytDList", "ytDStatus", "retryYtD", 3, "TOLAND VLOG");
 }
 
 function init() {
@@ -498,6 +527,18 @@ function init() {
   };
   el("retryB").onclick = function () {
     loadFeed(FEED_B, "feedBList", "feedBStatus", "retryB", 5, "怪談寄りの見出し");
+  };
+  el("retryYtA").onclick = function () {
+    loadFeed(FEED_YT_A, "ytAList", "ytAStatus", "retryYtA", 3, "Naokiman Show");
+  };
+  el("retryYtB").onclick = function () {
+    loadFeed(FEED_YT_B, "ytBList", "ytBStatus", "retryYtB", 3, "コヤッキースタジオ");
+  };
+  el("retryYtC").onclick = function () {
+    loadFeed(FEED_YT_C, "ytCList", "ytCStatus", "retryYtC", 3, "Mr.都市伝説 関暁夫");
+  };
+  el("retryYtD").onclick = function () {
+    loadFeed(FEED_YT_D, "ytDList", "ytDStatus", "retryYtD", 3, "TOLAND VLOG");
   };
   loadAllFeeds();
 }
