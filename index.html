@@ -280,6 +280,10 @@ background: #fff;
 <input id="freeInput" type="text" placeholder="ココニ言葉ヲ入力…" autocomplete="off">
 <button id="sendBtn" type="button">送信</button>
 </div>
+<div class="actrow" style="margin:4px 0 0 0;">
+<button id="aiBtn" type="button">AI回線：OFF</button>
+</div>
+<div id="aiNote" style="font-size:12px;color:var(--dim);text-shadow:none;margin-top:2px;">AI回線ONで自由文に本物のAIが返答（1日100回まで・無料）。混雑時は通常回線に戻ります。</div>
 <div style="font-size:12px;color:var(--dim);text-shadow:none;margin-top:4px;">ヒント：「○○って言って」で真似シマス。「『言葉』を覚えて」で言葉ヲ覚エマス。「呼び名は○○にして」で呼ビ方ヲ変エラレマス。「記念日は○月○日にして」で記念日ヲ登録デキマス。「help」と打ツト隠シコマンド一覧ガ見ラレマス。</div>
 
 <div class="label">▼ 観測ログ</div>
@@ -797,6 +801,9 @@ var cipherLevel = 1;
 var uraMode = false;
 var typeSpeed = 30;
 var lastTimeSignalHour = -1;
+var aiMode = false;
+var aiBusy = false;
+var speakTag = "";
 
 function el(id) { return document.getElementById(id);}
 
@@ -1122,7 +1129,8 @@ voiceSay(dispText);
 var useFace = face;
 if (energy < 25) useFace = "sleepy";
 el("faceArt").innerHTML = esc(FACES[useFace] || FACES.normal);
-addLog("", "SORA-01: " + dispText);
+addLog("", "SORA-01" + speakTag + ": " + dispText);
+speakTag = "";
 updateHex(dispText);
 finishType();
 hideCursor();
@@ -2265,6 +2273,61 @@ afterExchange(old);
 return;
 }
 
+if (aiMode && !aiBusy) { aiSend(text, old); return; }
+doCanned(text, old);
+}
+
+function aiFail(text, old) {
+el("evoNote").innerHTML = "AI回線が混み合っています。通常回線で応答しました。";
+doCanned(text, old);
+}
+
+function aiSend(text, old) {
+aiBusy = true;
+clearCipher();
+finishType();
+hideCursor();
+el("faceArt").innerHTML = esc(FACES.wow);
+el("speechText").innerHTML = esc("AI回線で通信中…");
+var prompt = "あなたは観測生物SORA-01。1980年代パソコン風のレトロな端末口調で、日本語で短く（100文字以内）答えてください。相手は観察者の小野さんです。質問：" + text;
+var xhr = new XMLHttpRequest();
+var done = false;
+function fail() {
+if (done) return;
+done = true;
+aiBusy = false;
+aiFail(text, old);
+}
+try {
+xhr.open("GET", "https://text.pollinations.ai/" + encodeURIComponent(prompt), true);
+xhr.timeout = 20000;
+xhr.onload = function () {
+if (done) return;
+var body = "";
+try { body = xhr.responseText || ""; } catch (e) { body = ""; }
+body = body.replace(/^\s+|\s+$/g, "");
+if (xhr.status === 200 && body && body.indexOf("Free limit reached") !== 0) {
+done = true;
+aiBusy = false;
+if (body.length > 280) body = body.substring(0, 280);
+addLog("you", "あなた: " + text);
+collectWords(text);
+speakTag = "[AI回線]";
+speak(body, "normal");
+afterExchange(old);
+} else {
+fail();
+}
+};
+xhr.onerror = fail;
+xhr.ontimeout = fail;
+xhr.send();
+} catch (e) {
+fail();
+}
+}
+
+function doCanned(text, old) {
 clearCipher();
 addLog("you", "あなた: " + text);
 collectWords(text);
@@ -2393,6 +2456,12 @@ cipherLevel = (cipherLevel >= 2) ? 1 : 2;
 el("cipherLvBtn").innerHTML = cipherLevel >= 2 ? "暗号：上級" : "暗号：初級";
 sndTap();
 addLog("sys", "暗号難易度ヲ『" + (cipherLevel >= 2 ? "上級" : "初級") + "』ニ切リ替エマシタ。");
+};
+el("aiBtn").onclick = function () {
+aiMode = !aiMode;
+el("aiBtn").innerHTML = aiMode ? "AI回線：ON" : "AI回線：OFF";
+sndTap();
+addLog("sys", aiMode ? "AI回線ヲ開通シマシタ。自由文ニ本物ノAIガ返答シマス（1日100回マデ）。" : "AI回線ヲ切断シマシタ。通常回線ニ戻リマス。");
 };
 
 var lastAct = new Date().getTime();
