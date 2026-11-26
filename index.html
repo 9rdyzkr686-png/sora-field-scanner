@@ -237,7 +237,7 @@ cursor: pointer;
 <span>LINK TIME: <b id="stTime">00:00:00</b></span>
 <span>元気度: <b id="stEnergy">70%</b> <span id="energyBar"></span></span>
 <span>シンクロ率: <b id="stSync">0%</b> <span id="syncBar"></span></span>
-<span><button id="themeBtn" class="mini" type="button">色：グリーン</button><button id="soundBtn" class="mini" type="button">音：ON</button></span>
+<span><button id="themeBtn" class="mini" type="button">色：グリーン</button><button id="soundBtn" class="mini" type="button">音：ON</button><button id="voiceBtn" class="mini" type="button">ボイス：ON</button></span>
 </div>
 
 <div id="faceWrap">
@@ -622,6 +622,8 @@ var qIdx = 0;
 var answers = {};
 var themeIdx = 0;
 var soundOn = true;
+var voiceOn = true;
+var voiceMute = true;
 var audioCtx = null;
 var scanTimer = null;
 var booting = true;
@@ -934,10 +936,33 @@ if (top < 0) top = 0;
 window.scrollTo(0, top);
 }
 
+function voiceSay(text) {
+if (!voiceOn || voiceMute) return;
+if (!window.speechSynthesis) return;
+if (text.indexOf("\n") >= 0) return;
+if (text.length > 120) return;
+try {
+speechSynthesis.cancel();
+var u = new SpeechSynthesisUtterance(text);
+u.lang = "ja-JP";
+u.pitch = 0.4;
+u.rate = 0.95;
+try {
+var vs = speechSynthesis.getVoices();
+var i;
+for (i = 0; i < vs.length; i++) {
+if (vs[i].lang && vs[i].lang.indexOf("ja") === 0) { u.voice = vs[i]; break; }
+}
+} catch (e2) {}
+speechSynthesis.speak(u);
+} catch (e) {}
+}
+
 function speak(text, face) {
 cancelScan();
 var dispText = text;
 if (kuchiguse && text.indexOf("\n") < 0 && text.length < 120) dispText = text + kuchiguse;
+voiceSay(dispText);
 var useFace = face;
 if (energy < 25) useFace = "sleepy";
 el("faceArt").innerHTML = esc(FACES[useFace] || FACES.normal);
@@ -1613,6 +1638,13 @@ soundOn = !soundOn;
 el("soundBtn").innerHTML = soundOn ? "音：ON" : "音：OFF";
 if (soundOn) sndTap();
 };
+el("voiceBtn").onclick = function () {
+voiceOn = !voiceOn;
+el("voiceBtn").innerHTML = voiceOn ? "ボイス：ON" : "ボイス：OFF";
+if (!voiceOn && window.speechSynthesis) {
+try { speechSynthesis.cancel(); } catch (e) {}
+}
+};
 
 var lastAct = new Date().getTime();
 var sleeping = false;
@@ -1733,6 +1765,7 @@ speak(spDay + "\n" + greetingLine(), "happy");
 } else {
 speak(greetingLine(), "happy");
 }
+voiceMute = false;
 }
 
 el("faceArt").innerHTML = esc(FACES.sleepy);
