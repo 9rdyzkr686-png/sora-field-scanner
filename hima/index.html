@@ -86,7 +86,14 @@
     transition: transform 0.9s linear;
   }
   input.wide { width: 92%; }
+  textarea {
+    font-size: 18px; font-family: inherit; width: 92%;
+    background: #02150a; color: #39ff6a;
+    border: 1px solid #39ff6a; border-radius: 6px;
+    padding: 10px; min-height: 96px;
+  }
   #mdText { white-space: pre-wrap; }
+  .bottle { border: 1px dashed #00e5ff; border-radius: 8px; padding: 10px; margin-top: 8px; white-space: pre-wrap; }
 </style>
 </head>
 <body>
@@ -308,6 +315,17 @@
   <div id="medText">丸の動きに合わせて、ゆっくり呼吸しましょう。約1分間です。</div>
   <div class="stat" id="medTime">残り 60秒</div>
   <button id="medBtn" type="button">スタート</button>
+</div>
+
+<div class="card">
+  <h2>■ BINZU-6 ボトルメール</h2>
+  <div>メッセージを書いて海に流すと、しばらくして「誰かからの返事」が漂着します。返事はこのページの中の文庫から届く、ごっこ遊びです。</div>
+  <textarea id="bzInput" rows="3" placeholder="海へ流したい一言をどうぞ（例：今日はいい天気だったよ）"></textarea>
+  <br>
+  <button id="bzSend" type="button">海に流す</button>
+  <button id="bzAgain" type="button">もう1通流す</button>
+  <div id="bzSea">まだ海は静かです。ボトルを流してみましょう。</div>
+  <div class="stat" id="bzStat">流したボトル 0 ／ 届いた返事 0</div>
 </div>
 
 <div class="card">
@@ -1036,6 +1054,47 @@ function initMeditation() {
   };
 }
 
+/* ---------- 15. BINZU-6 ボトルメール ---------- */
+var BZ_REPLY = [
+  { f: '旅するダックス', t: 'あなたのボトル、拾ったよ。今日の散歩は最高だった。明日もいい日になるといいね。' },
+  { f: '灯台守', t: '何十年も海を見ているが、こんなにまっすぐな気持ちのボトルは珍しい。大事に届けるよ。' },
+  { f: '月の住人', t: 'こちらは月。あなたの声は夜空を越えて届いたよ。星がきれいな夜に、また話そう。' },
+  { f: '未来のあなた', t: '未来のあなたです。今のあなたはちゃんと頑張っているよ。そのまま進んで大丈夫。' },
+  { f: '深海の魚', t: '深い海の底まで届いたよ。ここは静かで、光がゆらゆらしている。またボトルを流してね。' },
+  { f: '昭和のラジオ', t: 'こちら昭和のラジオ局。あなたの声を今夜の放送で紹介するよ。リクエスト、ありがとう。' },
+  { f: '流れ星', t: '流れ星だよ。願いごとは聞いた。叶うかどうかはあなた次第だけど、応援してるよ。' },
+  { f: '南の島のカメ', t: 'のんびり泳いでいたらボトルがぶつかったよ。急がなくていいんだ。ゆっくりでいいんだよ。' },
+  { f: '港のカモメ', t: 'カモメだよ。海の向こうは今日も晴れ。あなたのボトルはいい風に乗っていたよ。' },
+  { f: '星空郵便局の局長', t: '星空郵便局です。ボトル、確かに受け取りました。返事は星の光に乗せてお届けします。' },
+  { f: '100年後の誰か', t: '100年後の世界から読んでいるよ。あなたの言葉は、ちゃんと未来に届いているよ。' },
+  { f: 'となりの島のダックス', t: 'となりの島のダックスだよ。ボトル拾った！こっちは今日もお昼寝日和。そっちはどう？' }
+];
+var bzSent = 0, bzGot = 0, bzTimer = null;
+function initBottle() {
+  el('bzSend').onclick = function () {
+    var msg = el('bzInput').value;
+    var trim = msg.replace(/^\s+|\s+$/g, '');
+    if (trim === '') { el('bzSea').innerHTML = 'まず、流したい一言を書いてください。'; return; }
+    if (bzTimer !== null) { return; }
+    bzSent = bzSent + 1;
+    el('bzStat').innerHTML = '流したボトル ' + bzSent + ' ／ 届いた返事 ' + bzGot;
+    el('bzSea').innerHTML = '🌊 ボトルを流しました…<br>「' + esc(trim) + '」<br>波にゆられて、どこかへ漂っています。しばらく待ってみてください。';
+    el('bzInput').value = '';
+    var pick = BZ_REPLY[Math.floor(Math.random() * BZ_REPLY.length)];
+    bzTimer = setTimeout(function () {
+      bzTimer = null;
+      bzGot = bzGot + 1;
+      el('bzStat').innerHTML = '流したボトル ' + bzSent + ' ／ 届いた返事 ' + bzGot;
+      el('bzSea').innerHTML = '📮 返事が漂着しました！<br><div class="bottle">差出人：<span class="amber">' + esc(pick.f) + '</span><br>' + esc(pick.t) + '</div>';
+    }, 4000);
+  };
+  el('bzAgain').onclick = function () {
+    el('bzInput').value = '';
+    el('bzInput').focus();
+    if (bzTimer === null) { el('bzSea').innerHTML = '次のボトルをどうぞ。海は待っています。'; }
+  };
+}
+
 /* ---------- 起動（第3波） ---------- */
 function initWave3() {
   var s = daySeed();
@@ -1060,6 +1119,7 @@ function initWave3() {
   makeAnsQuiz('mdText', 'mdAns', 'mdShow', 'mdNext', MD_QUIZ, s);
   makeAnsQuiz('anText', 'anAns', 'anShow', 'anNext', AN_QUIZ, s);
   initMeditation();
+  initBottle();
 }
 initWave3();
 </script>
