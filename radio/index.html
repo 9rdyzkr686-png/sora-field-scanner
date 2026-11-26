@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RADIO-6 聞く暇つぶしラジオ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #000; color: #33ff66; font-family: "Courier New", monospace; padding: 10px; }
+  h1 { font-size: 26px; color: #ffb000; letter-spacing: 2px; }
+  .sub { font-size: 13px; color: #33ff66; margin: 2px 0 8px; }
+  .onair { display: inline-block; border: 2px solid #555; color: #555; padding: 2px 10px; font-size: 16px; font-weight: bold; border-radius: 4px; vertical-align: middle; margin-left: 8px; }
+  .onair.live { border-color: #ff3333; color: #ff3333; animation: blink 1.2s steps(1) infinite; }
+  @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.25; } 100% { opacity: 1; } }
+  .dial { border: 2px solid #33ff66; border-radius: 8px; padding: 8px 10px; margin: 8px 0; background: #031007; }
+  .freq { font-size: 30px; color: #ffb000; font-weight: bold; }
+  .freq small { font-size: 14px; color: #33ff66; }
+  .dialbar { height: 10px; background: #0a2a12; border-radius: 5px; margin-top: 6px; position: relative; }
+  .dialneedle { position: absolute; top: -3px; width: 4px; height: 16px; background: #ff3333; border-radius: 2px; }
+  .label { font-size: 13px; color: #ffb000; margin: 10px 0 4px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { font-family: inherit; cursor: pointer; border-radius: 8px; }
+  .chip { min-height: 56px; padding: 8px 10px; font-size: 16px; background: #031007; color: #33ff66; border: 2px solid #33ff66; flex: 1 1 30%; }
+  .chip.sel { background: #33ff66; color: #000; font-weight: bold; }
+  .vbtn { min-height: 56px; padding: 8px 12px; font-size: 16px; background: #140e00; color: #ffb000; border: 2px solid #ffb000; flex: 1; }
+  .vbtn.sel { background: #ffb000; color: #000; font-weight: bold; }
+  .controls { display: flex; gap: 6px; margin-top: 8px; }
+  .cbtn { min-height: 64px; font-size: 20px; background: #031007; color: #33ff66; border: 2px solid #33ff66; flex: 1; }
+  .cbtn.main { flex: 1.4; background: #33ff66; color: #000; font-weight: bold; }
+  .toggle { min-height: 56px; width: 100%; margin-top: 6px; font-size: 16px; background: #031007; color: #33ff66; border: 2px solid #33ff66; }
+  .toggle.sel { background: #33ff66; color: #000; font-weight: bold; }
+  .nowbox { border: 2px solid #ffb000; border-radius: 8px; padding: 10px; margin-top: 10px; background: #140e00; }
+  .nowch { font-size: 15px; color: #ffb000; }
+  .nowcount { font-size: 13px; color: #33ff66; float: right; }
+  .nowtext { font-size: 22px; line-height: 1.6; color: #fff; margin-top: 8px; min-height: 70px; }
+  .list { margin-top: 10px; border: 1px solid #1d5c2c; border-radius: 8px; }
+  .litem { padding: 12px 10px; font-size: 16px; line-height: 1.5; border-bottom: 1px solid #123d1d; color: #b9ffcb; min-height: 48px; }
+  .litem:last-child { border-bottom: none; }
+  .litem.cur { background: #0a2a12; color: #ffb000; font-weight: bold; }
+  .note { font-size: 13px; color: #ffb000; margin-top: 6px; }
+  .footer { margin-top: 16px; font-size: 13px; line-height: 1.8; color: #7ddb96; border-top: 1px solid #1d5c2c; padding-top: 8px; }
+  .links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .links a { display: inline-block; padding: 12px 14px; border: 2px solid #33ff66; border-radius: 8px; color: #33ff66; text-decoration: none; font-size: 15px; min-height: 48px; }
+</style>
+</head>
+<body>
+  <h1>📻 RADIO-6<span class="onair" id="onair">OFF AIR</span></h1>
+  <div class="sub">聞く暇つぶしラジオ ／ ロボット音声で次々読み上げます</div>
+
+  <div class="dial">
+    <div class="freq"><span id="freqVal">76.6</span> <small>MHz ／ </small><span id="chName" style="font-size:18px;">総合チャンネル</span></div>
+    <div class="dialbar"><div class="dialneedle" id="needle" style="left:20%;"></div></div>
+  </div>
+
+  <div class="label">■ チャンネル</div>
+  <div class="chips" id="chBox">
+    <button type="button" class="chip sel" id="ch-sogo">📻 総合</button>
+    <button type="button" class="chip" id="ch-news">📰 ニュース</button>
+    <button type="button" class="chip" id="ch-trivia">🌌 雑学</button>
+    <button type="button" class="chip" id="ch-legend">👻 都市伝説</button>
+    <button type="button" class="chip" id="ch-weather">🌦 天気</button>
+  </div>
+
+  <div class="label">■ 声の高さ</div>
+  <div class="chips">
+    <button type="button" class="vbtn sel" id="v-robo">🤖 ロボット</button>
+    <button type="button" class="vbtn" id="v-norm">ふつう</button>
+    <button type="button" class="vbtn" id="v-high">たかめ</button>
+  </div>
+
+  <div class="label">■ 再生コントロール</div>
+  <div class="controls">
+    <button type="button" class="cbtn" id="prevBtn">⏮ 前へ</button>
+    <button type="button" class="cbtn main" id="playBtn">▶ 再生</button>
+    <button type="button" class="cbtn" id="nextBtn">⏭ 次へ</button>
+    <button type="button" class="cbtn" id="stopBtn">■ 停止</button>
+  </div>
+  <button type="button" class="toggle" id="loopBtn">🔁 ループ再生：OFF</button>
+  <button type="button" class="toggle" id="refetchBtn">↻ ニュース再取得</button>
+  <div class="note" id="fetchNote"></div>
+
+  <div class="nowbox">
+    <span class="nowch" id="nowCh">総合チャンネル</span>
+    <span class="nowcount" id="nowCount">- / -</span>
+    <div class="nowtext" id="nowText">チャンネルを選んで「▶ 再生」を押してください。</div>
+  </div>
+
+  <div class="label">■ 番組表（タップでそこから再生）</div>
+  <div class="list" id="listBox"></div>
+
+  <div class="footer">
+    <div>※ 画面を消すと読み上げが止まることがあります。</div>
+    <div>※ 音が出ない時は本体のマナーモード（消音スイッチ）を確認してください。</div>
+    <div>※ 読み上げは端末の音声合成（Web Speech API）を使っています。</div>
+    <div class="links">
+      <a href="https://9rdyzkr686-png.github.io/iPhone6-board/">情報ボード</a>
+      <a href="https://9rdyzkr686-png.github.io/sora-field-scanner/">SORA</a>
+      <a href="https://9rdyzkr686-png.github.io/sora-field-scanner/hima/">HIMA-6</a>
+    </div>
+  </div>
+
+<script>
+var CH_FREQ = { sogo: "76.6", news: "80.0", trivia: "82.5", legend: "79.5", weather: "84.7" };
+var CH_POS = { sogo: "20%", news: "38%", trivia: "55%", legend: "46%", weather: "72%" };
+var CH_LABEL = { sogo: "総合チャンネル", news: "ニュースチャンネル", trivia: "雑学チャンネル", legend: "都市伝説チャンネル", weather: "天気チャンネル" };
+var CH_INTRO = {
+  sogo: "ラジオ・シックス、総合チャンネル。ニュースと雑学と、ダジャレ少々。のんびりお付き合いください。",
+  news: "ラジオ・シックス、ニュースチャンネル。最新の見出しを読み上げます。",
+  trivia: "ラジオ・シックス、雑学チャンネル。宇宙とダックスと、ためになる話をお届けします。",
+  legend: "ラジオ・シックス、都市伝説チャンネル。明かりは、消さない方がいいかもしれません。",
+  weather: "ラジオ・シックス、天気チャンネル。ふじみ野市の空模様をお伝えします。"
+};
+
+var SPACE_TRIVIA = [
+  "月は毎年およそ3.8センチずつ地球から遠ざかっています。遠い未来には、皆既日食が見られなくなると言われています。",
+  "金星の1日は、金星の1年より長いんです。自転がとてもゆっくりで、しかも逆向きに回っています。",
+  "土星は水に浮くと言われます。入るプールがあればの話ですが、密度が水より小さいんです。",
+  "月の表面に残された宇宙飛行士の足跡は、何百万年も消えないと言われています。風も雨もないからです。",
+  "国際宇宙ステーションは約90分で地球を1周します。1日に16回も日の出が見られる計算です。",
+  "木星の大赤斑は、地球がまるごと入るほどの大きさの嵐です。300年以上続いていると考えられています。",
+  "ブラックホールに近づくと、時間の流れがゆっくりになるそうです。相対性理論の不思議な世界です。",
+  "宇宙にある星の数は、地球のすべての砂粒の数より多いと言われています。気が遠くなる話です。"
+];
+var DAX_TRIVIA = [
+  "ダックスフントはドイツ語で「アナグマ犬」。アナグマ狩りのために、あの細長い体になりました。",
+  "ダックスの足が短いのは、穴にもぐるためです。狭い巣穴でも獲物を追いかけられる体なんです。",
+  "カニンヘンとはドイツ語で「ウサギ」のこと。ウサギ狩り用の、いちばん小さいダックスです。",
+  "ダックスの長く垂れた耳は、穴の中で土が耳に入りにくいため、という説があります。",
+  "ダックスは体のわりに声が太くて大きいです。番犬としても頼りになる犬種です。",
+  "ホットドッグの名前は、ダックスフントに似ているから、という説が有名です。",
+  "ダックスの嗅覚はとても優秀です。鼻を使う遊びをすると、大満足してぐっすり眠ってくれます。",
+  "ダックスは腰に負担がかかりやすい犬種です。段差の上り下りには気をつけてあげてください。"
+];
+var GEN_TRIVIA = [
+  "日本で一番多い名字は佐藤さん、次いで鈴木さん、高橋さんだそうです。",
+  "蜂蜜は腐らない食べ物と言われます。古代エジプトのお墓からも、食べられる蜂蜜が見つかりました。",
+  "富士山の高さは3776メートル。測り直されるたびに、少し話題になります。",
+  "サイコロの向かい合う面の数を足すと、必ず7になるように作られています。",
+  "パンダには、竹をつかむための骨の突起があります。指が7本あるように見えるのはそのためです。",
+  "人間の体で一番力持ちの筋肉は、噛む力の咬筋だと言われています。奥歯はすごいんです。"
+];
+var DAJARE = [
+  "ふとんが吹っ飛んだ。王道のダジャレで失礼しました。",
+  "アルミ缶の上にあるミカン。はい、次にいきます。",
+  "ダックスがタックス、税金を払う。犬に税金はありませんが。",
+  "猫が寝転ぶと、寝子になる。にゃるほど。",
+  "宇宙食を食べたら、うちゅう美味い。すみません、つい。",
+  "電話に出んわ。でんわだけに。お粗末さまでした。"
+];
+var LEGENDS = [
+  { t: "口裂け女", b: "1970年代の終わりに日本中を騒がせた噂です。マスクをした女が「私、きれい？」と聞いてくるという話で、下校途中の子どもたちを震え上がらせました。今では都市伝説の古典として語り継がれています。" },
+  { t: "花子さん", b: "学校のトイレの3番目の個室をノックすると現れるという、学校の怪談の代表格です。地域によって呼び方や出方が違うのも、この手の噂のおもしろいところです。" },
+  { t: "テケテケ", b: "線路にまつわる怖い話です。上半身だけで肘を使って高速で追いかけてくるという噂が、学校帰りの話題を独占しました。名前の由来は、その移動するときの音だと言われています。" },
+  { t: "きさらぎ駅", b: "2004年にネットの掲示板へ実況のように書き込まれた話です。存在しない駅に着いてしまったという体験談で、今もネット発都市伝説の代表作として知られています。真偽が分からないところが、また魅力です。" },
+  { t: "八尺様", b: "背丈が八尺、およそ2メートル40センチもある女性の怪異です。「ぽぽぽ」という笑い声が特徴とされ、地方の言い伝えがネットで広まりました。創作と伝承が混ざり合った、現代の怪談です。" },
+  { t: "メリーさん", b: "「いま、あなたの後ろにいるの」という電話で有名な話です。捨てられた人形の呪いという筋書きで、電話の着信が怖くなる都市伝説として知られています。スマホ時代の今も、アレンジされて語られています。" }
+];
+var CS_FALLBACK = [
+  "CUTIE STREETは、日本武道館での単独公演が話題のアイドルグループです。",
+  "CUTIE STREET、紅白初出場が濃厚と報じられています。今後の発表に注目です。"
+];
+var SPACE_FALLBACK = [
+  "宇宙ニュース。国際宇宙ステーションは今日も地球の上空を回り続けています。",
+  "今夜は月が見頃です。少しだけ、空を見上げてみてください。"
+];
+
+var CS_ITEMS = null, SPACE_ITEMS = null;
+var WX_LINES = null;
+
+var curCh = "sogo";
+var playlist = [];
+var idx = 0;
+var speaking = false;
+var paused = false;
+var gen = 0;
+var pitchVal = 0.3;
+var loopOn = false;
+
+function el(id) { return document.getElementById(id); }
+
+function cleanTitle(t) {
+  var cut = t.lastIndexOf(" - ");
+  if (cut > 0) t = t.substring(0, cut);
+  return t;
+}
+
+function getJSON(url, ok, ng) {
+  var x = new XMLHttpRequest();
+  x.open("GET", url, true);
+  x.onreadystatechange = function () {
+    if (x.readyState === 4) {
+      if (x.status === 200) {
+        try { ok(JSON.parse(x.responseText)); } catch (e) { ng(); }
+      } else { ng(); }
+    }
+  };
+  x.onerror = function () { ng(); };
+  x.send(null);
+}
+
+function fetchNews(done) {
+  var remain = 2, failed = false;
+  function fin() { remain--; if (remain <= 0 && done) done(failed); }
+  var u1 = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent('https://news.google.com/rss/search?q="CUTIE STREET"&hl=ja&gl=JP&ceid=JP:ja');
+  getJSON(u1, function (j) {
+    try {
+      var arr = [];
+      var items = (j && j.items) || [];
+      for (var i = 0; i < items.length && arr.length < 6; i++) arr.push(cleanTitle(items[i].title || ""));
+      CS_ITEMS = arr.length ? arr : CS_FALLBACK.slice(0);
+      if (!arr.length) failed = true;
+    } catch (e) { CS_ITEMS = CS_FALLBACK.slice(0); failed = true; }
+    fin();
+  }, function () { CS_ITEMS = CS_FALLBACK.slice(0); failed = true; fin(); });
+  var u2 = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://sorae.info/feed");
+  getJSON(u2, function (j) {
+    try {
+      var arr = [];
+      var items = (j && j.items) || [];
+      for (var i = 0; i < items.length && arr.length < 5; i++) arr.push(cleanTitle(items[i].title || ""));
+      SPACE_ITEMS = arr.length ? arr : SPACE_FALLBACK.slice(0);
+      if (!arr.length) failed = true;
+    } catch (e) { SPACE_ITEMS = SPACE_FALLBACK.slice(0); failed = true; }
+    fin();
+  }, function () { SPACE_ITEMS = SPACE_FALLBACK.slice(0); failed = true; fin(); });
+}
+
+var WMO = { 0: "晴れ", 1: "ほぼ晴れ", 2: "晴れ時々くもり", 3: "くもり", 45: "霧", 48: "霧", 51: "霧雨", 53: "霧雨", 55: "霧雨", 56: "凍る霧雨", 57: "凍る霧雨", 61: "雨", 63: "雨", 65: "強い雨", 66: "凍る雨", 67: "凍る雨", 71: "雪", 73: "雪", 75: "大雪", 77: "雪", 80: "にわか雨", 81: "にわか雨", 82: "激しいにわか雨", 85: "にわか雪", 86: "にわか雪", 95: "雷雨", 96: "雷雨とひょう", 99: "雷雨とひょう" };
+function wmoTxt(c) { return WMO[c] || "くもり"; }
+function hm(t) {
+  if (!t || t.length < 16) return "";
+  return parseInt(t.substring(11, 13), 10) + "時" + t.substring(14, 16) + "分";
+}
+function fetchWeather(done) {
+  var url = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&timezone=Asia%2FTokyo&forecast_days=2";
+  getJSON(url, function (j) {
+    try {
+      var cur = j.current, d = j.daily;
+      var lines = [];
+      lines.push("ふじみ野市は今、" + wmoTxt(cur.weather_code) + "。気温は" + Math.round(cur.temperature_2m) + "度です。");
+      lines.push("今日の最高気温は" + Math.round(d.temperature_2m_max[0]) + "度、最低気温は" + Math.round(d.temperature_2m_min[0]) + "度の予想です。");
+      lines.push("今日の降水確率は、最大で" + Math.round(d.precipitation_probability_max[0]) + "パーセントです。");
+      lines.push("明日の天気は" + wmoTxt(d.weather_code[1]) + "。最高" + Math.round(d.temperature_2m_max[1]) + "度、最低" + Math.round(d.temperature_2m_min[1]) + "度の予想です。");
+      lines.push("日の出は" + hm(d.sunrise[0]) + "、日の入りは" + hm(d.sunset[0]) + "です。");
+      var now = new Date();
+      var wd = ["日", "月", "火", "水", "木", "金", "土"][now.getDay()];
+      lines.push("以上、天気チャンネルでした。今日は" + (now.getMonth() + 1) + "月" + now.getDate() + "日、" + wd + "曜日です。良い一日を。");
+      WX_LINES = lines;
+    } catch (e) { WX_LINES = ["天気の取得に失敗しました。通信環境を確認して、もう一度チャンネルを選び直してください。"]; }
+    if (done) done();
+  }, function () {
+    WX_LINES = ["天気の取得に失敗しました。通信環境を確認して、もう一度チャンネルを選び直してください。"];
+    if (done) done();
+  });
+}
+
+function buildPlaylist() {
+  var list = [CH_INTRO[curCh]];
+  var i;
+  if (curCh === "sogo") {
+    var news = (CS_ITEMS || CS_FALLBACK).concat(SPACE_ITEMS || SPACE_FALLBACK);
+    var tr = SPACE_TRIVIA.concat(DAX_TRIVIA);
+    var ni = 0, ti = 0, di = 0;
+    while ((ni < news.length && ni < 6) || (ti < tr.length && ti < 5) || (di < DAJARE.length && di < 3)) {
+      if (ni < news.length && ni < 6) { list.push("ニュースです。" + news[ni]); ni++; }
+      if (ti < tr.length && ti < 5) { list.push(tr[ti]); ti++; }
+      if (di < DAJARE.length && di < 3 && ni % 2 === 0) { list.push("ダジャレのコーナー。" + DAJARE[di]); di++; }
+    }
+  } else if (curCh === "news") {
+    var cs = CS_ITEMS || CS_FALLBACK;
+    for (i = 0; i < cs.length; i++) list.push(cs[i]);
+    list.push("続いて、宇宙のニュースです。");
+    var sp = SPACE_ITEMS || SPACE_FALLBACK;
+    for (i = 0; i < sp.length; i++) list.push(sp[i]);
+    list.push("以上、ニュースチャンネルでした。");
+  } else if (curCh === "trivia") {
+    for (i = 0; i < SPACE_TRIVIA.length; i++) list.push("宇宙の雑学。" + SPACE_TRIVIA[i]);
+    for (i = 0; i < DAX_TRIVIA.length; i++) list.push("ダックス小ネタ。" + DAX_TRIVIA[i]);
+    for (i = 0; i < GEN_TRIVIA.length; i++) list.push("一般雑学。" + GEN_TRIVIA[i]);
+    for (i = 0; i < DAJARE.length; i++) list.push("ダジャレ。" + DAJARE[i]);
+    list.push("以上、雑学チャンネルでした。");
+  } else if (curCh === "legend") {
+    for (i = 0; i < LEGENDS.length; i++) list.push("都市伝説ファイル、その" + (i + 1) + "。" + LEGENDS[i].t + "。" + LEGENDS[i].b);
+    list.push("以上、都市伝説チャンネルでした。お聞きの後は、明るい道を歩いてくださいね。");
+  } else if (curCh === "weather") {
+    var w = WX_LINES || ["天気を取得中です。少々お待ちください。"];
+    for (i = 0; i < w.length; i++) list.push(w[i]);
+  }
+  playlist = list;
+  idx = 0;
+}
+
+function renderList() {
+  var box = el("listBox");
+  box.innerHTML = "";
+  for (var i = 0; i < playlist.length; i++) {
+    (function (n) {
+      var d = document.createElement("div");
+      d.className = "litem" + (n === idx ? " cur" : "");
+      d.textContent = (n + 1) + ". " + playlist[n];
+      d.onclick = function () { jumpTo(n); };
+      box.appendChild(d);
+    })(i);
+  }
+}
+
+function updateDisplay() {
+  el("chName").textContent = CH_LABEL[curCh];
+  el("freqVal").textContent = CH_FREQ[curCh];
+  el("needle").style.left = CH_POS[curCh];
+  el("nowCh").textContent = CH_LABEL[curCh];
+  el("nowCount").textContent = playlist.length ? (idx + 1) + " / " + playlist.length : "- / -";
+  el("nowText").textContent = playlist.length ? playlist[idx] : "—";
+  var oa = el("onair");
+  if (speaking && !paused) { oa.className = "onair live"; oa.textContent = "ON AIR"; }
+  else { oa.className = "onair"; oa.textContent = "OFF AIR"; }
+  el("playBtn").textContent = (speaking && !paused) ? "⏸ 一時停止" : "▶ 再生";
+  renderList();
+}
+
+function stopSpeech() {
+  gen++;
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  speaking = false;
+  paused = false;
+}
+
+function speakCurrent() {
+  if (!window.speechSynthesis) {
+    el("nowText").textContent = "この端末では音声読み上げに対応していません。";
+    return;
+  }
+  if (idx >= playlist.length) {
+    if (loopOn && playlist.length) { idx = 0; }
+    else { speaking = false; paused = false; updateDisplay(); return; }
+  }
+  var myGen = ++gen;
+  var u = new SpeechSynthesisUtterance(playlist[idx]);
+  u.lang = "ja-JP";
+  u.rate = 1.0;
+  u.pitch = pitchVal;
+  u.onend = function () {
+    if (myGen !== gen) return;
+    setTimeout(function () {
+      if (myGen !== gen) return;
+      idx++;
+      if (idx >= playlist.length && !loopOn) { speaking = false; paused = false; idx = playlist.length - 1; updateDisplay(); return; }
+      if (idx >= playlist.length) idx = 0;
+      updateDisplay();
+      speakCurrent();
+    }, 600);
+  };
+  u.onerror = u.onend;
+  speaking = true;
+  paused = false;
+  speechSynthesis.speak(u);
+  updateDisplay();
+}
+
+function jumpTo(n) {
+  if (n < 0 || n >= playlist.length) return;
+  stopSpeech();
+  idx = n;
+  updateDisplay();
+  speakCurrent();
+}
+
+function setChannel(ch) {
+  stopSpeech();
+  curCh = ch;
+  var ids = ["sogo", "news", "trivia", "legend", "weather"];
+  for (var i = 0; i < ids.length; i++) el("ch-" + ids[i]).className = "chip" + (ids[i] === ch ? " sel" : "");
+  if (ch === "weather" && !WX_LINES) {
+    fetchWeather(function () { if (curCh === "weather") { buildPlaylist(); updateDisplay(); } });
+  }
+  buildPlaylist();
+  updateDisplay();
+}
+
+function setPitch(p, id) {
+  pitchVal = p;
+  var ids = ["v-robo", "v-norm", "v-high"];
+  for (var i = 0; i < ids.length; i++) el(ids[i]).className = "vbtn" + (ids[i] === id ? " sel" : "");
+  if (speaking && !paused) { var n = idx; stopSpeech(); idx = n; speakCurrent(); }
+}
+
+el("ch-sogo").onclick = function () { setChannel("sogo"); };
+el("ch-news").onclick = function () { setChannel("news"); };
+el("ch-trivia").onclick = function () { setChannel("trivia"); };
+el("ch-legend").onclick = function () { setChannel("legend"); };
+el("ch-weather").onclick = function () { setChannel("weather"); };
+el("v-robo").onclick = function () { setPitch(0.3, "v-robo"); };
+el("v-norm").onclick = function () { setPitch(0.7, "v-norm"); };
+el("v-high").onclick = function () { setPitch(1.1, "v-high"); };
+el("playBtn").onclick = function () {
+  if (speaking && !paused) { speechSynthesis.pause(); paused = true; updateDisplay(); }
+  else if (paused) { speechSynthesis.resume(); paused = false; updateDisplay(); }
+  else { speakCurrent(); }
+};
+el("nextBtn").onclick = function () { if (idx < playlist.length - 1) jumpTo(idx + 1); else if (loopOn) jumpTo(0); };
+el("prevBtn").onclick = function () { if (idx > 0) jumpTo(idx - 1); };
+el("stopBtn").onclick = function () { stopSpeech(); idx = 0; updateDisplay(); };
+el("loopBtn").onclick = function () {
+  loopOn = !loopOn;
+  this.className = "toggle" + (loopOn ? " sel" : "");
+  this.textContent = "🔁 ループ再生：" + (loopOn ? "ON" : "OFF");
+};
+el("refetchBtn").onclick = function () {
+  el("fetchNote").textContent = "ニュースを取得中…";
+  fetchNews(function (failed) {
+    el("fetchNote").textContent = failed ? "一部のニュースを取得できませんでした（保存済みの文章で代用しています）" : "ニュースを更新しました。";
+    if (curCh === "news" || curCh === "sogo") { stopSpeech(); buildPlaylist(); updateDisplay(); }
+  });
+};
+
+buildPlaylist();
+updateDisplay();
+fetchNews(function (failed) {
+  if (failed) el("fetchNote").textContent = "一部のニュースを取得できませんでした（保存済みの文章で代用しています）";
+  if (!speaking && (curCh === "news" || curCh === "sogo")) { buildPlaylist(); updateDisplay(); }
+});
+</script>
+</body>
+</html>
