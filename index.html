@@ -1021,6 +1021,70 @@ xhr.ontimeout = xhr.onerror;
 xhr.send();
 }
 
+function newsFallback(old) {
+var t = findTopic("news");
+var pool = t.lines.slice(0);
+if (phaseNum() >= 4 && t.hi && t.hi.length) pool = pool.concat(t.hi);
+speak(maybeCallback(fill(pick(pool))), t.face);
+afterExchange(old);
+}
+
+function doNews(fromText) {
+if (!fromText) {
+clearCipher();
+addLog("you", "あなた: ");
+}
+var old = phaseNum();
+finishType();
+hideCursor();
+el("faceArt").innerHTML = esc(FACES.wow);
+el("speechText").innerHTML = esc("ニュース電文ヲ受信中…少シお待チ下サイ。");
+var rssUrl = "https://news.google.com/rss/search?q=%22CUTIE%20STREET%22&hl=ja&gl=JP&ceid=JP:ja";
+var xhr = new XMLHttpRequest();
+var done = false;
+xhr.open("GET", "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rssUrl), true);
+xhr.timeout = 9000;
+xhr.onload = function () {
+if (done) return;
+done = true;
+var lines = null;
+try {
+var data = JSON.parse(xhr.responseText);
+if (data && data.items && data.items.length) {
+lines = [];
+var i, n = Math.min(3, data.items.length);
+for (i = 0; i < n; i++) {
+var it = data.items[i];
+var title = "" + (it.title || "");
+title = title.replace(/<[^>]*>/g, "");
+var cut = title.lastIndexOf(" - ");
+if (cut > 0) title = title.substring(0, cut);
+var d = it.pubDate ? ("" + it.pubDate).substring(0, 10) : "";
+var entry = (i + 1) + ". " + title;
+if (d) entry += "（" + d.split("-").join("/") + "）";
+lines.push(entry);
+}
+if (!lines.length) lines = null;
+}
+} catch (e) {
+lines = null;
+}
+if (lines) {
+speak("最新ノ電文ヲ受信シタ。CUTIE STREETノ話題ダ、" + addr() + "。\n" + lines.join("\n"), "happy");
+afterExchange(old);
+} else {
+newsFallback(old);
+}
+};
+xhr.onerror = function () {
+if (done) return;
+done = true;
+newsFallback(old);
+};
+xhr.ontimeout = xhr.onerror;
+xhr.send();
+}
+
 function doMoon() {
 clearCipher();
 var old = phaseNum();
@@ -1070,6 +1134,7 @@ if (id === "spec") { doSpec(); return;}
 if (id === "question") { doQuestion(); return;}
 if (id === "scan") { doScan(); return;}
 if (id === "weatherobs") { doWeatherObs(); return;}
+if (id === "news") { doNews(false); return;}
 if (id === "moon") { doMoon(); return;}
 if (id === "inbox") { doInbox(); return;}
 clearCipher();
@@ -1156,7 +1221,8 @@ face = "happy";
 reply = fill(pick(findTopic("cutie").lines));
 face = "happy";
 } else if (has(text, ["ニュース", "速報", "話題"])) {
-reply = fill(pick(findTopic("news").lines));
+doNews(true);
+return;
 } else if (has(text, ["犬", "ダックス", "わんこ", "ワンコ", "耳"])) {
 reply = fill(pick(findTopic("dog").lines));
 } else if (has(text, ["天気", "雨", "晴れ", "曇り", "雪"])) {
