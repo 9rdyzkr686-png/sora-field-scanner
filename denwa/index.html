@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DENWA-6 まわる電話</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 16px 12px 32px;
+    background: #17120e;
+    color: #f3e9d2;
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+    text-align: center;
+  }
+  h1 {
+    font-size: 26px; margin: 6px 0 2px; letter-spacing: 2px; color: #f3e9d2;
+  }
+  .sub { font-size: 14px; color: #c9a86a; margin: 0 0 14px; }
+  .phone {
+    background: #241a12;
+    border: 3px solid #8a2f23;
+    border-radius: 24px;
+    padding: 18px 10px 20px;
+    max-width: 360px; margin: 0 auto;
+    box-shadow: 0 6px 24px rgba(0,0,0,.6);
+  }
+  .display {
+    background: #0f2b1d;
+    color: #7dffb0;
+    border: 2px solid #3d2c1c;
+    border-radius: 10px;
+    font-size: 40px; letter-spacing: 10px;
+    min-height: 62px; line-height: 62px;
+    margin: 0 6px 6px;
+    font-family: "Courier New", monospace;
+  }
+  .status {
+    font-size: 15px; color: #e8c97a; min-height: 22px; margin: 2px 0 8px;
+  }
+  .timer {
+    font-size: 15px; color: #c9a86a; min-height: 20px; margin: 0 0 6px;
+    font-family: "Courier New", monospace;
+  }
+  .dial {
+    position: relative; width: 300px; height: 300px; margin: 4px auto 10px;
+    background: #efe3c2;
+    border-radius: 50%;
+    border: 6px solid #8a2f23;
+    box-shadow: inset 0 0 0 4px #d8c491, 0 4px 14px rgba(0,0,0,.5);
+  }
+  .dialcenter {
+    position: absolute; left: 50%; top: 50%;
+    width: 118px; height: 118px; margin: -59px 0 0 -59px;
+    background: #8a2f23; color: #f3e9d2; border-radius: 50%;
+    font-size: 15px; line-height: 1.5;
+    display: table;
+  }
+  .dialcenter span { display: table-cell; vertical-align: middle; padding: 0 8px; }
+  .digit {
+    position: absolute; width: 56px; height: 56px; margin: -28px 0 0 -28px;
+    border-radius: 50%;
+    background: #fffaf0; color: #2a1c10;
+    border: 3px solid #8a2f23;
+    font-size: 26px; font-weight: bold;
+    line-height: 50px; text-align: center;
+    cursor: pointer; user-select: none; -webkit-user-select: none;
+  }
+  .digit:active { background: #e8c97a; }
+  .btnrow { margin: 8px 0 0; }
+  button.act {
+    min-width: 100px; min-height: 52px;
+    font-size: 19px; font-weight: bold;
+    border-radius: 12px; border: 2px solid #8a2f23;
+    background: #f3e9d2; color: #2a1c10;
+    margin: 4px 3px; padding: 10px 14px;
+    cursor: pointer;
+  }
+  button.act.call { background: #2e7d46; border-color: #1d5230; color: #ffffff; }
+  button.act.hangup { background: #b03024; border-color: #6f1d15; color: #ffffff; }
+  button.act:disabled { opacity: .35; }
+  .reply {
+    max-width: 360px; margin: 16px auto 0;
+    background: #241a12; border: 2px solid #c9a86a; border-radius: 14px;
+    padding: 14px 16px; min-height: 90px;
+    font-size: 21px; line-height: 1.6; text-align: left;
+    display: none;
+  }
+  .reply .who { font-size: 14px; color: #e8c97a; display: block; margin-bottom: 6px; }
+  .book {
+    max-width: 360px; margin: 16px auto 0; text-align: left;
+    font-size: 15px; line-height: 1.9; color: #d9c9a3;
+    background: #1d150e; border: 1px solid #3d2c1c; border-radius: 12px;
+    padding: 10px 16px;
+  }
+  .book b { color: #e8c97a; }
+  footer { margin-top: 26px; }
+  a.portal {
+    display: inline-block; min-height: 48px; line-height: 48px;
+    padding: 0 22px; border-radius: 12px;
+    background: #8a2f23; color: #ffffff; text-decoration: none;
+    font-size: 17px; font-weight: bold;
+  }
+  .credit { font-size: 12px; color: #8a7a5c; margin-top: 14px; }
+</style>
+</head>
+<body>
+<h1>☎ DENWA-6</h1>
+<p class="sub">まわる電話 ― 3けた番号にかけてみよう</p>
+
+<div class="phone">
+  <div class="display" id="display">---</div>
+  <div class="status" id="status">番号を押してください</div>
+  <div class="timer" id="timer"></div>
+  <div class="dial" id="dial">
+    <div class="dialcenter"><span>DENWA-6<br>☎</span></div>
+  </div>
+  <div class="btnrow">
+    <button class="act call" id="btnCall">かける</button>
+    <button class="act" id="btnClear">けす</button>
+    <button class="act hangup" id="btnHang" disabled>きる</button>
+  </div>
+  <div class="btnrow">
+    <button class="act" id="btnVoice">ボイス ON</button>
+  </div>
+</div>
+
+<div class="reply" id="reply"><span class="who" id="replyWho"></span><span id="replyText"></span></div>
+
+<div class="book">
+  <b>でんわちょう</b><br>
+  606 … ダックス直通<br>
+  333 … 都市伝説ホットライン<br>
+  808 … 宇宙ステーション<br>
+  555 … 占い交換台<br>
+  それ以外 … どうなるかは おたのしみ
+</div>
+
+<footer>
+  <a class="portal" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
+  <p class="credit">DENWA-6 まわる電話 ／ 番号はすべて架空です。実際の電話はかかりません。</p>
+</footer>
+
+<script>
+var digits = "";
+var state = "idle"; /* idle / ringing / connected */
+var voiceOn = true;
+var callSeconds = 0;
+var timerId = null;
+var ringTimeouts = [];
+var audioCtx = null;
+var dachsIdx = 0;
+var legendIdx = 0;
+var jokeIdx = 0;
+
+var DACHS_LINES = [
+  "ワン！ ダックス直通です。…はい、なでなでの予約ですね。あいてますよ。",
+  "もしもし、ダックスです。今はひるねの途中でしたが、特別に起きました。",
+  "ワンワン！ 散歩の時間ですか？ ぼくはいつでも準備できてます。",
+  "ダックス直通です。おやつの相談は、こちらの番号で合ってます。",
+  "もしもし。今日も耳を長くして、あなたの声を聞いてます。",
+  "ワン！ 留守かと思いましたか？ ぼくは電話の横で待ってたんです。"
+];
+var LEGEND_LINES = [
+  "都市伝説ホットラインです。今夜、駅のホームで白い影を見たという報告が入っています…。",
+  "こちらホットライン。その話、きさらぎ駅に似ていますね。次の電車には、乗らないでください。",
+  "受付しました。『電話の向こうで、もう一人の自分が笑った』…それは、よくある話です。",
+  "ホットラインです。今夜は月が赤いそうです。窓の外は、あまり見ない方がいいですよ。",
+  "その都市伝説、採用です。ただし、夜中の3時にこの番号へは、二度とかけてはいけません。"
+];
+var JOKE_LINES = [
+  "おかけになった番号は、現在使われておりません…たぶん。番号をお確かめのうえ、もう一度どうぞ。",
+  "ピーッという発信音のあとに…あ、間違い電話でした。この番号、持ち主が行方不明だそうです。"
+];
+var LUCK_GRADES = ["大吉", "中吉", "小吉", "吉", "末吉"];
+var LUCK_ITEMS = ["あかいハンカチ", "まるい石", "古い切符", "木のスプーン", "青いボタン", "小さな鈴", "星のシール"];
+
+function el(id) { return document.getElementById(id); }
+
+function showDisplay() {
+  var s = digits;
+  while (s.length < 3) { s = s + "-"; }
+  el("display").innerHTML = s;
+}
+function setStatus(t) { el("status").innerHTML = t; }
+
+function speak(text) {
+  if (!voiceOn) { return; }
+  try {
+    if (!("speechSynthesis" in window)) { return; }
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 0.5;
+    u.rate = 1.0;
+    window.speechSynthesis.speak(u);
+  } catch (e) { }
+}
+function stopSpeak() {
+  try {
+    if ("speechSynthesis" in window) { window.speechSynthesis.cancel(); }
+  } catch (e) { }
+}
+
+function beep(freq, dur, delay) {
+  try {
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) { return; }
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === "suspended") { audioCtx.resume(); }
+    var t0 = audioCtx.currentTime + delay;
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.15, t0 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.05);
+  } catch (e) { }
+}
+
+function later(fn, ms) {
+  var id = setTimeout(fn, ms);
+  ringTimeouts.push(id);
+}
+function clearLater() {
+  for (var i = 0; i < ringTimeouts.length; i++) { clearTimeout(ringTimeouts[i]); }
+  ringTimeouts = [];
+}
+
+function startTimer() {
+  callSeconds = 0;
+  el("timer").innerHTML = "通話時間 0:00";
+  timerId = setInterval(function () {
+    callSeconds++;
+    var m = Math.floor(callSeconds / 60);
+    var s = callSeconds % 60;
+    el("timer").innerHTML = "通話時間 " + m + ":" + (s < 10 ? "0" : "") + s;
+  }, 1000);
+}
+function stopTimer() {
+  if (timerId !== null) { clearInterval(timerId); timerId = null; }
+}
+
+function answer(who, text) {
+  state = "connected";
+  setStatus("つながりました");
+  el("replyWho").innerHTML = who;
+  el("replyText").innerHTML = text;
+  el("reply").style.display = "block";
+  el("btnHang").disabled = false;
+  el("btnCall").disabled = true;
+  startTimer();
+  speak(text);
+}
+
+function fortuneText() {
+  var now = new Date();
+  var seed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+  var g = LUCK_GRADES[seed % LUCK_GRADES.length];
+  var item = LUCK_ITEMS[Math.floor(seed / 7) % LUCK_ITEMS.length];
+  return "占い交換台です。今日のあなたは " + g + "。ラッキーアイテムは「" + item + "」です。よい一日を。";
+}
+
+function doAnswer() {
+  if (digits === "606") {
+    var line = DACHS_LINES[dachsIdx % DACHS_LINES.length];
+    dachsIdx++;
+    answer("📞 606 ダックス直通", line);
+  } else if (digits === "333") {
+    var line2 = LEGEND_LINES[legendIdx % LEGEND_LINES.length];
+    legendIdx++;
+    answer("📞 333 都市伝説ホットライン", line2);
+  } else if (digits === "808") {
+    answerISS();
+  } else if (digits === "555") {
+    answer("📞 555 占い交換台", fortuneText());
+  } else {
+    var line3 = JOKE_LINES[jokeIdx % JOKE_LINES.length];
+    jokeIdx++;
+    answer("📞 案内", line3);
+  }
+}
+
+function answerISS() {
+  var done = false;
+  function fallback() {
+    if (done) { return; }
+    if (state !== "ringing") { return; }
+    done = true;
+    answer("📞 808 宇宙ステーション", "こちら宇宙ステーション。交信は良好です。今、地球の上空を高速で飛行中。窓の外は星だらけです。");
+  }
+  try {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "https://api.wheretheiss.at/v1/satellites/25544", true);
+    xhr.timeout = 6000;
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) { return; }
+      if (xhr.status === 200) {
+        try {
+          var d = JSON.parse(xhr.responseText);
+          var alt = Math.round(d.altitude);
+          var vel = Math.round(d.velocity);
+          if (!done && state === "ringing") {
+            done = true;
+            answer("📞 808 宇宙ステーション", "こちら宇宙ステーション、応答します。現在の高度は約 " + alt + " キロメートル、速度は時速約 " + vel + " キロメートル。交信ありがとう、オーバー。");
+          }
+        } catch (e) { fallback(); }
+      } else {
+        fallback();
+      }
+    };
+    xhr.ontimeout = fallback;
+    xhr.onerror = fallback;
+    xhr.send(null);
+    later(fallback, 7000);
+  } catch (e) {
+    fallback();
+  }
+}
+
+function pressDigit(d) {
+  if (state !== "idle") { return; }
+  if (digits.length >= 3) { return; }
+  digits = digits + d;
+  showDisplay();
+  beep(700 + (d * 30), 0.07, 0);
+  if (digits.length === 3) {
+    setStatus("「かける」を押してください");
+  } else {
+    setStatus("あと " + (3 - digits.length) + " けた");
+  }
+}
+
+function pressCall() {
+  if (state !== "idle") { return; }
+  if (digits.length < 3) {
+    setStatus("3けたの番号を押してください");
+    el("reply").style.display = "none";
+    speak("3けたの番号を押してください。");
+    return;
+  }
+  state = "ringing";
+  setStatus("呼び出し中…");
+  el("btnCall").disabled = true;
+  el("btnClear").disabled = true;
+  el("btnHang").disabled = false;
+  beep(400, 0.5, 0);
+  beep(400, 0.5, 1.0);
+  later(function () {
+    if (state === "ringing") { doAnswer(); }
+  }, 2100);
+}
+
+function pressClear() {
+  if (state !== "idle") { return; }
+  digits = "";
+  showDisplay();
+  setStatus("番号を押してください");
+  el("reply").style.display = "none";
+}
+
+function pressHang() {
+  if (state === "idle") { return; }
+  clearLater();
+  stopTimer();
+  stopSpeak();
+  state = "idle";
+  digits = "";
+  showDisplay();
+  setStatus("通話を終了しました");
+  el("timer").innerHTML = "";
+  el("btnHang").disabled = true;
+  el("btnCall").disabled = false;
+  el("btnClear").disabled = false;
+}
+
+function pressVoice() {
+  voiceOn = !voiceOn;
+  el("btnVoice").innerHTML = voiceOn ? "ボイス ON" : "ボイス OFF";
+  if (!voiceOn) { stopSpeak(); }
+}
+
+function buildDial() {
+  var dial = el("dial");
+  var order = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+  var cx = 150, cy = 150, r = 108;
+  for (var i = 0; i < order.length; i++) {
+    var ang = (-60 + i * 32) * Math.PI / 180;
+    var x = cx + r * Math.cos(ang);
+    var y = cy + r * Math.sin(ang);
+    var b = document.createElement("div");
+    b.className = "digit";
+    b.innerHTML = order[i];
+    b.style.left = x + "px";
+    b.style.top = y + "px";
+    b.setAttribute("data-d", order[i]);
+    b.onclick = (function (d) {
+      return function () { pressDigit(d); };
+    })(order[i]);
+    dial.appendChild(b);
+  }
+}
+
+el("btnCall").onclick = pressCall;
+el("btnClear").onclick = pressClear;
+el("btnHang").onclick = pressHang;
+el("btnVoice").onclick = pressVoice;
+buildDial();
+showDisplay();
+</script>
+</body>
+</html>

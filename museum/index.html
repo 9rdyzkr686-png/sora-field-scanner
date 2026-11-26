@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>HAKUBUTSU-6 夜の博物館</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: #0a1128;
+    color: #e8e4d8;
+    font-family: "Hiragino Mincho ProN", "Hiragino Sans", sans-serif;
+    padding: 14px 12px 30px;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; }
+  header {
+    text-align: center;
+    border: 1px solid #c9a959;
+    border-radius: 10px;
+    padding: 16px 10px 12px;
+    background: #101c3f;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-size: 24px;
+    color: #e6c87a;
+    letter-spacing: 3px;
+    font-weight: bold;
+  }
+  .sub { font-size: 13px; color: #9fb0d0; margin-top: 4px; letter-spacing: 2px; }
+  #greeting {
+    margin-top: 10px;
+    font-size: 16px;
+    color: #f0e9d6;
+    min-height: 26px;
+  }
+  #counter {
+    text-align: center;
+    font-size: 15px;
+    color: #c9d4ee;
+    background: #0e1834;
+    border: 1px solid #3a4a75;
+    border-radius: 8px;
+    padding: 8px 6px;
+    margin-bottom: 6px;
+  }
+  #complete {
+    text-align: center;
+    font-size: 15px;
+    color: #e6c87a;
+    min-height: 24px;
+    margin-bottom: 8px;
+  }
+  .route-note {
+    font-size: 13px;
+    color: #8d9cc0;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .grid { overflow: hidden; }
+  .card {
+    float: left;
+    width: 48%;
+    margin: 0 1% 10px;
+    background: #12204a;
+    border: 1px solid #46598c;
+    border-radius: 10px;
+    padding: 12px 8px 10px;
+    text-align: center;
+    min-height: 118px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(201,169,89,0.3);
+  }
+  .card.opened { border-color: #c9a959; background: #16264f; }
+  .card .num {
+    display: inline-block;
+    font-size: 12px;
+    color: #0a1128;
+    background: #c9a959;
+    border-radius: 10px;
+    padding: 1px 9px;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .card .icon { font-size: 34px; line-height: 1.2; display: block; }
+  .card .name { font-size: 15px; color: #f0e9d6; margin-top: 5px; display: block; }
+  .card .done {
+    font-size: 11px;
+    color: #e6c87a;
+    display: block;
+    margin-top: 3px;
+    min-height: 15px;
+  }
+  #detail {
+    display: none;
+    background: #101c3f;
+    border: 1px solid #c9a959;
+    border-radius: 10px;
+    padding: 16px 14px;
+    margin: 4px 0 14px;
+  }
+  #dTitle { font-size: 20px; color: #e6c87a; margin-bottom: 4px; }
+  #dMeta { font-size: 12px; color: #9fb0d0; margin-bottom: 10px; }
+  #dText { font-size: 16px; color: #efe9da; }
+  .btnrow { margin-top: 14px; overflow: hidden; }
+  button {
+    font-family: inherit;
+    font-size: 16px;
+    min-height: 48px;
+    border-radius: 8px;
+    border: 1px solid #c9a959;
+    background: #1b2c58;
+    color: #f0e9d6;
+    padding: 10px 12px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: rgba(201,169,89,0.3);
+  }
+  #btnVoice { width: 48%; float: left; background: #c9a959; color: #14100a; font-weight: bold; }
+  #btnStop { width: 48%; float: right; }
+  #btnClose { width: 100%; margin-top: 10px; }
+  #voiceMsg { font-size: 13px; color: #9fb0d0; margin-top: 8px; min-height: 18px; text-align: center; }
+  footer { text-align: center; margin-top: 18px; }
+  .portal-link {
+    display: block;
+    min-height: 48px;
+    line-height: 48px;
+    background: #16264f;
+    border: 1px solid #c9a959;
+    border-radius: 8px;
+    color: #e6c87a;
+    font-size: 16px;
+    text-decoration: none;
+    margin-bottom: 12px;
+  }
+  .credit { font-size: 12px; color: #67779e; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>HAKUBUTSU-6</h1>
+    <div class="sub">夜 の 博 物 館</div>
+    <div id="greeting">夜の博物館へようこそ</div>
+  </header>
+
+  <div id="counter">開いた展示：0 / 8</div>
+  <div id="complete"></div>
+  <div class="route-note">順路番号の順にめぐるのがおすすめです。展示をタップすると解説が開きます。</div>
+
+  <div class="grid" id="grid"></div>
+
+  <div id="detail">
+    <div id="dTitle"></div>
+    <div id="dMeta"></div>
+    <div id="dText"></div>
+    <div class="btnrow">
+      <button id="btnVoice" type="button">🔊 音声ガイド</button>
+      <button id="btnStop" type="button">⏹ 停止</button>
+    </div>
+    <div id="voiceMsg"></div>
+    <button id="btnClose" type="button">展示室にもどる</button>
+  </div>
+
+  <footer>
+    <a class="portal-link" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
+    <div class="credit">HAKUBUTSU-6 夜の博物館 ／ 静かな夜のための、小さな展示室です</div>
+  </footer>
+</div>
+
+<script>
+var EXHIBITS = [
+  {
+    name: "カニンヘンダックス",
+    icon: "🐕",
+    meta: "第1展示室 ／ 生きもの",
+    text: "ドイツでアナグマ猟のために生まれた、小さな体の猟犬です。「カニンヘン」はウサギという意味で、ウサギの巣穴に入れるほど小さいことが名前の由来。短い脚と長い体は、穴の中でも方向転換しやすい工夫のかたまりです。当館のマスコット的存在として、入口に一番近いこの場所に展示されています。"
+  },
+  {
+    name: "昭和のテレビ",
+    icon: "📺",
+    meta: "第2展示室 ／ くらしの道具",
+    text: "チャンネルを「ガチャッ」と回して変える、ブラウン管テレビです。画面は丸みを帯び、電源を入れると「ジー」という音とともにゆっくり明るくなりました。家族みんなで一台を囲んだ時代の中心にあった家電です。つまみを回す感触まで含めて、昭和の居間の風景そのものが展示品です。"
+  },
+  {
+    name: "黒電話",
+    icon: "☎️",
+    meta: "第3展示室 ／ くらしの道具",
+    text: "ダイヤルを回し、指を離すと「ジーコジーコ」と戻る音が懐かしい電話機です。重たい受話器と、番号をひとつずつ回す手間が、かける相手への気持ちを少しだけ丁寧にしてくれました。600形と呼ばれるこの形は、日本の家庭に長く置かれた定番です。当館のDENWA-6コーナーとは親戚のような展示です。"
+  },
+  {
+    name: "月の石",
+    icon: "🌙",
+    meta: "第4展示室 ／ 宇宙",
+    text: "月の表面は、長い年月をかけて降り積もった細かい砂「レゴリス」に覆われています。アポロ計画で持ち帰られた月の石は、地球の石より水分が少なく、宇宙の厳しい環境を物語ります。夜空に見える月と、ここにある石の話は、38万キロの距離を越えてつながっています。静かに眺めるのがおすすめの展示です。"
+  },
+  {
+    name: "土偶",
+    icon: "🏺",
+    meta: "第5展示室 ／ 古代",
+    text: "縄文時代につくられた、土でできた人形です。大きな目を持つ遮光器土偶が有名で、その姿はまるで宇宙服のようだとも言われます。何のために作られたのかは今もはっきりせず、祈りやお守り、玩具など諸説あります。分からないことが残っているからこそ、想像がふくらむ展示です。"
+  },
+  {
+    name: "アンモナイト",
+    icon: "🐚",
+    meta: "第6展示室 ／ いにしえの海",
+    text: "渦巻きの殻を持つ、古代の海の生きものの化石です。およそ4億年前から恐竜が絶滅する約6600万年前まで、世界の海で繁栄しました。殻の中は小さな部屋に分かれていて、浮き沈みを調整していたと考えられています。石の中に眠る、はるか昔の海の時間を感じてください。"
+  },
+  {
+    name: "レトロパソコン",
+    icon: "💻",
+    meta: "第7展示室 ／ 機械",
+    text: "1980年代のパソコンは、黒い画面に緑色の文字が光る「グリーンディスプレイ」が主流でした。プログラムはカセットテープに記録し、読み込みには数分かかることも。今のスマートフォンとは比べものにならない性能でも、当時の人々には未来そのものに見えた機械です。当館の各端末のデザインは、この時代への敬意でできています。"
+  },
+  {
+    name: "流れ星のかけら",
+    icon: "🌠",
+    meta: "第8展示室 ／ 宇宙",
+    text: "流れ星の正体は、宇宙を漂う小さな砂粒が地球の大気に飛び込み、光って燃え尽きる現象です。燃え残って地面まで届いたものが隕石となり、この展示の「かけら」につながります。願いごとを唱え終わる前に消えてしまうほどの一瞬の光。その短さが、昔から人々の心を惹きつけてきました。今夜の観覧の締めくくりにどうぞ。"
+  }
+];
+
+var opened = {};
+var openedCount = 0;
+var currentText = "";
+
+function el(id) { return document.getElementById(id); }
+
+function setGreeting() {
+  var h = new Date().getHours();
+  var msg;
+  if (h >= 17 && h < 19) {
+    msg = "夕方の博物館へようこそ。日が落ちて、展示室に明かりが灯る時間です。";
+  } else if (h >= 19 && h < 23) {
+    msg = "夜の博物館へようこそ。静かな展示室で、ゆっくりご覧ください。";
+  } else if (h >= 23 || h < 5) {
+    msg = "深夜の博物館へようこそ。今夜も開館しています。足音をひそめて、どうぞ。";
+  } else if (h >= 5 && h < 11) {
+    msg = "朝の博物館へようこそ。本当は夜の館ですが、特別にご案内します。";
+  } else {
+    msg = "昼の博物館へようこそ。夜に来ると、展示がまた違って見えますよ。";
+  }
+  el("greeting").innerHTML = msg;
+}
+
+function buildGrid() {
+  var grid = el("grid");
+  var html = "";
+  var i;
+  for (i = 0; i < EXHIBITS.length; i++) {
+    html += '<div class="card" id="card' + i + '" data-idx="' + i + '">'
+      + '<span class="num">順路 ' + (i + 1) + '</span>'
+      + '<span class="icon">' + EXHIBITS[i].icon + '</span>'
+      + '<span class="name">' + EXHIBITS[i].name + '</span>'
+      + '<span class="done" id="done' + i + '"></span>'
+      + '</div>';
+  }
+  grid.innerHTML = html;
+  for (i = 0; i < EXHIBITS.length; i++) {
+    (function (idx) {
+      el("card" + idx).onclick = function () { openExhibit(idx); };
+    })(i);
+  }
+}
+
+function updateCounter() {
+  el("counter").innerHTML = "開いた展示：" + openedCount + " / 8";
+  if (openedCount >= 8) {
+    el("complete").innerHTML = "🎉 全展示コンプリート！今夜のご来館、ありがとうございました。";
+  }
+}
+
+function openExhibit(idx) {
+  var ex = EXHIBITS[idx];
+  stopVoice();
+  el("dTitle").innerHTML = "順路" + (idx + 1) + "：" + ex.name;
+  el("dMeta").innerHTML = ex.meta;
+  el("dText").innerHTML = ex.text;
+  currentText = ex.name + "。" + ex.text;
+  el("voiceMsg").innerHTML = "";
+  el("detail").style.display = "block";
+  if (!opened[idx]) {
+    opened[idx] = true;
+    openedCount++;
+    el("card" + idx).className = "card opened";
+    el("done" + idx).innerHTML = "✓ 観覧済み";
+    updateCounter();
+  }
+  el("detail").scrollIntoView();
+}
+
+function speakGuide() {
+  var msg = el("voiceMsg");
+  if (!("speechSynthesis" in window)) {
+    msg.innerHTML = "この端末では音声ガイドが使えませんでした。解説文をお読みください。";
+    return;
+  }
+  try {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(currentText);
+    u.lang = "ja-JP";
+    u.pitch = 0.9;
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+    msg.innerHTML = "音声ガイドを再生中です…";
+  } catch (e) {
+    msg.innerHTML = "音声ガイドを開始できませんでした。解説文をお読みください。";
+  }
+}
+
+function stopVoice() {
+  if ("speechSynthesis" in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+  var msg = el("voiceMsg");
+  if (msg) { msg.innerHTML = ""; }
+}
+
+function init() {
+  setGreeting();
+  buildGrid();
+  updateCounter();
+  el("btnVoice").onclick = speakGuide;
+  el("btnStop").onclick = function () {
+    stopVoice();
+    el("voiceMsg").innerHTML = "音声ガイドを停止しました。";
+  };
+  el("btnClose").onclick = function () {
+    stopVoice();
+    el("detail").style.display = "none";
+    window.scrollTo(0, 0);
+  };
+}
+
+init();
+</script>
+</body>
+</html>

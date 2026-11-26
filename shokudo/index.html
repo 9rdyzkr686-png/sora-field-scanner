@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SHOKUDO-6 深夜食堂</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0;}
+html { -webkit-text-size-adjust: 100%;}
+body {
+background: #1d120b;
+color: #f3e2c7;
+font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+padding: 12px 12px 40px;
+max-width: 640px;
+margin: 0 auto;
+}
+.lantern {
+text-align: center;
+font-size: 30px;
+letter-spacing: 6px;
+color: #ffb45e;
+text-shadow: 0 0 14px rgba(255,150,50,.75);
+margin-top: 4px;
+}
+h1 {
+text-align: center;
+font-size: 30px;
+color: #ffb45e;
+letter-spacing: 3px;
+margin: 2px 0 2px;
+text-shadow: 0 0 10px rgba(255,150,50,.45);
+}
+.sub {
+text-align: center;
+font-size: 14px;
+color: #c9a06a;
+margin-bottom: 12px;
+}
+.card {
+background: #2b1a10;
+border: 1px solid #6b4423;
+border-radius: 12px;
+padding: 14px;
+margin-bottom: 14px;
+box-shadow: inset 0 0 24px rgba(0,0,0,.45);
+}
+.card h2 {
+font-size: 19px;
+color: #ffb45e;
+border-bottom: 1px dashed #6b4423;
+padding-bottom: 6px;
+margin-bottom: 10px;
+letter-spacing: 1px;
+}
+#osusumeName { font-size: 23px; font-weight: bold; color: #ffe1ae;}
+#osusumeText { font-size: 16px; line-height: 1.6; margin-top: 6px;}
+.menuitem {
+border-bottom: 1px solid #4a2d16;
+padding: 10px 0;
+}
+.menuitem:last-child { border-bottom: none;}
+.dishline { display: table; width: 100%;}
+.dishname { display: table-cell; font-size: 20px; font-weight: bold; color: #ffe1ae; vertical-align: middle;}
+.dishprice { display: table-cell; text-align: right; font-size: 18px; color: #ffb45e; vertical-align: middle; white-space: nowrap;}
+.orderbtn {
+display: block;
+width: 100%;
+min-height: 52px;
+margin-top: 8px;
+background: #8a4b16;
+color: #fff3dd;
+border: 2px solid #ffb45e;
+border-radius: 10px;
+font-size: 19px;
+font-weight: bold;
+letter-spacing: 2px;
+cursor: pointer;
+}
+.orderbtn:active { background: #a85f1e;}
+#counterLine { font-size: 19px; line-height: 1.7;}
+#totalLine { font-size: 21px; font-weight: bold; color: #ffb45e; margin-top: 4px;}
+#servedName { font-size: 24px; font-weight: bold; color: #ffe1ae; margin-bottom: 8px;}
+#episodeText { font-size: 19px; line-height: 1.75; min-height: 60px;}
+#memoText {
+font-size: 15px;
+color: #d9b47e;
+background: #1d120b;
+border-left: 4px solid #ffb45e;
+padding: 8px 10px;
+margin-top: 12px;
+line-height: 1.6;
+display: none;
+}
+.togglebtn {
+display: block;
+width: 100%;
+min-height: 52px;
+background: #3a2413;
+color: #ffe1ae;
+border: 2px solid #6b4423;
+border-radius: 10px;
+font-size: 18px;
+font-weight: bold;
+cursor: pointer;
+}
+.togglebtn:active { background: #4a2d16;}
+.portallink {
+display: block;
+width: 100%;
+min-height: 52px;
+line-height: 52px;
+text-align: center;
+background: #3a2413;
+color: #ffb45e;
+border: 2px solid #ffb45e;
+border-radius: 10px;
+font-size: 18px;
+font-weight: bold;
+text-decoration: none;
+margin-bottom: 12px;
+}
+.credit { text-align: center; font-size: 12px; color: #9a7748; line-height: 1.6;}
+</style>
+</head>
+<body>
+
+<div class="lantern">🏮</div>
+<h1>SHOKUDO-6 深夜食堂</h1>
+<p class="sub">夜更けの小さな食堂。今夜も静かに営業中。</p>
+
+<div class="card">
+<h2>★ 本日のおすすめ</h2>
+<div id="osusumeName">―</div>
+<p id="osusumeText">考え中…</p>
+</div>
+
+<div class="card">
+<h2>■ お品書き</h2>
+<div id="menuList"></div>
+</div>
+
+<div class="card">
+<h2>■ 今夜の注文</h2>
+<p id="counterLine">今夜の注文：0品</p>
+<p id="totalLine">合計：0円</p>
+</div>
+
+<div class="card">
+<h2>■ 店主のひとこと</h2>
+<div id="servedName">いらっしゃい。</div>
+<p id="episodeText">カウンターに座って、ゆっくりしていってください。気になる品があったら「注文」をどうぞ。</p>
+<p id="memoText"></p>
+</div>
+
+<div class="card">
+<button type="button" class="togglebtn" id="voiceBtn">ボイス：ON</button>
+</div>
+
+<a class="portallink" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
+<p class="credit">SHOKUDO-6 深夜食堂 ／ 物語と料理はフィクションです。お会計も気持ちだけ。</p>
+
+<script>
+var MENU = [
+{
+name: "醤油ラーメン", price: 750,
+memo: "麺は中太、スープは鶏ガラと煮干し。仕上げに一滴のラードで香りを閉じ込めます。",
+episodes: [
+"このラーメンの味はね、昔、駅前の屋台で食べた一杯が原点なんだ。寒い夜に手がかじかんで、箸がうまく持てなくてね。それでも熱くてうまかった。今もあの夜の味を追いかけてるんだよ。",
+"常連のトラックの運転手さんが言ってたよ。「長距離の途中、この一杯で目が覚める」って。だからスープは少し濃いめにしてあるんだ。眠気覚ましの一杯さ。",
+"麺を茹でる時間は時計じゃなくて耳で決めるんだ。湯気の音が変わる瞬間がある。何十年もやってると、それが分かるようになるもんだね。"
+]
+},
+{
+name: "おでん盛り合わせ", price: 680,
+memo: "大根、玉子、ちくわ、こんにゃく、はんぺん。出汁は昆布と鰹、継ぎ足し三年目。",
+episodes: [
+"おでんの大根はね、昼のうちに仕込むんだ。夜になってやっと味が芯まで届く。急ぐ料理じゃないんだよ、おでんってのは。人と同じで、時間をかけた分だけ深くなる。",
+"昔、閉店間際に駆け込んできた若い子がいてね。財布に小銭しかないって言うから、大根と玉子だけ出したんだ。あの子、今は立派になって、たまに家族を連れて来てくれるよ。",
+"この出汁は三年継ぎ足してるんだ。捨てたら終わり、続けたら宝。店ってのはそういうものの積み重ねだね。"
+]
+},
+{
+name: "焼き魚定食", price: 880,
+memo: "旬の魚を炭火で。今日は塩焼き、大根おろしと小鉢、味噌汁付き。",
+episodes: [
+"魚は目で選ぶんだ。市場の親父とはもう三十年の付き合いでね、私の顔を見ると奥からいいのを出してくる。信用ってのは、そういうふうに貯まっていくんだよ。",
+"焼き加減は皮目が勝負さ。パリッと焼けた皮と、ふっくらした身。その境目に一番うまいところがあるんだ。焦がしたら負け、でも怖がっても負けだね。",
+"昔は魚が嫌いな子が多くてね。でも骨を取って出すと、みんな食べるんだ。手間をかけると、苦手は好きに変わることがある。料理も人も同じだね。"
+]
+},
+{
+name: "カレーライス", price: 800,
+memo: "玉ねぎを飴色まで炒めた甘口寄りの欧風カレー。福神漬けは自家製。",
+episodes: [
+"このカレーは三日目が一番うまいんだ。だから仕込みはいつも三日先を見てる。今日食べる人の笑顔と、三日後の誰かの笑顔と。両方考えながら鍋を混ぜるんだよ。",
+"昔、プロポーズの前にこのカレーを食べに来た青年がいてね。「緊張で味が分からない」って笑ってた。後日、二人で来てくれたよ。うまくいったみたいだね。",
+"隠し味は教えないよ。…と言いたいところだけど、実はインスタントコーヒーが少し。内緒だよ、常連さんにも言ってないんだから。"
+]
+},
+{
+name: "肉じゃが", price: 720,
+memo: "牛肉とじゃがいも、糸こんにゃく。甘辛の煮汁はごはんにもよく合います。",
+episodes: [
+"肉じゃがは家庭の味って言うけどね、家庭の数だけ味があるんだ。うちのは母の味。砂糖を入れる順番まで、そのまま受け継いでる。変える気はないんだ。",
+"じゃがいもは面取りをするんだ。煮崩れを防ぐためだけじゃない。角を取るってのは、料理の心遣いだと思うんだよ。食べる人の口当たりまで考える。",
+"雨の日に肉じゃがを頼む人が多いんだよ。不思議だね。温かい煮物は、濡れた心にも染みるのかもしれないね。"
+]
+},
+{
+name: "厚焼き卵", price: 480,
+memo: "出汁巻き仕立て、焼きたてふわふわ。大根おろしと醤油でどうぞ。",
+episodes: [
+"卵焼きは一番ごまかしが効かない料理だよ。火加減と手際、それだけ。だから修業時代は毎日焼かされた。何百本焼いたか分からないけど、今の腕はその頃の賜物だね。",
+"うちの卵焼きは少し甘いんだ。関東じゃ珍しいって言われるけど、母が九州の人でね。この甘さが私の故郷の味なんだよ。",
+"焼きたての湯気を見てるとね、朝の台所を思い出すんだ。夜の店で出す朝の味。それも悪くないだろう？"
+]
+},
+{
+name: "手作りプリン", price: 420,
+memo: "卵と牛乳と砂糖だけ。カラメルはほろ苦く、固めの昔ながらのプリン。",
+episodes: [
+"プリンは固めが好きなんだ。今はなめらかが流行りだけどね、スプーンを入れたときの手応えがあるプリン。それが私の子供の頃のごちそうだったんだ。",
+"カラメルの焦がし具合で毎回少し味が違うんだ。機械じゃないからね。その日の気温と気分で変わる。それも手作りの味だと思って、楽しんでほしいな。",
+"甘いものを食べると、人は少し優しい顔になるんだ。カウンター越しにそれを見るのが、この仕事の一番の楽しみかもしれないね。"
+]
+},
+{
+name: "ホットコーヒー", price: 380,
+memo: "深煎りブレンドを一杯ずつドリップ。食後の静かな時間のお供に。",
+episodes: [
+"コーヒーはね、湯の温度が命なんだ。沸かしたてはダメ、少し落ち着かせてから注ぐ。人に淹れる一杯は、急いじゃいけないんだよ。",
+"夜中に一人で来て、コーヒーだけ飲んで帰るお客さんがいるんだ。何も聞かない、何も言わない。でも、その静かな時間がその人には必要なんだろうね。店はそういう場所でもあるんだ。",
+"昔、師匠に言われたよ。「コーヒーの味は豆で決まるんじゃない、誰のために淹れるかで決まる」って。今ならその意味が少し分かる気がするよ。"
+]
+}
+];
+
+var voiceOn = true;
+var orderCount = 0;
+var totalPrice = 0;
+var episodeCursor = [0, 0, 0, 0, 0, 0, 0, 0];
+
+function el(id) { return document.getElementById(id);}
+
+function speak(text) {
+if (!voiceOn) { return;}
+try {
+if (!("speechSynthesis" in window)) { return;}
+window.speechSynthesis.cancel();
+var u = new SpeechSynthesisUtterance(text);
+u.lang = "ja-JP";
+u.pitch = 0.8;
+u.rate = 0.95;
+window.speechSynthesis.speak(u);
+} catch (e) { /* 音声が使えなくても表示は続ける */}
+}
+
+function buildMenu() {
+var html = "";
+for (var i = 0; i < MENU.length; i++) {
+html += '<div class="menuitem">'
++ '<div class="dishline"><span class="dishname">' + MENU[i].name + '</span>'
++ '<span class="dishprice">' + MENU[i].price + '円</span></div>'
++ '<button type="button" class="orderbtn" id="orderBtn' + i + '">注文する</button>'
++ '</div>';
+}
+el("menuList").innerHTML = html;
+for (var j = 0; j < MENU.length; j++) {
+(function (idx) {
+el("orderBtn" + idx).onclick = function () { order(idx);};
+})(j);
+}
+}
+
+function order(idx) {
+var dish = MENU[idx];
+var ep = dish.episodes[episodeCursor[idx] % dish.episodes.length];
+episodeCursor[idx] = episodeCursor[idx] + 1;
+orderCount = orderCount + 1;
+totalPrice = totalPrice + dish.price;
+
+el("servedName").innerHTML = "■ " + dish.name + "（" + dish.price + "円）";
+el("episodeText").innerHTML = ep;
+var memo = el("memoText");
+memo.innerHTML = "" + dish.memo;
+memo.style.display = "block";
+
+el("counterLine").innerHTML = "今夜の注文：" + orderCount + "品";
+el("totalLine").innerHTML = "合計：" + totalPrice + "円";
+
+el("servedName").scrollIntoView(true);
+speak(dish.name + "、お待たせしました。" + ep);
+}
+
+function pickOsusume() {
+var now = new Date();
+var seed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+var idx = seed % MENU.length;
+var dish = MENU[idx];
+el("osusumeName").innerHTML = dish.name + "（" + dish.price + "円）";
+el("osusumeText").innerHTML = dish.memo + " 今夜はこれを、ゆっくり味わっていってください。";
+}
+
+el("voiceBtn").onclick = function () {
+voiceOn =!voiceOn;
+el("voiceBtn").innerHTML = voiceOn? "ボイス：ON": "ボイス：OFF";
+if (!voiceOn) {
+try { if ("speechSynthesis" in window) { window.speechSynthesis.cancel();}} catch (e) {}
+}
+};
+
+buildMenu();
+pickOsusume();
+</script>
+</body>
+</html>

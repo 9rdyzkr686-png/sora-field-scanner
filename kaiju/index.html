@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>KAIJU-6 怪獣警報</title>
+<style>
+  * { box-sizing: border-box; }
+  html { background: #080808; }
+  body {
+    margin: 0;
+    padding: 14px;
+    color: #f5f0dc;
+    background:
+      repeating-linear-gradient(0deg, rgba(255, 210, 0, 0.025) 0, rgba(255, 210, 0, 0.025) 1px, transparent 1px, transparent 5px),
+      #080808;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    font-size: 19px;
+    line-height: 1.55;
+  }
+  .terminal {
+    max-width: 760px;
+    margin: 0 auto;
+    border: 3px solid #ffd400;
+    background: rgba(12, 12, 10, 0.97);
+    box-shadow: 0 0 0 3px #2b2100, 0 0 28px rgba(255, 60, 0, 0.22);
+  }
+  header {
+    padding: 20px 18px 16px;
+    border-bottom: 3px solid #ffd400;
+    background: linear-gradient(180deg, #251400, #0c0c0c);
+    text-align: center;
+  }
+  .system-line {
+    color: #ffd400;
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 0.18em;
+  }
+  h1 {
+    margin: 4px 0 2px;
+    color: #fff3a6;
+    font-size: 38px;
+    line-height: 1.15;
+    letter-spacing: 0.05em;
+    text-shadow: 3px 3px 0 #8b1600;
+  }
+  .date-line { color: #ffb3a0; font-size: 18px; font-weight: bold; }
+  .alert-strip {
+    margin-top: 14px;
+    padding: 10px;
+    border: 2px solid #ff3b1f;
+    color: #fff;
+    background: #8f1000;
+    font-size: 19px;
+    font-weight: bold;
+  }
+  main { padding: 16px; }
+  section {
+    margin: 0 0 18px;
+    padding: 16px;
+    border: 2px solid #665500;
+    background: #11110d;
+  }
+  section.warning-main { border-color: #ff3b1f; background: #180d09; }
+  h2 {
+    margin: 0 0 13px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #ffd400;
+    color: #ffd400;
+    font-size: 25px;
+    line-height: 1.25;
+  }
+  h3 {
+    margin: 0 0 8px;
+    color: #fff3a6;
+    font-size: 21px;
+  }
+  .monster-name {
+    margin: 4px 0 10px;
+    color: #ffffff;
+    font-size: 34px;
+    font-weight: bold;
+    line-height: 1.25;
+    overflow-wrap: break-word;
+  }
+  .data-grid { width: 100%; border-collapse: collapse; }
+  .data-grid th,
+  .data-grid td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #4c431e;
+    text-align: left;
+    vertical-align: top;
+  }
+  .data-grid th { width: 34%; color: #ffda45; font-weight: bold; }
+  .data-grid td { color: #ffffff; font-weight: bold; }
+  .level-row { margin-top: 16px; }
+  .level-label { color: #ffb3a0; font-size: 20px; font-weight: bold; }
+  .level-blocks {
+    display: table;
+    width: 100%;
+    margin-top: 8px;
+    border-spacing: 4px 0;
+  }
+  .level-block {
+    display: table-cell;
+    width: 20%;
+    height: 42px;
+    border: 2px solid #555;
+    background: #222;
+    color: #777;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 22px;
+    font-weight: bold;
+  }
+  .level-block.on.level-1 { border-color: #59d95e; background: #14551a; color: #d9ffd9; }
+  .level-block.on.level-2 { border-color: #ffe45e; background: #665800; color: #fffbd1; }
+  .level-block.on.level-3 { border-color: #ff9f1c; background: #713d00; color: #fff0cc; }
+  .level-block.on.level-4 { border-color: #ff5d3a; background: #7e1c08; color: #ffe1d8; }
+  .level-block.on.level-5 { border-color: #ff1744; background: #8c001d; color: #ffffff; }
+  .level-comment {
+    margin: 10px 0 0;
+    padding: 11px;
+    border-left: 6px solid #ff3b1f;
+    background: #25100b;
+    color: #fff;
+    font-weight: bold;
+  }
+  .time-list,
+  .archive-list { margin: 0; padding: 0; list-style: none; }
+  .time-list li {
+    margin: 0 0 10px;
+    padding: 12px;
+    border: 1px solid #665500;
+    background: #0b0b09;
+  }
+  .time-list li:last-child { margin-bottom: 0; }
+  .time-range { display: block; color: #ffd400; font-size: 21px; font-weight: bold; }
+  .time-condition { display: block; margin-top: 3px; color: #fff; }
+  .tomorrow-name { color: #fff; font-size: 27px; font-weight: bold; line-height: 1.3; }
+  .summary { margin: 8px 0 0; }
+  .archive-list li {
+    padding: 11px 4px;
+    border-bottom: 1px solid #4c431e;
+  }
+  .archive-list li:last-child { border-bottom: 0; }
+  .archive-date { color: #ffb3a0; font-weight: bold; }
+  .archive-name { color: #fff; font-weight: bold; }
+  .archive-level { color: #ffd400; font-weight: bold; }
+  button,
+  .portal-link {
+    display: block;
+    width: 100%;
+    min-height: 56px;
+    padding: 13px 16px;
+    border: 3px solid #ffd400;
+    border-radius: 4px;
+    background: #8f1000;
+    color: #ffffff;
+    font: inherit;
+    font-size: 21px;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  button:active,
+  .portal-link:active { background: #c51e05; }
+  .speech-status {
+    min-height: 30px;
+    margin: 9px 0 0;
+    color: #ffda45;
+    text-align: center;
+    font-size: 17px;
+  }
+  .disclaimer {
+    margin-top: 18px;
+    padding: 15px;
+    border: 3px solid #ff3b1f;
+    background: #fff3f0;
+    color: #7c0d00;
+    font-size: 21px;
+    font-weight: bold;
+    text-align: center;
+  }
+  footer {
+    padding: 0 16px 18px;
+  }
+  .credit {
+    margin: 13px 0 2px;
+    color: #aaa;
+    font-size: 15px;
+    text-align: center;
+  }
+  .noscript {
+    padding: 14px;
+    color: #fff;
+    background: #8f1000;
+    font-weight: bold;
+    text-align: center;
+  }
+  @media (max-width: 480px) {
+    body { padding: 8px; font-size: 18px; }
+    main { padding: 10px; }
+    section { padding: 13px; }
+    h1 { font-size: 32px; }
+    .monster-name { font-size: 29px; }
+    .data-grid th { width: 31%; }
+    footer { padding: 0 10px 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="terminal">
+  <header>
+    <div class="system-line">KAIJU WARNING TERMINAL</div>
+    <h1>KAIJU-6<br>怪獣警報</h1>
+    <div class="date-line" id="todayDate">日付を確認中</div>
+    <div class="alert-strip">⚠ 架空怪獣 出現予報 発令中 ⚠</div>
+  </header>
+
+  <main>
+    <noscript><div class="noscript">JavaScriptを有効にすると、本日の怪獣予報が表示されます。</div></noscript>
+
+    <section class="warning-main" aria-labelledby="todayHeading">
+      <h2 id="todayHeading">■ 本日の怪獣</h2>
+      <div class="monster-name" id="monsterName">観測中…</div>
+      <table class="data-grid" aria-label="本日の怪獣データ">
+        <tr><th>全長</th><td id="monsterLength">―</td></tr>
+        <tr><th>体重</th><td id="monsterWeight">―</td></tr>
+        <tr><th>出現エリア</th><td id="monsterArea">―</td></tr>
+      </table>
+      <div class="level-row">
+        <div class="level-label">警戒レベル：<span id="levelNumber">―</span> / 5</div>
+        <div class="level-blocks" aria-hidden="true">
+          <div class="level-block" id="levelBlock1">1</div>
+          <div class="level-block" id="levelBlock2">2</div>
+          <div class="level-block" id="levelBlock3">3</div>
+          <div class="level-block" id="levelBlock4">4</div>
+          <div class="level-block" id="levelBlock5">5</div>
+        </div>
+        <p class="level-comment" id="levelComment">観測データを解析しています。</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="timeHeading">
+      <h2 id="timeHeading">■ 時間別予報</h2>
+      <ul class="time-list">
+        <li><span class="time-range">朝 6:00〜9:00</span><span class="time-condition" id="timeCondition1">―</span></li>
+        <li><span class="time-range">昼 11:00〜14:00</span><span class="time-condition" id="timeCondition2">―</span></li>
+        <li><span class="time-range">夕方 16:00〜19:00</span><span class="time-condition" id="timeCondition3">―</span></li>
+        <li><span class="time-range">夜 21:00〜24:00</span><span class="time-condition" id="timeCondition4">―</span></li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="tomorrowHeading">
+      <h2 id="tomorrowHeading">■ 明日の予報</h2>
+      <div class="tomorrow-name" id="tomorrowName">観測中…</div>
+      <p class="summary" id="tomorrowSummary">明日の怪獣データを解析しています。</p>
+    </section>
+
+    <section aria-labelledby="archiveHeading">
+      <h2 id="archiveHeading">■ 過去の出現記録</h2>
+      <ul class="archive-list" id="archiveList"></ul>
+    </section>
+
+    <button type="button" id="readButton">🔊 本日の警報を読み上げ</button>
+    <p class="speech-status" id="speechStatus" aria-live="polite"></p>
+
+    <div class="disclaimer">※これはジョーク予報です。実在の警報ではありません</div>
+  </main>
+
+  <footer>
+    <a class="portal-link" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
+    <p class="credit">KAIJU-6 怪獣警報局｜ふじみ野・川越周辺 架空怪獣観測網</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var prefixes = ["炎角", "霧鱗", "雷背", "岩甲", "月影", "鉄顎", "砂嵐", "深海", "霜牙", "風鳴"];
+  var bodies = ["ゴラス", "バグン", "モグン", "ザウロン", "ギラス", "ドラグン", "カイゼル", "ボルガ", "レギオン", "タルス"];
+  var types = ["型", "重装型", "高速型", "潜行型", "覚醒型"];
+  var areas = ["ふじみ野市", "川越", "富士見", "志木", "入間川河川敷", "ふじみ野市・川越市境", "富士見市・志木市境", "入間川河川敷（川越側）"];
+  var conditions = [
+    "怪獣の足音が遠くに聞こえるかも。窓の外は見ないでください。",
+    "地面が小さく揺れる予報。積み上げた本から目を離さないでください。",
+    "鳥が一斉に飛び立つかも。上空の大きな影にもご注意ください。",
+    "怪獣の鼻息で洗濯物が大きく揺れる見込みです。",
+    "静かすぎます。逆に注意。足音センサーは沈黙を記録しています。",
+    "雲に怪獣の背びれらしい影が映るかも。写真は無理に撮らないでください。",
+    "遠くで低い鳴き声が聞こえる予報。ダックスが耳を立てるかもしれません。",
+    "尻尾の風圧で落ち葉が渦を巻くかも。帽子をしっかり押さえてください。"
+  ];
+  var levelComments = [
+    "",
+    "レベル1：気配だけです。散歩は通常どおり、でも空は時々見上げてください。",
+    "レベル2：小さな足音に注意。怪獣はまだ遠くで迷っているようです。",
+    "レベル3：地響きの可能性があります。窓際のダックス人形を安全な場所へ。",
+    "レベル4：かなり近い予報です。大きな影と低い鳴き声に注意してください。",
+    "レベル5：最大級のジョーク警戒。カーテンを閉めて、家の中で静かに過ごしてください。"
+  ];
+
+  function pad2(value) {
+    return (value < 10 ? "0" : "") + value;
+  }
+
+  function dateKey(date) {
+    return date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
+  }
+
+  function formatDate(date) {
+    var weeks = ["日", "月", "火", "水", "木", "金", "土"];
+    return date.getFullYear() + "年" + (date.getMonth() + 1) + "月" + date.getDate() + "日（" + weeks[date.getDay()] + "）";
+  }
+
+  function shortDate(date) {
+    return (date.getMonth() + 1) + "/" + date.getDate();
+  }
+
+  function seededRandom(seed) {
+    var value = seed % 2147483647;
+    if (value <= 0) {
+      value += 2147483646;
+    }
+    return function () {
+      value = value * 16807 % 2147483647;
+      return (value - 1) / 2147483646;
+    };
+  }
+
+  function pick(random, list) {
+    return list[Math.floor(random() * list.length)];
+  }
+
+  function makeForecast(date, seedOffset) {
+    var random = seededRandom(dateKey(date) * 97 + seedOffset * 1009 + 6606);
+    var length = Math.round((18 + random() * 132) * 10) / 10;
+    var weightBase = length * length * (0.55 + random() * 0.9);
+    var weight = Math.round(weightBase / 10) * 10;
+    var level = Math.floor(random() * 5) + 1;
+    return {
+      name: pick(random, prefixes) + pick(random, bodies) + pick(random, types),
+      length: length,
+      weight: weight,
+      area: pick(random, areas),
+      level: level,
+      comment: levelComments[level]
+    };
+  }
+
+  function setText(id, text) {
+    document.getElementById(id).textContent = text;
+  }
+
+  function renderForecast() {
+    var today = new Date();
+    var forecast = makeForecast(today, 0);
+    var tomorrowDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    var tomorrow = makeForecast(tomorrowDate, 31);
+    var random = seededRandom(dateKey(today) * 131 + 4242);
+    var i;
+    var block;
+
+    setText("todayDate", formatDate(today) + " 発表");
+    setText("monsterName", forecast.name);
+    setText("monsterLength", forecast.length.toFixed(1) + " m");
+    setText("monsterWeight", "推定 " + forecast.weight.toLocaleString() + " t");
+    setText("monsterArea", forecast.area);
+    setText("levelNumber", String(forecast.level));
+    setText("levelComment", forecast.comment);
+
+    for (i = 1; i <= 5; i++) {
+      block = document.getElementById("levelBlock" + i);
+      block.className = "level-block" + (i <= forecast.level ? " on level-" + forecast.level : "");
+    }
+
+    for (i = 1; i <= 4; i++) {
+      setText("timeCondition" + i, pick(random, conditions));
+    }
+
+    setText("tomorrowName", tomorrow.name);
+    setText("tomorrowSummary", "出現エリアは" + tomorrow.area + "、警戒レベルは" + tomorrow.level + "の見込みです。全長は約" + tomorrow.length.toFixed(1) + "m。続報は明日のジョーク観測をお待ちください。");
+
+    renderArchive(today);
+    return forecast;
+  }
+
+  function renderArchive(today) {
+    var list = document.getElementById("archiveList");
+    var gaps = [2, 5, 9, 14, 21, 30];
+    var html = "";
+    var i;
+    var pastDate;
+    var record;
+
+    for (i = 0; i < gaps.length; i++) {
+      pastDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - gaps[i]);
+      record = makeForecast(pastDate, 71 + i);
+      html += "<li><span class=\"archive-date\">" + shortDate(pastDate) + "</span>　" +
+        "<span class=\"archive-name\">" + record.name + "</span>　" +
+        "<span class=\"archive-level\">レベル" + record.level + "</span><br>" +
+        record.area + "に出現したという記録があります。</li>";
+    }
+    list.innerHTML = html;
+  }
+
+  var todayForecast = renderForecast();
+
+  document.getElementById("readButton").onclick = function () {
+    var status = document.getElementById("speechStatus");
+    var text = "KAIJU-6怪獣警報です。本日の怪獣は、" + todayForecast.name + "。" +
+      "全長" + todayForecast.length.toFixed(1) + "メートル、推定体重" + todayForecast.weight + "トン。" +
+      "出現エリアは" + todayForecast.area + "。警戒レベルは5段階のうち" + todayForecast.level + "です。" +
+      todayForecast.comment + "なお、これはジョーク予報です。実在の警報ではありません。";
+
+    try {
+      if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
+        status.textContent = "このブラウザでは読み上げを利用できません。";
+        return;
+      }
+      window.speechSynthesis.cancel();
+      var utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "ja-JP";
+      utterance.pitch = 0.6;
+      utterance.rate = 0.95;
+      utterance.onerror = function () {
+        status.textContent = "読み上げを開始できませんでした。";
+      };
+      window.speechSynthesis.speak(utterance);
+      status.textContent = "本日の警報を読み上げています。";
+    } catch (error) {
+      status.textContent = "読み上げを開始できませんでした。";
+    }
+  };
+}());
+</script>
+</body>
+</html>

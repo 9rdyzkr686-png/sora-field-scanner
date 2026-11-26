@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>JIKAN-6 時間旅行券売機</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #f3ead2;
+    color: #1d2a4a;
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+    font-size: 17px;
+    line-height: 1.5;
+    padding: 12px 12px 28px;
+  }
+  header {
+    text-align: center;
+    border: 3px double #1d2a4a;
+    background: #faf3dd;
+    padding: 12px 8px 10px;
+    margin-bottom: 12px;
+  }
+  header .sub { font-size: 13px; letter-spacing: 4px; color: #8a2b23; font-weight: bold; }
+  h1 { margin: 2px 0 4px; font-size: 26px; letter-spacing: 2px; color: #1d2a4a; }
+  header .note { font-size: 13px; color: #5a5342; }
+  .osusume {
+    background: #fdf8e7;
+    border: 2px solid #8a2b23;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .osusume .label { font-size: 13px; font-weight: bold; color: #8a2b23; letter-spacing: 2px; }
+  .osusume .era { font-size: 22px; font-weight: bold; color: #1d2a4a; }
+  .osusume .why { font-size: 14px; color: #5a5342; }
+  h2 {
+    font-size: 16px; letter-spacing: 2px; color: #1d2a4a;
+    border-left: 6px solid #8a2b23; padding-left: 8px; margin: 16px 0 8px;
+  }
+  .eraGrid { overflow: hidden; }
+  .eraBtn {
+    float: left; width: 32%; margin: 0 2% 10px 0;
+    min-height: 56px; padding: 10px 2px;
+    font-size: 17px; font-weight: bold; color: #1d2a4a;
+    background: #fdf8e7; border: 2px solid #1d2a4a; border-radius: 6px;
+    cursor: pointer;
+  }
+  .eraBtn:nth-child(3n) { margin-right: 0; }
+  .eraBtn.selected { background: #1d2a4a; color: #f3ead2; }
+  .ticketWrap { margin-top: 4px; }
+  .placeholder {
+    border: 2px dashed #a5977a; border-radius: 6px; padding: 18px 12px;
+    text-align: center; color: #8a8064; background: #efe6cd; font-size: 16px;
+  }
+  .ticket {
+    background: #fffdf4;
+    border: 2px solid #1d2a4a;
+    border-radius: 8px;
+    padding: 14px 14px 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .ticket:before, .ticket:after {
+    content: ""; position: absolute; top: 50%; width: 22px; height: 22px;
+    background: #f3ead2; border: 2px solid #1d2a4a; border-radius: 50%;
+    margin-top: -11px;
+  }
+  .ticket:before { left: -13px; }
+  .ticket:after { right: -13px; }
+  .ticket .route { font-size: 20px; font-weight: bold; text-align: center; color: #1d2a4a; }
+  .ticket .route .arrow { color: #8a2b23; }
+  .ticket .rows { margin-top: 10px; border-top: 1px dashed #a5977a; padding-top: 8px; }
+  .ticket .row { font-size: 16px; margin: 3px 0; }
+  .ticket .row .k { color: #5a5342; font-size: 14px; }
+  .stamp {
+    position: absolute; top: 10px; right: 12px;
+    width: 62px; height: 62px; border: 3px solid #b3372c; border-radius: 50%;
+    color: #b3372c; font-weight: bold; font-size: 13px; line-height: 1.25;
+    text-align: center; padding-top: 12px;
+    -webkit-transform: rotate(12deg); transform: rotate(12deg);
+    opacity: 0.85; background: rgba(255,253,244,0.6);
+  }
+  .triviaBox {
+    background: #fdf8e7; border: 2px solid #1d2a4a; border-radius: 6px;
+    padding: 12px; margin-top: 12px; min-height: 86px;
+  }
+  .triviaBox .tlabel { font-size: 13px; font-weight: bold; color: #8a2b23; letter-spacing: 2px; }
+  .triviaBox .ttext { font-size: 18px; margin-top: 4px; }
+  .bigBtn {
+    display: block; width: 100%; min-height: 54px; margin-top: 10px;
+    font-size: 19px; font-weight: bold; border-radius: 6px; cursor: pointer;
+    border: 2px solid #1d2a4a;
+  }
+  .nextBtn { background: #fdf8e7; color: #1d2a4a; }
+  .goBtn { background: #8a2b23; color: #fff8ea; border-color: #8a2b23; font-size: 22px; letter-spacing: 4px; }
+  .goBtn:disabled { background: #b9a894; border-color: #b9a894; }
+  .log {
+    margin-top: 12px; background: #1d2a4a; color: #f3ead2; border-radius: 6px;
+    padding: 12px 14px; min-height: 60px; font-size: 17px; display: none;
+  }
+  .log div { margin: 4px 0; }
+  .log .arrive { color: #ffd98a; font-weight: bold; }
+  footer { margin-top: 22px; text-align: center; }
+  .portalBtn {
+    display: block; min-height: 52px; line-height: 52px;
+    background: #1d2a4a; color: #f3ead2; text-decoration: none;
+    font-size: 18px; font-weight: bold; border-radius: 6px; letter-spacing: 2px;
+  }
+  .credit { margin-top: 10px; font-size: 12px; color: #8a8064; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="sub">TIME TRAVEL TICKETS</div>
+  <h1>JIKAN-6 時間旅行券売機</h1>
+  <div class="note">時代を選ぶと切符が発行されます。往復の保証はありません。</div>
+</header>
+
+<div class="osusume">
+  <div class="label">★ 本日のおすすめの時代</div>
+  <div class="era" id="osusumeEra">読み込み中…</div>
+  <div class="why" id="osusumeWhy"></div>
+</div>
+
+<h2>行き先を選んでください</h2>
+<div class="eraGrid" id="eraGrid"></div>
+
+<h2>あなたの切符</h2>
+<div class="ticketWrap">
+  <div class="placeholder" id="ticketPlaceholder">まだ切符がありません。<br>上のボタンから時代を選んでください。</div>
+  <div class="ticket" id="ticket" style="display:none;">
+    <div class="stamp" id="ticketStamp">JIKAN-6</div>
+    <div class="route">現在 <span class="arrow">→</span> <span id="ticketDest">―</span></div>
+    <div class="rows">
+      <div class="row"><span class="k">発行番号：</span><span id="ticketNo">―</span></div>
+      <div class="row"><span class="k">料金：</span><span id="ticketPrice">―</span></div>
+      <div class="row"><span class="k">ご注意：</span>帰りの便は現地調達です</div>
+    </div>
+  </div>
+</div>
+
+<div class="triviaBox" id="triviaBox" style="display:none;">
+  <div class="tlabel">時代トリビア <span id="triviaCount"></span></div>
+  <div class="ttext" id="triviaText"></div>
+</div>
+<button class="bigBtn nextBtn" id="triviaBtn" style="display:none;">つぎのトリビア ▶</button>
+<button class="bigBtn goBtn" id="goBtn" style="display:none;">しゅっぱつ！</button>
+
+<div class="log" id="journeyLog"></div>
+
+<footer>
+  <a class="portalBtn" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
+  <div class="credit">JIKAN-6 時間旅行券売機 ／ 時間旅行は自己責任でお願いします</div>
+</footer>
+
+<script>
+var ERAS = [
+  {
+    name: "恐竜時代",
+    stamp: "恐竜",
+    price: "片道：度胸 5つ",
+    why: "今日は大きな生き物に会いたくなる日です。",
+    trivia: [
+      "ティラノサウルスの歯は、バナナくらいの大きさがありました。",
+      "恐竜の時代は約1億6千万年も続きました。人類の歴史よりずっと長いです。",
+      "今の鳥たちは、恐竜の子孫だと言われています。",
+      "恐竜時代の終わりは、約6600万年前に落ちた巨大な隕石がきっかけとされています。"
+    ],
+    log: [
+      "時空トンネルを抜けています…",
+      "ジャングルの匂いがしてきました。",
+      "ドスン、ドスン…大きな足音が近づいています。",
+      "到着！恐竜時代です。食べられないようご注意ください。"
+    ]
+  },
+  {
+    name: "江戸",
+    stamp: "江戸",
+    price: "片道：小判 1枚",
+    why: "今日はのんびり城下町を歩きたい日です。",
+    trivia: [
+      "江戸の人口は100万人を超え、当時の世界でも最大級の都市でした。",
+      "お寿司は屋台でパッと食べる、今でいうファストフードでした。",
+      "銭湯はお風呂だけでなく、情報交換の社交場でもありました。",
+      "飛脚は江戸から大阪まで、リレー方式で手紙を運んでいました。"
+    ],
+    log: [
+      "時代の扉がゆっくり開いています…",
+      "下駄の音と、市場の掛け声が聞こえてきました。",
+      "川の向こうに江戸城が見えてきました。",
+      "到着！江戸の町です。まずは深川めしでもどうぞ。"
+    ]
+  },
+  {
+    name: "明治",
+    stamp: "明治",
+    price: "片道：ハイカラな気持ち",
+    why: "今日は新しいことに挑戦したくなる日です。",
+    trivia: [
+      "1872年、新橋と横浜の間に日本初の鉄道が開通しました。",
+      "文明開化の味といえば牛鍋。今のすき焼きのご先祖です。",
+      "男性の断髪は自由化され、散切り頭が流行しました。",
+      "鹿鳴館では西洋式の舞踏会が開かれ、話題になりました。"
+    ],
+    log: [
+      "汽笛の音と一緒に時代が動き出しました…",
+      "ガス灯の明かりが見えてきました。",
+      "馬車と人力車が通り過ぎていきます。",
+      "到着！明治の新橋駅です。文明開化の音がします。"
+    ]
+  },
+  {
+    name: "大正",
+    stamp: "大正",
+    price: "片道：ロマン 2つ",
+    why: "今日はちょっとおしゃれを楽しみたい日です。",
+    trivia: [
+      "大正時代は15年ほどと短く、でも文化は大きく花開きました。",
+      "カフェーでは女給さんが働き、モダンな若者が集まりました。",
+      "モガ・モボ（モダンガール・モダンボーイ）が街を歩いた時代です。",
+      "1925年、日本でラジオ放送が始まりました。"
+    ],
+    log: [
+      "レコードの音楽が流れてきました…",
+      "銀座の通りにカフェーの看板が見えます。",
+      "チンチン電車が横を通り過ぎました。",
+      "到着！大正の銀座です。大正ロマンをお楽しみください。"
+    ]
+  },
+  {
+    name: "昭和",
+    stamp: "昭和",
+    price: "片道：思い出 3つ",
+    why: "今日は懐かしい気持ちに浸りたい日です。",
+    trivia: [
+      "1953年、日本でテレビ放送が始まりました。街頭テレビに人が集まったそうです。",
+      "1958年に東京タワーが完成。高さ333メートルでした。",
+      "1964年、東海道新幹線が開通し、東京オリンピックが開かれました。",
+      "駄菓子屋は子どもたちの社交場。10円玉を握りしめて通ったものです。"
+    ],
+    log: [
+      "白黒テレビのような画面を抜けています…",
+      "商店街のスピーカーから歌謡曲が聞こえます。",
+      "夕日の匂いと、夕ごはんの香りがしてきました。",
+      "到着！昭和の商店街です。駄菓子屋はあの角ですよ。"
+    ]
+  },
+  {
+    name: "平成",
+    stamp: "平成",
+    price: "片道：懐かしさ 4つ",
+    why: "今日はあの頃の空気を思い出したい日です。",
+    trivia: [
+      "平成は1989年から2019年まで、30年あまり続きました。",
+      "ポケベルから携帯電話、そしてスマホへ。連絡の道具が大きく変わった時代です。",
+      "コンビニや100円ショップが、暮らしの当たり前になりました。",
+      "たまごっちやゲーム機が大ブームになり、社会現象になりました。"
+    ],
+    log: [
+      "着信音のようなメロディが流れています…",
+      "レンタルビデオ屋の看板が見えてきました。",
+      "公衆電話の前を通り過ぎます。",
+      "到着！平成の街です。懐かしさをお楽しみください。"
+    ]
+  },
+  {
+    name: "現在",
+    stamp: "現在",
+    price: "片道：0円（近いので）",
+    why: "今日は遠くに行かず、足元を楽しむ日です。",
+    trivia: [
+      "現在は一番近い行き先ですが、意外とじっくり見ていないものです。",
+      "スマホひとつで、買い物も地図も辞書もまかなえる時代になりました。",
+      "今日という日は、未来から見れば立派な「あの頃」になります。",
+      "現在への切符は無料です。いつでも何度でも使えます。"
+    ],
+    log: [
+      "時空トンネルは…あれ、すぐ終わりました。",
+      "聞き慣れた音が聞こえてきます。",
+      "見慣れた景色が広がっています。",
+      "到着！現在です。おかえりなさい。"
+    ]
+  },
+  {
+    name: "未来・2100年",
+    stamp: "未来",
+    price: "片道：未来ポイント 100",
+    why: "今日は先のことを想像してワクワクしたい日です。",
+    trivia: [
+      "ここから先は想像の旅です。2100年の姿は誰にも分かりません。",
+      "空飛ぶ車や、宇宙旅行が当たり前になっているかもしれません。",
+      "2100年を生きる人たちも、きっと今日の私たちを「昔の人」と呼ぶでしょう。",
+      "未来のトリビアは、あなたが作る番です。"
+    ],
+    log: [
+      "時空トンネルが青白く光っています…",
+      "見たことのない乗り物が横を通り過ぎました。",
+      "空に浮かぶ街が見えてきました。",
+      "到着！2100年です。未来は想像より静かかもしれません。"
+    ]
+  },
+  {
+    name: "月面時代",
+    stamp: "月面",
+    price: "片道：酸素ボンベ 1本",
+    why: "今日は地球を外から眺めてみたい日です。",
+    trivia: [
+      "月の重力は地球の約6分の1。大きくジャンプできます。",
+      "月面からは、地球が青く丸く浮かんで見えます。",
+      "月には大気がほとんどないので、足跡は長く残ると言われています。",
+      "月面基地ができたら、地球の夜景ならぬ「地球見」が名物になるかもしれません。"
+    ],
+    log: [
+      "ロケットがゆっくり浮かび上がりました…",
+      "窓の外で地球が小さくなっていきます。",
+      "静かの海が見えてきました。",
+      "到着！月面基地です。地球見をお楽しみください。"
+    ]
+  }
+];
+
+var currentEra = -1;
+var triviaIdx = 0;
+var timers = [];
+
+function el(id) { return document.getElementById(id); }
+
+function dateSeed() {
+  var d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+function pad2(n) {
+  return (n < 10 ? "0" : "") + n;
+}
+
+function clearTimers() {
+  var i;
+  for (i = 0; i < timers.length; i++) { clearTimeout(timers[i]); }
+  timers = [];
+}
+
+function showTrivia() {
+  var era = ERAS[currentEra];
+  el("triviaText").innerHTML = era.trivia[triviaIdx];
+  el("triviaCount").innerHTML = "（" + (triviaIdx + 1) + " / " + era.trivia.length + "）";
+}
+
+function selectEra(idx) {
+  var era = ERAS[idx];
+  var no;
+  clearTimers();
+  currentEra = idx;
+  triviaIdx = 0;
+  el("goBtn").disabled = false;
+
+  var btns = el("eraGrid").getElementsByTagName("button");
+  var i;
+  for (i = 0; i < btns.length; i++) {
+    btns[i].className = "eraBtn" + (i === idx ? " selected" : "");
+  }
+
+  no = dateSeed() + "-" + pad2(idx + 1);
+  el("ticketNo").innerHTML = "No. " + no;
+  el("ticketDest").innerHTML = era.name;
+  el("ticketPrice").innerHTML = era.price;
+  el("ticketStamp").innerHTML = era.stamp + "<br>JIKAN-6";
+  el("ticketPlaceholder").style.display = "none";
+  el("ticket").style.display = "block";
+  el("triviaBox").style.display = "block";
+  el("triviaBtn").style.display = "block";
+  el("goBtn").style.display = "block";
+  el("journeyLog").style.display = "none";
+  el("journeyLog").innerHTML = "";
+  showTrivia();
+}
+
+function nextTrivia() {
+  if (currentEra < 0) { return; }
+  triviaIdx = (triviaIdx + 1) % ERAS[currentEra].trivia.length;
+  showTrivia();
+}
+
+function appendLogLine(text, isArrive, delay) {
+  var t = setTimeout(function () {
+    var log = el("journeyLog");
+    var div = document.createElement("div");
+    if (isArrive) { div.className = "arrive"; }
+    div.innerHTML = text;
+    log.appendChild(div);
+  }, delay);
+  timers.push(t);
+}
+
+function depart() {
+  if (currentEra < 0) { return; }
+  var era = ERAS[currentEra];
+  var log = el("journeyLog");
+  var i;
+  clearTimers();
+  log.innerHTML = "";
+  log.style.display = "block";
+  el("goBtn").disabled = true;
+  for (i = 0; i < era.log.length; i++) {
+    appendLogLine(era.log[i], i === era.log.length - 1, 800 * (i + 1));
+  }
+  var t = setTimeout(function () { el("goBtn").disabled = false; }, 800 * era.log.length + 200);
+  timers.push(t);
+}
+
+function init() {
+  var grid = el("eraGrid");
+  var i;
+  for (i = 0; i < ERAS.length; i++) {
+    (function (idx) {
+      var b = document.createElement("button");
+      b.className = "eraBtn";
+      b.innerHTML = ERAS[idx].name;
+      b.onclick = function () { selectEra(idx); };
+      grid.appendChild(b);
+    })(i);
+  }
+  var rec = dateSeed() % ERAS.length;
+  el("osusumeEra").innerHTML = ERAS[rec].name;
+  el("osusumeWhy").innerHTML = ERAS[rec].why;
+  el("triviaBtn").onclick = nextTrivia;
+  el("goBtn").onclick = depart;
+}
+
+init();
+</script>
+</body>
+</html>

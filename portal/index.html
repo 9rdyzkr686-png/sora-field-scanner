@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>PORTAL-6 全サイト一覧</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #050807;
+  color: #c9f5d6;
+  font-family: "Courier New", monospace;
+  padding: 14px 12px 40px;
+  -webkit-text-size-adjust: 100%;
+}
+h1 {
+  font-size: 24px;
+  letter-spacing: 2px;
+  color: #39ff7a;
+  text-align: center;
+  margin: 8px 0 2px;
+}
+.sub {
+  text-align: center;
+  font-size: 13px;
+  color: #7fae8d;
+  margin-bottom: 16px;
+}
+h2 {
+  font-size: 17px;
+  color: #ffc857;
+  border-bottom: 1px solid #2a4a35;
+  padding-bottom: 5px;
+  margin: 22px 0 10px;
+  letter-spacing: 1px;
+}
+.note {
+  font-size: 12px;
+  color: #7fae8d;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+a.row {
+  display: block;
+  min-height: 56px;
+  background: #0c1710;
+  border: 1px solid #2a4a35;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  text-decoration: none;
+  color: #c9f5d6;
+}
+a.row:active { background: #14301d; }
+.name {
+  display: block;
+  font-size: 19px;
+  font-weight: bold;
+  color: #39ff7a;
+  line-height: 1.3;
+}
+.desc {
+  display: block;
+  font-size: 13px;
+  color: #9fc7ab;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+#autoStatus {
+  font-size: 13px;
+  color: #7fae8d;
+  padding: 4px 2px;
+}
+#refreshBtn {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 24px;
+  background: #0c1710;
+  color: #39ff7a;
+  border: 1px solid #39ff7a;
+  border-radius: 8px;
+  font-family: "Courier New", monospace;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+}
+#refreshBtn:active { background: #14301d; }
+.footer {
+  text-align: center;
+  font-size: 11px;
+  color: #5d8268;
+  margin-top: 22px;
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+<h1>PORTAL-6</h1>
+<div class="sub">全サイト一覧 — iPhone 6 専用ポータル</div>
+
+<h2>■ サイト一覧</h2>
+
+<a class="row" href="https://9rdyzkr686-png.github.io/iPhone6-board/">
+  <span class="name">情報ボード</span>
+  <span class="desc">天気・地震・ニュースと育成の全部入り</span>
+</a>
+
+<a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/">
+  <span class="name">SORA FIELD SCANNER</span>
+  <span class="desc">会話する相棒ソラ</span>
+</a>
+
+<a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/orbit/">
+  <span class="name">ORBIT-6 宇宙管制</span>
+  <span class="desc">ISS追跡と宇宙ニュース</span>
+</a>
+
+<a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/radar/">
+  <span class="name">RDR-6 周辺探査レーダー</span>
+  <span class="desc">ふじみ野周辺を探知</span>
+</a>
+
+<a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/hima/">
+  <span class="name">HIMA-6 ひまステーション</span>
+  <span class="desc">読み物とミニゲームの1時間コース</span>
+</a>
+
+<a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/densetsu/">
+  <span class="name">DENSETSU-6 都市伝説アーカイブ</span>
+  <span class="desc">最新トピックと定番の話</span>
+</a>
+
+<a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/radio/">
+  <span class="name">RADIO-6 聞く暇つぶしラジオ</span>
+  <span class="desc">ロボット音声で読み上げ</span>
+</a>
+
+<a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/denwa/">
+  <span class="name">DENWA-6 まわる電話</span>
+  <span class="desc">ダイヤルを回して電話をかける</span>
+</a>
+
+<a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/jikan/">
+  <span class="name">JIKAN-6 時間旅行券売機</span>
+  <span class="desc">時代行きの切符を発行</span>
+</a>
+
+<a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/shokudo/">
+  <span class="name">SHOKUDO-6 深夜食堂</span>
+  <span class="desc">店主の話を聞く夜の食堂</span>
+</a>
+
+<a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/kaiju/">
+  <span class="name">KAIJU-6 怪獣警報</span>
+  <span class="desc">今日の怪獣出現予報（ジョーク）</span>
+</a>
+
+<a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/museum/">
+  <span class="name">HAKUBUTSU-6 夜の博物館</span>
+  <span class="desc">音声ガイドつき展示</span>
+</a>
+
+<a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/ekima/">
+  <span class="name">EKIMA-6 ダックス駅</span>
+  <span class="desc">架空駅の発車案内板</span>
+</a>
+
+<h2>■ 自動で見つけた新しいサイト</h2>
+<div id="autoStatus">チェック中…</div>
+<div id="autoList"></div>
+<div class="note">新しいサイトが増えると、ここに自動で出ます</div>
+
+<button id="refreshBtn" type="button">↻ 更新</button>
+
+<div class="footer">PORTAL-6 は小野さん専用の入口です<br>一覧はネットがなくても表示されます</div>
+
+<script>
+var KNOWN = {
+  "orbit": 1, "radar": 1, "hima": 1, "densetsu": 1, "radio": 1,
+  "denwa": 1, "jikan": 1, "shokudo": 1, "kaiju": 1, "museum": 1,
+  "ekima": 1, "portal": 1
+};
+var SITE_BASE = "https://9rdyzkr686-png.github.io/sora-field-scanner/";
+var API_URL = "https://api.github.com/repos/9rdyzkr686-png/sora-field-scanner/contents/";
+
+function el(id) { return document.getElementById(id); }
+
+function xhrGet(url, timeoutMs, onOk, onFail) {
+  var xhr = new XMLHttpRequest();
+  var done = false;
+  xhr.open("GET", url, true);
+  try { xhr.timeout = timeoutMs; } catch (e) {}
+  xhr.onreadystatechange = function () {
+    if (done) { return; }
+    if (xhr.readyState === 4) {
+      done = true;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onOk(xhr.responseText);
+      } else {
+        onFail();
+      }
+    }
+  };
+  xhr.ontimeout = function () {
+    if (!done) { done = true; onFail(); }
+  };
+  xhr.onerror = function () {
+    if (!done) { done = true; onFail(); }
+  };
+  try { xhr.send(null); } catch (e) { if (!done) { done = true; onFail(); } }
+}
+
+function extractTitle(html) {
+  var m = /<title[^>]*>([^<]*)<\/title>/i.exec(html);
+  if (!m) { return ""; }
+  var t = m[1].replace(/^\s+|\s+$/g, "");
+  return t;
+}
+
+function addAutoRow(dirName, title) {
+  var a = document.createElement("a");
+  a.className = "row";
+  a.href = SITE_BASE + dirName + "/";
+  var nameSpan = document.createElement("span");
+  nameSpan.className = "name";
+  nameSpan.appendChild(document.createTextNode(title ? title : dirName));
+  var descSpan = document.createElement("span");
+  descSpan.className = "desc";
+  descSpan.appendChild(document.createTextNode("自動で追加されたサイト"));
+  a.appendChild(nameSpan);
+  a.appendChild(descSpan);
+  el("autoList").appendChild(a);
+}
+
+function autoFail() {
+  el("autoStatus").appendChild(document.createTextNode("（自動チェックはできませんでした）"));
+  el("autoStatus").style.display = "block";
+}
+
+function checkNewSites() {
+  xhrGet(API_URL, 10000, function (text) {
+    var entries;
+    try { entries = JSON.parse(text); } catch (e) { autoFail(); return; }
+    if (!entries || typeof entries.length !== "number") { autoFail(); return; }
+    var fresh = [];
+    var i;
+    for (i = 0; i < entries.length; i++) {
+      var en = entries[i];
+      if (en && en.type === "dir" && en.name && !KNOWN[en.name]) {
+        fresh.push(en.name);
+      }
+    }
+    if (fresh.length === 0) {
+      el("autoStatus").appendChild(document.createTextNode("（新しいサイトはまだありません）"));
+      return;
+    }
+    el("autoStatus").style.display = "none";
+    var pending = fresh.length;
+    var anyAdded = false;
+    function oneDone() {
+      pending--;
+      if (pending <= 0 && !anyAdded) { autoFail(); }
+    }
+    for (i = 0; i < fresh.length; i++) {
+      (function (dirName) {
+        xhrGet(SITE_BASE + dirName + "/", 10000, function (html) {
+          var title = extractTitle(html);
+          addAutoRow(dirName, title);
+          anyAdded = true;
+          oneDone();
+        }, function () { oneDone(); });
+      })(fresh[i]);
+    }
+  }, function () { autoFail(); });
+}
+
+function init() {
+  el("refreshBtn").onclick = function () { location.reload(); };
+  checkNewSites();
+}
+
+init();
+</script>
+</body>
+</html>
