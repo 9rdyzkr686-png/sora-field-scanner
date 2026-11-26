@@ -50,6 +50,13 @@
   }
   .row.ai .msg.thinking { color:#ffe9a8; border-color:#7a5a00; background:rgba(40,26,0,.4); }
   .row.ai .msg.error { color:#ffb3ab; border-color:#7a2d24; background:rgba(50,10,5,.4); }
+  body.sora .row.ai .who { color:#33ff66; }
+  body.sora .row.ai .msg {
+    background:#000; color:#33ff66; border:1px solid #33ff66;
+    text-shadow:0 0 6px rgba(51,255,102,.55);
+  }
+  body.sora .row.ai .msg.thinking { color:#ffb000; border-color:#ffb000; background:#000; text-shadow:0 0 6px rgba(255,176,0,.55); }
+  body.sora .row.ai .msg.error { color:#ff8a80; border-color:#ff8a80; background:#000; text-shadow:none; }
   .row.sys { text-align:center; }
   .row.sys .msg { font-size:13px; color:#9fb8a6; }
 
@@ -86,6 +93,7 @@
     <button type="button" class="mchip" data-mode="doctor">ダックス博士</button>
     <button type="button" class="mchip" data-mode="fortune">占い師</button>
     <button type="button" class="mchip" data-mode="story">昔話</button>
+    <button type="button" class="mchip" data-mode="sora">SORA-01</button>
   </div>
   <div class="chiprow">
     <button type="button" id="voiceBtn">ボイス：OFF</button>
@@ -134,7 +142,8 @@ var MODES = {
   chat:    { label: "雑談",         inst: "あなたは明るくフレンドリーな話し相手です。楽しく、短めに答えてください。" },
   doctor:  { label: "ダックス博士", inst: "あなたはダックスフンドにくわしい博士です。博士らしい口調で、ダックスフンドの知識を交えて答えてください。" },
   fortune: { label: "占い師",       inst: "あなたは神秘的な口調の占い師です。占いとして楽しく答えてください。これはエンターテイメントです。" },
-  story:   { label: "昔話",         inst: "あなたは昔話の語り部です。「むかしむかし」で始まる、短い創作の昔話を語ってください。" }
+  story:   { label: "昔話",         inst: "あなたは昔話の語り部です。「むかしむかし」で始まる、短い創作の昔話を語ってください。" },
+  sora:    { label: "SORA-01",      inst: "あなたは観測生物SORA-01です。1980年代パソコン風のレトロな端末口調で答えてください。相手は観察者の小野さんです。「小野さん」と呼びかけてください。" }
 };
 var COMMON_RULES = "必ず日本語で答えてください。マークダウン記号（#、*、-、番号リストなど）は使わないでください。改行は控えめにしてください。";
 
@@ -196,9 +205,50 @@ function speak(text) {
   } catch (e) { /* ignore */ }
 }
 
+/* ---- typewriter ---- */
+var typeTimer = null;
+var typeTarget = null;
+var typeFull = "";
+var typePos = 0;
+
+function finishTyping() {
+  if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+  if (typeTarget) {
+    typeTarget.innerHTML = esc(typeFull);
+    typeTarget = null;
+  }
+  scrollToBottom();
+}
+
+function startTyping(msgEl, fullText) {
+  finishTyping();
+  typeTarget = msgEl;
+  typeFull = fullText;
+  typePos = 0;
+  msgEl.innerHTML = "";
+  typeTimer = setInterval(function () {
+    if (!typeTarget) {
+      if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+      return;
+    }
+    typePos += 1;
+    if (typePos >= typeFull.length) {
+      typeTarget.innerHTML = esc(typeFull);
+      if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+      typeTarget = null;
+    } else {
+      typeTarget.innerHTML = esc(typeFull.substring(0, typePos));
+    }
+    scrollToBottom();
+  }, 15);
+}
+
 function buildPrompt(userText) {
   var inst = MODES[mode].inst;
-  var limit = (mode === "chat") ? "150文字以内で答えてください。" : "300文字以内で答えてください。";
+  var limit;
+  if (mode === "sora") limit = "100文字以内で答えてください。";
+  else if (mode === "chat") limit = "150文字以内で答えてください。";
+  else limit = "300文字以内で答えてください。";
   var p = inst + COMMON_RULES + limit;
   var i, h;
   var from = Math.max(0, history.length - 6);
@@ -216,6 +266,7 @@ function buildPrompt(userText) {
 function sendMessage(text) {
   text = (text || "").replace(/^\s+|\s+$/g, "");
   if (!text || sending) return;
+  finishTyping();
   sending = true;
   sendBtn.disabled = true;
   inputBox.value = "";
@@ -237,12 +288,11 @@ function sendMessage(text) {
     if (done) return;
     done = true;
     thinkMsg.className = "msg";
-    thinkMsg.innerHTML = esc(reply);
     history.push({ u: text, a: reply });
     if (history.length > 12) history.shift();
     sending = false;
     sendBtn.disabled = false;
-    scrollToBottom();
+    startTyping(thinkMsg, reply);
     speak(reply);
   }
 
@@ -279,7 +329,9 @@ for (mi = 0; mi < mchips.length; mi++) {
   mchips[mi].onclick = function () {
     var m = this.getAttribute("data-mode");
     if (m === mode) return;
+    finishTyping();
     mode = m;
+    document.body.className = (m === "sora") ? "sora" : "";
     var q;
     for (q = 0; q < mchips.length; q++) {
       mchips[q].className = "mchip" + (mchips[q].getAttribute("data-mode") === m ? " active" : "");
@@ -305,6 +357,7 @@ voiceBtn.onclick = function () {
 };
 
 document.getElementById("copyBtn").onclick = function () {
+  finishTyping();
   var lines = [], i;
   lines.push("AI: " + GREETING);
   for (i = 0; i < logBox.childNodes.length; i++) {
@@ -336,6 +389,8 @@ document.getElementById("copyBtn").onclick = function () {
 };
 
 document.getElementById("clearBtn").onclick = function () {
+  if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+  typeTarget = null;
   history = [];
   logBox.innerHTML = "";
   addAiRow(GREETING);
