@@ -775,6 +775,18 @@ scanTimer = null;
 el("scanLine").style.display = "none";
 }
 
+function goSpeech() {
+var node = el("speechBox");
+var top = 0;
+while (node) {
+top += node.offsetTop;
+node = node.offsetParent;
+}
+top -= 6;
+if (top < 0) top = 0;
+window.scrollTo(0, top);
+}
+
 function speak(text, face) {
 cancelScan();
 var useFace = face;
@@ -1048,6 +1060,7 @@ afterExchange(old);
 function doTopic(id) {
 var t = findTopic(id);
 if (!t) return;
+goSpeech();
 if (booting) finishBoot();
 sndTap();
 if (pendingQ && id!== "question") cancelQuestion(false);
@@ -1085,6 +1098,7 @@ var input = el("freeInput");
 var text = input.value.replace(/^\s+|\s+$/g, "");
 if (!text) return;
 input.value = "";
+goSpeech();
 if (booting) finishBoot();
 sndTap();
 var old = phaseNum();
@@ -1216,8 +1230,8 @@ if (e.keyCode === 13) doSend();
 el("exportBtn").onclick = doExport;
 el("copyBtn").onclick = doCopy;
 el("clearBtn").onclick = doClear;
-el("decodeBtn").onclick = doDecode;
-el("missionBtn").onclick = function () { completeMission();};
+el("decodeBtn").onclick = function () { goSpeech(); doDecode();};
+el("missionBtn").onclick = function () { goSpeech(); completeMission();};
 el("speechBox").onclick = function () {
 if (booting) { finishBoot(); return;}
 if (typeTimer) { finishType(); return;}
