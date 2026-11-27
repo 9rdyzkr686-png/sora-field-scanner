@@ -582,6 +582,11 @@ body.printing a.row:after { content: " (" attr(href) ")"; font-size: 10px; color
   <span class="desc">会話する相棒 KUU-01（子クー）</span>
 </a>
 
+<a class="row" href="https://9rdyzkr686-png.github.io/sora-world/">
+  <span class="name">SORA WORLD</span>
+  <span class="desc">自律進化する惑星シミュレーション。SORA-01と生命たちの生活を観測</span>
+</a>
+
 <a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/ai/">
   <span class="name">AI-6 おしゃべりAI端末</span>
   <span class="desc">本物のAIとチャット（モード切替つき）</span>
@@ -1081,6 +1086,7 @@ function siteKeyOf(a) {
     return seg ? seg : "kuu";
   }
   if (href.indexOf("iPhone6-board") >= 0) { return "board"; }
+  if (href.indexOf("sora-world") >= 0) { return "soraworld"; }
   return "site";
 }
 
@@ -1217,7 +1223,7 @@ function applySort() {
 
 var CAT_LIST = ["観測・天気", "AI・おしゃべり", "ラジオ・読み物", "レジャー・占い", "生活・メモ", "推し活・旅", "あそび・その他"];
 var CATS = {
-  "board": "生活・メモ", "kuu": "AI・おしゃべり", "ai": "AI・おしゃべり", "geesen": "AI・おしゃべり",
+  "board": "生活・メモ", "kuu": "AI・おしゃべり", "ai": "AI・おしゃべり", "geesen": "AI・おしゃべり", "soraworld": "観測・天気",
   "tv": "ラジオ・読み物", "jihanki": "AI・おしゃべり", "shinbun": "ラジオ・読み物", "sento": "レジャー・占い",
   "orbit": "観測・天気", "radar": "観測・天気", "hima": "レジャー・占い", "densetsu": "ラジオ・読み物",
   "radio": "ラジオ・読み物", "denwa": "あそび・その他", "jikan": "あそび・その他", "shokudo": "AI・おしゃべり",
