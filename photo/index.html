@@ -28,6 +28,23 @@
   #emptyState h1 { font-size: 22px; margin-bottom: 12px; color: #fff; letter-spacing: 2px; }
   #emptyState p { font-size: 14px; line-height: 1.8; color: #aaa; }
 
+  /* ===== Seasonal frame ===== */
+  #photoFrame {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+    pointer-events: none; border: 0 solid transparent;
+  }
+  #photoFrame.frame-spring { border: 14px solid #f6a9bc; box-shadow: inset 0 0 0 2px #fff0f3; }
+  #photoFrame.frame-summer { border: 14px solid #3f9be0; box-shadow: inset 0 0 0 2px #e8f6ff; }
+  #photoFrame.frame-autumn { border: 14px solid #c65d21; box-shadow: inset 0 0 0 2px #ffe9d6; }
+  #photoFrame.frame-winter { border: 14px solid #f2f2f2; box-shadow: inset 0 0 0 2px #b0bec5; }
+  #photoFrame .fdec { position: absolute; font-size: 28px; line-height: 1; display: none; }
+  #photoFrame.framed .fdec { display: block; }
+  #photoFrame .fdec.tl { left: 3px; top: 1px; }
+  #photoFrame .fdec.tr { right: 3px; top: 1px; }
+  #photoFrame .fdec.bl { left: 3px; bottom: 1px; }
+  #photoFrame .fdec.br { right: 3px; bottom: 1px; }
+  button.frameBtn { min-height: 48px; }
+
   /* ===== Clock overlay on slideshow ===== */
   #clockOverlay {
     position: absolute; right: 14px; bottom: 96px; text-align: right;
@@ -105,6 +122,9 @@
     </div>
   </div>
 
+  <!-- Seasonal frame overlay -->
+  <div id="photoFrame"><span class="fdec tl"></span><span class="fdec tr"></span><span class="fdec bl"></span><span class="fdec br"></span></div>
+
   <!-- Clock overlay -->
   <div id="clockOverlay">
     <div id="clockTime">--:--</div>
@@ -137,6 +157,15 @@
       <div class="row">
         <button id="clockToggleBtn" type="button" class="on">🕐 時計表示</button>
         <button id="clockModeBtn" type="button">🌙 時計だけ</button>
+      </div>
+      <div class="row">
+        <span style="font-size:13px;color:#bbb;">枠</span>
+        <button type="button" class="seg frameBtn on" data-frame="auto">自動（季節）</button>
+        <button type="button" class="seg frameBtn" data-frame="none">なし</button>
+        <button type="button" class="seg frameBtn" data-frame="spring">🌸 春</button>
+        <button type="button" class="seg frameBtn" data-frame="summer">🌻 夏</button>
+        <button type="button" class="seg frameBtn" data-frame="autumn">🍁 秋</button>
+        <button type="button" class="seg frameBtn" data-frame="winter">❄ 冬</button>
       </div>
       <div id="note">
         写真立てとして使うときは、iPhoneの「設定 → 画面表示と明るさ → 自動ロック」を「なし」にすると画面が消えません。<br>
@@ -298,6 +327,50 @@ el("clockMode").addEventListener("click", function () {
   showUI();
 });
 
+/* ===== Seasonal frame ===== */
+var frameMode = "auto";   // auto | none | spring | summer | autumn | winter
+var FRAME_DECO = { spring: "🌸", summer: "🌻", autumn: "🍁", winter: "❄" };
+
+function seasonOfMonth(m) {   // m: 0-11
+  if (m >= 2 && m <= 4) return "spring";
+  if (m >= 5 && m <= 7) return "summer";
+  if (m >= 8 && m <= 10) return "autumn";
+  return "winter";
+}
+
+function applyFrame() {
+  var eff = frameMode;
+  if (eff === "auto") { eff = seasonOfMonth(new Date().getMonth()); }
+  var f = el("photoFrame");
+  if (eff === "none") {
+    f.className = "";
+  } else {
+    f.className = "frame-" + eff + " framed";
+  }
+  var deco = FRAME_DECO[eff] || "";
+  var spans = f.getElementsByTagName("span");
+  var i;
+  for (i = 0; i < spans.length; i++) { spans[i].textContent = deco; }
+  var btns = document.querySelectorAll(".frameBtn");
+  for (i = 0; i < btns.length; i++) {
+    if (btns[i].getAttribute("data-frame") === frameMode) {
+      btns[i].className = "seg frameBtn on";
+    } else {
+      btns[i].className = "seg frameBtn";
+    }
+  }
+}
+
+var frameBtns = document.querySelectorAll(".frameBtn");
+var fi;
+for (fi = 0; fi < frameBtns.length; fi++) {
+  frameBtns[fi].addEventListener("click", function () {
+    frameMode = this.getAttribute("data-frame");
+    applyFrame();
+    showUI();
+  });
+}
+
 /* Tap on the stage: toggle pause and reveal UI */
 el("stage").addEventListener("click", function () {
   if (photos.length > 0) { setPlaying(!playing); }
@@ -308,6 +381,7 @@ el("stage").addEventListener("click", function () {
 el("ui").addEventListener("click", function (e) { e.stopPropagation(); });
 
 /* ===== Init ===== */
+applyFrame();
 updateClock();
 setInterval(updateClock, 1000);
 updateCounter();

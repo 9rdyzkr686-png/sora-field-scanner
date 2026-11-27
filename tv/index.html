@@ -241,6 +241,7 @@
       <button class="ch-btn" id="chBtn3" type="button">3</button>
       <button class="ch-btn" id="chBtn4" type="button">4</button>
       <button class="ch-btn" id="chBtn5" type="button">5</button>
+      <button class="ch-btn" id="chBtn6" type="button">6</button>
     </div>
     <div class="sub-row">
       <button class="ctl-btn" id="voiceBtn" type="button">ボイス：OFF</button>
@@ -262,13 +263,15 @@
   <button class="guide-row" id="guideRow5" type="button">21:00 深夜のAI怪談 ― 未生成</button>
 </div>
 
-<p class="note">1：AIニュース番組（本物の見出し＋AIの台本）／2：AI通販番組／3：AI時代劇／4：天気予報（本物の天気＋AIアナウンサー）／5：深夜のAI怪談<br>番組の文章はAIがその場で書いています。怪談は娯楽としてお楽しみください。</p>
+<p class="note">1：AIニュース番組（本物の見出し＋AIの台本）／2：AI通販番組／3：AI時代劇／4：天気予報（本物の天気＋AIアナウンサー）／5：深夜のAI怪談／6：アニメニュース（本物のアニメ見出し＋AIの台本）<br>番組の文章はAIがその場で書いています。怪談は娯楽としてお楽しみください。</p>
 
 <script>
 var RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
 var NEWS_RSS = "https://news.google.com/rss/search?q=%22CUTIE%20STREET%22&hl=ja&gl=JP&ceid=JP:ja";
+var ANIME_RSS = "https://news.google.com/rss/search?q=%E3%82%A2%E3%83%8B%E3%83%A1%20%E6%96%B0%E4%BD%9C%20OR%20%E6%94%BE%E9%80%81&hl=ja&gl=JP&ceid=JP:ja";
 var WX_URL = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia%2FTokyo";
 var SAMPLE_HEADLINE = "（サンプル）人気アイドルグループ CUTIE STREET が新曲を発表、ファンから歓声";
+var SAMPLE_ANIME_HEADLINE = "（サンプル）人気アニメの新作が来春から放送開始と発表され、ファンの期待が高まっている";
 
 var voiceOn = false;
 var busy = false;
@@ -415,11 +418,12 @@ var CH_NAMES = {
   2: "CH2 AI通販番組",
   3: "CH3 AI時代劇",
   4: "CH4 天気予報",
-  5: "CH5 深夜のAI怪談"
+  5: "CH5 深夜のAI怪談",
+  6: "CH6 アニメニュース"
 };
 
 function markActive(n) {
-  for (var i = 1; i <= 5; i++) {
+  for (var i = 1; i <= 6; i++) {
     el("chBtn" + i).className = (i === n) ? "ch-btn active" : "ch-btn";
   }
 }
@@ -440,7 +444,7 @@ function selectChannel(n) {
 
 function showLabel(n) {
   var label = CH_NAMES[n];
-  if (n === 1 || n === 2 || n === 3 || n === 5) {
+  if (n === 1 || n === 2 || n === 3 || n === 5 || n === 6) {
     el("chLabel").innerHTML = "";
     el("chLabel").appendChild(document.createTextNode(label));
     var tag = document.createElement("span");
@@ -460,6 +464,7 @@ function startChannel(n) {
   else if (n === 3) { chJidai(); }
   else if (n === 4) { chWeather(); }
   else if (n === 5) { chKaidan(); }
+  else if (n === 6) { chAnime(); }
 }
 
 /* CH1 ニュース */
@@ -551,6 +556,35 @@ function kaidanPrompt(lim) {
 }
 function chKaidan() {
   aiCall(kaidanPrompt(250), null);
+}
+
+/* CH6 アニメニュース */
+function chAnime() {
+  setStatus("見出しを受信中…");
+  getJson(RSS2JSON + encodeURIComponent(ANIME_RSS), function (data) {
+    var title = "";
+    try {
+      if (data && data.items && data.items.length > 0) { title = data.items[0].title || ""; }
+    } catch (e) {}
+    if (title) {
+      el("dataLine").style.display = "block";
+      el("dataLine").textContent = "🎬 本日のアニメ見出し：" + title;
+      animeScript(title);
+    } else {
+      animeFallback();
+    }
+  }, function () { animeFallback(); });
+}
+function animeFallback() {
+  el("dataLine").style.display = "block";
+  el("dataLine").textContent = "🎬 " + SAMPLE_ANIME_HEADLINE + "（見出しの取得に失敗したためサンプルです）";
+  animeScript(SAMPLE_ANIME_HEADLINE);
+}
+function animePrompt(title, lim) {
+  return "あなたは深夜のアニメ情報番組の元気な司会者です。次のアニメニュースの見出しをもとに、明るく楽しいアニメ情報番組風の短い原稿を書いてください。マークダウンは使わず普通の文章で、" + lim + "文字以内。分からない詳細は勝手に作らず、見出しの範囲でワクワク感を伝えてください。見出し：「" + title + "」";
+}
+function animeScript(title) {
+  aiCall(animePrompt(title, 220), null);
 }
 
 /* ===== 番組表モード ===== */
@@ -689,7 +723,7 @@ function playGuide(n) {
 /* ===== ボタン ===== */
 function bind() {
   var i;
-  for (i = 1; i <= 5; i++) {
+  for (i = 1; i <= 6; i++) {
     (function (n) {
       el("chBtn" + n).onclick = function () { selectChannel(n); };
     })(i);

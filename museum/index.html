@@ -59,6 +59,43 @@
     text-align: center;
     margin-bottom: 10px;
   }
+  .special-head {
+    font-size: 17px;
+    color: #e6c87a;
+    text-align: center;
+    letter-spacing: 3px;
+    margin: 16px 0 8px;
+  }
+  #specialBanner {
+    text-align: center;
+    font-size: 16px;
+    color: #f0e9d6;
+    background: #241436;
+    border: 2px solid #c9a959;
+    border-radius: 10px;
+    padding: 12px 10px;
+    margin-bottom: 8px;
+    line-height: 1.7;
+  }
+  #specialBanner .period { font-size: 13px; color: #cdb1e0; }
+  #specialCounter {
+    text-align: center;
+    font-size: 14px;
+    color: #d9c6ee;
+    background: #1a1030;
+    border: 1px solid #5b4478;
+    border-radius: 8px;
+    padding: 7px 6px;
+    margin-bottom: 8px;
+  }
+  .card .num.sp { background: #b0526b; color: #fff; }
+  .perm-head {
+    font-size: 17px;
+    color: #e6c87a;
+    text-align: center;
+    letter-spacing: 3px;
+    margin: 16px 0 8px;
+  }
   .grid { overflow: hidden; }
   .card {
     float: left;
@@ -149,6 +186,12 @@
   <div id="complete"></div>
   <div class="route-note">順路番号の順にめぐるのがおすすめです。展示をタップすると解説が開きます。</div>
 
+  <div class="special-head">✦ 企 画 展 ✦</div>
+  <div id="specialBanner"></div>
+  <div id="specialCounter">企画展の観覧：0 / 3</div>
+  <div class="grid" id="specialGrid"></div>
+
+  <div class="perm-head">✦ 常 設 展 ✦</div>
   <div class="grid" id="grid"></div>
 
   <div id="detail">
@@ -221,9 +264,78 @@ var EXHIBITS = [
   }
 ];
 
+var SPECIALS = [
+  {
+    title: "ダックスフンドの美術史",
+    period: "今月の企画展 ／ 会期：今月末まで",
+    items: [
+      {
+        name: "狩猟画の中のダックス",
+        icon: "🖼️",
+        text: "ヨーロッパの狩猟画には、獲物を追う猟犬たちと一緒に、小さな体のダックスフンドがしばしば描かれています。巣穴にもぐる役割を受け持つこの犬は、絵の中でも画面の低い位置に誇らしげに配されることが多いのが特徴です。脚の短さは弱点ではなく、仕事のための形だったことが絵からも伝わってきます。"
+      },
+      {
+        name: "王侯貴族と短い脚の犬",
+        icon: "👑",
+        text: "イギリスのヴィクトリア女王はダックスフンドをこよなく愛し、宮廷で何頭も飼っていたことで知られます。王室の肖像画にも小さなダックスが描き込まれ、この犬がヨーロッパ中に広まるきっかけになりました。狩りの犬から、愛される家族の一員へ。その転機を紹介する企画展の見どころです。"
+      },
+      {
+        name: "現代アートのダックス",
+        icon: "🎨",
+        text: "画家パブロ・ピカソが飼っていたダックスフンド「ランプ」は、ピカソの作品や写真にたびたび登場します。長い体と短い脚の輪郭は、現代アートの目で見ても一度見たら忘れられない造形です。古い狩猟画から現代美術まで、ダックスはいつも美術のそばにいました。"
+      }
+    ]
+  },
+  {
+    title: "月と星の古道具",
+    period: "今月の企画展 ／ 会期：今月末まで",
+    items: [
+      {
+        name: "星早見盤",
+        icon: "⭐",
+        text: "日付と時刻に合わせて円盤を回すと、その時に見える星空が小さな窓に現れる道具です。電気も電池もいらない、紙と工夫だけでできた「持ち歩けるプラネタリウム」。スマホで星を調べる前の時代、人々はこの盤をポケットに入れて夜空を見上げていました。"
+      },
+      {
+        name: "真鍮の望遠鏡",
+        icon: "🔭",
+        text: "何本もの筒をスライドさせて伸ばす、船乗りや天文家が使った真鍮製の望遠鏡です。重みのある金属の冷たさと、レンズ越しに初めて見る月のクレーターの驚き。ガリレオが木星の衛星を見つけた時代の望遠鏡も、仕組みはこれと大きく変わりません。"
+      },
+      {
+        name: "月暦の古文書",
+        icon: "📜",
+        text: "月の満ち欠けをもとに暦を組んだ「太陰暦」の時代の記録です。種まきも祭りも、月の形を見て決めていました。日本の旧暦もそのひとつで、十五夜に月を愛でる習慣はその名残です。紙の上に並ぶ月の満ち欠けの図は、今のカレンダーとは違う時間の流れを感じさせます。"
+      }
+    ]
+  },
+  {
+    title: "昭和の電話機",
+    period: "今月の企画展 ／ 会期：今月末まで",
+    items: [
+      {
+        name: "磁石式電話機",
+        icon: "📞",
+        text: "受話器を取る前に、本体の横のハンドルを「ガラガラ」と回して発電し、交換手につないでもらう電話機です。番号という概念がまだなく、「○○さんのお宅をお願いします」と人の声で取り次ぐ時代でした。常設展の黒電話より、さらにひとつ前の世代の電話です。"
+      },
+      {
+        name: "赤電話と電話ボックス",
+        icon: "☎️",
+        text: "商店の店先に置かれた赤い公衆電話「赤電話」と、街角の緑色の電話ボックス。家に電話のない時代、外出先からの連絡はこの小さな箱が担っていました。10円玉を握りしめて、話したいことをあらかじめ頭の中で組み立ててから受話器を取る。そんな作法も含めて昭和の風景です。"
+      },
+      {
+        name: "交換手の交換台",
+        icon: "🎛️",
+        text: "たくさんの穴とコードが並ぶ、電話交換手の交換台です。かかってきた電話のコードを、相手の穴に手で差し替えてつなぐのが交換手の仕事でした。自動交換が当たり前になる前の電話は、こうして人の手と声でつながっていたのです。常設展の黒電話と合わせてご覧ください。"
+      }
+    ]
+  }
+];
+
 var opened = {};
 var openedCount = 0;
 var currentText = "";
+var spIdx = 0;
+var spOpened = {};
+var spOpenedCount = 0;
 
 function el(id) { return document.getElementById(id); }
 
@@ -290,6 +402,58 @@ function openExhibit(idx) {
   el("detail").scrollIntoView();
 }
 
+function buildSpecial() {
+  var now = new Date();
+  spIdx = now.getMonth() % SPECIALS.length;
+  var sp = SPECIALS[spIdx];
+  el("specialBanner").innerHTML = "開催中：「" + sp.title + "」<br><span class=\"period\">" + sp.period + "（月ごとに展示が入れ替わります）</span>";
+  var grid = el("specialGrid");
+  var html = "";
+  var i;
+  for (i = 0; i < sp.items.length; i++) {
+    html += '<div class="card" id="scard' + i + '" data-idx="' + i + '">'
+      + '<span class="num sp">企画展</span>'
+      + '<span class="icon">' + sp.items[i].icon + '</span>'
+      + '<span class="name">' + sp.items[i].name + '</span>'
+      + '<span class="done" id="sdone' + i + '"></span>'
+      + '</div>';
+  }
+  grid.innerHTML = html;
+  for (i = 0; i < sp.items.length; i++) {
+    (function (idx) {
+      el("scard" + idx).onclick = function () { openSpecial(idx); };
+    })(i);
+  }
+  updateSpCounter();
+}
+
+function updateSpCounter() {
+  el("specialCounter").innerHTML = "企画展の観覧：" + spOpenedCount + " / 3";
+  if (spOpenedCount >= 3) {
+    el("specialCounter").innerHTML += "　🎉 企画展コンプリート！";
+  }
+}
+
+function openSpecial(idx) {
+  var sp = SPECIALS[spIdx];
+  var item = sp.items[idx];
+  stopVoice();
+  el("dTitle").innerHTML = "企画展：" + item.name;
+  el("dMeta").innerHTML = "企画展「" + sp.title + "」 ／ " + sp.period;
+  el("dText").innerHTML = item.text;
+  currentText = item.name + "。" + item.text;
+  el("voiceMsg").innerHTML = "";
+  el("detail").style.display = "block";
+  if (!spOpened[idx]) {
+    spOpened[idx] = true;
+    spOpenedCount++;
+    el("scard" + idx).className = "card opened";
+    el("sdone" + idx).innerHTML = "✓ 観覧済み";
+    updateSpCounter();
+  }
+  el("detail").scrollIntoView();
+}
+
 function speakGuide() {
   var msg = el("voiceMsg");
   if (!("speechSynthesis" in window)) {
@@ -319,6 +483,7 @@ function stopVoice() {
 
 function init() {
   setGreeting();
+  buildSpecial();
   buildGrid();
   updateCounter();
   el("btnVoice").onclick = speakGuide;

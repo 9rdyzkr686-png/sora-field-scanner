@@ -51,6 +51,35 @@ input[type="date"], input[type="text"] { width: 100%; min-height: 48px; font-siz
 .logitem .lm { font-size: 14px; margin-top: 2px; }
 .delbtn { min-height: 48px; min-width: 72px; font-size: 15px; color: #d6336c; background: #fff0f6;
   border: 2px solid #ffc2d9; border-radius: 10px; margin-top: 6px; }
+.mchip { display: inline-block; width: 47%; margin: 4px 1%; min-height: 48px; font-size: 16px; font-weight: bold;
+  color: #d6336c; background: #fff0f6; border: 2px solid #ffc2d9; border-radius: 10px; }
+.mchip.on { background: #d6336c; color: #ffffff; border-color: #d6336c; }
+.mdetail { background: #fff5f8; border: 2px dashed #ffc2d9; border-radius: 12px; padding: 10px; margin-top: 10px; }
+.mdetail .mn { font-size: 21px; font-weight: bold; color: #d6336c; }
+.mdetail .mb { font-size: 15px; color: #a0506e; margin: 4px 0; }
+.mdetail .mc { font-size: 17px; font-weight: bold; color: #d6336c; margin: 4px 0; }
+.mdetail ul { margin: 8px 0 2px; padding-left: 20px; }
+.mdetail li { font-size: 15px; line-height: 1.5; margin: 3px 0; }
+.chkrow { display: block; min-height: 48px; padding: 10px 6px; font-size: 17px; font-weight: normal;
+  border-bottom: 1px solid #ffe3ee; margin: 0; }
+.chkrow:last-child { border-bottom: none; }
+.chkrow input { width: 24px; height: 24px; vertical-align: middle; margin-right: 8px; }
+.subbtn { width: 100%; min-height: 48px; font-size: 16px; font-weight: bold; color: #d6336c;
+  background: #fff0f6; border: 2px solid #ffc2d9; border-radius: 10px; margin-top: 10px; }
+.okline { display: none; font-size: 18px; font-weight: bold; color: #d6336c; text-align: center; margin: 10px 0 2px; }
+.callbox { background: #fff5f8; border: 2px dashed #ffc2d9; border-radius: 12px; padding: 12px; text-align: center; }
+.callbox .ct { font-size: 14px; color: #a0506e; font-weight: bold; }
+.callbox .cx { font-size: 19px; font-weight: bold; line-height: 1.5; margin: 8px 0; }
+.halfbtn { display: inline-block; width: 47%; margin: 6px 1% 0; min-height: 52px; font-size: 16px; font-weight: bold;
+  color: #ffffff; background: #f06595; border: none; border-radius: 10px; }
+input[type="number"] { width: 100%; min-height: 48px; font-size: 17px; padding: 8px;
+  border: 2px solid #ffc2d9; border-radius: 10px; background: #fffafd; color: #4a2436; }
+.tripitem { border-bottom: 1px solid #ffe3ee; padding: 9px 4px; font-size: 16px; }
+.tripitem:last-child { border-bottom: none; }
+.tripitem .ta { float: right; font-weight: bold; color: #d6336c; }
+.triptotal { font-size: 19px; font-weight: bold; color: #d6336c; text-align: right; margin-top: 10px; }
+.tradeitem { border-bottom: 1px solid #ffe3ee; padding: 9px 4px; font-size: 16px; }
+.tradeitem:last-child { border-bottom: none; }
 .foot { text-align: center; font-size: 12px; color: #c08aa2; margin-top: 18px; }
 </style>
 </head>
@@ -91,6 +120,13 @@ input[type="date"], input[type="text"] { width: 100%; min-height: 48px; font-siz
 </div>
 
 <div class="card">
+  <h2>♥ メンバー紹介</h2>
+  <p class="note">メンバーを選ぶと、その子のページが開きます。</p>
+  <div id="memberChips"></div>
+  <div class="mdetail" id="memberDetail" style="display:none;"></div>
+</div>
+
+<div class="card">
   <h2>✎ 参戦記録</h2>
   <label for="logDate">日付</label>
   <input type="date" id="logDate">
@@ -101,6 +137,47 @@ input[type="date"], input[type="text"] { width: 100%; min-height: 48px; font-siz
   <button class="addbtn" id="logAdd" type="button">記録を追加</button>
   <div id="logList" style="margin-top:10px;"></div>
   <p class="note" id="logEmpty">まだ記録がありません。記録はこの端末の中にだけ保存されます。</p>
+</div>
+
+<div class="card">
+  <h2>✓ ライブ持ち物チェックリスト</h2>
+  <div id="checkList"></div>
+  <p class="okline" id="checkOk">持ち物OK！出発できます♪</p>
+  <button class="subbtn" id="checkReset" type="button">チェックをリセット</button>
+  <p class="note">チェック状態はこの端末の中にだけ保存されます。</p>
+</div>
+
+<div class="card">
+  <h2>♪ コール練習モード</h2>
+  <p class="note">※練習用です。定番のコール・MIXで声出し練習ができます。本番では会場のルールを守ってください。</p>
+  <div class="callbox">
+    <div class="ct" id="callTitle"></div>
+    <div class="cx" id="callText"></div>
+  </div>
+  <button class="halfbtn" id="callSpeak" type="button">🔊 読み上げ</button><button class="halfbtn" id="callNext" type="button">次のコール →</button>
+  <p class="status" id="callStatus"></p>
+</div>
+
+<div class="card">
+  <h2>⇔ グッズ交換メモ</h2>
+  <label for="tradeInput">交換メモ（譲るもの ⇔ ほしいもの）</label>
+  <input type="text" id="tradeInput" placeholder="例：○○の缶バッジ ⇔ ○○希望">
+  <button class="addbtn" id="tradeAdd" type="button">メモを追加</button>
+  <div id="tradeList" style="margin-top:10px;"></div>
+  <p class="note" id="tradeEmpty">まだメモがありません。メモはこの端末の中にだけ保存されます。</p>
+</div>
+
+<div class="card">
+  <h2>✈ 遠征費メモ</h2>
+  <label for="tripItem">項目</label>
+  <input type="text" id="tripItem" placeholder="例：往復の交通費">
+  <label for="tripAmount">金額（円）</label>
+  <input type="number" id="tripAmount" placeholder="例：12000" min="0">
+  <button class="addbtn" id="tripAdd" type="button">追加</button>
+  <div id="tripList" style="margin-top:10px;"></div>
+  <div class="triptotal" id="tripTotal"></div>
+  <button class="subbtn" id="tripClear" type="button">全部消す</button>
+  <p class="note">遠征費メモはこの端末の中にだけ保存されます。</p>
 </div>
 
 <p class="foot">OSHI-6 推し活ステーション<br>動画・ニュースは公式YouTube／Googleニュースから取得しています。</p>
@@ -220,14 +297,46 @@ function showAlbum() {
 
 /* ---------- 4. メンバー誕生日 ---------- */
 var MEMBERS = [
-  { name: "古澤里紗", m: 11, d: 8 },
-  { name: "佐野愛花", m: 11, d: 26 },
-  { name: "板倉可奈", m: 11, d: 11 },
-  { name: "増田彩乃", m: 5, d: 26 },
-  { name: "川本笑瑠", m: 4, d: 22 },
-  { name: "梅田みゆ", m: 9, d: 13 },
-  { name: "真鍋凪咲", m: 6, d: 28 },
-  { name: "桜庭遥花", m: 1, d: 29 }
+  { name: "古澤里紗", m: 11, d: 8, lines: [
+    "CUTIE STREETのメンバー。",
+    "誕生日は11月8日。秋の生誕祭シーズンは要チェック！",
+    "新着動画やニュースで最新情報を追いかけよう。"
+  ] },
+  { name: "佐野愛花", m: 11, d: 26, lines: [
+    "CUTIE STREETのメンバー。",
+    "誕生日は11月26日。公式生誕祭でもお祝いされました。",
+    "ライブや動画での活躍を応援しよう！"
+  ] },
+  { name: "板倉可奈", m: 11, d: 11, lines: [
+    "CUTIE STREETのメンバー。",
+    "誕生日は11月11日。ゾロ目の日で覚えやすい！",
+    "新着動画やニュースで最新情報を追いかけよう。"
+  ] },
+  { name: "増田彩乃", m: 5, d: 26, lines: [
+    "CUTIE STREETのメンバー。",
+    "誕生日は5月26日。初夏の生誕祭シーズン！",
+    "ライブや動画での活躍を応援しよう。"
+  ] },
+  { name: "川本笑瑠", m: 4, d: 22, lines: [
+    "CUTIE STREETのメンバー。",
+    "誕生日は4月22日。春の生誕祭シーズン！",
+    "新着動画やニュースで最新情報をチェックしよう。"
+  ] },
+  { name: "梅田みゆ", m: 9, d: 13, lines: [
+    "CUTIE STREETのメンバー。",
+    "誕生日は9月13日。秋のはじまりの生誕祭シーズン！",
+    "ライブや動画での活躍を応援しよう。"
+  ] },
+  { name: "真鍋凪咲", m: 6, d: 28, lines: [
+    "CUTIE STREETのメンバー。",
+    "誕生日は6月28日。初夏の生誕祭シーズン！",
+    "新着動画やニュースで最新情報を追いかけよう。"
+  ] },
+  { name: "桜庭遥花", m: 1, d: 29, lines: [
+    "CUTIE STREETのメンバー。",
+    "誕生日は1月29日。公式生誕祭でもお祝いされました。",
+    "1年で最初の生誕祭。お祝いの準備はお早めに！"
+  ] }
 ];
 function daysUntilBirthday(mb, today) {
   var thisYear = new Date(today.getFullYear(), mb.m - 1, mb.d);
@@ -321,10 +430,256 @@ function addLog() {
   mEl.value = "";
 }
 
+/* ---------- 6. メンバー別ページ ---------- */
+var memberSel = -1;
+function renderMemberChips() {
+  var html = "";
+  for (var i = 0; i < MEMBERS.length; i++) {
+    html += '<button class="mchip' + (i === memberSel ? " on" : "") + '" type="button" data-mi="' + i + '">' + esc(MEMBERS[i].name) + "</button>";
+  }
+  var box = document.getElementById("memberChips");
+  box.innerHTML = html;
+  var btns = box.getElementsByTagName("button");
+  for (var k = 0; k < btns.length; k++) {
+    btns[k].onclick = function () {
+      showMember(parseInt(this.getAttribute("data-mi"), 10));
+    };
+  }
+}
+function showMember(idx) {
+  memberSel = idx;
+  renderMemberChips();
+  var mb = MEMBERS[idx];
+  var today = dayOnly(new Date());
+  var days = daysUntilBirthday(mb, today);
+  var cnt = days === 0 ? "今日が誕生日！お祝いしよう♪" : "次の誕生日まで あと " + days + " 日";
+  var html = '<div class="mn">' + esc(mb.name) + "</div>";
+  html += '<div class="mb">誕生日：' + mb.m + "月" + mb.d + "日</div>";
+  html += '<div class="mc">' + cnt + "</div>";
+  html += "<ul>";
+  for (var i = 0; i < mb.lines.length; i++) {
+    html += "<li>" + esc(mb.lines[i]) + "</li>";
+  }
+  html += "</ul>";
+  var det = document.getElementById("memberDetail");
+  det.innerHTML = html;
+  det.style.display = "block";
+}
+
+/* ---------- 7. ライブ持ち物チェックリスト ---------- */
+var CHECK_KEY = "oshi6_check_v1";
+var CHECK_ITEMS = ["チケット", "スマホ", "ペンライト", "タオル", "現金", "身分証", "水", "モバイルバッテリー", "双眼鏡", "推しグッズ"];
+var checkState = [];
+function loadCheck() {
+  checkState = [];
+  for (var i = 0; i < CHECK_ITEMS.length; i++) checkState.push(false);
+  try {
+    var raw = localStorage.getItem(CHECK_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && p.length !== undefined) {
+        for (var j = 0; j < CHECK_ITEMS.length && j < p.length; j++) checkState[j] = !!p[j];
+      }
+    }
+  } catch (e) {}
+}
+function saveCheck() {
+  try { localStorage.setItem(CHECK_KEY, JSON.stringify(checkState)); } catch (e) {}
+}
+function renderCheck() {
+  var html = "";
+  for (var i = 0; i < CHECK_ITEMS.length; i++) {
+    html += '<label class="chkrow"><input type="checkbox" data-ci="' + i + '"' + (checkState[i] ? " checked" : "") + "> " + esc(CHECK_ITEMS[i]) + "</label>";
+  }
+  var box = document.getElementById("checkList");
+  box.innerHTML = html;
+  var inputs = box.getElementsByTagName("input");
+  for (var k = 0; k < inputs.length; k++) {
+    inputs[k].onchange = function () {
+      var idx = parseInt(this.getAttribute("data-ci"), 10);
+      checkState[idx] = !!this.checked;
+      saveCheck();
+      updateCheckOk();
+    };
+  }
+  updateCheckOk();
+}
+function updateCheckOk() {
+  var all = true;
+  for (var i = 0; i < checkState.length; i++) if (!checkState[i]) all = false;
+  document.getElementById("checkOk").style.display = all ? "block" : "none";
+}
+function resetCheck() {
+  for (var i = 0; i < checkState.length; i++) checkState[i] = false;
+  saveCheck();
+  renderCheck();
+}
+
+/* ---------- 8. コール練習モード ---------- */
+var CALLS = [
+  { t: "世界共通MIX", x: "イエッタイガー！ファイヤー！サイバー！ファイバー！ダイバー！バイバー！ジャージャー！" },
+  { t: "日本語MIX", x: "虎！火！人造！繊維！海女！振動！化繊飛除去！" },
+  { t: "オイオイコール", x: "オイ！オイ！オイ！オイ！" },
+  { t: "フッフーコール", x: "フッフー！フッフー！フッフー！" },
+  { t: "PPPH", x: "パンパンパンパン！ヒュー！" },
+  { t: "ガチ恋口上", x: "言いたいことがあるんだよ！やっぱり推しはかわいいよ！世界で一番大好きだよ！" },
+  { t: "イエッタイガー（単発）", x: "イエッタイガー！" },
+  { t: "かわいいコール", x: "せーの！かわいい！もういっちょ、かわいい！" }
+];
+var callIdx = 0;
+function renderCall() {
+  document.getElementById("callTitle").innerHTML = esc(CALLS[callIdx].t) + "（" + (callIdx + 1) + " / " + CALLS.length + "）";
+  document.getElementById("callText").innerHTML = esc(CALLS[callIdx].x);
+}
+function nextCall() {
+  callIdx = (callIdx + 1) % CALLS.length;
+  renderCall();
+}
+function speakCall() {
+  var st = document.getElementById("callStatus");
+  try {
+    if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === "undefined") {
+      st.innerHTML = "この端末では読み上げが使えません。";
+      return;
+    }
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(CALLS[callIdx].x);
+    u.lang = "ja-JP";
+    u.rate = 1.1;
+    window.speechSynthesis.speak(u);
+    st.innerHTML = "読み上げ中… 声を出して練習してみよう！";
+  } catch (e) {
+    st.innerHTML = "読み上げできませんでした。";
+  }
+}
+
+/* ---------- 9. グッズ交換メモ ---------- */
+var TRADE_KEY = "oshi6_trade_v1";
+var trades = [];
+function loadTrades() {
+  try {
+    var raw = localStorage.getItem(TRADE_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && p.length !== undefined) trades = p;
+    }
+  } catch (e) { trades = []; }
+}
+function saveTrades() {
+  try { localStorage.setItem(TRADE_KEY, JSON.stringify(trades)); } catch (e) {}
+}
+function renderTrades() {
+  var list = document.getElementById("tradeList");
+  var empty = document.getElementById("tradeEmpty");
+  if (!trades.length) {
+    list.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  var html = "";
+  for (var i = 0; i < trades.length; i++) {
+    html += '<div class="tradeitem">' + esc(trades[i]);
+    html += '<br><button class="delbtn" type="button" data-tx="' + i + '">削除</button></div>';
+  }
+  list.innerHTML = html;
+  var btns = list.getElementsByTagName("button");
+  for (var k = 0; k < btns.length; k++) {
+    btns[k].onclick = function () {
+      var idx = parseInt(this.getAttribute("data-tx"), 10);
+      trades.splice(idx, 1);
+      saveTrades();
+      renderTrades();
+    };
+  }
+}
+function addTrade() {
+  var el = document.getElementById("tradeInput");
+  var v = el.value.replace(/^\s+|\s+$/g, "");
+  if (!v) { alert("交換メモを入れてください"); return; }
+  trades.unshift(v);
+  saveTrades();
+  renderTrades();
+  el.value = "";
+}
+
+/* ---------- 10. 遠征費メモ ---------- */
+var TRIP_KEY = "oshi6_trip_v1";
+var trips = [];
+function loadTrips() {
+  try {
+    var raw = localStorage.getItem(TRIP_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && p.length !== undefined) trips = p;
+    }
+  } catch (e) { trips = []; }
+}
+function saveTrips() {
+  try { localStorage.setItem(TRIP_KEY, JSON.stringify(trips)); } catch (e) {}
+}
+function fmtYen(n) {
+  var s = String(n);
+  var out = "";
+  while (s.length > 3) {
+    out = "," + s.substring(s.length - 3) + out;
+    s = s.substring(0, s.length - 3);
+  }
+  return s + out;
+}
+function renderTrips() {
+  var list = document.getElementById("tripList");
+  var total = 0;
+  var html = "";
+  for (var i = 0; i < trips.length; i++) {
+    total += trips[i].a;
+    html += '<div class="tripitem"><span class="ta">' + fmtYen(trips[i].a) + '円</span>' + esc(trips[i].t);
+    html += '<br><button class="delbtn" type="button" data-tp="' + i + '">削除</button><div class="clr"></div></div>';
+  }
+  if (!trips.length) html = '<p class="note">まだ項目がありません。</p>';
+  list.innerHTML = html;
+  var btns = list.getElementsByTagName("button");
+  for (var k = 0; k < btns.length; k++) {
+    btns[k].onclick = function () {
+      var idx = parseInt(this.getAttribute("data-tp"), 10);
+      trips.splice(idx, 1);
+      saveTrips();
+      renderTrips();
+    };
+  }
+  document.getElementById("tripTotal").innerHTML = "合計：" + fmtYen(total) + "円";
+}
+function addTrip() {
+  var tEl = document.getElementById("tripItem");
+  var aEl = document.getElementById("tripAmount");
+  var t = tEl.value.replace(/^\s+|\s+$/g, "");
+  var a = parseInt(aEl.value, 10);
+  if (!t) { alert("項目を入れてください"); return; }
+  if (isNaN(a) || a < 0) { alert("金額を入れてください"); return; }
+  trips.push({ t: t, a: a });
+  saveTrips();
+  renderTrips();
+  tEl.value = "";
+  aEl.value = "";
+}
+function clearTrips() {
+  if (!trips.length) return;
+  if (!confirm("遠征費メモを全部消しますか？")) return;
+  trips = [];
+  saveTrips();
+  renderTrips();
+}
+
 /* ---------- 起動 ---------- */
 document.getElementById("ytRetry").onclick = loadYT;
 document.getElementById("newsRetry").onclick = loadNews;
 document.getElementById("logAdd").onclick = addLog;
+document.getElementById("checkReset").onclick = resetCheck;
+document.getElementById("callNext").onclick = nextCall;
+document.getElementById("callSpeak").onclick = speakCall;
+document.getElementById("tradeAdd").onclick = addTrade;
+document.getElementById("tripAdd").onclick = addTrip;
+document.getElementById("tripClear").onclick = clearTrips;
 (function () {
   var t = new Date();
   var mm = t.getMonth() + 1; if (mm < 10) mm = "0" + mm;
@@ -333,8 +688,16 @@ document.getElementById("logAdd").onclick = addLog;
 })();
 showAlbum();
 showBirthdays();
+renderMemberChips();
 loadLogs();
 renderLogs();
+loadCheck();
+renderCheck();
+renderCall();
+loadTrades();
+renderTrades();
+loadTrips();
+renderTrips();
 loadYT();
 loadNews();
 </script>

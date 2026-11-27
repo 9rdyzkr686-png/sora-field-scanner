@@ -129,6 +129,18 @@
 </div>
 
 <div class="card">
+  <h2>■ 芸能ニュース</h2>
+  <div id="geinoNews">取得中…</div>
+  <button id="geinoRetry" type="button">↻ 再試行</button>
+</div>
+
+<div class="card">
+  <h2>■ 将棋・囲碁ニュース</h2>
+  <div id="shogiNews">取得中…</div>
+  <button id="shogiRetry" type="button">↻ 再試行</button>
+</div>
+
+<div class="card">
   <h2>■ 読み物コーナー</h2>
 
   <h3>◆ ダックス小ネタ</h3>
@@ -574,13 +586,21 @@ function fetchNews(rssUrl, boxId) {
 }
 var CUTIE_RSS = 'https://news.google.com/rss/search?q=%22CUTIE%20STREET%22&hl=ja&gl=JP&ceid=JP:ja';
 var SORAE_RSS = 'https://sorae.info/feed';
+var GEINO_RSS = 'https://news.google.com/rss/search?q=' + encodeURIComponent('芸能 エンタメ') + '&hl=ja&gl=JP&ceid=JP:ja';
+var SHOGI_RSS = 'https://news.google.com/rss/search?q=' + encodeURIComponent('将棋 OR 囲碁') + '&hl=ja&gl=JP&ceid=JP:ja';
 function loadCutie() { el('cutieNews').innerHTML = '取得中…'; fetchNews(CUTIE_RSS, 'cutieNews'); }
 function loadSpace() { el('spaceNews').innerHTML = '取得中…'; fetchNews(SORAE_RSS, 'spaceNews'); }
+function loadGeino() { el('geinoNews').innerHTML = '取得中…'; fetchNews(GEINO_RSS, 'geinoNews'); }
+function loadShogi() { el('shogiNews').innerHTML = '取得中…'; fetchNews(SHOGI_RSS, 'shogiNews'); }
 function initNews() {
   el('cutieRetry').onclick = loadCutie;
   el('spaceRetry').onclick = loadSpace;
+  el('geinoRetry').onclick = loadGeino;
+  el('shogiRetry').onclick = loadShogi;
   loadCutie();
   loadSpace();
+  loadGeino();
+  loadShogi();
 }
 </script>
 

@@ -68,7 +68,34 @@
   .b2 { background:linear-gradient(#aee2ff, #4fa8e8); }
   .b3 { background:linear-gradient(#ffd7f2, #f07fc4); }
   .b4 { background:linear-gradient(#fff3a6, #ffd83c); }
+  .b5 { background:linear-gradient(#e6ccff, #a678e8); }
   .drink-btn.busy { opacity:.55; }
+  .drink-btn.soldout { opacity:.48; }
+  .clerk-btn {
+    display:block; width:100%; min-height:48px; margin:10px 0 2px; padding:8px 12px;
+    font-size:15px; font-weight:bold; color:#ffe9a8; cursor:pointer;
+    border-radius:12px; border:3px solid #7c642c; background:rgba(48,38,10,.85);
+    box-shadow:0 4px 0 rgba(0,0,0,.5);
+  }
+  .clerk-btn:active { transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.5); }
+  .clerk-btn.busy { opacity:.55; }
+
+  /* ===== 両替機コーナー ===== */
+  .exchange {
+    max-width:430px; margin:14px auto 0; border-radius:14px; padding:12px;
+    background:rgba(10,22,48,.85); border:2px solid #2c4a7c;
+  }
+  .ex-title { font-size:16px; font-weight:bold; color:#9fd8ff; margin-bottom:8px; }
+  .ex-row { overflow:hidden; }
+  #chgInput {
+    float:left; width:58%; min-height:48px; font-size:17px; padding:8px 10px;
+    border-radius:10px; border:2px solid #2c4a7c; background:#0a1428; color:#fff;
+  }
+  #chgBtn {
+    float:right; width:38%; min-height:48px; font-size:16px; font-weight:bold; cursor:pointer;
+    border-radius:10px; border:2px solid #2c4a7c; background:#173a6e; color:#dfe8ff;
+  }
+  #chgResult { margin-top:10px; font-size:16px; line-height:1.7; color:#f2f6ff; white-space:pre-wrap; word-break:break-word; }
 
   /* ===== 取り出し口 ===== */
   .slot {
@@ -122,12 +149,23 @@
       <button class="drink-btn b2" id="b2" type="button">💡 AI一言アドバイス<span class="price">むりょう</span></button>
       <button class="drink-btn b3" id="b3" type="button">🔮 AI占い<span class="price">むりょう</span></button>
       <button class="drink-btn b4" id="b4" type="button">🐶 ダックス便り<span class="price">むりょう</span></button>
+      <button class="drink-btn b5" id="b5" type="button">🍁 季節限定<span class="price">むりょう</span></button>
+      <button class="clerk-btn" id="clerkBtn" type="button">🛎 店員さんを呼ぶ（売り切れのとき）</button>
     </div>
 
     <div class="slot">
       <div class="slot-label">▼ とりだしぐち ▼</div>
       <div id="slotText">ボタンを押すと、ここにポトンと落ちてきます。</div>
     </div>
+  </div>
+
+  <div class="exchange">
+    <div class="ex-title">💱 両替機コーナー</div>
+    <div class="ex-row">
+      <input id="chgInput" type="number" inputmode="numeric" placeholder="金額（円）" min="1">
+      <button id="chgBtn" type="button">両替する</button>
+    </div>
+    <div id="chgResult">金額を入れて「両替する」を押すと、お札と小銭に分けて数えます。</div>
   </div>
 
   <div class="counter">出てきた数：<span id="countNum">0</span> 個</div>
@@ -139,8 +177,14 @@ var ITEMS = [
   { prompt: "俳句を一句作ってください。そのあと改行して、一行で短い解説を添えてください。日本語で、マークダウンは使わないでください。" },
   { prompt: "今日を少し良くするための一言アドバイスを、日本語で一文だけください。やさしく具体的に。マークダウンは使わないでください。" },
   { prompt: "今日の小さな占いをしてください。運勢のランク（大吉・中吉・小吉・吉・末吉のどれか）と、ラッキーアイテムを、日本語で2行以内にまとめてください。マークダウンは使わないでください。" },
-  { prompt: "カニンヘンダックスフンドの視点で、人間の小野さんへの短いお便りを書いてください。かわいく、150文字以内の日本語で、本文だけを書いてください。マークダウンは使わないでください。" }
+  { prompt: "カニンヘンダックスフンドの視点で、人間の小野さんへの短いお便りを書いてください。かわいく、150文字以内の日本語で、本文だけを書いてください。マークダウンは使わないでください。" },
+  { prompt: "" }
 ];
+
+var NAMES = ['あたたかい短編', 'AI俳句', 'AI一言アドバイス', 'AI占い', 'ダックス便り', '季節限定'];
+var BTN_ORIG = [];
+var soldOutIdx = -1;
+var restocked = false;
 
 var busy = false;
 var count = 0;
@@ -286,13 +330,158 @@ function dispense(idx) {
   xhr.send(payload);
 }
 
+function seasonInfo() {
+  var m = new Date().getMonth() + 1;
+  if (m >= 3 && m <= 5) { return { name: '春', emoji: '🌸', theme: '桜と新年度' }; }
+  if (m >= 6 && m <= 8) { return { name: '夏', emoji: '🌻', theme: '暑さと海' }; }
+  if (m >= 9 && m <= 11) { return { name: '秋', emoji: '🍁', theme: '紅葉と食欲' }; }
+  return { name: '冬', emoji: '⛄', theme: '寒さと温かいもの' };
+}
+
+function soldOutTap() {
+  if (busy) { return; }
+  clunk();
+  var msg = '売り切れでした… ごめんなさい。店員さんを呼ぶと、補充してもらえるかもしれません。';
+  setSlot(msg, '');
+  speak(msg);
+}
+
+function restock() {
+  restocked = true;
+  var btn = el('b' + soldOutIdx);
+  btn.classList.remove('soldout');
+  btn.innerHTML = BTN_ORIG[soldOutIdx];
+}
+
+function callClerk() {
+  if (busy) { return; }
+  if (restocked) {
+    clunk();
+    setSlot('店員さん「もう補充ずみですよ〜。また明日お越しください」', '');
+    return;
+  }
+  busy = true;
+  var btn = el('clerkBtn');
+  if (!btn.getAttribute('data-label')) { btn.setAttribute('data-label', btn.innerHTML); }
+  btn.classList.add('busy');
+  btn.innerHTML = '…';
+
+  var sec = 0;
+  setSlot('店員さんを呼んでいます… 0秒', 'waiting');
+  stopTimer();
+  timerId = setInterval(function() {
+    sec++;
+    setSlot('店員さんを呼んでいます… ' + sec + '秒', 'waiting');
+  }, 1000);
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://text.pollinations.ai/', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 90000;
+
+  xhr.onload = function() {
+    var body = xhr.responseText || '';
+    if (xhr.status === 402 || body.indexOf('Free limit') !== -1) {
+      showError(btn, '本日の無料AI回線は上限に達しました。明日の朝9時に回復します', '');
+      return;
+    }
+    if (xhr.status !== 200) {
+      showError(btn, 'AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
+      return;
+    }
+    var text = body.replace(/^\s+|\s+$/g, '');
+    if (!text) {
+      showError(btn, 'AI回線が混み合っています', '詳細：HTTP 200（空の返事）');
+      return;
+    }
+    if (text.length > 500) { text = text.substring(0, 500); }
+    finish(btn);
+    restock();
+    setSlot(text + '\n（店員さんが「' + NAMES[soldOutIdx] + '」を補充してくれました！）', '');
+    dropAnimate();
+    clunk();
+    speak(text);
+  };
+  xhr.onerror = function() {
+    showError(btn, 'AI回線が混み合っています', '詳細：HTTP 0');
+  };
+  xhr.ontimeout = function() {
+    showError(btn, 'AIの返事が時間切れになりました（90秒）。もう一度押してみてください', '');
+  };
+
+  var payload = JSON.stringify({
+    messages: [{ role: 'user', content: 'あなたは深夜の自動販売機の店員さんです。売り切れで買えなかったお客さんに、やさしくおわびして、この自販機の別のおすすめ（あたたかい短編・俳句・一言アドバイス・占い・ダックス便りのどれか）をすすめてください。日本語で120文字以内、本文だけを書いてください。マークダウンは使わないでください。' }],
+    model: 'openai-fast'
+  });
+  xhr.send(payload);
+}
+
+function doExchange() {
+  var amt = parseInt(el('chgInput').value, 10);
+  var out = el('chgResult');
+  out.innerHTML = '';
+  if (isNaN(amt) || amt < 1) {
+    out.appendChild(document.createTextNode('金額を入れてください（1円以上）。'));
+    return;
+  }
+  if (amt > 99999999) {
+    out.appendChild(document.createTextNode('大きすぎます。99,999,999円までにしてください。'));
+    return;
+  }
+  var denoms = [
+    [10000, '一万円札'], [5000, '五千円札'], [1000, '千円札'],
+    [500, '五百円玉'], [100, '百円玉'], [50, '五十円玉'],
+    [10, '十円玉'], [5, '五円玉'], [1, '一円玉']
+  ];
+  var rest = amt;
+  var total = 0;
+  var lines = [];
+  var i, n;
+  for (i = 0; i < denoms.length; i++) {
+    n = Math.floor(rest / denoms[i][0]);
+    if (n > 0) {
+      lines.push(denoms[i][1] + ' × ' + n + '枚');
+      total += n;
+      rest -= n * denoms[i][0];
+    }
+  }
+  var jokes = [
+    'ガシャン！両替できました。',
+    '両替完了！…でもこの自販機、全部無料でした。',
+    '小銭のジャラジャラ感、いいですよね。'
+  ];
+  var text = amt + '円 → 合計 ' + total + '枚\n' + lines.join('\n') + '\n' + jokes[amt % jokes.length];
+  out.appendChild(document.createTextNode(text));
+  clunk();
+}
+
 function init() {
   var i;
+  var now = new Date();
+
+  /* 季節限定ボタン：季節でラベルとプロンプトを変える */
+  var s = seasonInfo();
+  ITEMS[5].prompt = '今は' + (now.getMonth() + 1) + '月、' + s.name + 'の季節です。' + s.theme + 'をテーマに、心があたたかくなる、とても短い物語を書いてください。200文字以内の日本語、本文だけを書いてください。マークダウンや記号の装飾は使わないでください。';
+  el('b5').innerHTML = s.emoji + ' 季節限定（' + s.name + '）<span class="price">むりょう</span>';
+
+  /* 本日の売り切れ：日付シードで通常ボタン5つのうち1つ */
+  var seed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+  soldOutIdx = seed % 5;
+  for (i = 0; i < 5; i++) { BTN_ORIG[i] = el('b' + i).innerHTML; }
+  var soBtn = el('b' + soldOutIdx);
+  soBtn.classList.add('soldout');
+  soBtn.innerHTML = BTN_ORIG[soldOutIdx].replace('<span', '（売り切れ）<span');
+
   for (i = 0; i < ITEMS.length; i++) {
     (function(n) {
-      el('b' + n).addEventListener('click', function() { dispense(n); }, false);
+      el('b' + n).addEventListener('click', function() {
+        if (n === soldOutIdx && !restocked) { soldOutTap(); }
+        else { dispense(n); }
+      }, false);
     })(i);
   }
+  el('clerkBtn').addEventListener('click', callClerk, false);
+  el('chgBtn').addEventListener('click', doExchange, false);
   el('voiceBtn').addEventListener('click', function() {
     voiceOn = !voiceOn;
     el('voiceBtn').innerHTML = voiceOn ? 'ボイス：ON' : 'ボイス：OFF';

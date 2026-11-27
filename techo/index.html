@@ -46,6 +46,12 @@ canvas{width:100%;height:auto;background:#fff;border:1px solid #e0d2ae;border-ra
 .hrow{display:flex;gap:8px;}
 .hrow>div{flex:1;}
 .hrow label{font-size:13px;color:#8a7a5c;display:block;margin-bottom:2px;}
+select{width:100%;font-size:17px;padding:10px;border:1px solid #c9b98f;border-radius:8px;background:#fff;font-family:inherit;color:#3a2f23;}
+.warn{color:#a33b2e;font-size:14px;font-weight:bold;margin:6px 0;}
+.storehead{font-weight:bold;color:#8a5a1d;padding:12px 4px 0;font-size:15px;}
+.cvrow{display:flex;padding:8px 4px;border-bottom:1px solid #eee0bd;}
+.cvrow .u{flex:1;color:#8a7a5c;}
+.cvrow .v{font-weight:bold;}
 </style>
 </head>
 <body>
@@ -60,6 +66,7 @@ canvas{width:100%;height:auto;background:#fff;border:1px solid #e0d2ae;border-ra
 <button id="tbHealth" onclick="showTab(2)">健康</button>
 <button id="tbRecipe" onclick="showTab(3)">レシピ</button>
 <button id="tbGomi" onclick="showTab(4)">ゴミ出し</button>
+<button id="tbTool" onclick="showTab(5)">便利</button>
 </div>
 
 <section id="secMemo" class="on">
@@ -91,8 +98,12 @@ canvas{width:100%;height:auto;background:#fff;border:1px solid #e0d2ae;border-ra
       <input type="text" id="shopInput" placeholder="買うものを入力">
       <button class="btn" style="flex:none;" onclick="addShop()">追加</button>
     </div>
+    <div style="height:8px;"></div>
+    <input type="text" id="shopStoreInput" placeholder="店名（任意）例：スーパー、ドラッグストア">
   </div>
   <div class="card" id="shopList"></div>
+  <button class="sub" id="shopGroupBtn" style="width:100%;" onclick="toggleShopGroup()">店別に並べ替え</button>
+  <div style="height:8px;"></div>
   <button class="sub" style="width:100%;" onclick="clearDoneShop()">買ったもの（チェック済み）を消す</button>
 </section>
 
@@ -111,8 +122,14 @@ canvas{width:100%;height:auto;background:#fff;border:1px solid #e0d2ae;border-ra
     <button class="btn" style="width:100%;" onclick="addHealth()">記録する</button>
   </div>
   <div class="card">
-    <h3>体重のうつりかわり（最近14件）</h3>
+    <h3>体重のうつりかわり</h3>
+    <div class="row">
+      <button class="btn" id="hBtnRecent" onclick="setHView('recent')">最近の記録</button>
+      <button class="sub" id="hBtnMonth" onclick="setHView('month')">月表示</button>
+    </div>
+    <div style="height:8px;"></div>
     <canvas id="hGraph" width="640" height="260"></canvas>
+    <div id="hMonthList" style="display:none;"></div>
     <div class="m" id="hGraphNote" style="font-size:13px;color:#8a7a5c;margin-top:4px;"></div>
   </div>
   <div class="card" id="hList"></div>
@@ -154,6 +171,103 @@ canvas{width:100%;height:auto;background:#fff;border:1px solid #e0d2ae;border-ra
   </div>
 </section>
 
+<section id="secTool">
+  <div class="card">
+    <h3>バックアップ</h3>
+    <div style="font-size:15px;">メモ・買い物・健康・レシピ・ゴミ出し設定を、1つの文字列にまとめて書き出し／読み込みできます。機種変更や、万一データが消えたとき用です。</div>
+    <div class="warn">大事なデータです。人に見せないでください。</div>
+    <textarea id="bkText" rows="5" placeholder="「書き出し」を押すとここに文字列が出ます。読み込むときは、ここに文字列を貼ってください。"></textarea>
+    <div class="row" style="margin-top:8px;">
+      <button class="btn" onclick="bkExport()">書き出し</button>
+      <button class="sub" onclick="bkCopy()">コピー</button>
+    </div>
+    <div style="height:8px;"></div>
+    <button class="sub" style="width:100%;" onclick="bkImport()">貼った内容を読み込む（今のデータを上書き）</button>
+    <div id="bkMsg" style="font-size:13px;color:#8a7a5c;margin-top:6px;"></div>
+  </div>
+  <div class="card">
+    <h3>分量換算（料理）</h3>
+    <div class="row">
+      <input type="number" id="cvVal" placeholder="数字" step="any">
+      <select id="cvUnit">
+        <option value="15">大さじ</option>
+        <option value="5">小さじ</option>
+        <option value="1">ml</option>
+        <option value="1">cc</option>
+        <option value="1">g（水）</option>
+        <option value="200">カップ</option>
+      </select>
+    </div>
+    <div style="height:8px;"></div>
+    <button class="btn" style="width:100%;" onclick="cvConvert()">換算する</button>
+    <div id="cvResult" style="margin-top:6px;"></div>
+    <div style="font-size:13px;color:#8a7a5c;margin-top:8px;">大さじ1＝15ml、小さじ1＝5ml、カップ1＝200mlで計算します。gは水の場合の目安です（粉や油では重さが変わります）。</div>
+  </div>
+</section>
+
+<div id="techoBSections" style="padding:12px;">
+
+  <div class="card" id="tbThanksSec">
+    <h3>お礼メモ（お礼を返すのを忘れないために）</h3>
+    <div class="row">
+      <input type="text" id="tbThanksInput" placeholder="例：田中さんに旅行のお土産のお礼">
+      <button class="btn" style="flex:none;" onclick="tbAddThanks()">追加</button>
+    </div>
+    <div id="tbThanksList"></div>
+  </div>
+
+  <div class="card" id="tbNengaSec">
+    <h3>年賀状リスト</h3>
+    <div id="tbNengaCounts" style="font-weight:bold;color:#8a5a1d;margin-bottom:8px;"></div>
+    <input type="text" id="tbNengaName" placeholder="相手の名前">
+    <div style="height:8px;"></div>
+    <div class="row">
+      <select id="tbNengaNote" style="font-size:17px;padding:10px;border:1px solid #c9b98f;border-radius:8px;background:#fff;font-family:inherit;color:#3a2f23;">
+        <option value="出した">出した</option>
+        <option value="受けた">受けた</option>
+      </select>
+      <button class="btn" style="flex:none;" onclick="tbAddNenga()">追加</button>
+    </div>
+    <div id="tbNengaList"></div>
+  </div>
+
+  <div class="card" id="tbLentSec">
+    <h3>預けメモ（貸した・預けたもの）</h3>
+    <input type="text" id="tbLentItem" placeholder="もの（例：傘、本、充電器）">
+    <div style="height:8px;"></div>
+    <div class="row">
+      <input type="text" id="tbLentTo" placeholder="誰に（例：田中さん）">
+      <button class="btn" style="flex:none;" onclick="tbAddLent()">追加</button>
+    </div>
+    <div id="tbLentList"></div>
+  </div>
+
+  <div class="card" id="tbBorrowSec">
+    <h3>返却メモ（借りたもの・返すもの）</h3>
+    <input type="text" id="tbBorrowItem" placeholder="もの（例：図書館の本、DVD）">
+    <div style="height:8px;"></div>
+    <input type="text" id="tbBorrowFrom" placeholder="誰から・どこから（例：図書館）">
+    <div style="height:8px;"></div>
+    <div class="row">
+      <input type="text" id="tbBorrowDue" placeholder="返却期限（例：12/5まで）">
+      <button class="btn" style="flex:none;" onclick="tbAddBorrow()">追加</button>
+    </div>
+    <div id="tbBorrowList"></div>
+  </div>
+
+  <div class="card" id="tbBousaiSec">
+    <h3>防災メモ</h3>
+    <textarea id="tbBousaiText" rows="10"></textarea>
+    <div style="height:10px;"></div>
+    <button class="btn" style="width:100%;" onclick="tbSaveBousai()">防災メモを保存</button>
+    <div class="m" id="tbBousaiNote" style="font-size:13px;color:#8a7a5c;margin-top:6px;"></div>
+    <div style="height:10px;"></div>
+    <a href="https://www.jma.go.jp/" style="display:block;background:#efe3c8;color:#3a2f23;border:1px solid #d9c491;border-radius:8px;padding:12px 14px;font-size:16px;text-align:center;text-decoration:none;margin-bottom:8px;">気象庁（天気・地震・警報）</a>
+    <a href="https://www.bousai.go.jp/" style="display:block;background:#efe3c8;color:#3a2f23;border:1px solid #d9c491;border-radius:8px;padding:12px 14px;font-size:16px;text-align:center;text-decoration:none;margin-bottom:8px;">内閣府 防災情報のページ</a>
+    <a href="https://www.nhk.or.jp/kishou-saigai/" style="display:block;background:#efe3c8;color:#3a2f23;border:1px solid #d9c491;border-radius:8px;padding:12px 14px;font-size:16px;text-align:center;text-decoration:none;">NHK 防災・災害情報</a>
+  </div>
+
+</div>
 <footer>
 <a href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
 <div style="font-size:12px;color:#a08c62;margin-top:8px;">TECHO-6 くらし手帳</div>
@@ -204,11 +318,11 @@ var GOMI_CATS = [
 var WD_LABEL = ["日","月","火","水","木","金","土"];
 var WD_ORDER = [1,2,3,4,5,6,0];
 
-var TAB_IDS = ["tbMemo","tbShop","tbHealth","tbRecipe","tbGomi"];
-var SEC_IDS = ["secMemo","secShop","secHealth","secRecipe","secGomi"];
+var TAB_IDS = ["tbMemo","tbShop","tbHealth","tbRecipe","tbGomi","tbTool"];
+var SEC_IDS = ["secMemo","secShop","secHealth","secRecipe","secGomi","secTool"];
 function showTab(n){
   var i;
-  for (i = 0; i < 5; i++){
+  for (i = 0; i < TAB_IDS.length; i++){
     el(TAB_IDS[i]).className = (i === n) ? "on" : "";
     el(SEC_IDS[i]).className = (i === n) ? "on" : "";
   }
@@ -272,22 +386,58 @@ function deleteMemo(){
 }
 
 /* ---------- 買い物リスト ---------- */
+var shopGroup = false;
+function shopStoreOf(s){
+  return (s.store || "").replace(/^\s+|\s+$/g, "");
+}
+function shopItemHtml(i){
+  var s = shop[i], st = shopStoreOf(s);
+  return '<div class="shopitem">'
+    + '<button class="chk" onclick="toggleShop(' + i + ')">' + (s.done ? "✓" : "") + '</button>'
+    + '<div class="nm' + (s.done ? " done" : "") + '">' + esc(s.t)
+    + (st !== "" ? '<div style="font-size:13px;color:#8a7a5c;">' + esc(st) + '</div>' : '')
+    + '</div>'
+    + '<button class="delx" onclick="deleteShop(' + i + ')">×</button></div>';
+}
 function renderShop(){
   var html = "", i;
-  for (i = 0; i < shop.length; i++){
-    var s = shop[i];
-    html += '<div class="shopitem">'
-      + '<button class="chk" onclick="toggleShop(' + i + ')">' + (s.done ? "✓" : "") + '</button>'
-      + '<div class="nm' + (s.done ? " done" : "") + '">' + esc(s.t) + '</div>'
-      + '<button class="delx" onclick="deleteShop(' + i + ')">×</button></div>';
+  if (shop.length === 0){
+    el("shopList").innerHTML = '<div class="empty">リストは空です。買うものを追加してください。</div>';
+    return;
   }
-  if (html === "") html = '<div class="empty">リストは空です。買うものを追加してください。</div>';
+  if (!shopGroup){
+    for (i = 0; i < shop.length; i++) html += shopItemHtml(i);
+    el("shopList").innerHTML = html;
+    return;
+  }
+  var order = [], groups = {}, st;
+  for (i = 0; i < shop.length; i++){
+    st = shopStoreOf(shop[i]);
+    if (!groups[st]){ groups[st] = []; order.push(st); }
+    groups[st].push(i);
+  }
+  var sorted = [], hasEmpty = false, j, k;
+  for (j = 0; j < order.length; j++){
+    if (order[j] === "") hasEmpty = true; else sorted.push(order[j]);
+  }
+  if (hasEmpty) sorted.push("");
+  for (j = 0; j < sorted.length; j++){
+    st = sorted[j];
+    html += '<div class="storehead">' + esc(st === "" ? "店名なし" : st) + '</div>';
+    for (k = 0; k < groups[st].length; k++) html += shopItemHtml(groups[st][k]);
+  }
   el("shopList").innerHTML = html;
+}
+function toggleShopGroup(){
+  shopGroup = !shopGroup;
+  el("shopGroupBtn").innerHTML = shopGroup ? "ふつうの並びに戻す" : "店別に並べ替え";
+  renderShop();
 }
 function addShop(){
   var v = el("shopInput").value.replace(/^\s+|\s+$/g, "");
   if (v === "") return;
-  shop.push({ t:v, done:false });
+  var st = el("shopStoreInput").value.replace(/^\s+|\s+$/g, "");
+  shop.push({ t:v, done:false, store:st });
   el("shopInput").value = "";
   saveData("techo_shop", shop);
   renderShop();
@@ -358,9 +508,47 @@ function deleteHealth(i){
   saveData("techo_health", health);
   renderHealth();
 }
+var hView = "recent";
+function setHView(v){
+  hView = v;
+  el("hBtnRecent").className = (v === "recent") ? "btn" : "sub";
+  el("hBtnMonth").className = (v === "month") ? "btn" : "sub";
+  drawGraph();
+}
+function renderMonthList(){
+  var arr = sortedHealth(false), months = {}, order = [], j;
+  for (j = 0; j < arr.length; j++){
+    var e = arr[j].e;
+    if (e.w === null) continue;
+    var mk = e.d.substring(0, 7);
+    if (!months[mk]){ months[mk] = { sum:0, cnt:0, last:null, lastD:"" }; order.push(mk); }
+    var g = months[mk];
+    g.sum += e.w; g.cnt++;
+    if (e.d >= g.lastD){ g.lastD = e.d; g.last = e.w; }
+  }
+  var html = "";
+  for (j = order.length - 1; j >= 0; j--){
+    var key = order[j], gg = months[key], p = key.split("-");
+    var avg = Math.round((gg.sum / gg.cnt) * 10) / 10;
+    html += '<div class="listitem"><div class="t" style="font-size:15px;">' + Number(p[0]) + '年' + Number(p[1]) + '月</div>'
+      + '<div class="m">最新の体重 ' + gg.last + 'kg　／　平均 ' + avg + 'kg（' + gg.cnt + '件）</div></div>';
+  }
+  if (html === "") html = '<div class="empty">体重の記録がまだありません。</div>';
+  el("hMonthList").innerHTML = html;
+}
 function drawGraph(){
   var cv = el("hGraph");
-  if (!cv || !cv.getContext) return;
+  if (!cv) return;
+  if (hView === "month"){
+    cv.style.display = "none";
+    el("hMonthList").style.display = "block";
+    renderMonthList();
+    el("hGraphNote").innerHTML = "月ごとの集計です（その月の最新の体重と、平均）。";
+    return;
+  }
+  cv.style.display = "block";
+  el("hMonthList").style.display = "none";
+  if (!cv.getContext) return;
   var ctx = cv.getContext("2d");
   var W = cv.width, H = cv.height;
   ctx.clearRect(0, 0, W, H);
@@ -371,7 +559,7 @@ function drawGraph(){
     el("hGraphNote").innerHTML = "体重の記録が2件以上になるとグラフが出ます。";
     return;
   }
-  el("hGraphNote").innerHTML = "";
+  el("hGraphNote").innerHTML = "最近14件の記録です。";
   var min = pts[0].w, max = pts[0].w;
   for (j = 0; j < pts.length; j++){ if (pts[j].w < min) min = pts[j].w; if (pts[j].w > max) max = pts[j].w; }
   if (max - min < 2){ var mid = (max + min) / 2; min = mid - 1; max = mid + 1; }
@@ -481,6 +669,89 @@ function gomiToggle(k, wd){
   renderGomi();
 }
 
+/* ---------- バックアップ ---------- */
+var BACKUP_KEYS = ["techo_memos","techo_shop","techo_health","techo_recipes","techo_gomi", "techo6_thanks_v1", "techo6_nenga_v1", "techo6_lent_v1", "techo6_borrow_v1", "techo6_bousai_v1"];
+function bkSetMsg(t){ el("bkMsg").innerHTML = esc(t); }
+function bkExport(){
+  if (!storeOK){ bkSetMsg("この端末では保存が使えないため、書き出しできません。"); return; }
+  var data = {}, i;
+  for (i = 0; i < BACKUP_KEYS.length; i++){
+    var raw = null;
+    try { raw = localStorage.getItem(BACKUP_KEYS[i]); } catch(e){ raw = null; }
+    data[BACKUP_KEYS[i]] = raw;
+  }
+  var obj = { app:"TECHO-6", ver:1, data:data };
+  var b64 = "";
+  try { b64 = btoa(unescape(encodeURIComponent(JSON.stringify(obj)))); }
+  catch(e){ bkSetMsg("書き出しに失敗しました。"); return; }
+  el("bkText").value = b64;
+  bkSetMsg("書き出しました。「コピー」を押して、安全な場所に貼って保存してください。");
+}
+function bkCopy(){
+  var ta = el("bkText");
+  if (ta.value === ""){ bkSetMsg("まず「書き出し」を押してください。"); return; }
+  ta.focus();
+  ta.select();
+  try { ta.setSelectionRange(0, ta.value.length); } catch(e){}
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch(e){ ok = false; }
+  bkSetMsg(ok ? "コピーしました。" : "コピーできませんでした。文字列が選ばれているので、長押ししてコピーしてください。");
+}
+function bkImport(){
+  var s = el("bkText").value.replace(/\s+/g, "");
+  if (s === ""){ bkSetMsg("読み込む文字列が貼られていません。"); return; }
+  var obj = null;
+  try { obj = JSON.parse(decodeURIComponent(escape(atob(s)))); }
+  catch(e){ bkSetMsg("読み込めませんでした：文字列が TECHO-6 のバックアップではないようです。"); return; }
+  if (!obj || obj.app !== "TECHO-6" || !obj.data || typeof obj.data !== "object"){
+    bkSetMsg("読み込めませんでした：TECHO-6 のバックアップ形式ではありません。");
+    return;
+  }
+  var found = 0, i, k, v;
+  for (i = 0; i < BACKUP_KEYS.length; i++){
+    k = BACKUP_KEYS[i]; v = obj.data[k];
+    if (typeof v === "string"){
+      try { JSON.parse(v); found++; }
+      catch(e){ bkSetMsg("読み込めませんでした：データの一部が壊れているようです。"); return; }
+    }
+  }
+  if (found === 0){ bkSetMsg("読み込めませんでした：復元できるデータが含まれていません。"); return; }
+  if (!confirm("今のデータを、読み込んだ内容で上書きします。よろしいですか？")) return;
+  try {
+    for (i = 0; i < BACKUP_KEYS.length; i++){
+      k = BACKUP_KEYS[i]; v = obj.data[k];
+      if (typeof v === "string") localStorage.setItem(k, v);
+    }
+  } catch(e){ bkSetMsg("読み込めませんでした：この端末では保存が使えません。"); return; }
+  bkSetMsg("読み込みました。画面を更新します。");
+  location.reload();
+}
+
+/* ---------- 分量換算 ---------- */
+function cvFmt(n){
+  if (n === 0) return "0";
+  return String(Math.round(n * 100) / 100);
+}
+function cvConvert(){
+  var v = parseFloat(el("cvVal").value);
+  if (isNaN(v) || v < 0){ el("cvResult").innerHTML = '<div class="empty">数字を入力してください。</div>'; return; }
+  var factor = parseFloat(el("cvUnit").value);
+  var ml = v * factor;
+  var rows = [
+    ["大さじ", cvFmt(ml / 15)],
+    ["小さじ", cvFmt(ml / 5)],
+    ["ml", cvFmt(ml)],
+    ["cc", cvFmt(ml)],
+    ["g（水の場合）", "約 " + cvFmt(ml)],
+    ["カップ", cvFmt(ml / 200)]
+  ];
+  var html = "", i;
+  for (i = 0; i < rows.length; i++){
+    html += '<div class="cvrow"><div class="u">' + rows[i][0] + '</div><div class="v">' + rows[i][1] + '</div></div>';
+  }
+  el("cvResult").innerHTML = html;
+}
+
 /* ---------- 初期化 ---------- */
 if (!storeOK) showStoreNote();
 el("hDate").value = todayStr();
@@ -489,6 +760,194 @@ renderShop();
 renderHealth();
 renderRecipes();
 renderGomi();
+</script>
+<script>
+/* ===== TECHO-6 part B: 追加メモ機能（自己完結ブロック） ===== */
+function tbEl(id){ return document.getElementById(id); }
+function tbEsc(s){ s = String(s == null ? "" : s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function tbPad2(n){ return (n < 10 ? "0" : "") + n; }
+function tbToday(){ var d = new Date(); return d.getFullYear() + "-" + tbPad2(d.getMonth()+1) + "-" + tbPad2(d.getDate()); }
+function tbFmtDate(ds){ if(!ds) return ""; var p = String(ds).split("-"); if(p.length < 3) return String(ds); return Number(p[0]) + "/" + Number(p[1]) + "/" + Number(p[2]); }
+function tbTrim(s){ return String(s == null ? "" : s).replace(/^\s+|\s+$/g, ""); }
+function tbSave(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
+function tbLoad(key, def){
+  try {
+    var v = localStorage.getItem(key);
+    if (v === null || v === "") return def;
+    var p = JSON.parse(v);
+    return (p === null || p === undefined) ? def : p;
+  } catch(e){ return def; }
+}
+function tbLoadRaw(key){
+  try { return localStorage.getItem(key); } catch(e){ return null; }
+}
+
+/* ---------- (146) お礼メモ ---------- */
+var tbThanks = tbLoad("techo6_thanks_v1", []);
+function tbRenderThanks(){
+  var html = "", i;
+  for (i = 0; i < tbThanks.length; i++){
+    var e = tbThanks[i];
+    html += '<div class="listitem"><div class="row" style="align-items:center;">'
+      + '<div><div class="t" style="font-size:16px;">' + tbEsc(e.text) + '</div>'
+      + '<div class="m">' + tbFmtDate(e.date) + ' にメモ</div></div>'
+      + '<button class="delx" style="flex:none;" onclick="tbDelThanks(' + i + ')">×</button>'
+      + '</div></div>';
+  }
+  if (html === "") html = '<div class="empty">まだお礼メモがありません。</div>';
+  tbEl("tbThanksList").innerHTML = html;
+}
+function tbAddThanks(){
+  var v = tbTrim(tbEl("tbThanksInput").value);
+  if (v === "") return;
+  tbThanks.push({ text:v, date:tbToday() });
+  tbSave("techo6_thanks_v1", tbThanks);
+  tbEl("tbThanksInput").value = "";
+  tbRenderThanks();
+}
+function tbDelThanks(i){
+  if (!confirm("このお礼メモを消しますか？")) return;
+  tbThanks.splice(i, 1);
+  tbSave("techo6_thanks_v1", tbThanks);
+  tbRenderThanks();
+}
+
+/* ---------- (147) 年賀状リスト ---------- */
+var tbNenga = tbLoad("techo6_nenga_v1", []);
+function tbRenderNenga(){
+  var sent = 0, got = 0, i;
+  for (i = 0; i < tbNenga.length; i++){ if (tbNenga[i].note === "受けた") got++; else sent++; }
+  tbEl("tbNengaCounts").innerHTML = "出した " + sent + " 枚 ・ 受けた " + got + " 枚";
+  var html = "";
+  for (i = 0; i < tbNenga.length; i++){
+    var e = tbNenga[i];
+    html += '<div class="listitem"><div class="row" style="align-items:center;">'
+      + '<div><div class="t" style="font-size:16px;">' + tbEsc(e.name) + '</div>'
+      + '<div class="m">' + tbEsc(e.note) + '</div></div>'
+      + '<button class="delx" style="flex:none;" onclick="tbDelNenga(' + i + ')">×</button>'
+      + '</div></div>';
+  }
+  if (html === "") html = '<div class="empty">まだ年賀状の記録がありません。</div>';
+  tbEl("tbNengaList").innerHTML = html;
+}
+function tbAddNenga(){
+  var v = tbTrim(tbEl("tbNengaName").value);
+  if (v === "") return;
+  tbNenga.push({ name:v, note:tbEl("tbNengaNote").value });
+  tbSave("techo6_nenga_v1", tbNenga);
+  tbEl("tbNengaName").value = "";
+  tbRenderNenga();
+}
+function tbDelNenga(i){
+  if (!confirm("この記録を消しますか？")) return;
+  tbNenga.splice(i, 1);
+  tbSave("techo6_nenga_v1", tbNenga);
+  tbRenderNenga();
+}
+
+/* ---------- (148) 預けメモ ---------- */
+var tbLent = tbLoad("techo6_lent_v1", []);
+function tbRenderLent(){
+  var html = "", i;
+  for (i = 0; i < tbLent.length; i++){
+    var e = tbLent[i];
+    html += '<div class="listitem"><div class="row" style="align-items:center;">'
+      + '<div><div class="t" style="font-size:16px;">' + tbEsc(e.item) + ' を ' + tbEsc(e.to) + ' へ</div>'
+      + '<div class="m">' + tbFmtDate(e.date) + '</div></div>'
+      + '<button class="delx" style="flex:none;" onclick="tbDelLent(' + i + ')">×</button>'
+      + '</div></div>';
+  }
+  if (html === "") html = '<div class="empty">まだ預けメモがありません。</div>';
+  tbEl("tbLentList").innerHTML = html;
+}
+function tbAddLent(){
+  var item = tbTrim(tbEl("tbLentItem").value);
+  var to = tbTrim(tbEl("tbLentTo").value);
+  if (item === "" || to === ""){ alert("ものと、誰に預けたかを入力してください。"); return; }
+  tbLent.push({ item:item, to:to, date:tbToday() });
+  tbSave("techo6_lent_v1", tbLent);
+  tbEl("tbLentItem").value = "";
+  tbEl("tbLentTo").value = "";
+  tbRenderLent();
+}
+function tbDelLent(i){
+  if (!confirm("この預けメモを消しますか？")) return;
+  tbLent.splice(i, 1);
+  tbSave("techo6_lent_v1", tbLent);
+  tbRenderLent();
+}
+
+/* ---------- (154) 返却メモ ---------- */
+var tbBorrow = tbLoad("techo6_borrow_v1", []);
+function tbRenderBorrow(){
+  var html = "", i;
+  for (i = 0; i < tbBorrow.length; i++){
+    var e = tbBorrow[i];
+    var meta = "";
+    if (e.from) meta += tbEsc(e.from) + " から";
+    if (e.due) meta += (meta ? "　" : "") + "期限：" + tbEsc(e.due);
+    html += '<div class="listitem"><div class="row" style="align-items:center;">'
+      + '<div><div class="t" style="font-size:16px;">' + tbEsc(e.item) + '</div>'
+      + (meta ? '<div class="m">' + meta + '</div>' : '')
+      + '</div>'
+      + '<button class="delx" style="flex:none;" onclick="tbDelBorrow(' + i + ')">×</button>'
+      + '</div></div>';
+  }
+  if (html === "") html = '<div class="empty">まだ返却メモがありません。</div>';
+  tbEl("tbBorrowList").innerHTML = html;
+}
+function tbAddBorrow(){
+  var item = tbTrim(tbEl("tbBorrowItem").value);
+  if (item === "") return;
+  tbBorrow.push({ item:item, from:tbTrim(tbEl("tbBorrowFrom").value), due:tbTrim(tbEl("tbBorrowDue").value) });
+  tbSave("techo6_borrow_v1", tbBorrow);
+  tbEl("tbBorrowItem").value = "";
+  tbEl("tbBorrowFrom").value = "";
+  tbEl("tbBorrowDue").value = "";
+  tbRenderBorrow();
+}
+function tbDelBorrow(i){
+  if (!confirm("この返却メモを消しますか？")) return;
+  tbBorrow.splice(i, 1);
+  tbSave("techo6_borrow_v1", tbBorrow);
+  tbRenderBorrow();
+}
+
+/* ---------- (159) 防災メモ ---------- */
+var TB_BOUSAI_STARTER = "【防災メモ】\n"
+  + "■ 備蓄チェック（1人・3日分が目安）\n"
+  + "・水：9リットル（1日3リットル）\n"
+  + "・食料：9食分（レトルト・缶詰・乾パンなど）\n"
+  + "・携帯トイレ：15回分\n"
+  + "・懐中電灯・LEDランタン＋予備電池\n"
+  + "・現金（小銭も用意）\n"
+  + "・常備薬・マスク・ウェットティッシュ\n"
+  + "\n■ 避難場所：\n■ 家族との連絡方法：\n■ 備蓄の場所：";
+function tbInitBousai(){
+  var saved = tbLoadRaw("techo6_bousai_v1");
+  if (saved !== null && saved !== ""){
+    tbEl("tbBousaiText").value = saved;
+    tbEl("tbBousaiNote").innerHTML = "保存済みの防災メモを表示しています。";
+  } else {
+    tbEl("tbBousaiText").value = TB_BOUSAI_STARTER;
+    tbEl("tbBousaiNote").innerHTML = "はじめてなので見本のチェックリストを表示しています。直したら「保存」を押してください。";
+  }
+}
+function tbSaveBousai(){
+  try {
+    localStorage.setItem("techo6_bousai_v1", tbEl("tbBousaiText").value);
+    tbEl("tbBousaiNote").innerHTML = "防災メモを保存しました。";
+  } catch(e){
+    tbEl("tbBousaiNote").innerHTML = "この端末では保存できませんでした。";
+  }
+}
+
+/* ---------- part B 初期化 ---------- */
+tbRenderThanks();
+tbRenderNenga();
+tbRenderLent();
+tbRenderBorrow();
+tbInitBousai();
 </script>
 </body>
 </html>

@@ -48,6 +48,10 @@ font-size: 16px; border-radius: 20px; border: 2px solid #b39b57;
 background: #fff; color: #6b4f1d;
 }
 .catbtn.sel { background: #b39b57; color: #fff; font-weight: bold;}
+.pmark { display: inline-block; font-size: 13px; font-weight: bold; color: #fff; background: #e0a52e; border-radius: 10px; padding: 1px 9px; margin-right: 6px;}
+.entry.pri { border-left-color: #e0a52e; background: #fffbe8;}
+.ebtns button.pri-on { background: #e0a52e; color: #fff; border-color: #c98f1d; font-weight: bold;}
+#priBtn.sel { background: #e0a52e; border-color: #c98f1d; color: #fff;}
 .bigbtn {
 display: block; width: 100%; padding: 14px; margin-top: 10px;
 font-size: 19px; font-weight: bold; border: none; border-radius: 10px;
@@ -137,6 +141,11 @@ font-family: inherit; display: none;
 <button type="button" class="catbtn" data-cat="その他">その他</button>
 </div>
 
+<label>優先度</label>
+<div class="catrow">
+<button type="button" class="catbtn" id="priBtn">☆ 優先にする</button>
+</div>
+
 <label for="titleInput">タイトル（なくてもOK）</label>
 <input type="text" id="titleInput" placeholder="例：KUU-01に○○がほしい">
 
@@ -164,6 +173,7 @@ font-family: inherit; display: none;
 var LS_KEY = "board6_entries_v1";
 var entries = [];
 var selCat = "新機能の要望";
+var formPri = false;
 var nextId = 1;
 
 function el(id) { return document.getElementById(id);}
@@ -227,14 +237,18 @@ if (entries.length === 0) {
 box.innerHTML = '<div class="empty">まだ何も貼られていません。<br>思いついたら書いてみてください。</div>';
 return;
 }
+var disp = [];
+for (i = 0; i < entries.length; i++) { if (entries[i].pri) disp.push(entries[i]);}
+for (i = 0; i < entries.length; i++) { if (!entries[i].pri) disp.push(entries[i]);}
 var html = "";
-for (i = 0; i < entries.length; i++) {
-var e = entries[i];
-html += '<div class="entry' + (e.done? " done": "") + '">';
-html += '<div class="emeta"><span class="esite">【' + esc(siteOf(e)) + '】</span><span class="etag ' + catClass(e.cat) + '">' + esc(e.cat) + '</span>' + fmtDate(e.ts) + '</div>';
+for (i = 0; i < disp.length; i++) {
+var e = disp[i];
+html += '<div class="entry' + (e.done? " done": "") + (e.pri? " pri": "") + '">';
+html += '<div class="emeta">' + (e.pri? '<span class="pmark">★優先</span>': '') + '<span class="esite">【' + esc(siteOf(e)) + '】</span><span class="etag ' + catClass(e.cat) + '">' + esc(e.cat) + '</span>' + fmtDate(e.ts) + '</div>';
 if (e.title) html += '<div class="etitle">' + esc(e.title) + '</div>';
 html += '<div class="ebody">' + esc(e.body) + '</div>';
 html += '<div class="ebtns">';
+html += '<button type="button"' + (e.pri? ' class="pri-on"': '') + ' data-act="pri" data-id="' + e.id + '">' + (e.pri? "★優先": "☆優先にする") + '</button>';
 html += '<button type="button" data-act="done" data-id="' + e.id + '">' + (e.done? "未済みに戻す": "済みにする") + '</button>';
 html += '<button type="button" class="del" data-act="del" data-id="' + e.id + '">消す</button>';
 html += '</div></div>';
@@ -262,11 +276,15 @@ site: el("siteSel").value,
 cat: selCat,
 title: title,
 body: body,
-done: false
+done: false,
+pri: formPri? 1: 0
 });
 save();
 el("titleInput").value = "";
 el("bodyInput").value = "";
+formPri = false;
+el("priBtn").className = "catbtn";
+el("priBtn").innerHTML = "☆ 優先にする";
 render();
 }
 
@@ -279,7 +297,7 @@ var e = entries[i];
 if (e.done) continue;
 var text = e.body.replace(/\s*\n\s*/g, " ");
 if (e.title) text = e.title + "：" + text;
-lines.push("【" + siteOf(e) + "】" + text + "（" + fmtDay(e.ts) + "）");
+lines.push((e.pri? "★": "") + "【" + siteOf(e) + "】" + text + "（" + fmtDay(e.ts) + "）");
 }
 return lines.join("\n");
 }
@@ -334,7 +352,11 @@ var id = parseInt(t.getAttribute("data-id"), 10);
 var idx = findIdx(id);
 if (idx < 0) return;
 var act = t.getAttribute("data-act");
-if (act === "done") {
+if (act === "pri") {
+entries[idx].pri = entries[idx].pri? 0: 1;
+save();
+render();
+} else if (act === "done") {
 entries[idx].done =!entries[idx].done;
 save();
 render();
@@ -345,6 +367,13 @@ save();
 render();
 }
 }
+}, false);
+
+/* 優先度トグル（投稿フォーム） */
+el("priBtn").addEventListener("click", function () {
+formPri = !formPri;
+el("priBtn").className = "catbtn" + (formPri? " sel": "");
+el("priBtn").innerHTML = formPri? "★ 優先にする": "☆ 優先にする";
 }, false);
 
 el("postBtn").addEventListener("click", post, false);
