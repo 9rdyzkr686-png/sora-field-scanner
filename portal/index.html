@@ -53,6 +53,10 @@ a.row {
   color: #c9f5d6;
 }
 a.row:active { background: #14301d; }
+#recoRow { padding-right: 14px; margin-bottom: 6px; }
+#recoReason { font-size: 15px; line-height: 1.7; color: #ffc857; margin: 2px 0 6px; }
+body.theme-paper #recoReason { color: #a97e2f; }
+body.mono #recoReason { color: #fff; }
 .star {
   position: absolute;
   right: 6px;
@@ -505,6 +509,18 @@ body.printing a.row:after { content: " (" attr(href) ")"; font-size: 10px; color
 <button id="tourBtn" class="pbtn" type="button">🔊 音声ガイドツアー</button><button id="tourStopBtn" class="pbtn" type="button">⏹ 停止</button>
 </div>
 <div id="tourText" class="panel" style="display:none; font-size:15px; line-height:1.7;"></div>
+
+<h2>■ 今日のおすすめ</h2>
+<div class="panel" id="recoPanel">
+<a class="row" id="recoRow" href="#">
+  <span class="name" id="recoName"></span>
+  <span class="desc" id="recoDesc"></span>
+</a>
+<div id="recoReason"></div>
+<div class="btnrow" style="margin-bottom:0;">
+<button id="recoOpenBtn" class="pbtn" type="button">開く</button><button id="recoNextBtn" class="pbtn" type="button">別のおすすめ</button>
+</div>
+</div>
 
 <h2>■ わたしの記録</h2>
 <div class="panel"><div id="myPageBody" class="stat-line"></div></div>
@@ -1528,11 +1544,117 @@ function init() {
   initBatch2();
   initBatch3();
   initFilter();
+  initReco();
   var st = gatherStats();
   renderMyPage(st);
   renderTrophies(st);
   renderRally(st);
   checkNewSites();
+}
+
+/* ===== (227) 今日のおすすめサイト ===== */
+
+var RECO_REASONS = {
+  "観測・天気": "空と地球の様子をチェックする日に",
+  "AI・おしゃべり": "AIとおしゃべりして気分転換したい日に",
+  "ラジオ・読み物": "のんびり読み物と聞き物を楽しみたい日に",
+  "レジャー・占い": "遊びと占いでリフレッシュしたい日に",
+  "生活・メモ": "暮らしの記録を整理したい日に",
+  "推し活・旅": "推し活とお出かけ気分を味わいたい日に",
+  "あそび・その他": "新しい遊びを発掘したい日に"
+};
+var recoOffset = 0;
+var recoPick = null;
+
+function recoDayCount() {
+  var now = new Date();
+  var d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.floor(d.getTime() / 86400000);
+}
+
+function recoTextSkipRt(node) {
+  var out = "";
+  var i;
+  for (i = 0; i < node.childNodes.length; i++) {
+    var n = node.childNodes[i];
+    if (n.nodeType === 3) { out += n.nodeValue; }
+    else if (n.nodeType === 1 && n.tagName !== "RT") { out += recoTextSkipRt(n); }
+  }
+  return out;
+}
+
+function recoCleanName(a) {
+  var nameEl = null;
+  var i;
+  for (i = 0; i < a.childNodes.length; i++) {
+    if (a.childNodes[i].className === "name") { nameEl = a.childNodes[i]; break; }
+  }
+  if (!nameEl) { return a._key || ""; }
+  var clone = nameEl.cloneNode(true);
+  var j = clone.childNodes.length - 1;
+  for (; j >= 0; j--) {
+    var cn = clone.childNodes[j];
+    if (cn.nodeType === 1 && (cn.className === "siteicon" || cn.className === "newbadge" || cn.className === "catlabel")) {
+      clone.removeChild(cn);
+    }
+  }
+  return recoTextSkipRt(clone);
+}
+
+function recoDescOf(a) {
+  var i;
+  for (i = 0; i < a.childNodes.length; i++) {
+    if (a.childNodes[i].className === "desc") { return recoTextSkipRt(a.childNodes[i]); }
+  }
+  return "";
+}
+
+function renderReco() {
+  if (!curatedRows.length) { return; }
+  var idx = (recoDayCount() + recoOffset) % curatedRows.length;
+  var a = curatedRows[idx];
+  recoPick = a;
+  var key = a._key || siteKeyOf(a);
+  var cat = a._cat || CATS[key] || "あそび・その他";
+  var row = el("recoRow");
+  row.href = a.href;
+  var nameEl = el("recoName");
+  nameEl.innerHTML = "";
+  var ic = document.createElement("span");
+  ic.className = "siteicon";
+  ic.appendChild(document.createTextNode(ICONS[key] || "🔹"));
+  nameEl.appendChild(ic);
+  nameEl.appendChild(document.createTextNode(recoCleanName(a)));
+  var cl = document.createElement("span");
+  cl.className = "catlabel";
+  cl.appendChild(document.createTextNode(cat));
+  nameEl.appendChild(cl);
+  var descEl = el("recoDesc");
+  descEl.innerHTML = "";
+  descEl.appendChild(document.createTextNode(recoDescOf(a)));
+  var reasonEl = el("recoReason");
+  reasonEl.innerHTML = "";
+  reasonEl.appendChild(document.createTextNode("⭐ " + (RECO_REASONS[cat] || "今日の気分で開いてみたい日に")));
+}
+
+function initReco() {
+  if (!curatedRows.length) {
+    el("recoPanel").style.display = "none";
+    return;
+  }
+  renderReco();
+  if (el("recoRow").addEventListener) {
+    el("recoRow").addEventListener("click", function () { if (recoPick) { onVisit(recoPick); } }, false);
+  }
+  el("recoOpenBtn").onclick = function () {
+    if (!recoPick) { return; }
+    onVisit(recoPick);
+    location.href = recoPick.href;
+  };
+  el("recoNextBtn").onclick = function () {
+    recoOffset++;
+    renderReco();
+  };
 }
 
 /* ===== デザイン・設定（テーマ／フォント／夜モード／起動ロゴ／お知らせ／季節） ===== */

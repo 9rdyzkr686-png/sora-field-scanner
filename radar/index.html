@@ -192,6 +192,11 @@
   <div class="panel-title">OBSERVATION LOG / 観測ログ</div>
   <div class="legend" id="obsLogTotal">通算観測数：0件</div>
   <div id="obsLogList"></div>
+  <div class="btnrow" style="margin-top:8px;">
+    <button type="button" class="small" id="obsLogCopy">ログをコピー</button>
+    <button type="button" class="small" id="obsLogClear">ログを消す</button>
+  </div>
+  <div class="legend" id="obsLogMsg" style="margin-top:6px;"></div>
 </div>
 
 <footer>
@@ -936,6 +941,43 @@ function renderObs() {
     box.appendChild(row);
   }
 }
+
+/* ---- observation log copy / clear ---- */
+function obsLogStatus(msg) {
+  var m = document.getElementById("obsLogMsg");
+  if (m) m.innerHTML = msg;
+}
+function copyObsLog() {
+  if (obsLog.length === 0) { obsLogStatus("ログがまだありません"); return; }
+  var lines = [], j;
+  for (j = 0; j < obsLog.length; j++) {
+    lines.push(obsLog[j].date + "　" + obsLog[j].name);
+  }
+  var txt = lines.join("\n");
+  var ok = false;
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = txt;
+    ta.style.position = "absolute";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+  } catch (e) { ok = false; }
+  obsLogStatus(ok ? "観測ログをコピーしました（" + obsLog.length + "件）" : "コピーできませんでした");
+}
+function clearObsLog() {
+  if (obsLog.length === 0) { obsLogStatus("ログがまだありません"); return; }
+  obsLog = [];
+  saveObs();
+  renderObs();
+  obsLogStatus("観測ログを消しました");
+}
+var obsCopyBtn = document.getElementById("obsLogCopy");
+if (obsCopyBtn) obsCopyBtn.onclick = copyObsLog;
+var obsClearBtn = document.getElementById("obsLogClear");
+if (obsClearBtn) obsClearBtn.onclick = clearObsLog;
 
 /* ---- dachshund silhouette blip for the seasonal target ---- */
 function drawDachshund(x, y, rgbStr, alpha) {

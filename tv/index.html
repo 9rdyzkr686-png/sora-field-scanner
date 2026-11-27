@@ -242,6 +242,7 @@
       <button class="ch-btn" id="chBtn4" type="button">4</button>
       <button class="ch-btn" id="chBtn5" type="button">5</button>
       <button class="ch-btn" id="chBtn6" type="button">6</button>
+      <button class="ch-btn" id="chBtn7" type="button">7</button>
     </div>
     <div class="sub-row">
       <button class="ctl-btn" id="voiceBtn" type="button">ボイス：OFF</button>
@@ -255,15 +256,16 @@
 
 <div class="guide" id="guideBox">
   <div class="guide-title">■ 今夜の番組表</div>
-  <div class="guide-status" id="guideStatus">「今夜の番組表を作る」を押すと、5番組分の台本を順番にまとめて生成します。行を押すと、その番組を再生します。</div>
+  <div class="guide-status" id="guideStatus">「今夜の番組表を作る」を押すと、6番組分の台本を順番にまとめて生成します。行を押すと、その番組を再生します。</div>
   <button class="guide-row" id="guideRow1" type="button">19:00 AIニュース番組 ― 未生成</button>
   <button class="guide-row" id="guideRow2" type="button">19:30 AI通販番組 ― 未生成</button>
   <button class="guide-row" id="guideRow3" type="button">20:00 AI時代劇 ― 未生成</button>
   <button class="guide-row" id="guideRow4" type="button">20:30 天気予報 ― 未生成</button>
   <button class="guide-row" id="guideRow5" type="button">21:00 深夜のAI怪談 ― 未生成</button>
+  <button class="guide-row" id="guideRow6" type="button">25:00 深夜ラジオ ― 未生成</button>
 </div>
 
-<p class="note">1：AIニュース番組（本物の見出し＋AIの台本）／2：AI通販番組／3：AI時代劇／4：天気予報（本物の天気＋AIアナウンサー）／5：深夜のAI怪談／6：アニメニュース（本物のアニメ見出し＋AIの台本）<br>番組の文章はAIがその場で書いています。怪談は娯楽としてお楽しみください。</p>
+<p class="note">1：AIニュース番組（本物の見出し＋AIの台本）／2：AI通販番組／3：AI時代劇／4：天気予報（本物の天気＋AIアナウンサー）／5：深夜のAI怪談／6：アニメニュース（本物のアニメ見出し＋AIの台本）／7：深夜ラジオ（AI DJ／お便りと曲は架空です）<br>番組の文章はAIがその場で書いています。怪談は娯楽としてお楽しみください。</p>
 
 <script>
 var RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
@@ -447,11 +449,12 @@ var CH_NAMES = {
   3: "CH3 AI時代劇",
   4: "CH4 天気予報",
   5: "CH5 深夜のAI怪談",
-  6: "CH6 アニメニュース"
+  6: "CH6 アニメニュース",
+  7: "CH7 深夜ラジオ"
 };
 
 function markActive(n) {
-  for (var i = 1; i <= 6; i++) {
+  for (var i = 1; i <= 7; i++) {
     el("chBtn" + i).className = (i === n) ? "ch-btn active" : "ch-btn";
   }
 }
@@ -472,7 +475,7 @@ function selectChannel(n) {
 
 function showLabel(n) {
   var label = CH_NAMES[n];
-  if (n === 1 || n === 2 || n === 3 || n === 5 || n === 6) {
+  if (n === 1 || n === 2 || n === 3 || n === 5 || n === 6 || n === 7) {
     el("chLabel").innerHTML = "";
     el("chLabel").appendChild(document.createTextNode(label));
     var tag = document.createElement("span");
@@ -493,6 +496,7 @@ function startChannel(n) {
   else if (n === 4) { chWeather(); }
   else if (n === 5) { chKaidan(); }
   else if (n === 6) { chAnime(); }
+  else if (n === 7) { chRadio(); }
 }
 
 /* CH1 ニュース */
@@ -615,15 +619,26 @@ function animeScript(title) {
   aiCall(animePrompt(title, 220), null);
 }
 
+/* CH7 深夜ラジオ */
+function radioPrompt(lim) {
+  return "あなたは深夜ラジオ番組の落ち着いたパーソナリティです。次の3つのコーナーを、【オープニング】【お便り】【曲紹介】の見出しと改行で区切って、ラジオの語り口で短く書いてください。【オープニング】静かな深夜の挨拶と短いトーク。【お便り】ラジオネーム付きで、リスナーのお便りを1通紹介してください（お便りは架空のものです）。【曲紹介】実在しない架空の曲を1曲、曲名とアーティスト風の名前で紹介し、「（この曲は架空です）」と添えてください。マークダウンは使わず、全体で" + lim + "文字以内。";
+}
+function chRadio() {
+  el("dataLine").style.display = "block";
+  el("dataLine").textContent = "📻 深夜ラジオ ― お便りと曲はAIが考えた架空のものです";
+  aiCall(radioPrompt(290), null);
+}
+
 /* ===== 番組表モード ===== */
-var GUIDE_SLOTS = ["19:00", "19:30", "20:00", "20:30", "21:00"];
-var GUIDE_TITLES = ["AIニュース番組", "AI通販番組", "AI時代劇", "天気予報", "深夜のAI怪談"];
-var guideScripts = [null, null, null, null, null];
-var guideState = ["", "", "", "", ""];
+var GUIDE_SLOTS = ["19:00", "19:30", "20:00", "20:30", "21:00", "25:00"];
+var GUIDE_TITLES = ["AIニュース番組", "AI通販番組", "AI時代劇", "天気予報", "深夜のAI怪談", "深夜ラジオ"];
+var GUIDE_CHS = [1, 2, 3, 4, 5, 7];
+var guideScripts = [null, null, null, null, null, null];
+var guideState = ["", "", "", "", "", ""];
 var guideBusy = false;
 
 function renderGuide() {
-  for (var i = 1; i <= 5; i++) {
+  for (var i = 1; i <= 6; i++) {
     var row = el("guideRow" + i);
     var head = GUIDE_SLOTS[i - 1] + " " + GUIDE_TITLES[i - 1];
     if (guideState[i - 1] === "ok") {
@@ -666,35 +681,37 @@ function guideWxPrompt(cb) {
 }
 
 function guidePromptFor(n, cb) {
-  if (n === 1) { guideNewsPrompt(cb); }
-  else if (n === 2) { cb(shopPrompt(200)); }
-  else if (n === 3) { cb(jidaiPrompt(200)); }
-  else if (n === 4) { guideWxPrompt(cb); }
-  else { cb(kaidanPrompt(200)); }
+  var ch = GUIDE_CHS[n - 1];
+  if (ch === 1) { guideNewsPrompt(cb); }
+  else if (ch === 2) { cb(shopPrompt(200)); }
+  else if (ch === 3) { cb(jidaiPrompt(200)); }
+  else if (ch === 4) { guideWxPrompt(cb); }
+  else if (ch === 5) { cb(kaidanPrompt(200)); }
+  else { cb(radioPrompt(200)); }
 }
 
 function buildGuide() {
   if (busy || guideBusy) { return; }
   guideBusy = true;
   busy = true;
-  guideScripts = [null, null, null, null, null];
-  guideState = ["", "", "", "", ""];
+  guideScripts = [null, null, null, null, null, null];
+  guideState = ["", "", "", "", "", ""];
   renderGuide();
   el("guideBtn").textContent = "番組表を生成中…";
   guideStep(1, 0);
 }
 
 function guideStep(n, done) {
-  if (n > 5) {
+  if (n > 6) {
     guideBusy = false;
     busy = false;
     el("guideBtn").textContent = "📋 今夜の番組表を作る";
-    el("guideStatus").textContent = "番組表ができました（" + done + "/5生成）。行を押すと、その番組を再生します。";
+    el("guideStatus").textContent = "番組表ができました（" + done + "/6生成）。行を押すと、その番組を再生します。";
     setStatus("");
     return;
   }
-  el("guideStatus").textContent = "番組表を生成中… " + done + "/5（CH" + n + " を作成中）";
-  setStatus("番組表を生成中… " + done + "/5");
+  el("guideStatus").textContent = "番組表を生成中… " + done + "/6（CH" + GUIDE_CHS[n - 1] + " を作成中）";
+  setStatus("番組表を生成中… " + done + "/6");
   guideState[n - 1] = "doing";
   renderGuide();
   guidePromptFor(n, function (prompt) {
@@ -734,15 +751,16 @@ function playGuide(n) {
   if (busy || guideBusy) { return; }
   var t = guideScripts[n - 1];
   if (!t) { return; }
-  curCh = n;
-  markActive(n);
+  var ch = GUIDE_CHS[n - 1];
+  curCh = ch;
+  markActive(ch);
   flickerNoise(450);
   el("dataLine").style.display = "none";
   el("dataLine").textContent = "";
   setDetail("");
   setStatus("");
   try { if ("speechSynthesis" in window) { window.speechSynthesis.cancel(); } } catch (e) {}
-  showLabel(n);
+  showLabel(ch);
   lastText = t;
   el("progText").textContent = t;
   speak(t);
@@ -751,7 +769,7 @@ function playGuide(n) {
 /* ===== ボタン ===== */
 function bind() {
   var i;
-  for (i = 1; i <= 6; i++) {
+  for (i = 1; i <= 7; i++) {
     (function (n) {
       el("chBtn" + n).onclick = function () { selectChannel(n); };
     })(i);
@@ -772,7 +790,7 @@ function bind() {
     }
   };
   el("guideBtn").onclick = function () { buildGuide(); };
-  for (i = 1; i <= 5; i++) {
+  for (i = 1; i <= 6; i++) {
     (function (n) {
       el("guideRow" + n).onclick = function () { playGuide(n); };
     })(i);

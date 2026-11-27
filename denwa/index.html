@@ -166,6 +166,7 @@
   333 … 都市伝説ホットライン<br>
   808 … 宇宙ステーション<br>
   555 … 占い交換台<br>
+  777 … 占いダイヤル（今日の運勢）<br>
   767 … ニュース直通（CUTIE STREET）<br>
   909 … 天気直通（ふじみ野）<br>
   117 … 時報<br>
@@ -220,6 +221,20 @@ var JOKE_LINES = [
 ];
 var LUCK_GRADES = ["大吉", "中吉", "小吉", "吉", "末吉"];
 var LUCK_ITEMS = ["あかいハンカチ", "まるい石", "古い切符", "木のスプーン", "青いボタン", "小さな鈴", "星のシール"];
+var URANAI_GRADES = ["大吉", "中吉", "小吉", "吉", "末吉", "凶", "大凶"];
+var URANAI_ITEMS = ["黄色いハンカチ", "五円玉", "木の箸", "星のキーホルダー", "青いペン", "小さな鏡", "鈴のストラップ", "古い硬貨", "花のしおり", "白い靴下"];
+var URANAI_ADVICE = [
+  "深呼吸してから出かけると、いいことがありそうです。",
+  "今日は早めの行動が吉。のんびりは明日にしましょう。",
+  "なくした物は、意外と近くにあります。足元を見てみてください。",
+  "電話を一本かけると、うれしい知らせが届くかもしれません。",
+  "今日は聞き役にまわると、運が開けます。",
+  "温かい飲み物でほっと一息。それが今日の開運法です。",
+  "無理は禁物。今日は守りの日です。早めに休みましょう。",
+  "小さな親切が、大きな幸運を連れてきます。",
+  "財布の中を整理すると、金運が上がる気配です。",
+  "新しいことは明日から。今日は復習の日です。"
+];
 
 function el(id) { return document.getElementById(id); }
 
@@ -500,6 +515,15 @@ function fortuneText() {
   return "占い交換台です。今日のあなたは " + g + "。ラッキーアイテムは「" + item + "」です。よい一日を。";
 }
 
+function uranaiText() {
+  var now = new Date();
+  var seed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+  var g = URANAI_GRADES[seed % URANAI_GRADES.length];
+  var item = URANAI_ITEMS[Math.floor(seed / 5) % URANAI_ITEMS.length];
+  var adv = URANAI_ADVICE[Math.floor(seed / 13) % URANAI_ADVICE.length];
+  return "占いダイヤルです。今日のあなたの運勢は " + g + "。ラッキーアイテムは「" + item + "」です。ひとこと：" + adv + " 以上、占いダイヤルでした。";
+}
+
 function doAnswer() {
   if (digits === "606") {
     var line = DACHS_LINES[dachsIdx % DACHS_LINES.length];
@@ -513,6 +537,8 @@ function doAnswer() {
     answerISS();
   } else if (digits === "555") {
     answer("📞 555 占い交換台", fortuneText());
+  } else if (digits === "777") {
+    answer("📞 777 占いダイヤル", uranaiText());
   } else if (digits === "767") {
     answerNews();
   } else if (digits === "909") {

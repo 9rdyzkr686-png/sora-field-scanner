@@ -183,6 +183,42 @@
   .dex-date { color: #ffb3a0; font-weight: bold; }
   .dex-name { color: #fff; font-weight: bold; }
   .dex-level { color: #ffd400; font-weight: bold; }
+  .month-table { width: 100%; border-collapse: collapse; }
+  .month-table th {
+    padding: 4px 0;
+    color: #ffd400;
+    font-size: 15px;
+    text-align: center;
+  }
+  .month-table td {
+    width: 14.28%;
+    padding: 5px 1px 6px;
+    border: 1px solid #4c431e;
+    text-align: center;
+    vertical-align: top;
+  }
+  .month-table td.today { background: #2b2100; box-shadow: inset 0 0 0 3px #ffd400; }
+  .month-day { display: block; color: #f5f0dc; font-size: 15px; font-weight: bold; }
+  .month-dot {
+    display: inline-block;
+    min-width: 25px;
+    height: 25px;
+    margin-top: 2px;
+    padding: 0 3px;
+    border: 2px solid #555;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 21px;
+    text-align: center;
+  }
+  .month-dot.lv1 { border-color: #59d95e; background: #14551a; color: #d9ffd9; }
+  .month-dot.lv2 { border-color: #ffe45e; background: #665800; color: #fffbd1; }
+  .month-dot.lv3 { border-color: #ff9f1c; background: #713d00; color: #fff0cc; }
+  .month-dot.lv4 { border-color: #ff5d3a; background: #7e1c08; color: #ffe1d8; }
+  .month-dot.lv5 { border-color: #ff1744; background: #8c001d; color: #ffffff; }
+  .month-summary { margin: 12px 0 0; color: #ffffff; font-weight: bold; }
+  .month-note { margin: 6px 0 0; color: #ffda45; font-size: 15px; }
   .ai-status {
     min-height: 28px;
     margin: 9px 0 0;
@@ -317,6 +353,13 @@
     <section aria-labelledby="dexHeading">
       <h2 id="dexHeading">■ 怪獣図鑑（過去14日）</h2>
       <ul class="dex-list" id="dexList"></ul>
+    </section>
+
+    <section aria-labelledby="monthHeading">
+      <h2 id="monthHeading">■ 今月の出現まとめ<span id="monthName"></span></h2>
+      <div id="monthGrid"></div>
+      <p class="month-summary" id="monthSummary">今月の出現データを集計しています。</p>
+      <p class="month-note">※丸の中の数字は警戒レベル（1〜5）です。レベル1は「気配のみ」のため、出現日数には数えていません。</p>
     </section>
 
     <section aria-labelledby="namingHeading">
@@ -544,6 +587,70 @@
   }
 
   renderDex(new Date());
+
+  /* ■ 今月の出現まとめ：図鑑と同じシード計算（makeForecast・seedOffset 0）で今月1日〜月末を集計 */
+  function renderMonthSummary(today) {
+    var year = today.getFullYear();
+    var month = today.getMonth();
+    var lastDate = new Date(year, month + 1, 0).getDate();
+    var startWeekday = new Date(year, month, 1).getDay();
+    var totalCells = startWeekday + lastDate;
+    var rows = Math.ceil(totalCells / 7);
+    var levels = [];
+    var appearCount = 0;
+    var maxLevel = 0;
+    var maxDays = [];
+    var html = "";
+    var day;
+    var record;
+    var r;
+    var c;
+    var idx;
+    var cellDay;
+    var maxText = "";
+    var i;
+
+    for (day = 1; day <= lastDate; day++) {
+      record = makeForecast(new Date(year, month, day), 0);
+      levels.push(record.level);
+      if (record.level >= 2) {
+        appearCount++;
+      }
+      if (record.level > maxLevel) {
+        maxLevel = record.level;
+        maxDays = [day];
+      } else if (record.level === maxLevel) {
+        maxDays.push(day);
+      }
+    }
+
+    html += "<table class=\"month-table\"><tr><th>日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th></tr>";
+    for (r = 0; r < rows; r++) {
+      html += "<tr>";
+      for (c = 0; c < 7; c++) {
+        idx = r * 7 + c;
+        if (idx < startWeekday || idx >= totalCells) {
+          html += "<td></td>";
+        } else {
+          cellDay = idx - startWeekday + 1;
+          html += "<td" + (cellDay === today.getDate() ? " class=\"today\"" : "") + ">" +
+            "<span class=\"month-day\">" + cellDay + "</span>" +
+            "<span class=\"month-dot lv" + levels[cellDay - 1] + "\">" + levels[cellDay - 1] + "</span></td>";
+        }
+      }
+      html += "</tr>";
+    }
+    html += "</table>";
+    document.getElementById("monthGrid").innerHTML = html;
+
+    for (i = 0; i < maxDays.length; i++) {
+      maxText += (i ? "・" : "") + maxDays[i] + "日";
+    }
+    setText("monthName", "（" + year + "年" + (month + 1) + "月）");
+    setText("monthSummary", "出現日数" + appearCount + "日・最大レベルは" + maxText + "（レベル" + maxLevel + "）");
+  }
+
+  renderMonthSummary(new Date());
 
   /* ■ AI命名ジェネレーター */
   var naming = false;

@@ -183,6 +183,7 @@
   <button type="button" id="multiBtn">みんなに聞く</button>
   <button type="button" id="copyBtn">会話をコピー</button>
   <button type="button" id="telegramBtn">電文風コピー</button>
+  <button type="button" id="summaryBtn">会話を要約</button>
   <button type="button" id="favBtn">★お気に入り</button>
   <button type="button" id="kuuMsgBtn">KUU-01へ伝言</button>
   <button type="button" id="lineTestBtn">回線テスト</button>
@@ -283,6 +284,7 @@ var voicePanel = document.getElementById("voicePanel");
 var voiceStatusEl = document.getElementById("voiceStatus");
 var multiBtn = document.getElementById("multiBtn");
 var lineTestBtn = document.getElementById("lineTestBtn");
+var summaryBtn = document.getElementById("summaryBtn");
 var favListEl = document.getElementById("favList");
 
 function updateBodyClass() {
@@ -868,6 +870,61 @@ function lineTest() {
 
 multiBtn.onclick = function () { sendMulti(); };
 lineTestBtn.onclick = function () { lineTest(); };
+
+/* ---- 会話の要約（結果は履歴・保存に混ぜない） ---- */
+function summarizeChat() {
+  if (sending) {
+    setStatus("送信中です。終わってから要約してください。");
+    return;
+  }
+  if (history.length < 2) {
+    setStatus("要約できる会話がまだありません。");
+    return;
+  }
+  finishTyping();
+  var from = Math.max(0, history.length - 10); /* 直近10往復＝最大20メッセージ */
+  var convo = "";
+  var i;
+  for (i = from; i < history.length; i++) {
+    convo += "あなた：" + history[i].u.substring(0, 200) + "\n";
+    convo += "AI：" + history[i].a.substring(0, 200) + "\n";
+  }
+  var prompt = "次の会話を3行以内で要約してください。各行は『・』で始めてください。\n会話：\n" + convo;
+  sending = true;
+  sendBtn.disabled = true;
+  multiBtn.disabled = true;
+  summaryBtn.disabled = true;
+  var thinkMsg = addRow("ai", "AI", "要約を考え中…");
+  thinkMsg.className = "msg thinking";
+  if (voiceOnly) setVoiceStatus("要約を考え中…");
+  multiAttempt(prompt, thinkMsg, function (kind, payload) {
+    sending = false;
+    sendBtn.disabled = false;
+    multiBtn.disabled = false;
+    summaryBtn.disabled = false;
+    if (kind === "ok") {
+      var rowEl = thinkMsg.parentNode;
+      if (rowEl && rowEl.parentNode) rowEl.parentNode.removeChild(rowEl);
+      addSysRow("【要約】\n" + payload);
+      if (voiceOnly) setVoiceStatus("【要約】" + payload.replace(/\n/g, " "));
+      setStatus("会話を要約しました。");
+      scrollToBottom();
+    } else if (kind === "quota") {
+      thinkMsg.className = "msg error";
+      thinkMsg.innerHTML = esc(QUOTA_MSG);
+      if (voiceOnly) setVoiceStatus(QUOTA_MSG);
+      scrollToBottom();
+    } else {
+      thinkMsg.className = "msg error";
+      var html = esc(kind === "timeout" ? TIMEOUT_MSG : FAIL_MSG);
+      if (kind !== "timeout") html += " <span style=\"font-size:12px\">（詳細：HTTP " + payload + "）</span>";
+      thinkMsg.innerHTML = html;
+      if (voiceOnly) setVoiceStatus(kind === "timeout" ? TIMEOUT_MSG : FAIL_MSG);
+      scrollToBottom();
+    }
+  });
+}
+summaryBtn.onclick = function () { summarizeChat(); };
 
 /* ---- 音声だけモード ---- */
 voiceOnlyBtn.onclick = function () {

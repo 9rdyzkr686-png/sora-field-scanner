@@ -66,6 +66,7 @@ letter-spacing: 1px;
 .m-orange { color: #ffc48f; border-color: #ff9430; box-shadow: 0 0 12px rgba(255,148,48,0.35);}
 .m-red { color: #ff9d9d; border-color: #ff4040; box-shadow: 0 0 12px rgba(255,64,64,0.35);}
 .m-blue { color: #a8c8ff; border-color: #3d7bff; box-shadow: 0 0 12px rgba(61,123,255,0.35);}
+.m-white { color: #ffffff; border-color: #f2f2ff; box-shadow: 0 0 12px rgba(242,242,255,0.35);}
 .artImg { display: none; width: 100%; border: 3px solid #3d7bff; border-radius: 10px; margin-top: 12px;}
 .personaNote { text-align: center; color: #99a; font-size: 14px; margin: 4px 0 0 0;}
 .panel {
@@ -194,6 +195,7 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 <button type="button" class="machine m-orange" data-p="p6">6. おなやみメダル相談所<small>悩みを書くとAIが短くアドバイス</small></button>
 <button type="button" class="machine m-red" data-p="p7">7. AIニュース解説台<small>最新ニュースをAIが一文で解説</small></button>
 <button type="button" class="machine m-blue" data-p="p8">8. AI画伯<small>テーマを選ぶとAIが絵を描きます</small></button>
+<button type="button" class="machine m-white" data-p="p9">9. AIキャッチフレーズ機<small>テーマを入れるとAIがキャッチフレーズを3つ作ります</small></button>
 <div class="rankPanel" id="rankPanel">
 <div class="rankTitle">🏆 人気ランキング</div>
 <div id="rankList"></div>
@@ -309,6 +311,17 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 <button type="button" class="backBtn">← もどる（店内へ）</button>
 </div>
 
+<!-- ===== 9. AIキャッチフレーズ機 ===== -->
+<div class="panel" id="p9">
+<h2 style="color:#ffffff;">AIキャッチフレーズ機</h2>
+<p class="desc">テーマ・お題を入れると、AIが思わず目を引くキャッチフレーズを3つ作ります。空っぽで押すと、今日のお題で作ります。</p>
+<input type="text" id="catchIn" placeholder="例：推し / ラーメン / 自分の名前">
+<button type="button" class="bigBtn" id="catchBtn">キャッチフレーズを作る</button>
+<div class="status" id="st9"></div>
+<div class="result" id="res9"></div>
+<button type="button" class="backBtn">← もどる（店内へ）</button>
+</div>
+
 </div>
 
 <script>
@@ -358,7 +371,7 @@ setTimeout(function () { try { o.stop(); ctx.close();} catch (e) {}}, 320);
 }
 
 /* ---------- 画面遷移 ---------- */
-var panelIds = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8'];
+var panelIds = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9'];
 function hideAllPanels() {
 for (var i = 0; i < panelIds.length; i++) { el(panelIds[i]).style.display = 'none';}
 }
@@ -479,7 +492,8 @@ r.textContent = text;
 var MACHINE_NAMES = {
 p1: 'うらないマシン', p2: 'AI店長', p3: 'おすすめクレーン',
 p4: 'ものしり博士マシン', p5: 'ポエムプリント機',
-p6: 'おなやみメダル相談所', p7: 'AIニュース解説台', p8: 'AI画伯'
+p6: 'おなやみメダル相談所', p7: 'AIニュース解説台', p8: 'AI画伯',
+p9: 'AIキャッチフレーズ機'
 };
 var currentMachine = '';
 var COUNT_KEY = 'geesen6_counts_v1';
@@ -903,6 +917,23 @@ img.src = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(promptEn)
 }
 el('artBtn').onclick = requestArt;
 el('artAgainBtn').onclick = requestArt;
+
+/* ---------- 9. AIキャッチフレーズ機 ---------- */
+var CATCH_THEMES = ['ダックスフンド', 'ラーメン', '地元の商店街', '深夜のゲームセンター', '宇宙旅行', 'お昼寝', 'カレーライス', '雨の日の散歩', '昭和レトロ', '新しい自転車'];
+el('catchBtn').onclick = function () {
+var theme = el('catchIn').value.replace(/^\s+|\s+$/g, '');
+if (!theme) {
+theme = CATCH_THEMES[dateSeed() % CATCH_THEMES.length];
+el('catchIn').value = theme;
+}
+var prompt = 'あなたはプロのコピーライターです。テーマ「' + theme + '」のキャッチフレーズを3つ作ってください。条件：1つ20文字以内、番号付きリスト（1. 2. 3.）で各行に1つずつ。説明や前置きは書かず、キャッチフレーズだけを答えてください。マークダウンは使わないでください。';
+callAI(prompt, 'st9', function (err, text) {
+if (err) { showResult('res9', err); return;}
+var t = capText(text, 200);
+showResult('res9', 'お題：' + theme + '\n' + t);
+speak(t);
+});
+};
 </script>
 </body>
 </html>

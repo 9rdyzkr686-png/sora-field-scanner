@@ -182,6 +182,27 @@ box-shadow: inset 0 0 18px rgba(0,0,0,.55);
 #uraStatus { font-size: 15px; color: #ffb45e; min-height: 22px; margin-top: 8px; text-align: center; line-height: 1.5;}
 #diaryText { font-size: 17px; line-height: 1.75; min-height: 60px;}
 #diaryMeta { font-size: 13px; color: #9a7748; margin-top: 8px;}
+#visitStats { font-size: 19px; line-height: 1.7;}
+#visitStatus { font-size: 15px; color: #ffb45e; min-height: 22px; margin-top: 8px; text-align: center; line-height: 1.5;}
+#visitStripLabel { font-size: 13px; color: #9a7748; margin-top: 10px;}
+#visitStrip { margin-top: 6px;}
+#visitStrip .vd {
+display: inline-block;
+min-width: 36px;
+text-align: center;
+padding: 4px 0 5px;
+margin: 0 1px 4px;
+border: 1px solid #4a2d16;
+border-radius: 6px;
+background: #1d120b;
+font-size: 15px;
+line-height: 1.35;
+color: #9a7748;
+}
+#visitStrip .vd .vdn { font-size: 11px;}
+#visitStrip .vd.on { border-color: #ffb45e; color: #ffb45e;}
+#visitStrip .vd.today { background: #3a2413; border-color: #ffe1ae; color: #ffe1ae;}
+#visitMaster { font-size: 17px; line-height: 1.7; margin-top: 10px; color: #ffe1ae;}
 .wariLabel { display: block; font-size: 15px; color: #d9b47e; margin-bottom: 4px;}
 .wariInput {
 width: 100%;
@@ -328,6 +349,16 @@ body.noren-kinari .portallink { color: #ecd9a8;}
 <p id="diaryText">読み込み中…</p>
 <p id="diaryMeta"></p>
 <button type="button" class="orderbtn" id="diaryNextBtn">次の日誌</button>
+</div>
+
+<div class="card">
+<h2>■ 常連さん名簿</h2>
+<p id="visitStats">通算来店：0日 ／ 今月：0日 ／ 連続：0日</p>
+<button type="button" class="orderbtn" id="visitStampBtn">来店スタンプ</button>
+<p id="visitStatus"></p>
+<p id="visitStripLabel">最近14日間の来店（●＝来た日、枠つきが今日）</p>
+<div id="visitStrip"></div>
+<p id="visitMaster"></p>
 </div>
 
 <div class="card">
@@ -914,10 +945,98 @@ el("norenBtnAi").onclick = function () { setNoren("ai");};
 el("norenBtnEnji").onclick = function () { setNoren("enji");};
 el("norenBtnKinari").onclick = function () { setNoren("kinari");};
 
+var VISIT_KEY = "shokudo6_visits_v1";
+
+function visitDateStr(d) {
+var m = d.getMonth() + 1;
+var day = d.getDate();
+return d.getFullYear() + "-" + (m < 10? "0" + m: "" + m) + "-" + (day < 10? "0" + day: "" + day);
+}
+
+function loadVisitDates() {
+try {
+var raw = localStorage.getItem(VISIT_KEY);
+if (!raw) { return [];}
+var obj = JSON.parse(raw);
+if (obj && obj.dates && typeof obj.dates.length === "number") { return obj.dates;}
+} catch (e) { /* 読めなければ空の名簿として扱う */}
+return [];
+}
+
+function saveVisitDates(dates) {
+try { localStorage.setItem(VISIT_KEY, JSON.stringify({ dates: dates }));} catch (e) { /* 保存できなくても表示は続ける */}
+}
+
+function visitHas(dates, s) {
+for (var i = 0; i < dates.length; i++) {
+if (dates[i] === s) { return true;}
+}
+return false;
+}
+
+function calcVisitStreak(dates) {
+var d = new Date();
+if (!visitHas(dates, visitDateStr(d))) {
+d.setDate(d.getDate() - 1);
+if (!visitHas(dates, visitDateStr(d))) { return 0;}
+}
+var n = 0;
+while (visitHas(dates, visitDateStr(d))) {
+n = n + 1;
+d.setDate(d.getDate() - 1);
+}
+return n;
+}
+
+function visitMasterLine(total) {
+if (total <= 0) { return "名簿はまだ真っ白だ。よかったら今日、最初の一日を刻んでいってくれ。";}
+if (total <= 4) { return "顔は覚えたよ。遠慮はいらない、いつでも寄っておくれ。";}
+if (total <= 9) { return "すっかり常連さんだね。あんたの席は、カウンターの一番奥だ。";}
+if (total <= 19) { return "もう家族みたいなもんだ。無理しないで、長く通っておくれ。";}
+if (total <= 49) { return "これだけ通ってくれると、店の歴史はあんたの歴史でもあるんだよ。";}
+return "五〇日を超えたか…。この店はあんたと一緒に年を取ってきた。これからもよろしく頼むよ。";
+}
+
+function renderVisits() {
+var dates = loadVisitDates();
+var total = dates.length;
+var now = new Date();
+var m = now.getMonth() + 1;
+var ym = now.getFullYear() + "-" + (m < 10? "0" + m: "" + m);
+var monthCount = 0;
+for (var i = 0; i < dates.length; i++) {
+if (dates[i].indexOf(ym) === 0) { monthCount = monthCount + 1;}
+}
+var streak = calcVisitStreak(dates);
+el("visitStats").innerHTML = "通算来店：" + total + "日 ／ 今月：" + monthCount + "日 ／ 連続：" + streak + "日";
+var html = "";
+for (var k = 13; k >= 0; k--) {
+var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - k);
+var on = visitHas(dates, visitDateStr(d));
+html += '<span class="vd' + (on? " on": "") + (k === 0? " today": "") + '"><span class="vdn">' + d.getDate() + '</span><br>' + (on? "●": "○") + '</span>';
+}
+el("visitStrip").innerHTML = html;
+el("visitMaster").innerHTML = "大将：「" + visitMasterLine(total) + "」";
+}
+
+el("visitStampBtn").onclick = function () {
+var dates = loadVisitDates();
+var today = visitDateStr(new Date());
+if (visitHas(dates, today)) {
+el("visitStatus").innerHTML = "今日はもう来店済みです。また明日、待ってるよ。";
+return;
+}
+dates.push(today);
+saveVisitDates(dates);
+renderVisits();
+el("visitStatus").innerHTML = "来店スタンプを押しました。通算" + dates.length + "日目です。";
+};
+
 buildMenu();
 pickOsusume();
 initDiary();
 loadNoren();
+renderVisits();
 </script>
 </body>
 </html>

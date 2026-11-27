@@ -166,6 +166,32 @@
   body.noren-matcha .subbtn, body.noren-matcha .voicebtn { color: #5d7030; border-color: #5d7030; }
   body.noren-matcha .topbar a { color: #5d7030; }
   body.noren-matcha .panel { box-shadow: 0 2px 0 rgba(93,112,48,0.15); }
+  /* 入浴カレンダー */
+  .bathnav { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; margin-bottom: 6px; }
+  .bathnav .navbtn {
+    min-height: 48px; min-width: 88px; padding: 8px;
+    font-size: 16px; font-weight: bold;
+    background: #fff8ea; color: #8a3324;
+    border: 2px solid #8a3324; border-radius: 10px; cursor: pointer;
+  }
+  .bathnav .ym { font-size: 19px; font-weight: bold; color: #8a3324; }
+  .bathsum { margin-top: 10px; font-size: 17px; font-weight: bold; }
+  .bathtable { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .bathtable th { font-size: 14px; padding: 4px 0; color: #6b4a2f; text-align: center; }
+  .bathtable th.sun { color: #b03a2e; }
+  .bathtable th.sat { color: #2b4a7a; }
+  .bathtable td { padding: 2px; }
+  .bathday {
+    display: block; width: 100%; min-height: 46px;
+    font-size: 16px; line-height: 1.25; padding: 2px 0;
+    background: #ffffff; color: #3a2418;
+    border: 1px solid #d8bd8a; border-radius: 8px; cursor: pointer;
+  }
+  .bathday .mark { display: block; font-size: 15px; min-height: 19px; }
+  .bathday.today { border: 3px solid #8a3324; font-weight: bold; }
+  .bathday.marked { background: #f3d9a4; }
+  .bathday.future { opacity: 0.35; }
+  .bathday.empty { background: transparent; border: none; cursor: default; min-height: 46px; }
   /* 名湯コラム */
   .colname { font-size: 21px; font-weight: bold; color: #8a3324; margin-top: 10px; }
   .colbody { margin-top: 6px; }
@@ -254,6 +280,20 @@
     <div>実際に来たつもりで、今日の日付のスタンプを押せます（この端末の中だけに記録されます）。</div>
     <button type="button" class="bigbtn" id="stampBtn" style="margin-top:10px;">♨ 今日のスタンプを押す</button>
     <div class="stamp" id="stampInfo"></div>
+  </div>
+
+  <!-- 入浴カレンダー -->
+  <div class="panel">
+    <h2>♨ 入浴カレンダー</h2>
+    <div>お風呂に入った日を記録しましょう。日付をタップすると、記録をつけたり消したりできます（あとから付け足すこともできます）。記録はこの端末の中だけに保存されます。</div>
+    <button type="button" class="bigbtn" id="bathTodayBtn" style="margin-top:10px;">♨ 今日入った</button>
+    <div class="bathsum" id="bathSum"></div>
+    <div class="bathnav">
+      <button type="button" class="navbtn" id="bathPrev">◀ 前月</button>
+      <span class="ym" id="bathYm"></span>
+      <button type="button" class="navbtn" id="bathNext">翌月 ▶</button>
+    </div>
+    <div id="bathGrid"></div>
   </div>
 
   <!-- 名湯コラム -->
@@ -806,6 +846,136 @@ el("colNextBtn").onclick = function () {
   var seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
   colIdx = seed % COLUMNS.length;
   renderColumn();
+})();
+
+/* ---------- 入浴カレンダー ---------- */
+var BATH_KEY = "sento6_bath_cal_v1";
+var bathViewYear = 0;
+var bathViewMonth = 0;
+
+function loadBath() {
+  try {
+    var raw = window.localStorage.getItem(BATH_KEY);
+    if (raw) {
+      var obj = JSON.parse(raw);
+      if (obj && typeof obj === "object") return obj;
+    }
+  } catch (e) {}
+  return {};
+}
+
+function saveBath(obj) {
+  try { window.localStorage.setItem(BATH_KEY, JSON.stringify(obj)); } catch (e) {}
+}
+
+function bathKeyOf(y, m, d) {
+  var mm = m + 1;
+  return y + "-" + (mm < 10 ? "0" + mm : mm) + "-" + (d < 10 ? "0" + d : d);
+}
+
+function toggleBath(key) {
+  var data = loadBath();
+  if (data[key]) {
+    delete data[key];
+  } else {
+    data[key] = 1;
+  }
+  saveBath(data);
+  renderBathCal();
+}
+
+function renderBathCal() {
+  var data = loadBath();
+  var y = bathViewYear;
+  var m = bathViewMonth;
+  var now = new Date();
+  var todayKey = todayStr();
+
+  el("bathYm").innerHTML = y + "年" + (m + 1) + "月";
+
+  /* 件数（表示中の月／通算） */
+  var prefix = y + "-" + ((m + 1) < 10 ? "0" + (m + 1) : (m + 1)) + "-";
+  var monthCount = 0;
+  var total = 0;
+  for (var k in data) {
+    if (data[k]) {
+      total++;
+      if (k.indexOf(prefix) === 0) monthCount++;
+    }
+  }
+  var sumLabel;
+  if (y === now.getFullYear() && m === now.getMonth()) {
+    sumLabel = "今月 " + monthCount + "回";
+  } else {
+    sumLabel = y + "年" + (m + 1) + "月は " + monthCount + "回";
+  }
+  el("bathSum").innerHTML = sumLabel + " ／ 通算 " + total + "回";
+
+  /* 今日ボタン */
+  el("bathTodayBtn").innerHTML = data[todayKey]
+    ? "♨ 今日は入浴済み（タップで取り消し）"
+    : "♨ 今日入った";
+
+  /* グリッド */
+  var startDay = new Date(y, m, 1).getDay();
+  var daysInMonth = new Date(y, m + 1, 0).getDate();
+  var html = "<table class=\"bathtable\"><tr>"
+    + "<th class=\"sun\">日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th class=\"sat\">土</th>"
+    + "</tr>";
+  var day = 1;
+  for (var w = 0; w < 6; w++) {
+    html += "<tr>";
+    for (var c = 0; c < 7; c++) {
+      var cellIndex = w * 7 + c;
+      if (cellIndex < startDay || day > daysInMonth) {
+        html += "<td><span class=\"bathday empty\"></span></td>";
+      } else {
+        var key = bathKeyOf(y, m, day);
+        var isFuture = key > todayKey;
+        var marked = !!data[key];
+        var cls = "bathday"
+          + (key === todayKey ? " today" : "")
+          + (marked ? " marked" : "")
+          + (isFuture ? " future" : "");
+        html += "<td><button type=\"button\" class=\"" + cls + "\" id=\"bathDay" + day + "\""
+          + (isFuture ? " disabled" : "") + ">"
+          + day + "<span class=\"mark\">" + (marked ? "♨" : "") + "</span></button></td>";
+        day++;
+      }
+    }
+    html += "</tr>";
+    if (day > daysInMonth) break;
+  }
+  html += "</table>";
+  el("bathGrid").innerHTML = html;
+
+  for (var d = 1; d <= daysInMonth; d++) {
+    (function (dd) {
+      var b = el("bathDay" + dd);
+      if (b && !b.disabled) {
+        b.onclick = function () { toggleBath(bathKeyOf(bathViewYear, bathViewMonth, dd)); };
+      }
+    })(d);
+  }
+}
+
+el("bathTodayBtn").onclick = function () { toggleBath(todayStr()); };
+el("bathPrev").onclick = function () {
+  bathViewMonth--;
+  if (bathViewMonth < 0) { bathViewMonth = 11; bathViewYear--; }
+  renderBathCal();
+};
+el("bathNext").onclick = function () {
+  bathViewMonth++;
+  if (bathViewMonth > 11) { bathViewMonth = 0; bathViewYear++; }
+  renderBathCal();
+};
+
+(function () {
+  var d = new Date();
+  bathViewYear = d.getFullYear();
+  bathViewMonth = d.getMonth();
+  renderBathCal();
 })();
 </script>
 </body>
