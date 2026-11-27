@@ -53,6 +53,8 @@ h1 { text-align: center; color: #fff; font-size: 26px; text-shadow: 0 2px 6px rg
 .bigbtn.sub2 { background: #fff; color: #1a5a8a; border: 2px solid #1a7ab8; }
 .bigbtn:disabled { opacity: .55; }
 .status { font-size: 14px; color: #456; text-align: center; min-height: 20px; margin-top: 8px; }
+.tideline { font-size: 23px; font-weight: bold; color: #0d4a75; text-align: center; margin: 8px 0; }
+.tidehgt { font-size: 14px; font-weight: normal; color: #567; }
 .lettercard {
   background: #fffdf4; border: 1px solid #e4d9b8; border-radius: 10px;
   padding: 18px 16px; margin-top: 12px; display: none;
@@ -82,6 +84,14 @@ h1 { text-align: center; color: #fff; font-size: 26px; text-shadow: 0 2px 6px rg
   </div>
 
   <div class="card">
+    <h2>🌕 潮の満ち引き（東京湾）</h2>
+    <div id="tideBody">
+      <div class="note">潮の情報を取得しています…</div>
+    </div>
+    <button class="bigbtn sub2" id="tideRetry" onclick="fetchTide()" style="display:none;">もう一度取得する</button>
+  </div>
+
+  <div class="card">
     <h2>🔊 波音</h2>
     <div class="note">イヤホンでも小さな音でどうぞ。波の音はこの端末の中で作っています。</div>
     <button class="bigbtn" id="surfBtn" onclick="toggleSurf()">波音を聞く</button>
@@ -98,7 +108,7 @@ h1 { text-align: center; color: #fff; font-size: 26px; text-shadow: 0 2px 6px rg
     </div>
   </div>
 
-  <div class="foot">UMI-6 ／ 波データ：Open-Meteo Marine（東京湾）</div>
+  <div class="foot">UMI-6 ／ 波データ：Open-Meteo Marine（東京湾）／ 潮汐：気象庁 推算潮位（東京）</div>
 </div>
 <script>
 var voiceOn = true;
@@ -163,6 +173,133 @@ function fetchWave() {
 function waveFail() {
   document.getElementById('waveBody').innerHTML = '<div class="note">波の情報が取れませんでした。電波の良いところでお試しください。</div>';
   document.getElementById('waveRetry').style.display = 'block';
+}
+
+/* ---------- 1b. 潮の満ち引き（気象庁 推算潮位テキスト・東京 TK） ----------
+   年別テキスト（1日1行・固定長）を読み、今日と明日の満潮・干潮を取り出す。
+   行の形式： 毎時潮位24個×3桁 ／ 年2桁・月2桁・日2桁 ／ 地点記号2桁 ／
+   満潮4組×7桁（時2・分2・潮位3、なしは9999999）／ 干潮4組×7桁 */
+var tideEvents = null;
+var tideTimer = null;
+
+function tideFileUrl(year) {
+  return 'https://www.data.jma.go.jp/kaiyou/data/db/tide/suisan/txt/' + year + '/TK.txt';
+}
+
+function parseTideText(text, dates, out) {
+  var lines = String(text).split('\n');
+  var i, j, k, ln, yy, mm, dd, grp, hh, mi, hg;
+  for (i = 0; i < lines.length; i++) {
+    ln = lines[i];
+    if (ln.length < 136) { continue; }
+    yy = parseInt(ln.substr(72, 2), 10);
+    mm = parseInt(ln.substr(74, 2), 10);
+    dd = parseInt(ln.substr(76, 2), 10);
+    if (isNaN(yy) || isNaN(mm) || isNaN(dd)) { continue; }
+    for (k = 0; k < dates.length; k++) {
+      if (yy === dates[k].getFullYear() % 100 && mm === dates[k].getMonth() + 1 && dd === dates[k].getDate()) {
+        for (j = 0; j < 8; j++) {
+          grp = ln.substr(80 + j * 7, 7);
+          if (grp === '9999999') { continue; }
+          hh = parseInt(grp.substr(0, 2), 10);
+          mi = parseInt(grp.substr(2, 2), 10);
+          hg = parseInt(grp.substr(4, 3), 10);
+          if (isNaN(hh) || isNaN(mi) || isNaN(hg)) { continue; }
+          out.push({
+            t: new Date(dates[k].getFullYear(), mm - 1, dd, hh, mi, 0),
+            kind: (j < 4 ? 'high' : 'low'),
+            h: hg
+          });
+        }
+      }
+    }
+  }
+}
+
+function loadTideYear(year, cb) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', tideFileUrl(year), true);
+  xhr.timeout = 20000;
+  xhr.onload = function () {
+    if (xhr.status !== 200) { cb(null); return; }
+    cb(xhr.responseText || null);
+  };
+  xhr.onerror = function () { cb(null); };
+  xhr.ontimeout = function () { cb(null); };
+  xhr.send();
+}
+
+function fetchTide() {
+  var body = document.getElementById('tideBody');
+  var retry = document.getElementById('tideRetry');
+  retry.style.display = 'none';
+  body.innerHTML = '<div class="note">潮の情報を取得しています…</div>';
+  var now = new Date();
+  var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var tomorrow = new Date(today.getTime() + 86400000);
+  var dates = [today, tomorrow];
+  var events = [];
+  loadTideYear(today.getFullYear(), function (text1) {
+    if (text1) { parseTideText(text1, dates, events); }
+    if (tomorrow.getFullYear() !== today.getFullYear()) {
+      loadTideYear(tomorrow.getFullYear(), function (text2) {
+        if (text2) { parseTideText(text2, dates, events); }
+        finishTide(events);
+      });
+    } else {
+      finishTide(events);
+    }
+  });
+}
+
+function finishTide(events) {
+  if (!events.length) { tideFail(); return; }
+  events.sort(function (a, b) { return a.t.getTime() - b.t.getTime(); });
+  tideEvents = events;
+  renderTide();
+  if (tideTimer) { clearInterval(tideTimer); }
+  tideTimer = setInterval(renderTide, 60000);
+}
+
+function tideFail() {
+  document.getElementById('tideBody').innerHTML = '<div class="note">潮の情報が取れませんでした。電波の良いところでお試しください。</div>';
+  document.getElementById('tideRetry').style.display = 'block';
+}
+
+function fmtClock(d) { return d.getHours() + ':' + pad2(d.getMinutes()); }
+
+function fmtRemain(ms) {
+  var mins = Math.round(ms / 60000);
+  if (mins <= 0) { return 'まもなく'; }
+  if (mins < 60) { return 'あと' + mins + '分'; }
+  return 'あと' + Math.floor(mins / 60) + '時間' + pad2(mins % 60) + '分';
+}
+
+function renderTide() {
+  if (!tideEvents) { return; }
+  var now = new Date();
+  var nextHigh = null, nextLow = null, i, ev;
+  for (i = 0; i < tideEvents.length; i++) {
+    ev = tideEvents[i];
+    if (ev.t.getTime() < now.getTime() - 60000) { continue; }
+    if (ev.kind === 'high' && !nextHigh) { nextHigh = ev; }
+    if (ev.kind === 'low' && !nextLow) { nextLow = ev; }
+    if (nextHigh && nextLow) { break; }
+  }
+  var body = document.getElementById('tideBody');
+  if (!nextHigh && !nextLow) {
+    body.innerHTML = '<div class="note">これからの潮の情報が見つかりませんでした。</div>';
+    return;
+  }
+  var html = '';
+  if (nextHigh) {
+    html += '<div class="tideline">次の満潮 ' + fmtClock(nextHigh.t) + '（' + fmtRemain(nextHigh.t.getTime() - now.getTime()) + '）<span class="tidehgt"> 潮位 ' + nextHigh.h + 'cm</span></div>';
+  }
+  if (nextLow) {
+    html += '<div class="tideline">次の干潮 ' + fmtClock(nextLow.t) + '（' + fmtRemain(nextLow.t.getTime() - now.getTime()) + '）<span class="tidehgt"> 潮位 ' + nextLow.h + 'cm</span></div>';
+  }
+  html += '<div class="wavetime">気象庁の推算潮位（東京）／ ' + now.getHours() + '時' + pad2(now.getMinutes()) + '分 現在</div>';
+  body.innerHTML = html;
 }
 
 /* ---------- 2. 波音 ---------- */
@@ -328,6 +465,7 @@ function escapeHtml(s) {
 }
 
 fetchWave();
+fetchTide();
 </script>
 </body>
 </html>

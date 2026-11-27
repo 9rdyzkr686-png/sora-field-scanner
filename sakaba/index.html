@@ -76,6 +76,17 @@ textarea {
 .sendBtn:disabled { background: #5a4632; border-color: #3a2c1c; color: #a68d64; }
 .thinking { text-align: center; font-size: 16px; color: #ffb35c; padding: 10px 0; display: none; }
 .foot { text-align: center; font-size: 12px; color: #8a7350; margin-top: 16px; line-height: 1.7; }
+.kanpaiBox {
+  background: rgba(20, 12, 6, 0.85); border: 2px solid #c62f1d; border-radius: 12px;
+  padding: 14px 12px; margin-bottom: 12px; text-align: center;
+}
+.kanpaiBtn {
+  width: 100%; background: #c62f1d; color: #ffe9c9; border: 3px solid #ffb35c;
+  border-radius: 14px; font-size: 24px; font-weight: bold; padding: 18px 10px; min-height: 72px; cursor: pointer;
+}
+.kanpaiBtn:active { background: #a32415; }
+#kanpaiLine { font-size: 19px; color: #ffd9a0; min-height: 30px; margin: 12px 0 6px; line-height: 1.5; }
+#kanpaiStats { font-size: 15px; color: #c9a06a; }
 </style>
 </head>
 <body>
@@ -90,6 +101,13 @@ textarea {
 </header>
 
 <div class="noren">いらっしゃいませ。ここは小さなAI酒場です。お酒は雰囲気だけのお店ですが、会話は本物（AI回線）です。愚痴でも世間話でも、どうぞごゆっくり。</div>
+
+<div class="sectionTitle">■ 乾杯カウンター</div>
+<div class="kanpaiBox">
+  <button class="kanpaiBtn" id="kanpaiBtn" onclick="tapKanpai()">🍻 乾杯！</button>
+  <div id="kanpaiLine">ボタンで乾杯の練習ができます</div>
+  <div id="kanpaiStats">今日0回 ・ 通算0回</div>
+</div>
 
 <div class="sectionTitle">■ お品書き（話題）</div>
 <div class="chips">
@@ -328,6 +346,63 @@ function tapSend() {
   $("freeInput").value = "";
   askAI(v, true);
 }
+
+/* ---- 乾杯カウンター ---- */
+var KANPAI_KEY = "sakaba6_kanpai_v1";
+var KANPAI_LINES = [
+  "かんぱーい！",
+  "お疲れさまです！ 今日もよくがんばりました",
+  "乾杯！ 明日もいい日になりますように",
+  "マスター：ほっと一息、どうぞごゆっくり",
+  "タロさん：かんぱーい！ 次の一杯はマスターの奢り…かも？",
+  "乾杯！ いい夜にしましょう",
+  "マスター：いつもありがとうございます。乾杯！",
+  "タロさん：今日の疲れはここに置いていきましょう。かんぱい！"
+];
+
+function kanpaiTodayStr() {
+  var n = new Date();
+  var m = n.getMonth() + 1;
+  var d = n.getDate();
+  return n.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (d < 10 ? "0" : "") + d;
+}
+
+function loadKanpai() {
+  try {
+    var raw = localStorage.getItem(KANPAI_KEY);
+    if (!raw) { return {}; }
+    var o = JSON.parse(raw);
+    if (o && typeof o === "object") { return o; }
+    return {};
+  } catch (e) { return {}; }
+}
+
+function storeKanpai(o) {
+  try { localStorage.setItem(KANPAI_KEY, JSON.stringify(o)); } catch (e) {}
+}
+
+function renderKanpai() {
+  var o = loadKanpai();
+  var today = o[kanpaiTodayStr()] || 0;
+  var total = 0;
+  for (var k in o) {
+    if (o.hasOwnProperty(k)) { total += o[k]; }
+  }
+  $("kanpaiStats").innerHTML = "今日" + today + "回 ・ 通算" + total + "回";
+}
+
+function tapKanpai() {
+  var o = loadKanpai();
+  var t = kanpaiTodayStr();
+  o[t] = (o[t] || 0) + 1;
+  storeKanpai(o);
+  var line = KANPAI_LINES[Math.floor(Math.random() * KANPAI_LINES.length)];
+  $("kanpaiLine").innerHTML = esc(line);
+  renderKanpai();
+  speak(line);
+}
+
+renderKanpai();
 
 window.onload = function () {
   addMsg("master", "マスター", GREETING);

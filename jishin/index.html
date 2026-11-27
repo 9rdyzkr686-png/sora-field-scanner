@@ -66,6 +66,13 @@
     background: #101418; color: #e8ecef;
     border: 1px solid #3a4652; border-radius: 8px;
   }
+  select {
+    min-height: 48px; padding: 10px; font-size: 17px;
+    background: #101418; color: #e8ecef;
+    border: 1px solid #3a4652; border-radius: 8px;
+  }
+  .felt { border-top: 1px solid #2c3641; padding: 8px 0; font-size: 16px; }
+  .felt:first-of-type { border-top: none; }
   .note { color: #9aa7b1; font-size: 14px; margin-top: 8px; }
   .saved { color: #7fd08c; font-size: 15px; margin-left: 10px; }
   .err { color: #f0a13c; font-size: 15px; }
@@ -96,6 +103,20 @@
 </div>
 
 <div class="card">
+  <h2>体感メモ（個人の記録）</h2>
+  <div>
+    <select id="feltLevel">
+      <option value="弱い">弱い</option>
+      <option value="はっきり">はっきり</option>
+      <option value="強い">強い</option>
+    </select>
+    <button id="feltBtn" type="button">揺れた気がした</button><span class="saved" id="feltMsg"></span>
+  </div>
+  <div id="feltList" style="margin-top:10px;"></div>
+  <div class="note">体感メモは個人の記録です。実際の地震情報は上の公式データで確認してください。</div>
+</div>
+
+<div class="card">
   <h2>わが家の防災メモ</h2>
   <textarea id="memoArea" placeholder="例：集合場所は○○小学校の校庭／連絡先 090-XXXX-XXXX／備蓄は玄関の収納"></textarea>
   <div style="margin-top:10px;">
@@ -107,6 +128,7 @@
 <script>
 var API_URL = "https://api.p2pquake.net/v2/history?codes=551&limit=10";
 var MEMO_KEY = "jishin6_memo_v1";
+var FELT_KEY = "jishin6_felt_v1";
 
 function scaleInfo(scale) {
   if (scale === 10) { return { label: "1", cls: "s1" }; }
@@ -224,10 +246,58 @@ function saveMemo() {
   setTimeout(function () { msg.innerHTML = ""; }, 3000);
 }
 
+function loadFelt() {
+  try {
+    var v = localStorage.getItem(FELT_KEY);
+    if (!v) { return []; }
+    var a = JSON.parse(v);
+    if (a && typeof a.length === "number") { return a; }
+    return [];
+  } catch (e) { return []; }
+}
+
+function saveFelt(a) {
+  try { localStorage.setItem(FELT_KEY, JSON.stringify(a)); } catch (e) { }
+}
+
+function fmtFeltTime(d) {
+  function p(x) { return (x < 10 ? "0" : "") + x; }
+  return (d.getMonth() + 1) + "月" + d.getDate() + "日 " + p(d.getHours()) + "時" + p(d.getMinutes()) + "分";
+}
+
+function renderFelt() {
+  var list = document.getElementById("feltList");
+  var a = loadFelt();
+  if (!a.length) {
+    list.innerHTML = '<div class="note">まだ体感メモはありません。</div>';
+    return;
+  }
+  var html = "";
+  for (var i = 0; i < a.length; i++) {
+    var e = a[i] || {};
+    html += '<div class="felt">' + esc(e.t || "") + "／強さ：" + esc(e.lv || "") + "</div>";
+  }
+  list.innerHTML = html;
+}
+
+function addFelt() {
+  var lv = document.getElementById("feltLevel").value;
+  var a = loadFelt();
+  a.unshift({ t: fmtFeltTime(new Date()), lv: lv });
+  if (a.length > 50) { a.length = 50; }
+  saveFelt(a);
+  renderFelt();
+  var msg = document.getElementById("feltMsg");
+  msg.innerHTML = "記録しました";
+  setTimeout(function () { msg.innerHTML = ""; }, 3000);
+}
+
 document.getElementById("reloadBtn").addEventListener("click", fetchQuakes, false);
 document.getElementById("saveBtn").addEventListener("click", saveMemo, false);
+document.getElementById("feltBtn").addEventListener("click", addFelt, false);
 
 loadMemo();
+renderFelt();
 fetchQuakes();
 </script>
 </body>

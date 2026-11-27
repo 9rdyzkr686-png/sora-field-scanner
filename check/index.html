@@ -195,6 +195,22 @@ h1 {
   <div id="devInfo"></div>
 </div>
 
+<div class="row" id="row7">
+  <div class="rowhead">
+    <span class="rname">7. 天気取得 (Open-Meteo)</span>
+    <span class="rres res-wait" id="res7">未診断</span>
+  </div>
+  <div class="rdet"><span id="det7">-</span> <span class="rms" id="ms7"></span></div>
+</div>
+
+<div class="row" id="row8">
+  <div class="rowhead">
+    <span class="rname">8. ニュース取得 (rss2json)</span>
+    <span class="rres res-wait" id="res8">未診断</span>
+  </div>
+  <div class="rdet"><span id="det8">-</span> <span class="rms" id="ms8"></span></div>
+</div>
+
 <div id="summary"></div>
 
 <div id="histBox">
@@ -226,7 +242,7 @@ function setDet(n, text) { $("det" + n).innerHTML = text; }
 function setMs(n, ms) { $("ms" + n).innerHTML = " / " + ms + "ms"; }
 
 var HIST_KEY = "check6_history_v1";
-var TEST_NAMES = { 1: "AI回線", 2: "ニュース取得", 3: "天気", 4: "ISS位置", 5: "地震情報", 6: "端末情報" };
+var TEST_NAMES = { 1: "AI回線", 2: "ニュース取得", 3: "天気", 4: "ISS位置", 5: "地震情報", 6: "端末情報", 7: "天気取得", 8: "宇宙ニュース取得" };
 
 function escHist(s) {
   s = String(s == null ? "" : s);
@@ -308,13 +324,13 @@ function finishOne(n, ok) {
   if (n === 1) { saveLastResult(ok); }
   doneCount++;
   if (ok) { okCount++; }
-  if (doneCount >= 6) {
+  if (doneCount >= 8) {
     running = false;
     $("startBtn").disabled = false;
     $("startBtn").innerHTML = "■ もう一度診断";
     var s = $("summary");
     s.style.display = "block";
-    s.innerHTML = "診断結果： " + okCount + "/6 OK";
+    s.innerHTML = "診断結果： " + okCount + "/8 OK";
   }
 }
 
@@ -644,6 +660,104 @@ function testDevice() {
   }
 }
 
+function testWeatherFetch() {
+  var n = 7;
+  var start = new Date().getTime();
+  setRes(n, "res-run", "診断中…");
+  setDet(n, "ふじみ野市の天気データを再取得中…");
+  var url = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&current_weather=true&timezone=Asia%2FTokyo";
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", url, true);
+  xhr.timeout = 20000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    if (xhr.status !== 200) { failHttp(7, start, xhr.status); return; }
+    var ms = new Date().getTime() - start;
+    setMs(7, ms);
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (data && data.current_weather) {
+        setRes(7, "res-ok", "OK");
+        setDet(7, "天気データを取得できました。詳細：HTTP 200");
+        finishOne(7, true);
+      } else {
+        setRes(7, "res-ng", "NG");
+        setDet(7, "天気データが含まれていませんでした。詳細：HTTP 200");
+        finishOne(7, false);
+      }
+    } catch (e) {
+      setRes(7, "res-ng", "NG");
+      setDet(7, "応答の解析に失敗しました。詳細：HTTP 200");
+      finishOne(7, false);
+    }
+  };
+  xhr.ontimeout = function () {
+    var ms = new Date().getTime() - start;
+    setMs(7, ms);
+    setRes(7, "res-ng", "NG");
+    setDet(7, "時間切れ（20秒）");
+    finishOne(7, false);
+  };
+  xhr.onerror = function () {
+    var ms = new Date().getTime() - start;
+    setMs(7, ms);
+    setRes(7, "res-ng", "NG");
+    setDet(7, "通信エラー（HTTP 0）");
+    finishOne(7, false);
+  };
+  xhr.send(null);
+}
+
+function testSoraeNews() {
+  var n = 8;
+  var start = new Date().getTime();
+  setRes(n, "res-run", "診断中…");
+  setDet(n, "宇宙ニュース（sorae）を取得中…");
+  var feed = "https://sorae.info/feed";
+  var url = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feed);
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", url, true);
+  xhr.timeout = 20000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    if (xhr.status !== 200) { failHttp(8, start, xhr.status); return; }
+    var ms = new Date().getTime() - start;
+    setMs(8, ms);
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (data.status === "ok") {
+        var cnt = (data.items && data.items.length) ? data.items.length : 0;
+        setRes(8, "res-ok", "OK");
+        setDet(8, "見出し " + cnt + " 件取得。詳細：HTTP 200");
+        finishOne(8, true);
+      } else {
+        setRes(8, "res-ng", "NG");
+        setDet(8, "フィードが空、または制限中です（" + (data.message || data.status || "?") + "）。詳細：HTTP 200");
+        finishOne(8, false);
+      }
+    } catch (e) {
+      setRes(8, "res-ng", "NG");
+      setDet(8, "応答の解析に失敗しました。詳細：HTTP 200");
+      finishOne(8, false);
+    }
+  };
+  xhr.ontimeout = function () {
+    var ms = new Date().getTime() - start;
+    setMs(8, ms);
+    setRes(8, "res-ng", "NG");
+    setDet(8, "時間切れ（20秒）");
+    finishOne(8, false);
+  };
+  xhr.onerror = function () {
+    var ms = new Date().getTime() - start;
+    setMs(8, ms);
+    setRes(8, "res-ng", "NG");
+    setDet(8, "通信エラー（HTTP 0）");
+    finishOne(8, false);
+  };
+  xhr.send(null);
+}
+
 function startAll() {
   if (running) { return; }
   running = true;
@@ -655,7 +769,7 @@ function startAll() {
   btn.disabled = true;
   btn.innerHTML = "診断中…";
   var i;
-  for (i = 1; i <= 6; i++) {
+  for (i = 1; i <= 8; i++) {
     setRes(i, "res-wait", "待機中");
     setDet(i, "-");
     $("ms" + i).innerHTML = "";
@@ -666,6 +780,8 @@ function startAll() {
   testISS();
   testQuake();
   testDevice();
+  testWeatherFetch();
+  testSoraeNews();
 }
 
 $("startBtn").onclick = startAll;

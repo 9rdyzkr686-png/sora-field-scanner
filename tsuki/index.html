@@ -68,6 +68,8 @@ footer { text-align:center; color:#7986cb; font-size:13px; padding:8px 12px 28px
 </div>
 <div class="stats">
 <div>月齢：<b id="moonAge">―</b> 日</div>
+<div>昔の名前：<b id="tradName">―</b></div>
+<div id="tradNote" style="font-size:15px; color:#9fa8da; padding:2px 0 4px;">―</div>
 <div>照度：<b id="moonIllum">―</b> ％</div>
 <div>次の満月まで：<b id="toFull">―</b></div>
 <div>次の新月まで：<b id="toNew">―</b></div>
@@ -114,6 +116,31 @@ function phaseNameFor(age) {
 function illumFor(age) {
   return (1 - Math.cos(2 * Math.PI * age / SYNODIC)) / 2;
 }
+var TRAD_MOONS = [
+  { max: 1.5,  name: "新月（さくげつ）",       note: "姿は見えなくても、月はそこに。始まりの夜です。" },
+  { max: 2,    name: "二日月（ふつかづき）",   note: "細い光が戻ってきました。西の空低く、短い逢瀬です。" },
+  { max: 4,    name: "三日月（みかづき）",     note: "弓のような細い月。夕空に浮かぶ笑顔のようです。" },
+  { max: 6,    name: "弓張月（ゆみはりづき）", note: "弓を張った形の月。少しずつふくらんでいきます。" },
+  { max: 8.5,  name: "上弦の月（じょうげん）", note: "半分の月。昼に生まれて、真夜中に沈みます。" },
+  { max: 12,   name: "十日夜の月（とおかんや）", note: "十日夜は収穫に感謝する夜。満月が近づいています。" },
+  { max: 14,   name: "十三夜の月（じゅうさんや）", note: "満月より少し手前の月。栗や豆を供えて愛でる月です。" },
+  { max: 16,   name: "十五夜・満月（じゅうごや）", note: "十五夜お月さま。今夜が一番の見ごろです。" },
+  { max: 17.5, name: "十六夜（いざよい）",     note: "いざよいは「ためらい」の意。少し遅れて昇る月です。" },
+  { max: 18.5, name: "立待月（たちまちづき）", note: "立って待つ間に昇る月。夕暮れが少し長くなります。" },
+  { max: 19.5, name: "居待月（いまちづき）",   note: "座って待つ月。月の出はさらに遅くなります。" },
+  { max: 20.5, name: "寝待月（ねまちづき）",   note: "寝て待つほど遅い月の出。夜更けに静かに昇ります。" },
+  { max: 21.5, name: "更待月（ふけまちづき）", note: "夜更けに待つ月。二十日ごろに昇る月です。" },
+  { max: 24,   name: "下弦の月（かげん）",     note: "半分の月。真夜中に昇り、昼に沈みます。" },
+  { max: 28,   name: "有明月（ありあけづき）", note: "夜明けの空に残る月。朝の光の中の月です。" },
+  { max: 99,   name: "晦日月（みそかづき）",   note: "次の新月へ、静かに近づいていく月です。" }
+];
+function tradMoonFor(age) {
+  var i;
+  for (i = 0; i < TRAD_MOONS.length; i++) {
+    if (age < TRAD_MOONS[i].max) return TRAD_MOONS[i];
+  }
+  return TRAD_MOONS[TRAD_MOONS.length - 1];
+}
 function fmtDays(x) {
   if (x < 0.5) return "今日";
   return "あと約 " + Math.ceil(x) + " 日";
@@ -125,6 +152,9 @@ function renderTonight() {
   var illum = illumFor(age);
   document.getElementById("phaseName").innerHTML = phaseNameFor(age);
   document.getElementById("moonAge").innerHTML = age.toFixed(1);
+  var trad = tradMoonFor(age);
+  document.getElementById("tradName").innerHTML = trad.name;
+  document.getElementById("tradNote").innerHTML = trad.note;
   document.getElementById("moonIllum").innerHTML = Math.round(illum * 100);
   var half = SYNODIC / 2;
   var toFull = (half - age + SYNODIC) % SYNODIC;

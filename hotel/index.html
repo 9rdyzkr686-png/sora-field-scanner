@@ -40,6 +40,18 @@ button:active { background: #2c3a63; }
 #diaryDate { color: #d4af37; font-size: 15px; margin-bottom: 6px; }
 #diaryText { font-size: 17px; background: #0a1128; border: 1px solid #2c3a63; border-radius: 6px; padding: 12px; min-height: 110px; }
 #diaryBtn { width: 100%; margin-top: 10px; }
+#bfTray { background: #0a1128; border: 2px solid #d4af37; border-radius: 8px; padding: 10px 12px; margin: 10px 0 2px 0; min-height: 60px; }
+.bfRow { padding: 5px 0; border-bottom: 1px dashed #2c3a63; }
+.bfRow:last-child { border-bottom: none; }
+.bfCat { display: block; color: #d4af37; font-size: 13px; letter-spacing: 1px; }
+.bfEmpty { color: #9aa7c7; }
+#bfDrawBtn { width: 100%; margin-top: 10px; }
+#bfSaveBtn { width: 100%; margin-top: 8px; background: #d4af37; color: #0a1128; font-weight: bold; border: none; }
+#bfStatus { min-height: 22px; color: #ffd97a; font-size: 15px; margin-top: 6px; }
+.bfSavedHead { color: #d4af37; font-size: 15px; letter-spacing: 1px; margin-top: 10px; }
+.bfSaved { background: #0a1128; border: 1px solid #2c3a63; border-radius: 6px; padding: 9px 11px; margin-top: 8px; font-size: 15px; }
+.bfSavedDate { color: #d4af37; font-size: 13px; margin-bottom: 3px; }
+.bfDelBtn { margin-top: 7px; }
 .footer { text-align: center; color: #9aa7c7; font-size: 13px; margin: 14px 0 6px 0; letter-spacing: 2px; }
 .clearfix:after { content: ""; display: block; clear: both; }
 </style>
@@ -79,6 +91,16 @@ button:active { background: #2c3a63; }
   <div id="diaryDate"></div>
   <div id="diaryText"></div>
   <button id="diaryBtn" type="button">別の日の日誌</button>
+</div>
+
+<div class="panel">
+  <h2>朝食ビュッフェ</h2>
+  <div>深夜に決める、明日の朝食。ビュッフェのトレーを1回引いてみましょう。（架空のメニューです）</div>
+  <div id="bfTray"></div>
+  <button id="bfDrawBtn" type="button">🍳 朝食を引く</button>
+  <button id="bfSaveBtn" type="button">この朝食を保存</button>
+  <div id="bfStatus"></div>
+  <div id="bfSavedList"></div>
 </div>
 
 <hr class="goldline">
@@ -276,6 +298,116 @@ function showDiary() {
   $("diaryText").appendChild(document.createTextNode(DIARY[idx]));
 }
 
+var BF_CATS = ["主菜", "パン・ごはん", "汁物・スープ", "サラダ", "デザート", "ドリンク"];
+var BF_BANKS = [
+  ["オムレツ（デミグラスソース）", "焼き鮭", "スクランブルエッグ", "ソーセージ盛り合わせ", "ハムステーキ", "エッグベネディクト", "白身魚のムニエル", "ローストチキン", "和風ハンバーグ", "目玉焼きとベーコン"],
+  ["クロワッサン", "白ごはん", "トースト（バターとジャム）", "バターロール", "おかゆ", "フレンチトースト", "ベーグル", "五穀ごはん", "ミニおにぎり（鮭・梅）", "パンケーキ"],
+  ["味噌汁", "コーンポタージュ", "クラムチャウダー", "コンソメスープ", "けんちん汁", "ミネストローネ", "オニオングラタンスープ", "豚汁", "かぼちゃのポタージュ", "わかめと豆腐のスープ"],
+  ["グリーンサラダ", "シーザーサラダ", "ポテトサラダ", "海藻サラダ", "トマトとモッツァレラ", "コールスロー", "温野菜の盛り合わせ", "フルーツサラダ", "大根とツナのサラダ", "カプレーゼ"],
+  ["ヨーグルト（はちみつ）", "季節のフルーツ盛り合わせ", "プリン", "フルーツゼリー", "ミニケーキ", "フルーツポンチ", "チーズ盛り合わせ", "あんみつ", "シャーベット", "カットメロン"],
+  ["コーヒー", "紅茶", "オレンジジュース", "牛乳", "カフェオレ", "ハーブティー", "グレープフルーツジュース", "緑茶", "豆乳", "野菜ジュース"]
+];
+var bfCurrent = null;
+
+function bfLoad() {
+  try {
+    var s = localStorage.getItem("hotel6_breakfast_v1");
+    if (s) {
+      var a = JSON.parse(s);
+      if (a && typeof a.length === "number") { return a; }
+    }
+  } catch (e) {}
+  return [];
+}
+function bfStore(list) {
+  try { localStorage.setItem("hotel6_breakfast_v1", JSON.stringify(list)); } catch (e) {}
+}
+function bfDateStr() {
+  var d = new Date();
+  function p(n) { return (n < 10 ? "0" : "") + n; }
+  return d.getFullYear() + "/" + p(d.getMonth() + 1) + "/" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+function bfSetStatus(t) { $("bfStatus").textContent = t; }
+
+function bfRenderTray() {
+  var tray = $("bfTray");
+  tray.innerHTML = "";
+  if (!bfCurrent) {
+    var e = document.createElement("div");
+    e.className = "bfEmpty";
+    e.appendChild(document.createTextNode("まだ朝食が決まっていません。「朝食を引く」をどうぞ。"));
+    tray.appendChild(e);
+    return;
+  }
+  for (var i = 0; i < BF_CATS.length; i++) {
+    var row = document.createElement("div");
+    row.className = "bfRow";
+    var c = document.createElement("span");
+    c.className = "bfCat";
+    c.appendChild(document.createTextNode(BF_CATS[i]));
+    row.appendChild(c);
+    row.appendChild(document.createTextNode(bfCurrent[i] || ""));
+    tray.appendChild(row);
+  }
+}
+function drawBreakfast() {
+  bfCurrent = [];
+  for (var i = 0; i < BF_BANKS.length; i++) {
+    bfCurrent.push(BF_BANKS[i][Math.floor(Math.random() * BF_BANKS[i].length)]);
+  }
+  bfRenderTray();
+  bfSetStatus("今朝のトレーが決まりました。気に入ったら保存どうぞ。");
+}
+function saveBreakfast() {
+  if (!bfCurrent) { bfSetStatus("まず「朝食を引く」を押してください。"); return; }
+  var list = bfLoad();
+  list.unshift({ items: bfCurrent.slice(0), date: bfDateStr() });
+  while (list.length > 20) { list.pop(); }
+  bfStore(list);
+  bfRenderSaved();
+  bfSetStatus("この朝食を保存しました。");
+}
+function bfRenderSaved() {
+  var box = $("bfSavedList");
+  box.innerHTML = "";
+  var list = bfLoad();
+  if (list.length === 0) { return; }
+  var head = document.createElement("div");
+  head.className = "bfSavedHead";
+  head.appendChild(document.createTextNode("保存した朝食（" + list.length + "件）"));
+  box.appendChild(head);
+  for (var i = 0; i < list.length; i++) {
+    (function (idx) {
+      var ent = list[idx];
+      var d = document.createElement("div");
+      d.className = "bfSaved";
+      var dt = document.createElement("div");
+      dt.className = "bfSavedDate";
+      dt.appendChild(document.createTextNode(ent.date || ""));
+      d.appendChild(dt);
+      var items = ent.items || [];
+      for (var j = 0; j < items.length; j++) {
+        var line = document.createElement("div");
+        line.appendChild(document.createTextNode((BF_CATS[j] ? BF_CATS[j] + "：" : "") + items[j]));
+        d.appendChild(line);
+      }
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "bfDelBtn";
+      del.appendChild(document.createTextNode("削除"));
+      del.onclick = function () {
+        var l2 = bfLoad();
+        l2.splice(idx, 1);
+        bfStore(l2);
+        bfRenderSaved();
+        bfSetStatus("保存した朝食を1件削除しました。");
+      };
+      d.appendChild(del);
+      box.appendChild(d);
+    })(i);
+  }
+}
+
 function init() {
   buildWindow();
   showDiary();
@@ -288,6 +420,10 @@ function init() {
     diaryIdx++;
     showDiary();
   };
+  $("bfDrawBtn").onclick = drawBreakfast;
+  $("bfSaveBtn").onclick = saveBreakfast;
+  bfRenderTray();
+  bfRenderSaved();
   $("voiceBtn").onclick = function () {
     voiceOn = !voiceOn;
     $("voiceBtn").innerHTML = voiceOn ? "ボイス ON" : "ボイス OFF";

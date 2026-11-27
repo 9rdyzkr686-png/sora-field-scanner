@@ -164,6 +164,58 @@
     color: #77694f;
     margin-top: 6px;
   }
+  /* ===== 冬キャンプ装備チェック ===== */
+  .gear-box {
+    max-width: 560px;
+    margin: 18px auto 0;
+    background: #0c0a08;
+    border: 1px solid #3a2a16;
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .gear-box h2 {
+    font-size: 19px;
+    color: #ffd9a0;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .gear-progress {
+    font-size: 16px;
+    color: #ffb36b;
+    margin: 8px 0 10px;
+    min-height: 22px;
+  }
+  .gear-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    min-height: 52px;
+    padding: 10px 12px;
+    margin: 6px 0;
+    font-size: 17px;
+  }
+  .gear-check {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    text-align: center;
+    border: 2px solid #a85a1c;
+    border-radius: 7px;
+    margin-right: 10px;
+    color: #ffd9a0;
+    font-size: 19px;
+    vertical-align: middle;
+    background: #140d06;
+  }
+  .gear-item.checked { background: #33200f; }
+  .gear-item.checked .gear-label { color: #ffe9c4; }
+  .gear-note {
+    font-size: 13px;
+    color: #b09a76;
+    line-height: 1.7;
+    margin-top: 10px;
+  }
   .orbit-line {
     text-align: center;
     margin-top: 26px;
@@ -220,6 +272,17 @@
   <div class="story-status" id="storyStatus"></div>
   <div class="story-text" id="storyText">まだ語りはありません。「語りを聞く」を押してみてください。</div>
   <div class="detail" id="storyDetail"></div>
+</div>
+
+<div class="gear-box">
+  <h2>🎒 冬キャンプ装備チェック</h2>
+  <div style="font-size:14px;color:#9a8d76;">寒い季節のキャンプに持っていきたい装備です。用意できたらタップしてチェックしましょう。</div>
+  <div class="gear-progress" id="gearProgress">準備 0/10 準備OK</div>
+  <div id="gearList"></div>
+  <div class="gear-note">※テントの中でストーブや炭火を使うと、一酸化炭素中毒の危険があります。換気をこまめにして、警報器も忘れずに。</div>
+  <div class="btn-row">
+    <button class="btn-sub" id="gearResetBtn">リセット</button>
+  </div>
 </div>
 
 <div class="orbit-line">
@@ -499,6 +562,96 @@ document.getElementById('storyBtn').onclick = function() {
   }
   sendReq();
 };
+
+/* ============ 冬キャンプ装備チェック ============ */
+var GEAR_ITEMS = [
+  '冬用シュラフ',
+  'ダウンジャケット',
+  '手袋・ニット帽',
+  'カイロ',
+  '湯たんぽ',
+  '冬用テントスカート',
+  '焚き火グローブ',
+  '防寒ブーツ',
+  '温かい飲み物セット',
+  '一酸化炭素警報器'
+];
+var gearChecked = [];
+
+function gearLoad() {
+  gearChecked = [];
+  try {
+    var raw = localStorage.getItem('camp6_winter_v1');
+    if (raw) {
+      var arr = JSON.parse(raw);
+      if (arr && typeof arr.length === 'number') {
+        for (var i = 0; i < arr.length; i++) {
+          if (typeof arr[i] === 'number' && arr[i] >= 0 && arr[i] < GEAR_ITEMS.length) {
+            gearChecked.push(arr[i]);
+          }
+        }
+      }
+    }
+  } catch (e) {}
+}
+
+function gearSave() {
+  try { localStorage.setItem('camp6_winter_v1', JSON.stringify(gearChecked)); } catch (e) {}
+}
+
+function gearHas(idx) {
+  for (var i = 0; i < gearChecked.length; i++) {
+    if (gearChecked[i] === idx) return true;
+  }
+  return false;
+}
+
+function gearRender() {
+  var list = document.getElementById('gearList');
+  list.innerHTML = '';
+  for (var i = 0; i < GEAR_ITEMS.length; i++) {
+    (function(idx) {
+      var b = document.createElement('button');
+      b.className = 'gear-item' + (gearHas(idx) ? ' checked' : '');
+      var box = document.createElement('span');
+      box.className = 'gear-check';
+      box.innerHTML = gearHas(idx) ? '✓' : '';
+      var label = document.createElement('span');
+      label.className = 'gear-label';
+      label.innerHTML = GEAR_ITEMS[idx];
+      b.appendChild(box);
+      b.appendChild(label);
+      b.onclick = function() {
+        if (gearHas(idx)) {
+          var next = [];
+          for (var j = 0; j < gearChecked.length; j++) {
+            if (gearChecked[j] !== idx) next.push(gearChecked[j]);
+          }
+          gearChecked = next;
+        } else {
+          gearChecked.push(idx);
+        }
+        gearSave();
+        gearRender();
+      };
+      list.appendChild(b);
+    })(i);
+  }
+  var msg = '準備 ' + gearChecked.length + '/' + GEAR_ITEMS.length + ' 準備OK';
+  if (gearChecked.length === GEAR_ITEMS.length) {
+    msg += ' ― 全部そろいました！';
+  }
+  document.getElementById('gearProgress').innerHTML = msg;
+}
+
+document.getElementById('gearResetBtn').onclick = function() {
+  gearChecked = [];
+  gearSave();
+  gearRender();
+};
+
+gearLoad();
+gearRender();
 </script>
 </body>
 </html>

@@ -44,6 +44,14 @@ input[type="date"], input[type="text"] { width:100%; min-height:50px; font-size:
 .card h3 { font-size:17px; color:#ffb066; margin-bottom:4px; }
 .card p { font-size:15px; color:#e8d3b5; }
 .warn { color:#ffcf9e; font-weight:bold; }
+#totoStats { font-size:17px; color:#ffd9a8; margin:10px 0 4px 0; text-align:center; }
+.totoStrip { text-align:center; margin:10px 0 4px 0; }
+.totoDay { display:inline-block; width:12.8%; min-width:38px; margin:2px 0.4%; padding:6px 0; background:#241408; border:1px solid #6b4423; border-radius:8px; font-size:14px; line-height:1.35; color:#a98d6d; vertical-align:top; }
+.totoDay .mark { display:block; font-size:19px; color:#6b5540; }
+.totoDay.hit { color:#ffd9a8; border-color:#ff7b2d; }
+.totoDay.hit .mark { color:#ff7b2d; }
+.totoDay.today { border:2px solid #ffb066; }
+#totoWord { background:#241408; border:1px dashed #8a5a2b; border-radius:10px; padding:12px; font-size:16px; margin-top:10px; }
 footer { text-align:center; font-size:13px; color:#a98d6d; margin-top:20px; padding:0 12px; }
 </style>
 </head>
@@ -68,6 +76,14 @@ footer { text-align:center; font-size:13px; color:#a98d6d; margin-top:20px; padd
 <div id="heatLabel">熱波をためています…</div>
 <button class="btn" id="heatBtn" onclick="callAufguss()">熱波を受ける</button>
 <div id="aiStatus"></div>
+</div>
+
+<div class="panel">
+<h2>📅 ととのいチェック</h2>
+<button class="btn" id="totoBtn" onclick="quickTotonoi()">今日ととのった</button>
+<div id="totoStats">今月0回 ・ 通算0回 ・ 連続0日</div>
+<div class="totoStrip" id="totoStrip"></div>
+<div id="totoWord"></div>
 </div>
 
 <div class="panel">
@@ -309,6 +325,75 @@ function renderLogs() {
     html = "<p style=\"font-size:15px;color:#a98d6d;\">まだ記録がありません。サウナに入ったら記録してみてください。</p>";
   }
   document.getElementById("logList").innerHTML = html;
+  renderTotonoi();
+}
+
+/* ---- ととのいチェック（クイック記録） ---- */
+function dateStrOf(d) {
+  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+}
+
+function quickTotonoi() {
+  var today = dateStrOf(new Date());
+  var arr = loadLogs();
+  var i;
+  for (i = 0; i < arr.length; i++) {
+    if (arr[i].date === today) { renderTotonoi(); return; }
+  }
+  arr.unshift({ date: today, sets: setCount, memo: "", ts: new Date().getTime() });
+  storeLogs(arr);
+  renderLogs();
+}
+
+function renderTotonoi() {
+  var arr = loadLogs();
+  var set = {};
+  var i, d;
+  for (i = 0; i < arr.length; i++) {
+    if (arr[i].date) { set[arr[i].date] = true; }
+  }
+  var now = new Date();
+  var today = dateStrOf(now);
+  var monthPrefix = today.substring(0, 7);
+  var monthCount = 0;
+  for (i = 0; i < arr.length; i++) {
+    if (arr[i].date && arr[i].date.indexOf(monthPrefix) === 0) { monthCount++; }
+  }
+  var streak = 0;
+  var cursor = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (!set[dateStrOf(cursor)]) { cursor.setDate(cursor.getDate() - 1); }
+  while (set[dateStrOf(cursor)]) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  document.getElementById("totoStats").innerHTML = "今月" + monthCount + "回 ・ 通算" + arr.length + "回 ・ 連続" + streak + "日";
+  var html = "";
+  for (i = 13; i >= 0; i--) {
+    d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    var ds = dateStrOf(d);
+    var hit = !!set[ds];
+    html += "<span class=\"totoDay" + (hit ? " hit" : "") + (i === 0 ? " today" : "") + "\">" + (d.getMonth() + 1) + "/" + d.getDate() + "<span class=\"mark\">" + (hit ? "●" : "○") + "</span></span>";
+  }
+  document.getElementById("totoStrip").innerHTML = html;
+  var word;
+  if (monthCount === 0) {
+    word = "店主：今月はこれからですね。まずは1回、体を温めに来てください。";
+  } else if (monthCount <= 3) {
+    word = "店主：今月もいい汗をかいていますね。その調子です。";
+  } else if (monthCount <= 9) {
+    word = "店主：すっかり常連さんのペースですね。水分補給も忘れずに。";
+  } else {
+    word = "店主：今月もたくさん来てくれてありがとうございます。立派なサウナーです！";
+  }
+  document.getElementById("totoWord").innerHTML = escapeHtml(word);
+  var btn = document.getElementById("totoBtn");
+  if (set[today]) {
+    btn.disabled = true;
+    btn.innerHTML = "今日は記録済みです ✓";
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = "今日ととのった";
+  }
 }
 
 function initDate() {

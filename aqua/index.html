@@ -36,6 +36,19 @@ h2 { font-size:19px; color:#bfeaff; margin:16px 0 8px; border-left:6px solid #2e
 #keeperStatus { font-size:15px; color:#9fd8ff; min-height:20px; margin:4px 0; }
 #keeperText { background:#06283f; border:2px solid #2e7cb6; border-radius:12px; padding:14px; font-size:17px; line-height:1.7; min-height:60px; white-space:pre-wrap; }
 .detail { font-size:12px; color:#7fb8d8; }
+.creatureCard { background:#06283f; border:2px solid #2e7cb6; border-radius:12px; padding:14px; margin-bottom:6px; }
+.creatureHead { overflow:hidden; margin-bottom:6px; }
+.creatureDot { float:left; width:44px; height:30px; border-radius:50%; margin:4px 12px 0 0; }
+.creatureName { font-size:20px; font-weight:bold; color:#bfeaff; line-height:38px; }
+.creatureDesc { font-size:16px; line-height:1.7; color:#dff3ff; }
+#meetBtn { background:#2e7cb6; color:#fff; }
+#meetBtn:active { background:#1d5a86; }
+#meetStatus { font-size:15px; color:#ffd9a0; min-height:20px; margin:4px 0; text-align:center; }
+.colProgress { font-size:16px; color:#ffd9a0; margin-bottom:8px; }
+.colItem { background:#0a3a5c; border:2px solid #2e7cb6; border-radius:10px; padding:10px 12px; margin:0 0 8px; font-size:16px; line-height:1.6; overflow:hidden; }
+.colDot { display:inline-block; width:22px; height:15px; border-radius:50%; margin-right:8px; vertical-align:middle; }
+.colMeta { float:right; font-size:14px; color:#9fd8ff; text-align:right; }
+.colEmpty { font-size:15px; color:#9fd8ff; line-height:1.7; }
 .foot { text-align:center; font-size:12px; color:#5f96b5; margin:16px 0 6px; }
 </style>
 </head>
@@ -57,6 +70,17 @@ h2 { font-size:19px; color:#bfeaff; margin:16px 0 8px; border-left:6px solid #2e
 <button class="btn" id="feedBtn" type="button">🍤 餌やり</button>
 <div class="counter" id="feedCount">餌やり 0回</div>
 
+<h2>🐡 今日の生き物</h2>
+<div class="creatureCard">
+  <div class="creatureHead">
+    <div class="creatureDot" id="creatureDot"></div>
+    <div class="creatureName" id="creatureName"></div>
+  </div>
+  <div class="creatureDesc" id="creatureDesc"></div>
+</div>
+<button class="btn" id="meetBtn" type="button">🤝 会えた</button>
+<div id="meetStatus"></div>
+
 <h2>🎤 飼育員さんに聞く</h2>
 <div class="chips" id="topicChips">
   <button class="chip sel" type="button" data-topic="魚の話">🐟 魚の話</button>
@@ -66,6 +90,10 @@ h2 { font-size:19px; color:#bfeaff; margin:16px 0 8px; border-left:6px solid #2e
 <button class="btn" id="askBtn" type="button">飼育員さんに聞く</button>
 <div id="keeperStatus"></div>
 <div id="keeperText">話題を選んでボタンを押すと、飼育員さんが水族館の小さな秘密を教えてくれます。</div>
+
+<h2>📖 生き物コレクション</h2>
+<div class="colProgress" id="collectionProgress"></div>
+<div id="collectionList"></div>
 
 <div class="foot">AQUA-6 は小野さん専用の小さな水族館です</div>
 
@@ -318,6 +346,101 @@ el("askBtn").onclick = function() {
   }
   send();
 };
+
+/* ---------- 今日の生き物とコレクション ---------- */
+/* 水槽の魚（FISH_DEFS）と色・順番をそろえた生き物データ */
+var CREATURES = [
+  { name: "オレンジの魚", color: "#ff8c42", desc: "水槽のムードメーカー。ほどよい速さで、のんびり泳ぎます。" },
+  { name: "黄色の魚", color: "#ffd23f", desc: "小柄で元気いっぱい。ちょこちょこ泳ぎ回ります。" },
+  { name: "ピンクの魚", color: "#ff5d8f", desc: "いちばん大きくて、ゆったり泳ぐやさしいお姉さん。" },
+  { name: "水色の魚", color: "#6ee7ff", desc: "いちばん小さくて、いちばん速いスプリンター。" },
+  { name: "緑の魚", color: "#9dff57", desc: "水底のほうを、ゆっくり泳ぐのが好きです。" }
+];
+function todayCreatureIndex() {
+  var now = new Date();
+  var start = new Date(now.getFullYear(), 0, 0);
+  var day = Math.floor((now.getTime() - start.getTime()) / 86400000);
+  return day % CREATURES.length;
+}
+var todayCreature = CREATURES[todayCreatureIndex()];
+el("creatureDot").style.background = todayCreature.color;
+el("creatureName").innerHTML = esc(todayCreature.name);
+el("creatureDesc").innerHTML = esc(todayCreature.desc);
+
+function todayStr() {
+  var d = new Date();
+  var m = d.getMonth() + 1;
+  var day = d.getDate();
+  return d.getFullYear() + "/" + (m < 10 ? "0" + m : "" + m) + "/" + (day < 10 ? "0" + day : "" + day);
+}
+function loadCollection() {
+  try {
+    var raw = localStorage.getItem("aqua6_collection_v1");
+    if (raw) {
+      var arr = JSON.parse(raw);
+      if (arr && typeof arr.length === "number") return arr;
+    }
+  } catch (e) {}
+  return [];
+}
+function saveCollection(arr) {
+  try { localStorage.setItem("aqua6_collection_v1", JSON.stringify(arr)); } catch (e) {}
+}
+function renderCollection() {
+  var arr = loadCollection();
+  el("collectionProgress").innerHTML = "集めた生き物 " + arr.length + "/" + CREATURES.length + "種";
+  var box = el("collectionList");
+  box.innerHTML = "";
+  if (arr.length === 0) {
+    var empty = document.createElement("div");
+    empty.className = "colEmpty";
+    empty.innerHTML = "まだ会えた生き物がいません。「今日の生き物」の「会えた」ボタンを押すと、ここに記録されます。生き物は日替わりなので、毎日来ると少しずつ集まります。";
+    box.appendChild(empty);
+    return;
+  }
+  var ci, cj;
+  for (ci = 0; ci < CREATURES.length; ci++) {
+    for (cj = 0; cj < arr.length; cj++) {
+      if (arr[cj].name === CREATURES[ci].name) {
+        var item = document.createElement("div");
+        item.className = "colItem";
+        var meta = document.createElement("span");
+        meta.className = "colMeta";
+        meta.innerHTML = "会えた " + arr[cj].count + "回<br>最終日 " + esc(arr[cj].lastDate);
+        var dot = document.createElement("span");
+        dot.className = "colDot";
+        dot.style.background = CREATURES[ci].color;
+        item.appendChild(meta);
+        item.appendChild(dot);
+        item.appendChild(document.createTextNode(CREATURES[ci].name));
+        box.appendChild(item);
+      }
+    }
+  }
+}
+el("meetBtn").onclick = function() {
+  var arr = loadCollection();
+  var found = null;
+  var i;
+  for (i = 0; i < arr.length; i++) {
+    if (arr[i].name === todayCreature.name) found = arr[i];
+  }
+  var newCount;
+  if (found) {
+    found.count++;
+    found.lastDate = todayStr();
+    newCount = found.count;
+  } else {
+    arr.push({ name: todayCreature.name, count: 1, lastDate: todayStr() });
+    newCount = 1;
+  }
+  saveCollection(arr);
+  renderCollection();
+  speedBoostUntil = new Date().getTime() + 3000;
+  el("meetStatus").innerHTML = esc(todayCreature.name) + "に会えました！（通算" + newCount + "回目）";
+  speak(todayCreature.name + "に会えました");
+};
+renderCollection();
 </script>
 </body>
 </html>

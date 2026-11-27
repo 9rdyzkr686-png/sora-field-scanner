@@ -66,6 +66,27 @@ h1 { text-align:center; font-size:27px; margin:14px 0 2px; color:#ffcf7d;
   padding:5px 0; }
 .boughtItem .yen { color:#ffd76e; }
 .empty { font-size:14px; color:#c9a06a; }
+.priceBox { background:#1f1206; border:1px solid #6b4423; border-radius:14px;
+  padding:12px 14px; margin-top:18px; }
+.priceBox h2 { font-size:18px; color:#ffcf7d; margin:10px 0 8px; }
+.priceBox h2:first-child { margin-top:2px; }
+.pfLabel { font-size:13px; color:#c9a06a; display:block; margin-top:8px; }
+.pfInput { width:100%; min-height:50px; font-size:16px; padding:0 10px;
+  border-radius:10px; border:1px solid #a06a2c; background:#170d08; color:#f5e6d0;
+  margin:4px 0; }
+.pfBtn { display:block; width:100%; min-height:52px; margin:10px 0 4px; font-size:17px;
+  font-weight:bold; color:#241203; background:#ffd76e; border:none; border-radius:12px; }
+.pfSubBtn { display:block; width:100%; min-height:50px; margin:10px 0 4px; font-size:16px;
+  color:#ffe9c4; background:#4a2c12; border:1px solid #a06a2c; border-radius:12px; }
+.pfStatus { font-size:14px; color:#d9b98c; min-height:20px; margin:4px 0; }
+.bestLine { font-size:16px; line-height:1.7; border-bottom:1px dashed #6b4423;
+  padding:5px 0; }
+.bestLine .yen { color:#ffd76e; font-weight:bold; }
+.plItem { font-size:15px; line-height:1.6; border-bottom:1px dashed #6b4423;
+  padding:7px 0; }
+.plItem .yen { color:#ffd76e; }
+.plDel { min-height:48px; padding:0 16px; margin-top:5px; font-size:14px;
+  color:#ffe9c4; background:#4a2c12; border:1px solid #a06a2c; border-radius:10px; }
 footer { text-align:center; font-size:12px; color:#a3805a; margin-top:16px; line-height:1.7; }
 </style>
 </head>
@@ -81,6 +102,24 @@ footer { text-align:center; font-size:12px; color:#a3805a; margin-top:16px; line
 <div class="boughtBox">
   <h2>🛍 買ったもの（<span id="boughtCount">0</span>）</h2>
   <div id="boughtList"><p class="empty" id="boughtEmpty">まだ何も買っていません</p></div>
+</div>
+
+<div class="priceBox">
+  <h2>📝 価格メモ（お買い物の記録）</h2>
+  <p class="empty">ふだんのお買い物の値段を記録すると、品目ごとの最安値が分かります。</p>
+  <span class="pfLabel">品目名</span>
+  <input class="pfInput" id="pfName" type="text" placeholder="例：卵">
+  <span class="pfLabel">値段（円）</span>
+  <input class="pfInput" id="pfPrice" type="number" inputmode="numeric" placeholder="例：198">
+  <span class="pfLabel">店名（任意）</span>
+  <input class="pfInput" id="pfStore" type="text" placeholder="例：○○スーパー">
+  <button class="pfBtn" id="pfAdd" type="button">価格メモに追加</button>
+  <div class="pfStatus" id="pfStatus"></div>
+  <h2>🏆 品目ごとの最安値</h2>
+  <div id="pfBest"></div>
+  <h2>📋 記録の一覧</h2>
+  <div id="pfList"></div>
+  <button class="pfSubBtn" id="pfCopy" type="button">価格メモを全文コピー</button>
 </div>
 
 <footer>値段と交渉は、このページの中だけのお遊びです<br>占いは娯楽です</footer>
@@ -511,6 +550,135 @@ el("voiceBtn").onclick = function () {
     try { speechSynthesis.cancel(); } catch (e) {}
   }
 };
+
+var PRICE_KEY = "market6_prices_v1";
+
+function loadPrices() {
+  try {
+    var s = localStorage.getItem(PRICE_KEY);
+    if (s) {
+      var a = JSON.parse(s);
+      if (a && typeof a.length === "number") { return a; }
+    }
+  } catch (e) {}
+  return [];
+}
+function storePrices(a) {
+  try { localStorage.setItem(PRICE_KEY, JSON.stringify(a)); } catch (e) {}
+}
+function priceDateStr() {
+  var d = new Date();
+  function p(n) { return (n < 10 ? "0" : "") + n; }
+  return d.getFullYear() + "/" + p(d.getMonth() + 1) + "/" + p(d.getDate());
+}
+function trimStr(s) { return (s || "").replace(/^\s+|\s+$/g, ""); }
+
+function addPrice() {
+  var name = trimStr(el("pfName").value);
+  var price = parseInt(el("pfPrice").value, 10);
+  var store = trimStr(el("pfStore").value);
+  if (!name) { el("pfStatus").textContent = "品目名を入れてください"; return; }
+  if (isNaN(price) || price <= 0) { el("pfStatus").textContent = "値段を数字で入れてください"; return; }
+  var list = loadPrices();
+  list.unshift({ name: name, price: price, store: store, date: priceDateStr() });
+  while (list.length > 100) { list.pop(); }
+  storePrices(list);
+  el("pfName").value = "";
+  el("pfPrice").value = "";
+  el("pfStore").value = "";
+  el("pfStatus").textContent = "追加しました：" + name + " " + price + "円";
+  renderPrices();
+}
+
+function renderPrices() {
+  var list = loadPrices();
+  var best = el("pfBest");
+  var box = el("pfList");
+  best.innerHTML = "";
+  box.innerHTML = "";
+  if (list.length === 0) {
+    var e1 = document.createElement("p");
+    e1.className = "empty";
+    e1.textContent = "まだ記録がありません";
+    best.appendChild(e1);
+    var e2 = document.createElement("p");
+    e2.className = "empty";
+    e2.textContent = "まだ記録がありません";
+    box.appendChild(e2);
+    return;
+  }
+  var order = [];
+  var map = {};
+  var i, it;
+  for (i = 0; i < list.length; i++) {
+    it = list[i];
+    if (!map[it.name]) { map[it.name] = it; order.push(it.name); }
+    else if (it.price < map[it.name].price) { map[it.name] = it; }
+  }
+  for (i = 0; i < order.length; i++) {
+    var b = map[order[i]];
+    var row = document.createElement("div");
+    row.className = "bestLine";
+    row.appendChild(document.createTextNode(order[i] + "：最安 "));
+    var y = document.createElement("span");
+    y.className = "yen";
+    y.textContent = b.price + "円";
+    row.appendChild(y);
+    if (b.store) { row.appendChild(document.createTextNode("（" + b.store + "）")); }
+    best.appendChild(row);
+  }
+  for (i = 0; i < list.length; i++) {
+    (function (idx) {
+      var e = list[idx];
+      var d = document.createElement("div");
+      d.className = "plItem";
+      d.appendChild(document.createTextNode(e.name + " "));
+      var yy = document.createElement("span");
+      yy.className = "yen";
+      yy.textContent = e.price + "円";
+      d.appendChild(yy);
+      d.appendChild(document.createTextNode((e.store ? "（" + e.store + "）" : "") + " " + (e.date || "")));
+      d.appendChild(document.createElement("br"));
+      var del = document.createElement("button");
+      del.className = "plDel";
+      del.type = "button";
+      del.textContent = "削除";
+      del.onclick = function () {
+        var l2 = loadPrices();
+        l2.splice(idx, 1);
+        storePrices(l2);
+        renderPrices();
+        el("pfStatus").textContent = "削除しました";
+      };
+      d.appendChild(del);
+      box.appendChild(d);
+    })(i);
+  }
+}
+
+function copyPrices() {
+  var list = loadPrices();
+  if (list.length === 0) { el("pfStatus").textContent = "コピーする記録がありません"; return; }
+  var lines = ["【MARKET-6 価格メモ】"];
+  for (var i = 0; i < list.length; i++) {
+    var e = list[i];
+    lines.push(e.name + " " + e.price + "円" + (e.store ? "（" + e.store + "）" : "") + " " + (e.date || ""));
+  }
+  var ta = document.createElement("textarea");
+  ta.value = lines.join("\n");
+  ta.style.position = "absolute";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e2) { ok = false; }
+  document.body.removeChild(ta);
+  el("pfStatus").textContent = ok ? "価格メモをコピーしました" : "コピーできませんでした";
+}
+
+el("pfAdd").onclick = addPrice;
+el("pfCopy").onclick = copyPrices;
+renderPrices();
 
 buildStalls();
 </script>

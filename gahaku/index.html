@@ -167,6 +167,54 @@
     margin-top: 28px;
     letter-spacing: 1px;
   }
+  /* 画廊 */
+  .gallery { font-size: 0; }
+  .gal-item {
+    display: inline-block;
+    width: 49%;
+    vertical-align: top;
+    margin: 0 2% 14px 0;
+  }
+  .gal-item:nth-child(2n) { margin-right: 0; }
+  .gal-item img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 3px solid #c9a959;
+    cursor: pointer;
+    background: #241d16;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .gal-cap {
+    font-size: 12px;
+    color: #a08c5f;
+    line-height: 1.5;
+    margin: 6px 0;
+    word-break: break-all;
+  }
+  .gal-del {
+    display: block;
+    width: 100%;
+    font-family: inherit;
+    font-size: 14px;
+    color: #e8dcc3;
+    background: #2e2620;
+    border: 2px solid #6e5c33;
+    border-radius: 8px;
+    min-height: 48px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .gal-empty {
+    font-size: 14px;
+    color: #8d7c58;
+    line-height: 1.7;
+  }
+  .gal-note {
+    font-size: 12px;
+    color: #6e5c33;
+    margin-top: 4px;
+  }
 </style>
 </head>
 <body>
@@ -228,6 +276,12 @@
 
 <button type="button" class="draw-btn" id="drawBtn">描く</button>
 
+<div class="section" style="margin-top:26px;">
+  <div class="section-label">画廊（保存した作品）</div>
+  <div class="gallery" id="gallery"></div>
+  <div class="gal-note">絵は外部サービス（Pollinations）で表示しています</div>
+</div>
+
 <div class="footer">GAHAKU-6 ― 絵はAIがその場で描きます</div>
 
 <script>
@@ -272,13 +326,20 @@ var statusEl = document.getElementById("status");
 var titleCard = document.getElementById("titleCard");
 var workTitle = document.getElementById("workTitle");
 
+var pendingWork = null;
+
 artImg.onload = function () {
   statusEl.innerHTML = "";
   drawBtn.disabled = false;
+  if (pendingWork) {
+    addToGallery(pendingWork);
+    pendingWork = null;
+  }
 };
 artImg.onerror = function () {
   statusEl.innerHTML = "絵が届きませんでした。もう一度お試しください";
   drawBtn.disabled = false;
+  pendingWork = null;
 };
 
 drawBtn.onclick = function () {
@@ -304,8 +365,76 @@ drawBtn.onclick = function () {
   artImg.style.display = "block";
   statusEl.innerHTML = "描いています…（数十秒かかることがあります）";
   drawBtn.disabled = true;
+  pendingWork = { url: url, title: titleJa, date: todayStr() };
   artImg.src = url;
 };
+
+var GALLERY_KEY = "gahaku6_gallery_v1";
+var galleryItems = [];
+try {
+  var savedGal = window.localStorage.getItem(GALLERY_KEY);
+  if (savedGal) { galleryItems = JSON.parse(savedGal) || []; }
+} catch (e) { galleryItems = []; }
+
+function saveGallery() {
+  try { window.localStorage.setItem(GALLERY_KEY, JSON.stringify(galleryItems)); } catch (e) {}
+}
+
+function todayStr() {
+  var d = new Date();
+  return d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate();
+}
+
+function addToGallery(item) {
+  var i;
+  for (i = 0; i < galleryItems.length; i++) {
+    if (galleryItems[i].url === item.url) { return; }
+  }
+  galleryItems.push(item);
+  while (galleryItems.length > 12) { galleryItems.shift(); }
+  saveGallery();
+  renderGallery();
+}
+
+function renderGallery() {
+  var box = document.getElementById("gallery");
+  var html = "";
+  var i, it;
+  if (galleryItems.length === 0) {
+    box.innerHTML = '<div class="gal-empty">まだ保存した作品はありません。<br>「描く」で描いた絵が、ここに残ります。</div>';
+    return;
+  }
+  for (i = 0; i < galleryItems.length; i++) {
+    it = galleryItems[i];
+    html += '<div class="gal-item">';
+    html += '<img src="' + it.url + '" alt="" onclick="viewWork(' + i + ')">';
+    html += '<div class="gal-cap">' + it.title + '<br>' + it.date + '</div>';
+    html += '<button type="button" class="gal-del" onclick="deleteWork(' + i + ')">削除</button>';
+    html += '</div>';
+  }
+  box.innerHTML = html;
+}
+
+function viewWork(i) {
+  var it = galleryItems[i];
+  if (!it) { return; }
+  pendingWork = null;
+  emptyMsg.style.display = "none";
+  artImg.style.display = "block";
+  workTitle.innerHTML = "「" + it.title + "」";
+  titleCard.style.display = "block";
+  statusEl.innerHTML = "";
+  artImg.src = it.url;
+  window.scrollTo(0, 0);
+}
+
+function deleteWork(i) {
+  galleryItems.splice(i, 1);
+  saveGallery();
+  renderGallery();
+}
+
+renderGallery();
 </script>
 </body>
 </html>

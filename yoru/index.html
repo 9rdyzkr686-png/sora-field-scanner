@@ -121,6 +121,41 @@ text-align: center;
 #finalBox.finTitle { font-size: 24px; color: #f2e3b3; margin-bottom: 12px;}
 #finalBox.finSteps { font-size: 19px; color: #dfe8ff; line-height: 1.8;}
 .hidden { display: none;}
+.goodInput {
+display: block;
+width: 100%;
+background: #0a1430;
+color: #eef3ff;
+border: 1px solid #2c447e;
+border-radius: 10px;
+font-size: 17px;
+padding: 13px;
+min-height: 50px;
+margin-bottom: 10px;
+}
+.goodNote { color: #8fa5d8; font-size: 14px; margin: 6px 0 10px; line-height: 1.6;}
+#goodStatus { font-size: 16px; color: #ffd97a; min-height: 24px; margin: 8px 0; line-height: 1.5;}
+.goodEntry {
+background: rgba(10, 20, 48, 0.85);
+border: 1px solid #2c447e;
+border-radius: 12px;
+padding: 14px 16px;
+margin-bottom: 10px;
+}
+.goodDate { font-size: 15px; color: #aebfff; margin-bottom: 6px;}
+.goodLine { font-size: 17px; line-height: 1.7; color: #eef3ff;}
+.goodDel {
+display: inline-block;
+background: #101c3d;
+color: #cdd9ff;
+border: 1px solid #35509c;
+border-radius: 10px;
+font-size: 15px;
+padding: 10px 16px;
+min-height: 48px;
+margin-top: 10px;
+}
+.goodEmpty { color: #8fa5d8; font-size: 15px; margin: 8px 0;}
 .foot { color: #5f74a8; font-size: 12px; margin-top: 24px; text-align: center;}
 </style>
 </head>
@@ -161,6 +196,17 @@ text-align: center;
 <div class="finTitle">今日の散歩 おわり</div>
 <div class="finSteps" id="finalText"></div>
 <button class="ghostBtn" id="btnHome">帰る</button>
+</div>
+
+<div id="goodArea">
+<div class="secTitle">🌟 今日のよかったこと</div>
+<div class="goodNote">寝る前に、今日よかったことを3つまで書いてみましょう。1つだけでも大丈夫です。同じ日に保存し直すと、その日の記録は新しいものに置きかわります。</div>
+<input class="goodInput" id="good1" type="text" placeholder="よかったこと 1">
+<input class="goodInput" id="good2" type="text" placeholder="よかったこと 2">
+<input class="goodInput" id="good3" type="text" placeholder="よかったこと 3">
+<button class="bigBtn" id="btnGoodSave">保存する</button>
+<div id="goodStatus"></div>
+<div id="goodList"></div>
 </div>
 
 <div class="foot">YORU-6 深夜の散歩 ／ 歩数は空想の記録です</div>
@@ -512,6 +558,110 @@ el('btnVoice').onclick = toggleVoice;
 el('btnSound').onclick = toggleSound;
 el('btnAuto').onclick = toggleAuto;
 bindChips();
+
+/* ---- 今日のよかったこと 3行メモ ---- */
+var GOOD_KEY = 'yoru6_good_v1';
+
+function goodTodayStr() {
+var d = new Date();
+var m = d.getMonth() + 1;
+var day = d.getDate();
+return d.getFullYear() + '-' + (m < 10 ? '0' + m : '' + m) + '-' + (day < 10 ? '0' + day : '' + day);
+}
+
+function goodDateLabel(s) {
+var p = String(s).split('-');
+if (p.length !== 3) { return s;}
+var d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+var w = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()];
+return p[0] + '年' + parseInt(p[1], 10) + '月' + parseInt(p[2], 10) + '日（' + w + '）';
+}
+
+function goodLoad() {
+try {
+var raw = window.localStorage.getItem(GOOD_KEY);
+if (!raw) { return [];}
+var arr = JSON.parse(raw);
+if (arr && arr.length !== undefined) {
+arr.sort(function (a, b) {
+if (a.date < b.date) { return 1;}
+if (a.date > b.date) { return -1;}
+return 0;
+});
+return arr;
+}
+} catch (e) {}
+return [];
+}
+
+function goodSaveAll(arr) {
+try { window.localStorage.setItem(GOOD_KEY, JSON.stringify(arr));} catch (e) {}
+}
+
+function goodEsc(s) {
+return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function renderGood() {
+var arr = goodLoad();
+var box = el('goodList');
+if (arr.length === 0) {
+box.innerHTML = '<div class="goodEmpty">まだ記録がありません。</div>';
+return;
+}
+var html = '<div class="secTitle">これまでの記録</div>';
+var n = Math.min(arr.length, 14);
+for (var i = 0; i < n; i++) {
+var e = arr[i];
+html += '<div class="goodEntry"><div class="goodDate">' + goodEsc(goodDateLabel(e.date)) + '</div>';
+for (var j = 0; j < e.lines.length; j++) {
+html += '<div class="goodLine">・' + goodEsc(e.lines[j]) + '</div>';
+}
+html += '<button class="goodDel" data-gooddel="' + goodEsc(e.date) + '">この日を消す</button></div>';
+}
+box.innerHTML = html;
+var btns = box.querySelectorAll('[data-gooddel]');
+for (var k = 0; k < btns.length; k++) {
+btns[k].onclick = function () {
+var date = this.getAttribute('data-gooddel');
+var cur = goodLoad();
+var next = [];
+for (var i2 = 0; i2 < cur.length; i2++) {
+if (cur[i2].date !== date) { next.push(cur[i2]);}
+}
+goodSaveAll(next);
+el('goodStatus').textContent = '記録を消しました。';
+renderGood();
+};
+}
+}
+
+function saveGood() {
+var lines = [];
+var v1 = el('good1').value.replace(/^\s+|\s+$/g, '');
+var v2 = el('good2').value.replace(/^\s+|\s+$/g, '');
+var v3 = el('good3').value.replace(/^\s+|\s+$/g, '');
+if (v1) { lines.push(v1);}
+if (v2) { lines.push(v2);}
+if (v3) { lines.push(v3);}
+if (lines.length === 0) {
+el('goodStatus').textContent = '1つだけでも書いてから保存してください。';
+return;
+}
+var today = goodTodayStr();
+var arr = goodLoad();
+var next = [];
+for (var i = 0; i < arr.length; i++) {
+if (arr[i].date !== today) { next.push(arr[i]);}
+}
+next.unshift({ date: today, lines: lines });
+goodSaveAll(next);
+el('goodStatus').textContent = '保存しました。今日もいい日でしたね。';
+renderGood();
+}
+
+el('btnGoodSave').onclick = saveGood;
+renderGood();
 </script>
 </body>
 </html>

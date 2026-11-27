@@ -87,6 +87,20 @@
   #prevBtn { float: left; }
   #nextBtn { float: right; background: #e8873a; }
   .navbtn:disabled { background: #9a8a7a; color: #5d5348; border-color: #6e6156; }
+  /* 参拝記録 */
+  #visitBtn {
+    display: block; width: 100%; min-height: 56px;
+    background: #b03a2e; color: #fff; border: 3px solid #7e241a;
+    border-radius: 12px; font-size: 19px; font-weight: bold;
+  }
+  #visitMsg { text-align: center; font-size: 15px; color: #5a3410; min-height: 22px; margin-top: 8px; line-height: 1.5; }
+  #visitCounts { text-align: center; font-size: 16px; font-weight: bold; color: #6b3d14; margin: 10px 0 6px; }
+  .strip { font-size: 0; text-align: center; margin-top: 4px; }
+  .vcell { display: inline-block; width: 7%; text-align: center; vertical-align: top; padding: 2px 0; }
+  .vcell.today { background: #fff6df; border: 1px solid #b3854a; border-radius: 6px; }
+  .vday { font-size: 11px; color: #8a5a28; }
+  .vmark { font-size: 15px; color: #d8bd8a; }
+  .vmark.on { color: #c0392b; }
   .foot { text-align: center; color: #a97c46; font-size: 12px; margin-top: 14px; line-height: 1.6; }
 </style>
 </head>
@@ -127,6 +141,14 @@
   <div class="navrow">
     <button class="navbtn" id="prevBtn" type="button" disabled>← もどる</button>
     <button class="navbtn" id="nextBtn" type="button" disabled>つぎへ →</button>
+  </div>
+
+  <div class="panel">
+    <div class="panelTitle">⛩️ 参拝記録</div>
+    <button id="visitBtn" type="button">⛩️ 参拝した</button>
+    <div id="visitMsg">今日の参拝を記録しましょう。</div>
+    <div id="visitCounts">通算 0 回 ・ 今月 0 回</div>
+    <div class="strip" id="visitStrip"></div>
   </div>
 
   <div class="foot">
@@ -396,6 +418,93 @@ startBtn.onclick = function () {
   }
   sendKami();
 };
+
+/* ===== 参拝記録 ===== */
+var KAMI_VISIT_KEY = 'kami6_visits_v1';
+var KAMI_WORDS = [
+  '今日もよい日になりますように。',
+  '手を合わせる時間は、心を整える時間です。',
+  '小さな感謝を、ひとつ思い出してみましょう。',
+  '深呼吸をひとつ。肩の力を抜いていきましょう。',
+  '誰かの幸せを願う気持ちは、自分にも返ってきます。',
+  '一歩ずつで大丈夫。今日の歩みを大切にしましょう。'
+];
+var visitBtn = document.getElementById('visitBtn');
+var visitMsg = document.getElementById('visitMsg');
+var visitCounts = document.getElementById('visitCounts');
+var visitStrip = document.getElementById('visitStrip');
+
+function kamiDateStr(d) {
+  var m = d.getMonth() + 1;
+  var day = d.getDate();
+  return d.getFullYear() + '-' + (m < 10 ? '0' + m : '' + m) + '-' + (day < 10 ? '0' + day : '' + day);
+}
+function kamiTodayWord() {
+  var now = new Date();
+  var start = new Date(now.getFullYear(), 0, 0);
+  var doy = Math.floor((now.getTime() - start.getTime()) / 86400000);
+  return KAMI_WORDS[doy % KAMI_WORDS.length];
+}
+function loadVisits() {
+  try {
+    var raw = localStorage.getItem(KAMI_VISIT_KEY);
+    if (!raw) return [];
+    var arr = JSON.parse(raw);
+    if (arr && typeof arr.length === 'number') return arr;
+  } catch (e) {}
+  return [];
+}
+function saveVisits(arr) {
+  try { localStorage.setItem(KAMI_VISIT_KEY, JSON.stringify(arr)); } catch (e) {}
+}
+function hasVisit(visits, ds) {
+  for (var i = 0; i < visits.length; i++) {
+    if (visits[i] === ds) return true;
+  }
+  return false;
+}
+function renderVisits(msg) {
+  var visits = loadVisits();
+  var now = new Date();
+  var todayStr = kamiDateStr(now);
+  var monthPrefix = todayStr.substring(0, 7);
+  var monthCount = 0;
+  var i;
+  for (i = 0; i < visits.length; i++) {
+    if (String(visits[i]).substring(0, 7) === monthPrefix) monthCount++;
+  }
+  visitCounts.textContent = '通算 ' + visits.length + ' 回 ・ 今月 ' + monthCount + ' 回';
+  visitStrip.innerHTML = '';
+  for (i = 13; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    var visited = hasVisit(visits, kamiDateStr(d));
+    var cell = document.createElement('div');
+    cell.className = 'vcell' + (i === 0 ? ' today' : '');
+    var dn = document.createElement('div');
+    dn.className = 'vday';
+    dn.textContent = '' + d.getDate();
+    var mk = document.createElement('div');
+    mk.className = 'vmark' + (visited ? ' on' : '');
+    mk.textContent = visited ? '●' : '○';
+    cell.appendChild(dn);
+    cell.appendChild(mk);
+    visitStrip.appendChild(cell);
+  }
+  visitBtn.textContent = hasVisit(visits, todayStr) ? '今日は参拝ずみです' : '⛩️ 参拝した';
+  if (typeof msg === 'string') visitMsg.textContent = msg;
+}
+visitBtn.onclick = function () {
+  var visits = loadVisits();
+  var todayStr = kamiDateStr(new Date());
+  if (hasVisit(visits, todayStr)) {
+    renderVisits('今日はもう参拝しました。また明日どうぞ。');
+    return;
+  }
+  visits.push(todayStr);
+  saveVisits(visits);
+  renderVisits('参拝しました。今日のひとこと：' + kamiTodayWord());
+};
+renderVisits();
 </script>
 </body>
 </html>
