@@ -52,6 +52,11 @@ select{width:100%;font-size:17px;padding:10px;border:1px solid #c9b98f;border-ra
 .cvrow{display:flex;padding:8px 4px;border-bottom:1px solid #eee0bd;}
 .cvrow .u{flex:1;color:#8a7a5c;}
 .cvrow .v{font-weight:bold;}
+.qtygrp{display:flex;align-items:center;gap:2px;flex:none;margin-left:6px;}
+.qtybtn{width:44px;height:44px;border-radius:8px;border:1px solid #c9b98f;background:#efe3c8;color:#3a2f23;font-size:20px;padding:0;font-family:inherit;flex:none;}
+.qtynum{min-width:28px;text-align:center;font-weight:bold;font-size:17px;}
+#gSearchBar{background:#fffdf5;border-bottom:1px solid #e0d2ae;padding:10px 12px;}
+#gSearchCount{font-size:14px;color:#8a5a1d;margin-top:6px;}
 </style>
 </head>
 <body>
@@ -67,6 +72,14 @@ select{width:100%;font-size:17px;padding:10px;border:1px solid #c9b98f;border-ra
 <button id="tbRecipe" onclick="showTab(3)">レシピ</button>
 <button id="tbGomi" onclick="showTab(4)">ゴミ出し</button>
 <button id="tbTool" onclick="showTab(5)">便利</button>
+</div>
+
+<div id="gSearchBar">
+  <div class="row">
+    <input type="search" id="gSearch" placeholder="ぜんぶのメモから検索（メモ・買い物・健康・レシピなど）" oninput="gSearchRun()">
+    <button class="sub" style="flex:none;" onclick="gSearchClear()">クリア</button>
+  </div>
+  <div id="gSearchCount"></div>
 </div>
 
 <section id="secMemo" class="on">
@@ -349,6 +362,7 @@ function renderMemos(){
   }
   if (html === "") html = '<div class="empty">' + (memos.length === 0 ? "まだメモがありません。「＋ 新しいメモ」から書けます。" : "検索に合うメモがありません。") + '</div>';
   el("memoList").innerHTML = html;
+  gSearchRun();
 }
 function newMemo(){
   memos.push({ t:"", b:"", u:new Date().getTime() });
@@ -390,24 +404,43 @@ var shopGroup = false;
 function shopStoreOf(s){
   return (s.store || "").replace(/^\s+|\s+$/g, "");
 }
+function shopQtyOf(s){
+  var q = parseInt(s.qty, 10);
+  if (isNaN(q) || q < 1) return 1;
+  if (q > 99) return 99;
+  return q;
+}
 function shopItemHtml(i){
-  var s = shop[i], st = shopStoreOf(s);
+  var s = shop[i], st = shopStoreOf(s), q = shopQtyOf(s);
   return '<div class="shopitem">'
     + '<button class="chk" onclick="toggleShop(' + i + ')">' + (s.done ? "✓" : "") + '</button>'
     + '<div class="nm' + (s.done ? " done" : "") + '">' + esc(s.t)
     + (st !== "" ? '<div style="font-size:13px;color:#8a7a5c;">' + esc(st) + '</div>' : '')
     + '</div>'
+    + '<span class="qtygrp"><button class="qtybtn" onclick="shopQty(' + i + ',-1)">−</button>'
+    + '<span class="qtynum">' + q + '</span>'
+    + '<button class="qtybtn" onclick="shopQty(' + i + ',1)">＋</button></span>'
     + '<button class="delx" onclick="deleteShop(' + i + ')">×</button></div>';
+}
+function shopQty(i, d){
+  var q = shopQtyOf(shop[i]) + d;
+  if (q < 1) q = 1;
+  if (q > 99) q = 99;
+  shop[i].qty = q;
+  saveData("techo_shop", shop);
+  renderShop();
 }
 function renderShop(){
   var html = "", i;
   if (shop.length === 0){
     el("shopList").innerHTML = '<div class="empty">リストは空です。買うものを追加してください。</div>';
+    gSearchRun();
     return;
   }
   if (!shopGroup){
     for (i = 0; i < shop.length; i++) html += shopItemHtml(i);
     el("shopList").innerHTML = html;
+    gSearchRun();
     return;
   }
   var order = [], groups = {}, st;
@@ -427,6 +460,7 @@ function renderShop(){
     for (k = 0; k < groups[st].length; k++) html += shopItemHtml(groups[st][k]);
   }
   el("shopList").innerHTML = html;
+  gSearchRun();
 }
 function toggleShopGroup(){
   shopGroup = !shopGroup;
@@ -437,7 +471,7 @@ function addShop(){
   var v = el("shopInput").value.replace(/^\s+|\s+$/g, "");
   if (v === "") return;
   var st = el("shopStoreInput").value.replace(/^\s+|\s+$/g, "");
-  shop.push({ t:v, done:false, store:st });
+  shop.push({ t:v, done:false, store:st, qty:1 });
   el("shopInput").value = "";
   saveData("techo_shop", shop);
   renderShop();
@@ -501,6 +535,7 @@ function renderHealth(){
   if (html === "") html = '<div class="empty">まだ記録がありません。</div>';
   el("hList").innerHTML = html;
   drawGraph();
+  gSearchRun();
 }
 function deleteHealth(i){
   if (!confirm("この記録を消しますか？")) return;
@@ -597,6 +632,7 @@ function renderRecipes(){
   }
   if (html === "") html = '<div class="empty">まだレシピがありません。「＋ 新しいレシピ」から登録できます。</div>';
   el("recipeList").innerHTML = html;
+  gSearchRun();
 }
 function newRecipe(){
   recipes.push({ t:"", ing:"", steps:"" });
@@ -752,6 +788,79 @@ function cvConvert(){
   el("cvResult").innerHTML = html;
 }
 
+/* ---------- 全体検索 ---------- */
+function gRowHit(elm, q){
+  var t = (elm.textContent || "").toLowerCase();
+  return t.indexOf(q) >= 0;
+}
+function gFilterList(listId, rowClass, q){
+  var list = el(listId);
+  if (!list) return 0;
+  var rows = list.querySelectorAll("." + rowClass);
+  var cnt = 0, i;
+  for (i = 0; i < rows.length; i++){
+    var hit = (q === "") || gRowHit(rows[i], q);
+    rows[i].style.display = hit ? "" : "none";
+    if (hit && q !== "") cnt++;
+  }
+  var empties = list.querySelectorAll(".empty");
+  for (i = 0; i < empties.length; i++){
+    empties[i].style.display = (q === "") ? "" : "none";
+  }
+  return cnt;
+}
+function gFilterShop(q){
+  var list = el("shopList");
+  if (!list) return 0;
+  var cnt = 0, i;
+  var kids = list.children;
+  var head = null, headHit = false;
+  function flushHead(){
+    if (head) head.style.display = (q === "" || headHit) ? "" : "none";
+  }
+  for (i = 0; i < kids.length; i++){
+    var k = kids[i];
+    if (k.className.indexOf("storehead") >= 0){
+      flushHead();
+      head = k; headHit = gRowHit(k, q);
+    } else if (k.className.indexOf("shopitem") >= 0){
+      var hit = (q === "") || gRowHit(k, q);
+      k.style.display = hit ? "" : "none";
+      if (hit){ if (q !== "") cnt++; headHit = true; }
+    } else if (k.className.indexOf("empty") >= 0){
+      k.style.display = (q === "") ? "" : "none";
+    }
+  }
+  flushHead();
+  return cnt;
+}
+function gSearchRun(){
+  var input = el("gSearch");
+  if (!input) return;
+  var raw = input.value.replace(/^\s+|\s+$/g, "");
+  var q = raw.toLowerCase();
+  var parts = [], total = 0, c;
+  c = gFilterList("memoList", "listitem", q);    if (c) { parts.push("メモ " + c + "件"); total += c; }
+  c = gFilterShop(q);                            if (c) { parts.push("買い物 " + c + "件"); total += c; }
+  c = gFilterList("hList", "listitem", q);       if (c) { parts.push("健康 " + c + "件"); total += c; }
+  gFilterList("hMonthList", "listitem", q);
+  c = gFilterList("recipeList", "listitem", q);  if (c) { parts.push("レシピ " + c + "件"); total += c; }
+  c = gFilterList("tbThanksList", "listitem", q);  if (c) { parts.push("お礼メモ " + c + "件"); total += c; }
+  c = gFilterList("tbNengaList", "listitem", q);   if (c) { parts.push("年賀状 " + c + "件"); total += c; }
+  c = gFilterList("tbLentList", "listitem", q);    if (c) { parts.push("預けメモ " + c + "件"); total += c; }
+  c = gFilterList("tbBorrowList", "listitem", q);  if (c) { parts.push("返却メモ " + c + "件"); total += c; }
+  var box = el("gSearchCount");
+  if (!box) return;
+  if (q === ""){ box.innerHTML = ""; return; }
+  box.innerHTML = (total === 0)
+    ? "「" + esc(raw) + "」に合うものはありませんでした。"
+    : "「" + esc(raw) + "」の結果：" + parts.join("、") + "（合計 " + total + " 件）。タブを切り替えて確認できます。";
+}
+function gSearchClear(){
+  el("gSearch").value = "";
+  gSearchRun();
+}
+
 /* ---------- 初期化 ---------- */
 if (!storeOK) showStoreNote();
 el("hDate").value = todayStr();
@@ -796,6 +905,7 @@ function tbRenderThanks(){
   }
   if (html === "") html = '<div class="empty">まだお礼メモがありません。</div>';
   tbEl("tbThanksList").innerHTML = html;
+  if (typeof gSearchRun === "function") gSearchRun();
 }
 function tbAddThanks(){
   var v = tbTrim(tbEl("tbThanksInput").value);
@@ -829,6 +939,7 @@ function tbRenderNenga(){
   }
   if (html === "") html = '<div class="empty">まだ年賀状の記録がありません。</div>';
   tbEl("tbNengaList").innerHTML = html;
+  if (typeof gSearchRun === "function") gSearchRun();
 }
 function tbAddNenga(){
   var v = tbTrim(tbEl("tbNengaName").value);
@@ -859,6 +970,7 @@ function tbRenderLent(){
   }
   if (html === "") html = '<div class="empty">まだ預けメモがありません。</div>';
   tbEl("tbLentList").innerHTML = html;
+  if (typeof gSearchRun === "function") gSearchRun();
 }
 function tbAddLent(){
   var item = tbTrim(tbEl("tbLentItem").value);
@@ -895,6 +1007,7 @@ function tbRenderBorrow(){
   }
   if (html === "") html = '<div class="empty">まだ返却メモがありません。</div>';
   tbEl("tbBorrowList").innerHTML = html;
+  if (typeof gSearchRun === "function") gSearchRun();
 }
 function tbAddBorrow(){
   var item = tbTrim(tbEl("tbBorrowItem").value);
