@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SENTO-6 銭湯いちばん</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0 0 40px 0;
+    background: #f6ead2;
+    color: #3a2418;
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+    font-size: 17px; line-height: 1.55;
+  }
+  a { color: #8a3324; }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; background: #efe0c0; border-bottom: 2px solid #c9a86a;
+  }
+  .topbar a { font-size: 16px; font-weight: bold; text-decoration: none; min-height: 48px; display: inline-flex; align-items: center; }
+  .voicebtn {
+    min-height: 48px; min-width: 120px; padding: 8px 12px;
+    font-size: 16px; font-weight: bold;
+    background: #fff8ea; color: #8a3324;
+    border: 2px solid #8a3324; border-radius: 10px; cursor: pointer;
+  }
+  /* のれん */
+  .noren {
+    background: #8a3324;
+    background-image: repeating-linear-gradient(90deg, rgba(0,0,0,0.18) 0 2px, rgba(0,0,0,0) 2px 25%);
+    color: #fff8ea; text-align: center;
+    padding: 18px 10px 16px 10px;
+    border-bottom: 6px solid #5f2015;
+  }
+  .noren .yu {
+    display: inline-block; width: 58px; height: 58px; line-height: 58px;
+    border: 3px solid #fff8ea; border-radius: 50%;
+    font-size: 30px; font-weight: bold; margin-bottom: 6px;
+  }
+  .noren h1 { margin: 4px 0 2px 0; font-size: 27px; letter-spacing: 2px; }
+  .noren .sub { font-size: 14px; opacity: 0.92; }
+  /* 富士山の壁絵バンド */
+  .fuji {
+    position: relative; height: 96px; overflow: hidden;
+    background: linear-gradient(#fdf3d8 0%, #f7e3b2 55%, #eecf95 100%);
+    border-bottom: 4px solid #c9a86a;
+  }
+  .fuji .sun {
+    position: absolute; top: 12px; right: 14%;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: radial-gradient(circle at 50% 50%, #e2572b 0%, #d84a24 70%, rgba(216,74,36,0) 72%);
+  }
+  .fuji .yama {
+    position: absolute; bottom: 0; left: 50%; margin-left: -120px;
+    width: 0; height: 0;
+    border-left: 120px solid transparent; border-right: 120px solid transparent;
+    border-bottom: 78px solid #546a8a;
+  }
+  .fuji .yuki {
+    position: absolute; bottom: 55px; left: 50%; margin-left: -36px;
+    width: 0; height: 0;
+    border-left: 36px solid transparent; border-right: 36px solid transparent;
+    border-bottom: 23px solid #ffffff;
+  }
+  .fuji .caption {
+    position: absolute; left: 10px; bottom: 6px;
+    font-size: 13px; color: #7a5a34; font-weight: bold;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 12px; }
+  .panel {
+    background: #fff8ea; border: 2px solid #c9a86a; border-radius: 12px;
+    padding: 14px; margin-top: 16px;
+    box-shadow: 0 2px 0 rgba(138,51,36,0.15);
+  }
+  .panel h2 {
+    margin: 0 0 10px 0; font-size: 20px; color: #8a3324;
+    border-bottom: 2px dashed #c9a86a; padding-bottom: 6px;
+  }
+  .wxrow { padding: 8px 0; border-bottom: 1px dotted #d8bd8a; }
+  .wxrow:last-of-type { border-bottom: none; }
+  .wxday { font-weight: bold; color: #8a3324; font-size: 18px; }
+  .wxtemp { font-size: 19px; font-weight: bold; }
+  .wxmeta { font-size: 15px; color: #6b4a2f; }
+  .stamp { font-size: 13px; color: #8a7a5f; margin-top: 8px; }
+  .bigbtn {
+    display: block; width: 100%; min-height: 54px;
+    font-size: 18px; font-weight: bold;
+    background: #8a3324; color: #fff8ea;
+    border: none; border-radius: 10px; cursor: pointer; padding: 12px;
+  }
+  .bigbtn:active { background: #6d271b; }
+  .subbtn {
+    display: block; width: 100%; min-height: 48px; margin-top: 10px;
+    font-size: 16px; font-weight: bold;
+    background: #fff8ea; color: #8a3324;
+    border: 2px solid #8a3324; border-radius: 10px; cursor: pointer; padding: 10px;
+  }
+  /* チャット */
+  .chatlog {
+    background: #fdf3da; border: 1px solid #d8bd8a; border-radius: 8px;
+    padding: 10px; min-height: 120px; max-height: 340px; overflow-y: auto;
+  }
+  .msg { margin: 0 0 10px 0; }
+  .msg .who { font-size: 13px; font-weight: bold; color: #8a7a5f; }
+  .msg .body {
+    display: inline-block; padding: 8px 12px; border-radius: 12px;
+    max-width: 92%; word-break: break-word;
+  }
+  .msg.bandai .body { background: #ffffff; border: 1px solid #d8bd8a; }
+  .msg.guest { text-align: right; }
+  .msg.guest .body { background: #f3d9a4; border: 1px solid #c9a86a; text-align: left; }
+  .chatrow { display: flex; margin-top: 10px; }
+  .chatrow input {
+    flex: 1; min-height: 52px; font-size: 17px; padding: 10px;
+    border: 2px solid #c9a86a; border-radius: 10px; background: #ffffff;
+  }
+  .chatrow button {
+    min-height: 52px; min-width: 84px; margin-left: 8px;
+    font-size: 17px; font-weight: bold;
+    background: #8a3324; color: #fff8ea; border: none; border-radius: 10px; cursor: pointer;
+  }
+  .status { font-size: 14px; color: #8a5a24; min-height: 20px; margin-top: 6px; }
+  .detail { font-size: 12px; color: #a08a68; }
+  /* 今日の湯（木枠カード） */
+  .yucard {
+    background: #a9743f; border: 4px solid #6e4a26; border-radius: 8px;
+    padding: 10px; margin-top: 12px; display: none;
+  }
+  .yucard .inner {
+    background: #fff3d6; border-radius: 4px; padding: 16px 14px;
+    text-align: center; min-height: 84px;
+  }
+  .yucard .yuname { font-size: 24px; font-weight: bold; color: #8a3324; letter-spacing: 2px; }
+  .yucard .yunote { font-size: 16px; margin-top: 6px; }
+  .footer { text-align: center; font-size: 13px; color: #8a7a5f; margin-top: 22px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="../portal/">← 全サイト一覧へ</a>
+  <button type="button" class="voicebtn" id="voiceBtn">ボイス：OFF</button>
+</div>
+
+<div class="noren">
+  <div class="yu">ゆ</div>
+  <h1>SENTO-6 銭湯いちばん</h1>
+  <div class="sub">〜 番台のおばちゃんがいる、まちの銭湯 〜</div>
+</div>
+
+<div class="fuji">
+  <div class="sun"></div>
+  <div class="yama"></div>
+  <div class="yuki"></div>
+  <div class="caption">壁絵はいつもの富士山</div>
+</div>
+
+<div class="wrap">
+
+  <!-- 番台の掲示板 -->
+  <div class="panel">
+    <h2>♨ 番台の掲示板（ふじみ野の天気）</h2>
+    <div id="weatherBox">天気を読み込み中…</div>
+    <div class="stamp" id="weatherStamp"></div>
+    <button type="button" class="subbtn" id="weatherBtn">天気を読み直す</button>
+  </div>
+
+  <!-- AI番台さん -->
+  <div class="panel">
+    <h2>🧺 AI番台さんに話しかける</h2>
+    <div class="chatlog" id="chatLog"></div>
+    <div class="chatrow">
+      <input type="text" id="chatInput" placeholder="例：今日は寒いねえ">
+      <button type="button" id="chatSend">送る</button>
+    </div>
+    <div class="status" id="chatStatus"></div>
+  </div>
+
+  <!-- 今日の湯 -->
+  <div class="panel">
+    <h2>🛁 今日の湯</h2>
+    <div>日替わりのお湯は、番台さんがAIに聞いて決めています。</div>
+    <button type="button" class="bigbtn" id="yuBtn" style="margin-top:10px;">今日の湯を聞く</button>
+    <div class="yucard" id="yuCard">
+      <div class="inner">
+        <div class="yuname" id="yuName"></div>
+        <div class="yunote" id="yuNote"></div>
+      </div>
+    </div>
+    <div class="status" id="yuStatus"></div>
+  </div>
+
+  <div class="footer">SENTO-6 銭湯いちばん ／ お湯は熱め、心はぬくめ</div>
+</div>
+
+<script>
+var voiceOn = false;
+var aiBusy = false;
+
+function el(id) { return document.getElementById(id); }
+
+function speak(text) {
+  if (!voiceOn) return;
+  if (!text) return;
+  if (text.indexOf("\n") >= 0) return;
+  if (text.length > 150) return;
+  try {
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 0.8;
+    u.rate = 1.0;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+el("voiceBtn").onclick = function () {
+  voiceOn = !voiceOn;
+  el("voiceBtn").innerHTML = voiceOn ? "ボイス：ON" : "ボイス：OFF";
+  if (!voiceOn) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+};
+
+/* ---------- AI共通 ---------- */
+function callAI(prompt, statusEl, onOk) {
+  if (aiBusy) {
+    statusEl.innerHTML = "いま他の用事でAIを呼んでいます。少し待ってください。";
+    return;
+  }
+  aiBusy = true;
+  var sec = 0;
+  statusEl.innerHTML = "考え中… 0秒";
+  var timer = setInterval(function () {
+    sec++;
+    statusEl.innerHTML = "考え中… " + sec + "秒";
+  }, 1000);
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  function finish() {
+    clearInterval(timer);
+    aiBusy = false;
+  }
+  xhr.onload = function () {
+    finish();
+    var text = xhr.responseText || "";
+    if (xhr.status === 402 || text.indexOf("Free limit") >= 0) {
+      statusEl.innerHTML = "本日の無料AI回線は上限に達しました。明日の朝9時に回復します。";
+      return;
+    }
+    if (xhr.status === 200 && text) {
+      statusEl.innerHTML = "";
+      onOk(text.replace(/^\s+|\s+$/g, ""));
+    } else {
+      statusEl.innerHTML = "AI回線が混み合っています。少し待って、もう一度どうぞ。<br><span class=\"detail\">詳細：HTTP " + xhr.status + "</span>";
+    }
+  };
+  xhr.ontimeout = function () {
+    finish();
+    statusEl.innerHTML = "AIの返事が時間切れになりました（90秒）。もう一度押してみてください。";
+  };
+  xhr.onerror = function () {
+    finish();
+    statusEl.innerHTML = "AI回線が混み合っています。少し待って、もう一度どうぞ。<br><span class=\"detail\">詳細：HTTP 0</span>";
+  };
+  var body = JSON.stringify({
+    messages: [{ role: "user", content: prompt }],
+    model: "openai-fast"
+  });
+  xhr.send(body);
+}
+
+/* ---------- 天気（番台の掲示板） ---------- */
+function weatherName(code) {
+  if (code === 0) return "晴れ";
+  if (code === 1) return "晴れ（雲すこし）";
+  if (code === 2) return "晴れ時々くもり";
+  if (code === 3) return "くもり";
+  if (code === 45 || code === 48) return "霧";
+  if (code === 51 || code === 53 || code === 55) return "霧雨";
+  if (code === 56 || code === 57) return "着氷性の霧雨";
+  if (code === 61 || code === 63 || code === 65) return "雨";
+  if (code === 66 || code === 67) return "着氷性の雨";
+  if (code === 71 || code === 73 || code === 75) return "雪";
+  if (code === 77) return "雪あられ";
+  if (code === 80 || code === 81 || code === 82) return "にわか雨";
+  if (code === 85 || code === 86) return "にわか雪";
+  if (code === 95) return "雷雨";
+  if (code === 96 || code === 99) return "雷雨（ひょう）";
+  return "不明";
+}
+
+function loadWeather() {
+  var box = el("weatherBox");
+  box.innerHTML = "天気を読み込み中…";
+  var url = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=Asia%2FTokyo";
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", url, true);
+  xhr.timeout = 20000;
+  xhr.onload = function () {
+    if (xhr.status !== 200) {
+      box.innerHTML = "天気が取れませんでした。電波の良いところで、もう一度読み直してみてください。";
+      return;
+    }
+    var data;
+    try { data = JSON.parse(xhr.responseText); } catch (e) {
+      box.innerHTML = "天気の読み取りに失敗しました。もう一度読み直してみてください。";
+      return;
+    }
+    var d = data.daily;
+    if (!d || !d.time || d.time.length < 2) {
+      box.innerHTML = "天気の内容が空でした。もう一度読み直してみてください。";
+      return;
+    }
+    var labels = ["今日", "明日"];
+    var html = "";
+    for (var i = 0; i < 2; i++) {
+      var rain = d.precipitation_probability_max[i];
+      var rainText = (rain === null || rain === undefined) ? "—" : rain + "％";
+      html += "<div class=\"wxrow\">"
+        + "<span class=\"wxday\">" + labels[i] + "（" + d.time[i] + "）</span>　"
+        + "<span class=\"wxtemp\">最高 " + Math.round(d.temperature_2m_max[i]) + "℃ ／ 最低 " + Math.round(d.temperature_2m_min[i]) + "℃</span><br>"
+        + "<span class=\"wxmeta\">天気：" + weatherName(d.weather_code[i]) + "　／　雨の確率：" + rainText + "</span>"
+        + "</div>";
+    }
+    box.innerHTML = html;
+    var now = new Date();
+    el("weatherStamp").innerHTML = now.getHours() + "時" + now.getMinutes() + "分取得（Open-Meteo）";
+  };
+  xhr.ontimeout = function () {
+    box.innerHTML = "天気が取れませんでした（時間切れ）。もう一度読み直してみてください。";
+  };
+  xhr.onerror = function () {
+    box.innerHTML = "天気が取れませんでした。電波の良いところで、もう一度読み直してみてください。";
+  };
+  xhr.send(null);
+}
+el("weatherBtn").onclick = function () { loadWeather(); };
+loadWeather();
+
+/* ---------- AI番台さん ---------- */
+var chatHistory = []; // {r:"u"|"a", t:"..."}
+
+function addMsg(whoClass, whoLabel, text) {
+  var log = el("chatLog");
+  var div = document.createElement("div");
+  div.className = "msg " + whoClass;
+  var safe = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  div.innerHTML = "<div class=\"who\">" + whoLabel + "</div><span class=\"body\">" + safe + "</span>";
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+addMsg("bandai", "番台さん", "いらっしゃい！今日もいい湯だよ。ゆっくりしてってね。");
+
+function sendChat() {
+  var input = el("chatInput");
+  var text = input.value.replace(/^\s+|\s+$/g, "");
+  if (!text) return;
+  if (aiBusy) {
+    el("chatStatus").innerHTML = "いま番台さんが考え中です。少し待ってください。";
+    return;
+  }
+  addMsg("guest", "小野さん", text);
+  chatHistory.push({ r: "u", t: text });
+  input.value = "";
+
+  var prompt = "あなたは銭湯『銭湯いちばん』の番台に座るおばちゃんです。温かくて、少しおせっかいで、優しい口調で答えてください。返事は120文字以内、マークダウンなしの普通の文章で。相手は常連の小野さんです。";
+  var start = chatHistory.length - 7;
+  if (start < 0) start = 0;
+  var lines = [];
+  for (var i = start; i < chatHistory.length - 1; i++) {
+    var h = chatHistory[i];
+    lines.push((h.r === "u" ? "小野さん：" : "番台さん：") + h.t);
+  }
+  if (lines.length > 0) {
+    prompt += "\n\nこれまでの会話:\n" + lines.join("\n");
+  }
+  prompt += "\n\n小野さんの新しい発言：" + text + "\n番台さんとして短く答えてください。";
+
+  callAI(prompt, el("chatStatus"), function (reply) {
+    if (reply.length > 280) reply = reply.substring(0, 280);
+    addMsg("bandai", "番台さん", reply);
+    chatHistory.push({ r: "a", t: reply });
+    speak(reply);
+  });
+}
+el("chatSend").onclick = function () { sendChat(); };
+el("chatInput").onkeydown = function (ev) {
+  if (ev.keyCode === 13) { sendChat(); }
+};
+
+/* ---------- 今日の湯 ---------- */
+el("yuBtn").onclick = function () {
+  var prompt = "銭湯の『今日の湯』を1つ提案してください。ゆず湯、ミント湯、ラベンダー湯、しょうが湯、よもぎ湯、りんご湯などから選ぶか、季節に合うものを考えてください。出力は必ず次の2行だけにしてください。1行目：湯の名前だけ（例：ゆず湯）。2行目：効能や気分を伝える一言（60文字以内）。マークダウンなし。";
+  callAI(prompt, el("yuStatus"), function (reply) {
+    var parts = reply.split("\n");
+    var name = "";
+    var note = "";
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i].replace(/^\s+|\s+$/g, "");
+      if (!p) continue;
+      if (!name) { name = p; } else if (!note) { note = p; }
+    }
+    if (!name) { name = reply; }
+    if (name.length > 40) name = name.substring(0, 40);
+    if (note.length > 120) note = note.substring(0, 120);
+    el("yuName").innerHTML = name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    el("yuNote").innerHTML = note.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    el("yuCard").style.display = "block";
+    speak(name + "。" + note);
+  });
+};
+</script>
+</body>
+</html>

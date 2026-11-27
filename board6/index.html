@@ -35,6 +35,12 @@ border: 2px solid #cbbd93; border-radius: 8px; background: #fff;
 font-family: inherit;
 }
 textarea { min-height: 90px;}
+select {
+width: 100%; font-size: 17px; height: 52px; padding: 10px;
+border: 2px solid #cbbd93; border-radius: 8px; background: #fff;
+font-family: inherit; color: #333;
+}
+.esite { font-size: 14px; font-weight: bold; color: #6b4f1d; margin-right: 6px;}
 .catrow { margin: 4px 0 2px 0;}
 .catbtn {
 display: inline-block; margin: 0 6px 8px 0; padding: 10px 14px;
@@ -88,12 +94,40 @@ font-family: inherit; display: none;
 <h1>📌 BOARD-6 要望ボード</h1>
 
 <div class="note">
-ここに書いたものは、このiPhoneの中に保存されます。<br>
-たまったら下の「全文コピー」を押して、クーとのトークに貼ってください。クーが読んで実装します。
+ここに書いた要望は、このiPhoneの中だけに保存されます。このページから自動で送信されることはありません。<br>
+夜になったら、下の「全文コピー」を押して、クーとのトークに貼ってください。クーが読んで、各サイトを改善します。
 </div>
 
 <div class="card">
 <h2>✏️ 新しく書く</h2>
+
+<label for="siteSel">どのサイトへの要望？</label>
+<select id="siteSel">
+<option value="KUU FIELD SCANNER" selected>KUU FIELD SCANNER</option>
+<option value="情報ボード">情報ボード</option>
+<option value="PORTAL-6">PORTAL-6</option>
+<option value="AI-6">AI-6</option>
+<option value="GEESEN-6">GEESEN-6</option>
+<option value="ORBIT-6">ORBIT-6</option>
+<option value="RDR-6">RDR-6</option>
+<option value="HIMA-6">HIMA-6</option>
+<option value="DENSETSU-6">DENSETSU-6</option>
+<option value="RADIO-6">RADIO-6</option>
+<option value="DENWA-6">DENWA-6</option>
+<option value="JIKAN-6">JIKAN-6</option>
+<option value="SHOKUDO-6">SHOKUDO-6</option>
+<option value="KAIJU-6">KAIJU-6</option>
+<option value="HAKUBUTSU-6">HAKUBUTSU-6</option>
+<option value="EKIMA-6">EKIMA-6</option>
+<option value="TECHO-6">TECHO-6</option>
+<option value="PHOTO-6">PHOTO-6</option>
+<option value="TV-6">TV-6</option>
+<option value="JIHANKI-6">JIHANKI-6</option>
+<option value="SHINBUN-6">SHINBUN-6</option>
+<option value="SENTO-6">SENTO-6</option>
+<option value="BOARD-6">BOARD-6</option>
+<option value="その他">その他</option>
+</select>
 
 <label>カテゴリ</label>
 <div class="catrow" id="catRow">
@@ -142,6 +176,15 @@ return d.getFullYear() + "/" + pad2(d.getMonth() + 1) + "/" + pad2(d.getDate()) 
 " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
 }
 
+function fmtDay(ts) {
+var d = new Date(ts);
+return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+}
+
+function siteOf(e) {
+return e.site? e.site: "未選択";
+}
+
 function esc(s) {
 return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -188,7 +231,7 @@ var html = "";
 for (i = 0; i < entries.length; i++) {
 var e = entries[i];
 html += '<div class="entry' + (e.done? " done": "") + '">';
-html += '<div class="emeta"><span class="etag ' + catClass(e.cat) + '">' + esc(e.cat) + '</span>' + fmtDate(e.ts) + '</div>';
+html += '<div class="emeta"><span class="esite">【' + esc(siteOf(e)) + '】</span><span class="etag ' + catClass(e.cat) + '">' + esc(e.cat) + '</span>' + fmtDate(e.ts) + '</div>';
 if (e.title) html += '<div class="etitle">' + esc(e.title) + '</div>';
 html += '<div class="ebody">' + esc(e.body) + '</div>';
 html += '<div class="ebtns">';
@@ -215,6 +258,7 @@ var title = el("titleInput").value.replace(/^\s+|\s+$/g, "");
 entries.unshift({
 id: nextId++,
 ts: new Date().getTime(),
+site: el("siteSel").value,
 cat: selCat,
 title: title,
 body: body,
@@ -228,17 +272,14 @@ render();
 
 function buildCopyText() {
 var lines = [];
-var n = 0;
 var i;
-lines.push("未済み " + countUndone() + "件");
+lines.push("BOARD-6 要望ボード（未済み" + countUndone() + "件）");
 for (i = entries.length - 1; i >= 0; i--) {
 var e = entries[i];
 if (e.done) continue;
-n++;
-lines.push("");
-lines.push(n + ". [" + e.cat + "] " + (e.title? e.title: "（タイトルなし）"));
-lines.push(" " + fmtDate(e.ts));
-lines.push(" " + e.body.replace(/\n/g, "\n "));
+var text = e.body.replace(/\s*\n\s*/g, " ");
+if (e.title) text = e.title + "：" + text;
+lines.push("【" + siteOf(e) + "】" + text + "（" + fmtDay(e.ts) + "）");
 }
 return lines.join("\n");
 }

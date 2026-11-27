@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHINBUN-6 クー新聞</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0;}
+html { -webkit-text-size-adjust: 100%;}
+body {
+background: #efe9dc;
+color: #1a1a1a;
+font-family: "Hiragino Mincho ProN", "Hiragino Mincho Pro", "Yu Mincho", "YuMincho", serif;
+padding: 10px 10px 40px;
+line-height: 1.7;
+}
+.portal-link {
+display: inline-block; min-height: 48px; line-height: 48px;
+padding: 0 14px; margin-bottom: 10px;
+color: #1a1a1a; text-decoration: none; font-size: 15px;
+border: 1px solid #1a1a1a; background: #f7f3e8;
+font-family: sans-serif;
+}
+.paper {
+background: #faf6ec;
+border: 2px solid #1a1a1a;
+padding: 14px 14px 18px;
+box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+.masthead { text-align: center; border-bottom: 4px double #1a1a1a; padding-bottom: 8px;}
+.masthead.paper-name { font-size: 44px; font-weight: bold; letter-spacing: 0.25em; line-height: 1.2;}
+.masthead.date-line { font-size: 14px; margin-top: 4px; border-top: 1px solid #1a1a1a; padding-top: 4px;}
+.fiction-note {
+margin-top: 8px; font-size: 13px; text-align: center;
+border: 1px solid #1a1a1a; padding: 6px 8px; background: #efe9dc;
+font-family: sans-serif;
+}
+.weather-box {
+margin-top: 12px; border: 1px solid #1a1a1a; padding: 8px 10px;
+}
+.weather-box.w-title { font-size: 13px; font-weight: bold; letter-spacing: 0.2em; border-bottom: 1px solid #999; padding-bottom: 2px;}
+.weather-box.w-body { font-size: 16px; margin-top: 4px;}
+.weather-box.w-src { font-size: 11px; color: #555; font-family: sans-serif;}
+.issue-btn {
+display: block; width: 100%; min-height: 56px; margin-top: 14px;
+font-size: 20px; font-weight: bold; letter-spacing: 0.1em;
+font-family: "Hiragino Mincho ProN", serif;
+background: #1a1a1a; color: #faf6ec; border: none; cursor: pointer;
+}
+.issue-btn:disabled { background: #777;}
+.status-line {
+margin-top: 10px; min-height: 24px; text-align: center;
+font-size: 15px; font-family: sans-serif;
+}
+.status-detail { font-size: 12px; color: #666; text-align: center; font-family: sans-serif;}
+.section { margin-top: 18px;}
+.section.sec-label {
+font-size: 13px; font-weight: bold; letter-spacing: 0.3em;
+border-top: 2px solid #1a1a1a; border-bottom: 1px solid #1a1a1a;
+padding: 2px 0; text-align: center;
+}
+.top-headline { font-size: 26px; font-weight: bold; line-height: 1.4; margin-top: 10px; text-align: center;}
+.article-body { font-size: 16px; margin-top: 8px; text-align: justify;}
+.column-body { font-size: 15px; margin-top: 8px; text-align: justify;}
+.column-by { font-size: 13px; text-align: right; color: #444;}
+.hitokoto-body { font-size: 19px; font-weight: bold; margin-top: 8px; text-align: center;}
+.copy-btn {
+display: block; width: 100%; min-height: 52px; margin-top: 18px;
+font-size: 17px; font-family: sans-serif;
+background: #faf6ec; color: #1a1a1a; border: 2px solid #1a1a1a; cursor: pointer;
+}
+.copy-note { text-align: center; font-size: 13px; color: #555; margin-top: 6px; min-height: 18px; font-family: sans-serif;}
+.footer {
+margin-top: 16px; text-align: center; font-size: 12px; color: #555;
+font-family: sans-serif; border-top: 1px solid #999; padding-top: 8px;
+}
+.hidden { display: none;}
+</style>
+</head>
+<body>
+
+<a class="portal-link" href="../portal/">← 全サイト一覧へ</a>
+
+<div class="paper">
+<div class="masthead">
+<div class="paper-name">クー新聞</div>
+<div class="date-line" id="dateLine">----年--月--日</div>
+</div>
+<div class="fiction-note">この新聞の記事はAIが書いた創作です。本当のニュースではありません</div>
+
+<div class="weather-box">
+<div class="w-title">天気欄（本物のデータ）</div>
+<div class="w-body" id="weatherBody">発行すると、ふじみ野市の今日の天気がここに出ます</div>
+<div class="w-src">出典：Open-Meteo（埼玉県ふじみ野市）</div>
+</div>
+
+<button class="issue-btn" id="issueBtn" type="button">今日の新聞を発行する</button>
+<div class="status-line" id="statusLine"></div>
+<div class="status-detail" id="statusDetail"></div>
+
+<div id="paperBody" class="hidden">
+<div class="section">
+<div class="sec-label">一　面</div>
+<div class="top-headline" id="topHeadline"></div>
+<div class="article-body" id="topBody"></div>
+</div>
+<div class="section">
+<div class="sec-label">コ　ラ　ム</div>
+<div class="column-body" id="colBody"></div>
+<div class="column-by">—— ダックス記者</div>
+</div>
+<div class="section">
+<div class="sec-label">ひ　と　こ　と</div>
+<div class="hitokoto-body" id="hitokotoBody"></div>
+</div>
+<button class="copy-btn" id="copyBtn" type="button">全文コピー</button>
+<div class="copy-note" id="copyNote"></div>
+</div>
+</div>
+
+<div class="footer">SHINBUN-6 クー新聞 ／ 一面・コラムはAIの創作、天気欄だけ本物です</div>
+
+<script>
+var RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
+var CUTIE_FEED = "https://news.google.com/rss/search?q=%22CUTIE%20STREET%22&hl=ja&gl=JP&ceid=JP:ja";
+var SPACE_FEED = "https://sorae.info/feed";
+var WEATHER_URL = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia%2FTokyo";
+var AI_URL = "https://text.pollinations.ai/";
+
+var WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+var issueNo = 1;
+var dateText = "";
+var weatherText = "";
+var paperData = null;
+var busy = false;
+var printTimer = null;
+var printSec = 0;
+
+function el(id) { return document.getElementById(id);}
+
+function pad2(n) { return (n < 10? "0": "") + n;}
+
+function initDate() {
+var now = new Date();
+var base = new Date(2025, 0, 1);
+var today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+issueNo = Math.floor((today0.getTime() - base.getTime()) / 86400000) + 1;
+dateText = now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日（" + WEEKDAYS[now.getDay()] + "）";
+el("dateLine").textContent = dateText + "　第" + issueNo + "号";
+}
+
+function weatherName(code) {
+if (code === 0) return "快晴";
+if (code === 1) return "晴れ";
+if (code === 2) return "晴れ時々くもり";
+if (code === 3) return "くもり";
+if (code === 45 || code === 48) return "霧";
+if (code === 51 || code === 53 || code === 55) return "霧雨";
+if (code === 56 || code === 57) return "凍る霧雨";
+if (code === 61) return "小雨";
+if (code === 63) return "雨";
+if (code === 65) return "大雨";
+if (code === 66 || code === 67) return "凍る雨";
+if (code === 71) return "小雪";
+if (code === 73) return "雪";
+if (code === 75) return "大雪";
+if (code === 77) return "雪の結晶";
+if (code === 80) return "にわか雨（弱）";
+if (code === 81) return "にわか雨";
+if (code === 82) return "激しいにわか雨";
+if (code === 85 || code === 86) return "にわか雪";
+if (code === 95) return "雷雨";
+if (code === 96 || code === 99) return "雷雨（雹あり）";
+return "不明";
+}
+
+function fetchWeather() {
+var xhr = new XMLHttpRequest();
+xhr.open("GET", WEATHER_URL, true);
+xhr.timeout = 15000;
+xhr.onreadystatechange = function () {
+if (xhr.readyState!== 4) return;
+if (xhr.status === 200) {
+try {
+var d = JSON.parse(xhr.responseText);
+var max = Math.round(d.daily.temperature_2m_max[0]);
+var min = Math.round(d.daily.temperature_2m_min[0]);
+var name = weatherName(d.daily.weather_code[0]);
+weatherText = "ふじみ野市　" + name + "　最高 " + max + "℃ ／ 最低 " + min + "℃";
+el("weatherBody").textContent = weatherText;
+} catch (e) {
+el("weatherBody").textContent = "天気データの読み取りに失敗しました";
+}
+} else {
+el("weatherBody").textContent = "天気が取得できませんでした（通信エラー）";
+}
+};
+xhr.ontimeout = function () { el("weatherBody").textContent = "天気が取得できませんでした（時間切れ）";};
+xhr.onerror = function () { el("weatherBody").textContent = "天気が取得できませんでした（通信エラー）";};
+xhr.send(null);
+}
+
+function fetchFeedTitles(feedUrl, done) {
+var xhr = new XMLHttpRequest();
+xhr.open("GET", RSS2JSON + encodeURIComponent(feedUrl), true);
+xhr.timeout = 15000;
+var finished = false;
+function finish(titles) {
+if (finished) return;
+finished = true;
+done(titles);
+}
+xhr.onreadystatechange = function () {
+if (xhr.readyState!== 4) return;
+var titles = [];
+if (xhr.status === 200) {
+try {
+var d = JSON.parse(xhr.responseText);
+if (d && d.items) {
+for (var i = 0; i < d.items.length && titles.length < 2; i++) {
+if (d.items[i].title) titles.push(d.items[i].title);
+}
+}
+} catch (e) { titles = [];}
+}
+finish(titles);
+};
+xhr.ontimeout = function () { finish([]);};
+xhr.onerror = function () { finish([]);};
+xhr.send(null);
+}
+
+function setStatus(main, detail) {
+el("statusLine").textContent = main || "";
+el("statusDetail").textContent = detail || "";
+}
+
+function startPrintTimer() {
+printSec = 0;
+el("statusLine").textContent = "印刷中… 0秒";
+printTimer = setInterval(function () {
+printSec++;
+el("statusLine").textContent = "印刷中… " + printSec + "秒";
+}, 1000);
+}
+
+function stopPrintTimer() {
+if (printTimer!== null) { clearInterval(printTimer); printTimer = null;}
+}
+
+function parsePaper(text) {
+var t = String(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+var iTop = t.indexOf("");
+var iCol = t.indexOf("");
+var iHit = t.indexOf("");
+var result = { headline: "", top: "", col: "", hitokoto: ""};
+if (iTop < 0) {
+result.top = t.replace(/^\s+|\s+$/g, "");
+return result;
+}
+var topEnd = (iCol > iTop)? iCol: ((iHit > iTop)? iHit: t.length);
+var topSeg = t.substring(iTop + 4, topEnd).replace(/^\s+|\s+$/g, "");
+var nl = topSeg.indexOf("\n");
+if (nl > 0) {
+result.headline = topSeg.substring(0, nl).replace(/^\s+|\s+$/g, "");
+result.top = topSeg.substring(nl + 1).replace(/^\s+|\s+$/g, "");
+} else {
+result.top = topSeg;
+}
+if (iCol >= 0) {
+var colEnd = (iHit > iCol)? iHit: t.length;
+result.col = t.substring(iCol + 5, colEnd).replace(/^\s+|\s+$/g, "");
+}
+if (iHit >= 0) {
+result.hitokoto = t.substring(iHit + 6).replace(/^\s+|\s+$/g, "");
+}
+return result;
+}
+
+function showPaper(p) {
+paperData = p;
+el("topHeadline").textContent = p.headline || "";
+el("topHeadline").style.display = p.headline? "": "none";
+el("topBody").textContent = p.top || "";
+el("colBody").textContent = p.col || "（コラムはお休みです）";
+el("hitokotoBody").textContent = p.hitokoto || "";
+el("paperBody").className = "";
+el("copyNote").textContent = "";
+}
+
+function callAI(seeds) {
+var seedText;
+if (seeds.length > 0) {
+seedText = seeds.join("／");
+} else {
+seedText = "（種になる見出しが取れなかったので、テーマは「ふじみ野市の穏やかな一日」でお願いします）";
+}
+var prompt = "あなたはユーモア新聞『クー新聞』の編集長です。次の本当のニュース見出しを種にして、ほのぼのした創作記事を書いてください。事実として断定する書き方は避け、ジョークとして楽しめる内容にしてください。\n"
++ "種の見出し：" + seedText + "\n"
++ "出力は必ず次の形式ちょうどで、各マーカーは単独の行に置いてください。全体で700文字以内、マークダウンや記号の装飾は使わず、プレーンテキストのみで書いてください。\n"
++ "\n"
++ "（一面の見出しを1行）\n"
++ "（一面の本文を5〜7文）\n"
++ "\n"
++ "（ダックスフントの記者『ダックス記者』が書いた短いコラム、3〜4文）\n"
++ "\n"
++ "（締めのウィットのある一言、1行）";
+
+startPrintTimer();
+var xhr = new XMLHttpRequest();
+xhr.open("POST", AI_URL, true);
+xhr.setRequestHeader("Content-Type", "application/json");
+xhr.timeout = 90000;
+var body = JSON.stringify({ messages: [{ role: "user", content: prompt}], model: "openai-fast"});
+xhr.onreadystatechange = function () {
+if (xhr.readyState!== 4) return;
+stopPrintTimer();
+busy = false;
+el("issueBtn").disabled = false;
+var resp = xhr.responseText || "";
+if (xhr.status === 402 || resp.indexOf("Free limit") >= 0) {
+setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+return;
+}
+if (xhr.status === 200 && resp.replace(/\s+/g, "")!== "") {
+setStatus("発行しました！", "");
+showPaper(parsePaper(resp));
+return;
+}
+setStatus("AI回線が混み合っています。少し待って、もう一度発行してみてください", "詳細：HTTP " + xhr.status);
+};
+xhr.ontimeout = function () {
+stopPrintTimer();
+busy = false;
+el("issueBtn").disabled = false;
+setStatus("AIの返事が時間切れになりました。もう一度発行してみてください", "詳細：timeout");
+};
+xhr.onerror = function () {
+stopPrintTimer();
+busy = false;
+el("issueBtn").disabled = false;
+setStatus("AI回線が混み合っています。少し待って、もう一度発行してみてください", "詳細：HTTP " + xhr.status);
+};
+xhr.send(body);
+}
+
+function issuePaper() {
+if (busy) return;
+busy = true;
+el("issueBtn").disabled = true;
+el("paperBody").className = "hidden";
+setStatus("見出しを集めています…", "");
+fetchWeather();
+var seeds = [];
+var pending = 2;
+function oneDone(titles) {
+for (var i = 0; i < titles.length; i++) seeds.push(titles[i]);
+pending--;
+if (pending === 0) callAI(seeds);
+}
+fetchFeedTitles(CUTIE_FEED, oneDone);
+fetchFeedTitles(SPACE_FEED, oneDone);
+}
+
+function copyAll() {
+if (!paperData) return;
+var lines = [];
+lines.push("クー新聞　" + dateText + "　第" + issueNo + "号");
+lines.push("（この新聞の記事はAIが書いた創作です。本当のニュースではありません）");
+lines.push("");
+if (weatherText) { lines.push("" + weatherText); lines.push("");}
+lines.push("");
+if (paperData.headline) lines.push(paperData.headline);
+lines.push(paperData.top);
+lines.push("");
+lines.push("ダックス記者");
+lines.push(paperData.col);
+lines.push("");
+lines.push("");
+lines.push(paperData.hitokoto);
+var text = lines.join("\n");
+var ta = document.createElement("textarea");
+ta.value = text;
+ta.style.position = "absolute";
+ta.style.left = "-9999px";
+document.body.appendChild(ta);
+ta.select();
+var ok = false;
+try { ok = document.execCommand("copy");} catch (e) { ok = false;}
+document.body.removeChild(ta);
+el("copyNote").textContent = ok? "コピーしました": "コピーできませんでした";
+}
+
+el("issueBtn").addEventListener("click", issuePaper, false);
+el("copyBtn").addEventListener("click", copyAll, false);
+initDate();
+</script>
+</body>
+</html>

@@ -92,6 +92,51 @@ margin-top: 12px;
 line-height: 1.6;
 display: none;
 }
+#aiPanel { display: none; margin-top: 12px;}
+#aiLog {
+background: #1d120b;
+border: 1px solid #4a2d16;
+border-radius: 10px;
+padding: 10px;
+min-height: 120px;
+max-height: 320px;
+overflow-y: auto;
+}
+.ailine { font-size: 17px; line-height: 1.65; margin-bottom: 10px; word-break: break-all;}
+.ailine .who { font-size: 13px; font-weight: bold; letter-spacing: 1px; display: block; margin-bottom: 2px;}
+.ailine.master { color: #ffe1ae;}
+.ailine.master .who { color: #ffb45e;}
+.ailine.user { color: #bcd8ff; text-align: right;}
+.ailine.user .who { color: #7fa8d9;}
+.ailine.sys { color: #9a7748; font-size: 14px; text-align: center;}
+.ailine.sys.small { font-size: 12px; margin-top: -6px;}
+#aiStatus { font-size: 15px; color: #ffb45e; min-height: 22px; margin-top: 8px; text-align: center;}
+.aiInputRow { display: table; width: 100%; margin-top: 10px;}
+.aiInputCell { display: table-cell; vertical-align: middle;}
+.aiSendCell { display: table-cell; vertical-align: middle; width: 96px; padding-left: 8px;}
+#aiInput {
+width: 100%;
+min-height: 52px;
+background: #1d120b;
+color: #f3e2c7;
+border: 2px solid #6b4423;
+border-radius: 10px;
+font-size: 17px;
+padding: 10px;
+}
+#aiSendBtn {
+display: block;
+width: 100%;
+min-height: 52px;
+background: #8a4b16;
+color: #fff3dd;
+border: 2px solid #ffb45e;
+border-radius: 10px;
+font-size: 18px;
+font-weight: bold;
+cursor: pointer;
+}
+#aiSendBtn:active { background: #a85f1e;}
 .togglebtn {
 display: block;
 width: 100%;
@@ -151,6 +196,19 @@ margin-bottom: 12px;
 <div id="servedName">いらっしゃい。</div>
 <p id="episodeText">カウンターに座って、ゆっくりしていってください。気になる品があったら「注文」をどうぞ。</p>
 <p id="memoText"></p>
+</div>
+
+<div class="card">
+<h2>■ AI大将</h2>
+<button type="button" class="togglebtn" id="aiToggleBtn">AI大将と話す</button>
+<div id="aiPanel">
+<div id="aiLog"></div>
+<p id="aiStatus"></p>
+<div class="aiInputRow">
+<div class="aiInputCell"><input type="text" id="aiInput" placeholder="大将に話しかけてみてください"></div>
+<div class="aiSendCell"><button type="button" id="aiSendBtn">送信</button></div>
+</div>
+</div>
 </div>
 
 <div class="card">
@@ -308,6 +366,136 @@ el("voiceBtn").innerHTML = voiceOn? "ボイス：ON": "ボイス：OFF";
 if (!voiceOn) {
 try { if ("speechSynthesis" in window) { window.speechSynthesis.cancel();}} catch (e) {}
 }
+};
+
+var aiOpen = false;
+var aiBusy = false;
+var aiGreeted = false;
+var aiHistory = [];
+var aiTimer = null;
+var aiSeconds = 0;
+
+function appendAiLine(kind, who, text) {
+var log = el("aiLog");
+var div = document.createElement("div");
+div.className = "ailine " + kind;
+if (who) {
+var w = document.createElement("span");
+w.className = "who";
+w.appendChild(document.createTextNode(who));
+div.appendChild(w);
+}
+div.appendChild(document.createTextNode(text));
+log.appendChild(div);
+log.scrollTop = log.scrollHeight;
+}
+
+function appendAiSys(text, small) {
+var log = el("aiLog");
+var div = document.createElement("div");
+div.className = "ailine sys" + (small? " small": "");
+div.appendChild(document.createTextNode(text));
+log.appendChild(div);
+log.scrollTop = log.scrollHeight;
+}
+
+function startAiTimer() {
+aiSeconds = 0;
+el("aiStatus").innerHTML = "大将が考え中… 0秒";
+aiTimer = setInterval(function () {
+aiSeconds = aiSeconds + 1;
+el("aiStatus").innerHTML = "大将が考え中… " + aiSeconds + "秒";
+}, 1000);
+}
+
+function stopAiTimer() {
+if (aiTimer!== null) { clearInterval(aiTimer); aiTimer = null;}
+el("aiStatus").innerHTML = "";
+}
+
+function buildAiPrompt() {
+var p = "あなたは深夜だけ開く小さな食堂の大将です。温かくて口数は少なく、優しい口調で話してください。相手は客の小野さんです。返事は100文字以内にしてください。日本語の普通の文章だけで答え、マークダウンや絵文字、箇条書きは使わないでください。";
+var start = aiHistory.length > 6? aiHistory.length - 6: 0;
+var convo = "";
+for (var i = start; i < aiHistory.length; i++) {
+if (aiHistory[i].r === "u") { convo += "\n客：" + aiHistory[i].t;}
+else { convo += "\n大将：" + aiHistory[i].t;}
+}
+if (convo) { p += "\n\nこれまでの会話：" + convo;}
+p += "\n大将として、最後の客の言葉に返事をしてください。";
+return p;
+}
+
+function sendAi() {
+if (aiBusy) { return;}
+var input = el("aiInput");
+var text = input.value.replace(/^\s+|\s+$/g, "");
+if (!text) { return;}
+input.value = "";
+appendAiLine("user", "小野さん", text);
+aiHistory.push({ r: "u", t: text});
+aiBusy = true;
+startAiTimer();
+var xhr = new XMLHttpRequest();
+xhr.open("POST", "https://text.pollinations.ai/", true);
+xhr.setRequestHeader("Content-Type", "application/json");
+xhr.timeout = 90000;
+xhr.onreadystatechange = function () {
+if (xhr.readyState!== 4) { return;}
+stopAiTimer();
+aiBusy = false;
+var body = xhr.responseText || "";
+if (xhr.status === 402 || body.indexOf("Free limit")!== -1) {
+appendAiSys("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", false);
+return;
+}
+if (xhr.status === 200) {
+var reply = body.replace(/^\s+|\s+$/g, "");
+if (reply) {
+if (reply.length > 300) { reply = reply.substring(0, 300);}
+appendAiLine("master", "大将", reply);
+aiHistory.push({ r: "a", t: reply});
+if (reply.indexOf("\n") === -1 && reply.length <= 150) { speak(reply);}
+return;
+}
+}
+appendAiSys("AI回線が混み合っています", false);
+appendAiSys("詳細：HTTP " + xhr.status, true);
+};
+xhr.ontimeout = function () {
+stopAiTimer();
+aiBusy = false;
+appendAiSys("大将の返事が時間切れになりました。もう一度送ってみてください", false);
+};
+xhr.onerror = function () {
+stopAiTimer();
+aiBusy = false;
+appendAiSys("AI回線が混み合っています", false);
+appendAiSys("詳細：HTTP 0", true);
+};
+try {
+xhr.send(JSON.stringify({ messages: [{ role: "user", content: buildAiPrompt()}], model: "openai-fast"}));
+} catch (e) {
+stopAiTimer();
+aiBusy = false;
+appendAiSys("AI回線が混み合っています", false);
+appendAiSys("詳細：HTTP 0", true);
+}
+}
+
+el("aiToggleBtn").onclick = function () {
+aiOpen =!aiOpen;
+el("aiPanel").style.display = aiOpen? "block": "none";
+el("aiToggleBtn").innerHTML = aiOpen? "AI大将を閉じる": "AI大将と話す";
+if (aiOpen &&!aiGreeted) {
+aiGreeted = true;
+appendAiLine("master", "大将", "いらっしゃい。腹、減ってるかい？　おすすめを聞いてもいいし、今日あったことを話してもいいよ。ゆっくりしていきな。");
+}
+};
+
+el("aiSendBtn").onclick = function () { sendAi();};
+el("aiInput").onkeydown = function (e) {
+if (e && (e.keyCode === 13 || e.key === "Enter")) { sendAi();}
 };
 
 buildMenu();

@@ -165,6 +165,15 @@ button:active { background: #33ff66; color: #000; }
 </div>
 
 <div class="panel">
+  <div class="panel-title">PLANETARIUM <span class="jp">プラネタリウム（AI星空案内）</span></div>
+  <button id="planetBtn">今夜の星空を案内してもらう</button>
+  <div id="planetText" style="font-size:16px; min-height:48px; color:#eafff8; line-height:1.7;">ボタンを押すと、今夜の日没時刻と月の様子をもとに、AIが星空の見どころを案内します。</div>
+  <div class="msg" id="planetMsg"></div>
+  <button id="planetStopBtn" style="display:none;">読み上げを止める STOP</button>
+  <div class="note">※ 案内文はAIが生成します。日没・月相はこのページの実データ（取得値・計算値）を使います。</div>
+</div>
+
+<div class="panel">
   <div class="panel-title">SUN <span class="jp">太陽データ（計算値）</span></div>
   <div class="row">
     <div class="cell"><div class="k">地球〜太陽の距離</div><div class="v" id="sunDist">---</div></div>
@@ -925,6 +934,134 @@ function quizNext() {
     el("quizMsg").innerHTML = "まず答えを選んでください。";
   }
 }
+
+/* ---------- PLANETARIUM ---------- */
+var planetBusy = false;
+var planetTimer = null;
+
+function planetEsc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+}
+
+function planetMoonNameLocal() {
+  var synodic = 29.530588853;
+  var newMoon = Date.UTC(2000, 0, 6, 18, 14) / 86400000;
+  var nowDays = Date.now() / 86400000;
+  var age = (nowDays - newMoon) % synodic;
+  if (age < 0) { age += synodic; }
+  var names = ["新月", "三日月", "上弦の月", "十三夜", "満月", "寝待月", "下弦の月", "有明月"];
+  var idx = Math.floor(((age + synodic / 16) % synodic) / (synodic / 8));
+  return names[idx];
+}
+
+function planetSpeak(text) {
+  if (!("speechSynthesis" in window)) { return; }
+  try {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 0.6;
+    u.rate = 1.0;
+    u.onend = function () { el("planetStopBtn").style.display = "none"; };
+    u.onerror = function () { el("planetStopBtn").style.display = "none"; };
+    el("planetStopBtn").style.display = "block";
+    speechSynthesis.speak(u);
+  } catch (e) {
+    el("planetStopBtn").style.display = "none";
+  }
+}
+
+function planetStop() {
+  if ("speechSynthesis" in window) {
+    try { speechSynthesis.cancel(); } catch (e) {}
+  }
+  el("planetStopBtn").style.display = "none";
+}
+
+function planetFinish() {
+  planetBusy = false;
+  if (planetTimer) { clearInterval(planetTimer); planetTimer = null; }
+}
+
+function planetShow(text) {
+  planetFinish();
+  el("planetText").innerHTML = planetEsc(text);
+  el("planetMsg").innerHTML = "";
+  if (text.length <= 300) { planetSpeak(text); }
+}
+
+function planetError(msg, detail) {
+  planetFinish();
+  el("planetText").innerHTML = planetEsc(msg);
+  el("planetMsg").innerHTML = detail ? planetEsc(detail) : "";
+}
+
+function planetAsk(dateStr, sunset, moonName) {
+  var facts = "今日は" + dateStr + "です。観測地は埼玉県ふじみ野市です。";
+  if (sunset) { facts += "今夜の日没は" + sunset + "ごろです。"; }
+  if (moonName) { facts += "今夜の月は「" + moonName + "」です。"; }
+  var prompt = "あなたはプラネタリウムの案内役です。次の情報をもとに、今夜の星空の見どころを紹介する案内文を、星空案内の優しい口調で書いてください。250文字以内。マークダウンなし、プレーンテキストのみ。情報にない数値や時刻は断定しないでください。【情報】" + facts;
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  xhr.onload = function () {
+    var body = xhr.responseText || "";
+    if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+      planetError("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+      return;
+    }
+    if (xhr.status !== 200 || body.replace(/\s/g, "") === "") {
+      planetError("AI回線が混み合っています", "詳細：HTTP " + xhr.status);
+      return;
+    }
+    planetShow(body.replace(/\s+$/, ""));
+  };
+  xhr.ontimeout = function () {
+    planetError("AIの返事が時間切れになりました。もう一度押してみてください", "");
+  };
+  xhr.onerror = function () {
+    planetError("AI回線が混み合っています", "詳細：HTTP " + xhr.status);
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+}
+
+function planetGo() {
+  if (planetBusy) { return; }
+  planetBusy = true;
+  planetStop();
+  var sec = 0;
+  el("planetText").innerHTML = "投影準備中… 0秒";
+  el("planetMsg").innerHTML = "";
+  if (planetTimer) { clearInterval(planetTimer); }
+  planetTimer = setInterval(function () {
+    sec++;
+    if (planetBusy) { el("planetText").innerHTML = "投影準備中… " + sec + "秒"; }
+  }, 1000);
+  var now = new Date();
+  var wd = ["日", "月", "火", "水", "木", "金", "土"][now.getDay()];
+  var dateStr = (now.getMonth() + 1) + "月" + now.getDate() + "日（" + wd + "）";
+  var moonName = el("moonName").textContent || "";
+  if (moonName === "" || moonName === "---") { moonName = planetMoonNameLocal(); }
+  var sunset = el("sunsetT").textContent || "";
+  if (/^\d{1,2}:\d{2}$/.test(sunset)) {
+    planetAsk(dateStr, sunset, moonName);
+  } else {
+    var url = "https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON +
+      "&daily=sunset&timezone=Asia%2FTokyo&forecast_days=1";
+    getJSON(url, function (d) {
+      var ss = "";
+      try { ss = d.daily.sunset[0].substring(11, 16); } catch (e) { ss = ""; }
+      if (!/^\d{1,2}:\d{2}$/.test(ss)) { ss = ""; }
+      planetAsk(dateStr, ss, moonName);
+    }, function () {
+      planetAsk(dateStr, "", moonName);
+    });
+  }
+}
+
+el("planetBtn").addEventListener("click", function () { planetGo(); });
+el("planetStopBtn").addEventListener("click", function () { planetStop(); });
 
 /* ---------- INIT ---------- */
 function refreshAll() {

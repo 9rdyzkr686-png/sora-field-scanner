@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>JIHANKI-6 深夜の自動販売機</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { background:#050914; }
+  body {
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+    color:#dfe8ff; min-height:100vh; padding:10px 10px 26px;
+    background:
+      radial-gradient(ellipse 90px 34px at 82% 34px, rgba(240,244,200,.85), rgba(240,244,200,0) 70%),
+      radial-gradient(ellipse 300px 120px at 50% 108%, rgba(38,64,140,.5), rgba(38,64,140,0) 70%),
+      linear-gradient(#04060f 0%, #071022 55%, #0a1428 100%);
+  }
+  .stars { color:#8fa8d8; font-size:10px; letter-spacing:6px; text-align:center; opacity:.7; padding:2px 0 0; }
+  .topbar { overflow:hidden; margin:4px 0 8px; }
+  .portal-link {
+    float:left; display:block; min-height:48px; line-height:48px; padding:0 14px;
+    color:#9fd8ff; text-decoration:none; font-size:15px;
+    border:2px solid #2c4a7c; border-radius:10px; background:rgba(10,22,48,.85);
+  }
+  #voiceBtn {
+    float:right; min-height:48px; min-width:118px; padding:0 12px;
+    font-size:15px; font-weight:bold; color:#ffe9a8; cursor:pointer;
+    border:2px solid #7c642c; border-radius:10px; background:rgba(48,38,10,.9);
+  }
+  h1 {
+    text-align:center; font-size:21px; letter-spacing:2px; color:#fff;
+    text-shadow:0 0 8px #6fc3ff, 0 0 22px #2f7fe0; margin:2px 0 2px;
+  }
+  .sub { text-align:center; font-size:13px; color:#9db4dd; margin-bottom:10px; }
+
+  /* ===== 自動販売機 ===== */
+  .machine {
+    max-width:430px; margin:0 auto; border-radius:16px; padding:12px 12px 14px;
+    background:linear-gradient(#8e1620, #6d0f18 60%, #570b12);
+    border:3px solid #2b0206;
+    box-shadow:0 0 34px rgba(255,70,80,.28), 0 0 90px rgba(90,150,255,.16), inset 0 2px 0 rgba(255,255,255,.25);
+  }
+  .window {
+    border-radius:10px; padding:12px 10px 10px; text-align:center;
+    background:linear-gradient(#fdf6d8, #ffeeb0);
+    border:3px solid #20140a;
+    box-shadow:inset 0 0 22px rgba(255,196,0,.55), 0 0 18px rgba(255,238,170,.75);
+    color:#33240a;
+  }
+  .window .w-title { font-size:19px; font-weight:bold; letter-spacing:3px; }
+  .window .w-sub { font-size:12px; margin-top:3px; color:#6b5320; }
+  .cans { font-size:19px; letter-spacing:5px; margin-top:6px; }
+  .free-note {
+    text-align:center; margin:10px 0 2px; font-size:15px; font-weight:bold; color:#ffe9a8;
+    text-shadow:0 0 8px rgba(255,200,60,.6);
+  }
+  .btns { margin-top:8px; }
+  .drink-btn {
+    display:block; width:100%; min-height:56px; margin:9px 0; padding:8px 12px;
+    font-size:17px; font-weight:bold; color:#101018; text-align:left; cursor:pointer;
+    border-radius:12px; border:3px solid rgba(0,0,0,.45);
+    box-shadow:0 4px 0 rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.55);
+  }
+  .drink-btn:active { transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.5); }
+  .drink-btn .price { float:right; font-size:13px; font-weight:normal; opacity:.75; }
+  .b0 { background:linear-gradient(#ffb37a, #ff8a3c); }
+  .b1 { background:linear-gradient(#b7f0c0, #5fd06e); }
+  .b2 { background:linear-gradient(#aee2ff, #4fa8e8); }
+  .b3 { background:linear-gradient(#ffd7f2, #f07fc4); }
+  .b4 { background:linear-gradient(#fff3a6, #ffd83c); }
+  .drink-btn.busy { opacity:.55; }
+
+  /* ===== 取り出し口 ===== */
+  .slot {
+    margin-top:12px; border-radius:10px; padding:12px;
+    background:linear-gradient(#0a0d16, #141a28);
+    border:3px solid #000; box-shadow:inset 0 6px 14px rgba(0,0,0,.9), inset 0 -2px 0 rgba(255,255,255,.08);
+    min-height:120px;
+  }
+  .slot-label { font-size:12px; color:#7d8fb3; letter-spacing:2px; margin-bottom:6px; }
+  #slotText { font-size:17px; line-height:1.65; color:#f2f6ff; white-space:pre-wrap; word-break:break-word; }
+  #slotText.waiting { color:#ffd76e; }
+  #slotText.error { color:#ff9d9d; }
+  .detail { display:block; margin-top:6px; font-size:12px; color:#8d99b5; }
+  .drop { animation:dropIn .45s ease-out; -webkit-animation:dropIn .45s ease-out; }
+  @keyframes dropIn {
+    0% { transform:translateY(-34px); opacity:0; }
+    60% { transform:translateY(4px); opacity:1; }
+    100% { transform:translateY(0); opacity:1; }
+  }
+  @-webkit-keyframes dropIn {
+    0% { -webkit-transform:translateY(-34px); opacity:0; }
+    60% { -webkit-transform:translateY(4px); opacity:1; }
+    100% { -webkit-transform:translateY(0); opacity:1; }
+  }
+  .counter { text-align:center; margin-top:12px; font-size:15px; color:#cfe0ff; }
+  .counter span { color:#ffd76e; font-weight:bold; font-size:18px; }
+  .foot { text-align:center; margin-top:14px; font-size:12px; color:#5f7195; line-height:1.7; }
+</style>
+</head>
+<body>
+  <div class="stars">・　・　・　・　・　・</div>
+  <div class="topbar">
+    <a class="portal-link" href="../portal/">← 全サイト一覧へ</a>
+    <button id="voiceBtn" type="button">ボイス：ON</button>
+  </div>
+  <h1>JIHANKI-6</h1>
+  <div class="sub">〜 深夜の自動販売機 〜</div>
+
+  <div class="machine">
+    <div class="window">
+      <div class="w-title">よるの じはんき</div>
+      <div class="w-sub">真夜中だけ開いている、ふしぎな自販機</div>
+      <div class="cans">🥫🧃🥤🧋🍵</div>
+    </div>
+
+    <div class="free-note">★ 全部無料・コインいりません ★</div>
+
+    <div class="btns">
+      <button class="drink-btn b0" id="b0" type="button">📕 あたたかい短編<span class="price">むりょう</span></button>
+      <button class="drink-btn b1" id="b1" type="button">🎋 AI俳句<span class="price">むりょう</span></button>
+      <button class="drink-btn b2" id="b2" type="button">💡 AI一言アドバイス<span class="price">むりょう</span></button>
+      <button class="drink-btn b3" id="b3" type="button">🔮 AI占い<span class="price">むりょう</span></button>
+      <button class="drink-btn b4" id="b4" type="button">🐶 ダックス便り<span class="price">むりょう</span></button>
+    </div>
+
+    <div class="slot">
+      <div class="slot-label">▼ とりだしぐち ▼</div>
+      <div id="slotText">ボタンを押すと、ここにポトンと落ちてきます。</div>
+    </div>
+  </div>
+
+  <div class="counter">出てきた数：<span id="countNum">0</span> 個</div>
+  <div class="foot">中身はAIがその場で作っています。同じボタンでも毎回ちがいます。<br>無料AI回線には1日の上限があります。</div>
+
+<script>
+var ITEMS = [
+  { prompt: "心があたたかくなる、とても短い物語を書いてください。200文字以内の日本語、本文だけを書いてください。マークダウンや記号の装飾は使わないでください。" },
+  { prompt: "俳句を一句作ってください。そのあと改行して、一行で短い解説を添えてください。日本語で、マークダウンは使わないでください。" },
+  { prompt: "今日を少し良くするための一言アドバイスを、日本語で一文だけください。やさしく具体的に。マークダウンは使わないでください。" },
+  { prompt: "今日の小さな占いをしてください。運勢のランク（大吉・中吉・小吉・吉・末吉のどれか）と、ラッキーアイテムを、日本語で2行以内にまとめてください。マークダウンは使わないでください。" },
+  { prompt: "カニンヘンダックスフンドの視点で、人間の小野さんへの短いお便りを書いてください。かわいく、150文字以内の日本語で、本文だけを書いてください。マークダウンは使わないでください。" }
+];
+
+var busy = false;
+var count = 0;
+var voiceOn = true;
+var timerId = null;
+var audioCtx = null;
+
+function el(id) { return document.getElementById(id); }
+
+function setSlot(text, cls) {
+  var s = el('slotText');
+  s.className = cls || '';
+  s.innerHTML = '';
+  s.appendChild(document.createTextNode(text));
+}
+
+function dropAnimate() {
+  var s = el('slotText');
+  s.classList.remove('drop');
+  void s.offsetWidth;
+  s.classList.add('drop');
+}
+
+function speak(text) {
+  if (!voiceOn) { return; }
+  if (!('speechSynthesis' in window)) { return; }
+  if (text.indexOf('\n') !== -1) { return; }
+  if (text.length > 150) { return; }
+  try {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP';
+    u.pitch = 0.6;
+    u.rate = 1.0;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+function clunk() {
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) { return; }
+    if (!audioCtx) { audioCtx = new AC(); }
+    if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+    var t = audioCtx.currentTime;
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(140, t);
+    osc.frequency.exponentialRampToValueAtTime(45, t + 0.13);
+    gain.gain.setValueAtTime(0.22, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + 0.18);
+  } catch (e) {}
+}
+
+function stopTimer() {
+  if (timerId !== null) { clearInterval(timerId); timerId = null; }
+}
+
+function finish(btn) {
+  busy = false;
+  stopTimer();
+  if (btn) {
+    btn.classList.remove('busy');
+    if (btn.getAttribute('data-label')) { btn.innerHTML = btn.getAttribute('data-label'); }
+  }
+}
+
+function showError(btn, msg, detail) {
+  finish(btn);
+  var s = el('slotText');
+  s.className = 'error';
+  s.innerHTML = '';
+  s.appendChild(document.createTextNode(msg));
+  if (detail) {
+    var d = document.createElement('span');
+    d.className = 'detail';
+    d.appendChild(document.createTextNode(detail));
+    s.appendChild(d);
+  }
+}
+
+function dispense(idx) {
+  if (busy) { return; }
+  busy = true;
+  var btn = el('b' + idx);
+  if (!btn.getAttribute('data-label')) { btn.setAttribute('data-label', btn.innerHTML); }
+  btn.classList.add('busy');
+  btn.innerHTML = '…';
+
+  var sec = 0;
+  setSlot('ガシャン… 0秒', 'waiting');
+  stopTimer();
+  timerId = setInterval(function() {
+    sec++;
+    setSlot('ガシャン… ' + sec + '秒', 'waiting');
+  }, 1000);
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://text.pollinations.ai/', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 90000;
+
+  xhr.onload = function() {
+    var body = xhr.responseText || '';
+    if (xhr.status === 402 || body.indexOf('Free limit') !== -1) {
+      showError(btn, '本日の無料AI回線は上限に達しました。明日の朝9時に回復します', '');
+      return;
+    }
+    if (xhr.status !== 200) {
+      showError(btn, 'AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
+      return;
+    }
+    var text = body.replace(/^\s+|\s+$/g, '');
+    if (!text) {
+      showError(btn, 'AI回線が混み合っています', '詳細：HTTP 200（空の返事）');
+      return;
+    }
+    if (text.length > 500) { text = text.substring(0, 500); }
+    finish(btn);
+    setSlot(text, '');
+    dropAnimate();
+    clunk();
+    count++;
+    el('countNum').innerHTML = String(count);
+    speak(text);
+  };
+  xhr.onerror = function() {
+    showError(btn, 'AI回線が混み合っています', '詳細：HTTP 0');
+  };
+  xhr.ontimeout = function() {
+    showError(btn, 'AIの返事が時間切れになりました（90秒）。もう一度押してみてください', '');
+  };
+
+  var payload = JSON.stringify({
+    messages: [{ role: 'user', content: ITEMS[idx].prompt }],
+    model: 'openai-fast'
+  });
+  xhr.send(payload);
+}
+
+function init() {
+  var i;
+  for (i = 0; i < ITEMS.length; i++) {
+    (function(n) {
+      el('b' + n).addEventListener('click', function() { dispense(n); }, false);
+    })(i);
+  }
+  el('voiceBtn').addEventListener('click', function() {
+    voiceOn = !voiceOn;
+    el('voiceBtn').innerHTML = voiceOn ? 'ボイス：ON' : 'ボイス：OFF';
+    if (!voiceOn && ('speechSynthesis' in window)) {
+      try { speechSynthesis.cancel(); } catch (e) {}
+    }
+  }, false);
+}
+
+init();
+</script>
+</body>
+</html>
