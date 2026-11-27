@@ -58,6 +58,10 @@
   .hidden { display:none; }
   #reportText, #quizText { font-size:15px; line-height:1.7; color:#c8ffd6; white-space:pre-wrap; }
   footer { font-size:13px; color:#5f9a6c; margin-top:14px; line-height:1.6; }
+  footer a.portal-back { display:inline-block; padding:12px 16px; margin-top:8px; color:#33ff66; border:1px solid #33ff66; background:#021a08; text-decoration:none; font-size:14px; letter-spacing:1px; }
+  footer a.portal-back:active { background:#33ff66; color:#000; }
+  body.night footer a.portal-back { color:#ff7a6b; border-color:#ff5040; background:#1a0302; }
+  body.night footer a.portal-back:active { background:#ff5040; color:#000; }
   /* ---- night mode ---- */
   body.night { color:#ff7a6b; }
   body.night h1 { color:#ff5040; text-shadow:0 0 8px rgba(255,80,64,.7); }
@@ -193,7 +197,8 @@
 <footer>
   ※ 位置・距離・方角は概算です（娯楽用レーダー）。富士山の視程や季節演出は演出です。<br>
   季節演出：<span id="seasonLine">--</span><br>
-  RDR-6 SURROUNDINGS SCANNER — OFFLINE MODE / ALL DATA ON BOARD
+  RDR-6 SURROUNDINGS SCANNER — OFFLINE MODE / ALL DATA ON BOARD<br>
+  <a class="portal-back" href="../portal/">← PORTAL-6（全サイト一覧）へ戻る</a>
 </footer>
 
 <script>

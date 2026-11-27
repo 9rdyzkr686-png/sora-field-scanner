@@ -311,6 +311,51 @@ body.night #coinBar, body.night #seasonStrip { color: #ffc857; }
 body.night .footer { color: #777; }
 /* ===== 第3バッチ：アイコン／演出／片手／白黒／印刷／粒子／ふりがな ===== */
 .siteicon { display: inline-block; font-size: 20px; margin-right: 7px; vertical-align: -2px; }
+/* ===== (232) カテゴリ絞り込み＋サイト検索 ===== */
+.catlabel {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: normal;
+  color: #9fc7ab;
+  border: 1px solid #2a4a35;
+  border-radius: 8px;
+  padding: 0 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+.chips {
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0 6px;
+}
+.chip {
+  display: inline-block;
+  min-height: 44px;
+  padding: 10px 14px;
+  margin: 0 8px 6px 0;
+  background: #0c1710;
+  color: #c9f5d6;
+  border: 1px solid #2a4a35;
+  border-radius: 22px;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.chip:active { background: #14301d; }
+.chip.on { background: #39ff7a; color: #050807; font-weight: bold; border-color: #39ff7a; }
+body.theme-paper .catlabel { color: #7a6242; border-color: #c9b489; }
+body.theme-paper .chip { background: #fdf8ea; color: #7a4d12; border-color: #a97e2f; }
+body.theme-paper .chip:active { background: #f3e9cd; }
+body.theme-paper .chip.on { background: #a97e2f; color: #fff8e7; border-color: #a97e2f; }
+body.theme-sunset .catlabel { color: #ffd9c0; border-color: rgba(255,215,110,.5); }
+body.theme-sunset .chip { background: rgba(20,8,40,.55); color: #ffd76e; border-color: #ffd76e; }
+body.theme-sunset .chip.on { background: #ffd76e; color: #31135e; border-color: #ffd76e; }
+body.night .catlabel { color: #bdbdbd; border-color: #3a3a3a; }
+body.night .chip { background: #0a0a0a; color: #e8e8e8; border-color: #888; }
+body.night .chip.on { background: #e8e8e8; color: #000; border-color: #e8e8e8; }
+body.theme-retro .chip { font-family: "Courier New", monospace; }
 .pinput {
   width: 100%;
   min-height: 48px;
@@ -477,6 +522,15 @@ body.printing a.row:after { content: " (" attr(href) ")"; font-size: 10px; color
 <button id="wordBtn" class="pbtn" type="button">言う</button>
 <div id="wordMsg" class="stat-line" style="margin-top:6px;"></div>
 <div id="wordSecret" class="stat-line" style="display:none; margin-top:6px; color:#ffc857;">🤫 子クーからの内緒話：KUU-01は、小野さんが来るたび耳をぴんと立てて待っています</div>
+</div>
+
+<h2>■ サイトを探す</h2>
+<div class="panel" id="filterPanel">
+<input id="filterInput" class="pinput" type="text" placeholder="サイト名で検索" autocomplete="off">
+<div class="chips" id="filterChips"></div>
+<div id="filterCount" class="stat-line"></div>
+<div id="filterEmpty" class="stat-line" style="display:none;">該当するサイトがありません。条件を変えてみてください。</div>
+<div class="stat-line" style="font-size:12px;">※ 絞り込みは「お気に入り」と「自動で追加されたサイト」にも適用されます</div>
 </div>
 
 <div id="favSection" style="display:none;">
@@ -896,6 +950,13 @@ function setupRow(a, home, idx) {
       nameEl.appendChild(bd);
     }
   }
+  a._cat = CATS[a._key] || "あそび・その他";
+  if (nameEl) {
+    var cl = document.createElement("span");
+    cl.className = "catlabel";
+    cl.appendChild(document.createTextNode(a._cat));
+    nameEl.appendChild(cl);
+  }
   if (a.addEventListener) {
     a.addEventListener("click", function () { onVisit(a); }, false);
   }
@@ -933,6 +994,7 @@ function arrangeFavorites() {
   for (i = 0; i < favRows.length; i++) { el("favList").appendChild(favRows[i]); }
   el("favSection").style.display = favRows.length ? "block" : "none";
   applySort();
+  applyFilter();
 }
 
 /* ===== 統合機能（訪問記録・コイン・並び替え・記録集計・バックアップ） ===== */
@@ -1074,6 +1136,85 @@ function applySort() {
   sortContainer(el("autoList"));
   el("sortDefaultBtn").className = sortMode === "default" ? "pbtn on" : "pbtn";
   el("sortRecentBtn").className = sortMode === "recent" ? "pbtn on" : "pbtn";
+}
+
+/* ===== (232) カテゴリ絞り込み＋サイト検索 ===== */
+
+var CAT_LIST = ["観測・天気", "AI・おしゃべり", "ラジオ・読み物", "レジャー・占い", "生活・メモ", "推し活・旅", "あそび・その他"];
+var CATS = {
+  "board": "生活・メモ", "kuu": "AI・おしゃべり", "ai": "AI・おしゃべり", "geesen": "AI・おしゃべり",
+  "tv": "ラジオ・読み物", "jihanki": "AI・おしゃべり", "shinbun": "ラジオ・読み物", "sento": "レジャー・占い",
+  "orbit": "観測・天気", "radar": "観測・天気", "hima": "レジャー・占い", "densetsu": "ラジオ・読み物",
+  "radio": "ラジオ・読み物", "denwa": "あそび・その他", "jikan": "あそび・その他", "shokudo": "AI・おしゃべり",
+  "kaiju": "観測・天気", "museum": "ラジオ・読み物", "ekima": "推し活・旅", "techo": "生活・メモ",
+  "photo": "あそび・その他", "board6": "生活・メモ", "oshi": "推し活・旅", "oyasumi": "レジャー・占い",
+  "lite": "生活・メモ", "check": "生活・メモ", "kami": "AI・おしゃべり", "news": "ラジオ・読み物",
+  "tabi": "推し活・旅", "fortune": "レジャー・占い", "gahaku": "AI・おしゃべり", "yoru": "レジャー・占い",
+  "hon": "ラジオ・読み物", "umi": "観測・天気", "mori": "レジャー・占い", "sakaba": "レジャー・占い",
+  "hotel": "レジャー・占い", "yubin": "生活・メモ", "tenki": "観測・天気", "jishin": "観測・天気",
+  "tsuki": "観測・天気", "amayadori": "レジャー・占い", "juke": "ラジオ・読み物", "meisho": "推し活・旅",
+  "sauna": "レジャー・占い", "camp": "レジャー・占い", "aqua": "レジャー・占い", "sky": "観測・天気",
+  "letter": "生活・メモ", "train": "推し活・旅", "market": "あそび・その他", "moonbase": "あそび・その他"
+};
+var curCat = "すべて";
+var curQuery = "";
+
+function normText(s) {
+  return (s || "").replace(/\s+/g, "").toLowerCase();
+}
+
+function applyFilter() {
+  var q = normText(curQuery);
+  var shown = 0;
+  var favShown = 0;
+  var favListEl = el("favList");
+  var i, a;
+  for (i = 0; i < allRows.length; i++) {
+    a = allRows[i];
+    var ok = true;
+    if (curCat !== "すべて" && a._cat !== curCat) { ok = false; }
+    if (ok && q) {
+      var hay = normText(a.textContent) + "|" + normText(a._key) + "|" + normText(a._cat);
+      if (hay.indexOf(q) < 0) { ok = false; }
+    }
+    a.style.display = ok ? "" : "none";
+    if (ok) {
+      shown++;
+      if (a.parentNode === favListEl) { favShown++; }
+    }
+  }
+  el("favSection").style.display = favShown ? "block" : "none";
+  el("filterCount").innerHTML = "表示中：" + shown + "件 ／ 全" + allRows.length + "件";
+  el("filterEmpty").style.display = shown ? "none" : "block";
+}
+
+function initFilter() {
+  var wrap = el("filterChips");
+  var cats = ["すべて"];
+  var i;
+  for (i = 0; i < CAT_LIST.length; i++) { cats.push(CAT_LIST[i]); }
+  for (i = 0; i < cats.length; i++) {
+    (function (cat) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = cat === "すべて" ? "chip on" : "chip";
+      b.appendChild(document.createTextNode(cat));
+      b.onclick = function () {
+        curCat = cat;
+        var j;
+        for (j = 0; j < wrap.childNodes.length; j++) {
+          wrap.childNodes[j].className = wrap.childNodes[j] === b ? "chip on" : "chip";
+        }
+        applyFilter();
+      };
+      wrap.appendChild(b);
+    })(cats[i]);
+  }
+  var inp = el("filterInput");
+  var onType = function () { curQuery = inp.value; applyFilter(); };
+  inp.oninput = onType;
+  inp.onkeyup = onType;
+  applyFilter();
 }
 
 function readJSON(key) {
@@ -1386,6 +1527,7 @@ function init() {
   el("bkImportBtn").onclick = bkImport;
   initBatch2();
   initBatch3();
+  initFilter();
   var st = gatherStats();
   renderMyPage(st);
   renderTrophies(st);

@@ -80,6 +80,12 @@ canvas { display: block; width: 100%; background: #000a10; border: 1px solid #0e
 .mw-now { background: #03251d; color: #33ff66; }
 #seaList { font-size: 13px; color: #7fb8a8; margin-top: 6px; line-height: 1.7; }
 .season-now { color: #ffb000; }
+.pg-seasons { overflow: hidden; margin-bottom: 6px; }
+.pg-scell { float: left; width: 25%; text-align: center; padding: 12px 0; border: 1px solid #0e5a4a; font-size: 16px; color: #7fb8a8; cursor: pointer; }
+.pg-son { background: #03251d; color: #33ff66; }
+.pg-item { padding: 5px 0; border-bottom: 1px dashed #0e5a4a; font-size: 16px; }
+.pg-item:last-child { border-bottom: none; }
+.pg-guide { font-size: 14px; color: #7fb8a8; line-height: 1.6; }
 #moonMapCanvas { height: auto; }
 button {
   display: block; width: 100%; min-height: 48px; margin: 4px 0 10px 0;
@@ -89,6 +95,8 @@ button {
 }
 button:active { background: #33ff66; color: #000; }
 .footer { font-size: 12px; color: #5f8a7d; text-align: center; margin: 8px 0 16px 0; }
+.footer a.portal-back { display: inline-block; padding: 12px 16px; margin-top: 8px; color: #33ff66; border: 1px solid #33ff66; background: #03251d; text-decoration: none; font-size: 14px; letter-spacing: 1px; }
+.footer a.portal-back:active { background: #33ff66; color: #000; }
 .blink { color: #33ff66; }
 </style>
 </head>
@@ -191,6 +199,19 @@ button:active { background: #33ff66; color: #000; }
   <div id="planetCardsText" style="font-size:16px; min-height:24px; color:#eafff8; line-height:1.7;">上のボタンを押すと、今夜の惑星の見どころをAIが案内します。</div>
   <div class="msg" id="planetCardsMsg"></div>
   <div class="note">※ 各カードの「見える時期」は一般的な目安です。正確な位置は日々変わります。案内文はAIが生成します。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">PLANET GUIDE <span class="jp">今月の惑星の見え方（季節ごとの目安）</span></div>
+  <div class="msg" id="pgNow"></div>
+  <div class="pg-seasons">
+    <div class="pg-scell" id="pgBtn0">春</div>
+    <div class="pg-scell" id="pgBtn1">夏</div>
+    <div class="pg-scell" id="pgBtn2">秋</div>
+    <div class="pg-scell" id="pgBtn3">冬</div>
+  </div>
+  <div id="pgBody"></div>
+  <div class="note">※ ◎見やすい ○見えることがある △見にくい。惑星の見頃は年ごとにずれます（金星は数か月ごとに夕方と明け方を入れ替わり、火星の見頃は約2年ごと、木星・土星の見頃は毎年少しずつずれます）。この表は季節ごとの傾向を示した概算の目安です。正確な位置は星図アプリ等で確認してください。</div>
 </div>
 
 <div class="panel">
@@ -420,7 +441,8 @@ button:active { background: #33ff66; color: #000; }
 
 <div class="footer">
   DATA SOURCES: wheretheiss.at / Open-Meteo / sorae.info / NOAA SWPC / Google News<br>
-  ORBIT-6 v1.3 — 観測地：埼玉県ふじみ野市 (35.8795, 139.5197)
+  ORBIT-6 v1.3 — 観測地：埼玉県ふじみ野市 (35.8795, 139.5197)<br>
+  <a class="portal-back" href="../portal/">← PORTAL-6（全サイト一覧）へ戻る</a>
 </div>
 
 <script>
@@ -1234,6 +1256,74 @@ function renderPlanetCards() {
   el("planetCards").innerHTML = html;
 }
 
+/* ---------- PLANET GUIDE (seasonal visibility, rough guide) ---------- */
+var PG_SEASON_NAMES = ["春", "夏", "秋", "冬"];
+var PG_GUIDE = [
+  [
+    { name: "水星 MERCURY", vis: 1, text: "夕方・西の低空（日没直後）。黄道が立って傾く春の夕方は、1年でいちばん見つけやすい時期。" },
+    { name: "金星 VENUS", vis: 2, text: "宵の明星の年は夕方・西で見頃。春は高く上がってひときわ明るい。明けの明星の年は明け方・東。" },
+    { name: "火星 MARS", vis: 0, text: "接近の年（約2年ごと）以外は目立たない。接近の年は一晩中、赤く明るく見える。" },
+    { name: "木星 JUPITER", vis: 1, text: "見頃（衝）の前後は一晩中見える。双眼鏡でも4つの衛星が見える。見頃の季節は年ごとにずれる。" },
+    { name: "土星 SATURN", vis: 0, text: "見頃（衝）の前後は一晩中見える。環を見るには望遠鏡が必要。見頃の季節は年ごとにずれる。" }
+  ],
+  [
+    { name: "水星 MERCURY", vis: 0, text: "見にくい。夕方・西か明け方・東の低空に、短期間だけ姿を見せる。" },
+    { name: "金星 VENUS", vis: 1, text: "明けの明星（明け方・東）か宵の明星（夕方・西）。いつ見えても全天でいちばん明るい惑星。" },
+    { name: "火星 MARS", vis: 0, text: "接近の年以外は目立たない。夏は夜が短いので、接近の年でも観察できる時間は短め。" },
+    { name: "木星 JUPITER", vis: 1, text: "見頃の年は夜更けの南の空に見やすい。見頃の季節は年ごとにずれる。" },
+    { name: "土星 SATURN", vis: 1, text: "見頃の年は夜更けの南の空に見やすい。見頃の季節は年ごとにずれる。" }
+  ],
+  [
+    { name: "水星 MERCURY", vis: 1, text: "明け方・東の低空（日の出前）。黄道が立つ秋の明け方は、朝側で1年でいちばん見つけやすい時期。" },
+    { name: "金星 VENUS", vis: 2, text: "明けの明星の年は明け方・東で見頃。秋は高く上がってひときわ明るい。宵の明星の年は夕方・西。" },
+    { name: "火星 MARS", vis: 0, text: "接近の年（約2年ごと）以外は目立たない。接近の年は一晩中、赤く明るく見える。" },
+    { name: "木星 JUPITER", vis: 1, text: "見頃の年は夕方から南の空に見やすい。見頃の季節は年ごとにずれる。" },
+    { name: "土星 SATURN", vis: 1, text: "見頃の年は夕方から南の空に見やすい。見頃の季節は年ごとにずれる。" }
+  ],
+  [
+    { name: "水星 MERCURY", vis: 0, text: "見にくい。夕方・西か明け方・東の低空に、短期間だけ姿を見せる。" },
+    { name: "金星 VENUS", vis: 1, text: "明けの明星（明け方・東）か宵の明星（夕方・西）。冬は夜が長く、長く眺めていられる。" },
+    { name: "火星 MARS", vis: 1, text: "接近の年は夜が長く、一晩中たっぷり見える。接近は約2年ごと。" },
+    { name: "木星 JUPITER", vis: 2, text: "見頃の年は夜が長く、一晩中が観察の好期。見頃の季節は年ごとにずれる。" },
+    { name: "土星 SATURN", vis: 0, text: "見頃（衝）の前後は一晩中見える。環を見るには望遠鏡が必要。見頃の季節は年ごとにずれる。" }
+  ]
+];
+
+function pgSeasonOf(month) {
+  if (month >= 3 && month <= 5) { return 0; }
+  if (month >= 6 && month <= 8) { return 1; }
+  if (month >= 9 && month <= 11) { return 2; }
+  return 3;
+}
+
+var pgSeason = pgSeasonOf(new Date().getMonth() + 1);
+
+function renderPlanetGuide() {
+  var now = new Date();
+  var cur = pgSeasonOf(now.getMonth() + 1);
+  var label = "今月は" + (now.getMonth() + 1) + "月 ＝ " + PG_SEASON_NAMES[cur] + "の季節です。";
+  label += (pgSeason === cur) ? "その目安を表示しています。" : PG_SEASON_NAMES[pgSeason] + "の目安を表示しています。";
+  el("pgNow").innerHTML = label;
+  var html = "", i, g, mark;
+  for (i = 0; i < PG_GUIDE[pgSeason].length; i++) {
+    g = PG_GUIDE[pgSeason][i];
+    mark = (g.vis === 2) ? "◎" : ((g.vis === 1) ? "○" : "△");
+    html += '<div class="pg-item">' + g.name + ' <span class="planet-vis' + g.vis + '">' + mark + "</span>" +
+      '<div class="pg-guide">' + g.text + "</div></div>";
+  }
+  el("pgBody").innerHTML = html;
+  for (i = 0; i < 4; i++) {
+    el("pgBtn" + i).className = "pg-scell" + ((i === pgSeason) ? " pg-son" : "");
+  }
+}
+
+function pgSetSeason(s) { pgSeason = s; renderPlanetGuide(); }
+
+el("pgBtn0").addEventListener("click", function () { pgSetSeason(0); });
+el("pgBtn1").addEventListener("click", function () { pgSetSeason(1); });
+el("pgBtn2").addEventListener("click", function () { pgSetSeason(2); });
+el("pgBtn3").addEventListener("click", function () { pgSetSeason(3); });
+
 var pcBusy = false;
 var pcTimer = null;
 
@@ -1460,6 +1550,7 @@ renderQuiz();
 showTrivia();
 drawStarChart();
 renderPlanetCards();
+renderPlanetGuide();
 renderMoonCal();
 quoteIdx = Math.floor(Date.now() / 86400000) % QUOTES.length;
 renderQuote();
