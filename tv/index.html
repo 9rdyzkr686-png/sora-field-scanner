@@ -213,6 +213,90 @@
     line-height: 1.6;
     text-align: center;
   }
+  /* ===== 録画リスト ===== */
+  .recbox {
+    max-width: 560px;
+    margin: 14px auto 0 auto;
+    background: #141824;
+    border: 2px solid #3a4358;
+    border-radius: 12px;
+    padding: 12px;
+  }
+  .rec-title {
+    font-size: 16px;
+    color: #ffd76a;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .rec-status {
+    font-size: 14px;
+    color: #9fb6c9;
+    line-height: 1.6;
+    min-height: 22px;
+    margin-bottom: 6px;
+  }
+  .rec-item {
+    border: 2px solid #39445e;
+    border-radius: 10px;
+    margin: 6px 0;
+    background: #1d2436;
+    overflow: hidden;
+  }
+  .rec-head {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #e8e8f0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .rec-body {
+    display: none;
+    padding: 10px 12px;
+    border-top: 1px solid #39445e;
+  }
+  .rec-text {
+    font-size: 16px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: #e8e8f0;
+    text-shadow: 0 0 5px rgba(140,220,255,0.55);
+  }
+  .rec-del {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    margin-top: 10px;
+    padding: 10px 12px;
+    font-size: 15px;
+    color: #ffb37a;
+    background: #2b1d16;
+    border: 2px solid #8a5a3d;
+    border-radius: 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .rec-clear {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    margin-top: 10px;
+    padding: 10px 12px;
+    font-size: 15px;
+    color: #ffb37a;
+    background: #2b1d16;
+    border: 2px solid #8a5a3d;
+    border-radius: 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
 </style>
 </head>
 <body>
@@ -251,6 +335,10 @@
     <div class="sub-row">
       <button class="ctl-btn" id="guideBtn" type="button">📋 今夜の番組表を作る</button>
     </div>
+    <div class="sub-row">
+      <button class="ctl-btn" id="recBtn" type="button">⏺ 録画する</button>
+      <button class="ctl-btn" id="recListBtn" type="button">📼 録画リスト</button>
+    </div>
   </div>
 </div>
 
@@ -263,6 +351,13 @@
   <button class="guide-row" id="guideRow4" type="button">20:30 天気予報 ― 未生成</button>
   <button class="guide-row" id="guideRow5" type="button">21:00 深夜のAI怪談 ― 未生成</button>
   <button class="guide-row" id="guideRow6" type="button">25:00 深夜ラジオ ― 未生成</button>
+</div>
+
+<div class="recbox" id="recBox" style="display:none;">
+  <div class="rec-title">■ 録画リスト</div>
+  <div class="rec-status" id="recStatus">録画した番組がここに残ります（最大30件）。行を押すと全文が開きます。</div>
+  <div id="recList"></div>
+  <button class="rec-clear" id="recClearBtn" type="button">録画を全部消す</button>
 </div>
 
 <p class="note">1：AIニュース番組（本物の見出し＋AIの台本）／2：AI通販番組／3：AI時代劇／4：天気予報（本物の天気＋AIアナウンサー）／5：深夜のAI怪談／6：アニメニュース（本物のアニメ見出し＋AIの台本）／7：深夜ラジオ（AI DJ／お便りと曲は架空です）<br>番組の文章はAIがその場で書いています。怪談は娯楽としてお楽しみください。</p>
@@ -279,6 +374,7 @@ var voiceOn = false;
 var busy = false;
 var curCh = 0;
 var lastText = "";
+var lastCh = 0;
 var secTimer = null;
 var secCount = 0;
 var aiRetrying = false;
@@ -409,6 +505,7 @@ function aiCall(prompt, onOk) {
       setStatus("");
       setDetail("");
       lastText = t;
+      lastCh = curCh;
       el("progText").textContent = t;
       if (onOk) { onOk(t); }
       speak(t);
@@ -762,8 +859,123 @@ function playGuide(n) {
   try { if ("speechSynthesis" in window) { window.speechSynthesis.cancel(); } } catch (e) {}
   showLabel(ch);
   lastText = t;
+  lastCh = ch;
   el("progText").textContent = t;
   speak(t);
+}
+
+/* ===== 録画リスト ===== */
+var REC_KEY = "tv6_saved_v1";
+var REC_MAX = 30;
+
+function loadRecs() {
+  try {
+    var s = localStorage.getItem(REC_KEY);
+    if (s) {
+      var o = JSON.parse(s);
+      if (o && typeof o === "object" && o.length !== undefined) { return o; }
+    }
+  } catch (e) {}
+  return [];
+}
+
+function saveRecs(list) {
+  try { localStorage.setItem(REC_KEY, JSON.stringify(list)); } catch (e) {}
+}
+
+function recDateStr(d) {
+  function p2(n) { return (n < 10 ? "0" : "") + n; }
+  return d.getFullYear() + "/" + p2(d.getMonth() + 1) + "/" + p2(d.getDate()) + " " + p2(d.getHours()) + ":" + p2(d.getMinutes());
+}
+
+function firstLine(t) {
+  var s = (t || "").replace(/^\s+/, "");
+  var i = s.indexOf("\n");
+  if (i >= 0) { s = s.substring(0, i); }
+  if (s.length > 40) { s = s.substring(0, 40) + "…"; }
+  return s || "（無題）";
+}
+
+function recNow() {
+  if (!lastText || !lastCh) {
+    setStatus("まだ録画できる番組がありません。チャンネルを押して番組を表示してください。");
+    return;
+  }
+  var list = loadRecs();
+  list.unshift({
+    ch: CH_NAMES[lastCh] || ("CH" + lastCh),
+    title: firstLine(lastText),
+    text: lastText,
+    date: recDateStr(new Date())
+  });
+  while (list.length > REC_MAX) { list.pop(); }
+  saveRecs(list);
+  renderRecs();
+  el("recBox").style.display = "block";
+  el("recStatus").textContent = "録画しました（" + list.length + "件）。古い録画から消えていきます。";
+  setStatus("「" + firstLine(lastText) + "」を録画しました。");
+}
+
+function renderRecs() {
+  var list = loadRecs();
+  var box = el("recList");
+  box.innerHTML = "";
+  if (list.length === 0) {
+    el("recStatus").textContent = "まだ録画がありません。番組を表示して「⏺ 録画する」を押してください（最大30件）。";
+    el("recClearBtn").style.display = "none";
+    return;
+  }
+  el("recClearBtn").style.display = "block";
+  for (var i = 0; i < list.length; i++) {
+    (function (idx, item) {
+      var wrap = document.createElement("div");
+      wrap.className = "rec-item";
+      var head = document.createElement("button");
+      head.type = "button";
+      head.className = "rec-head";
+      head.textContent = item.date + "　" + item.ch + "\n" + item.title;
+      var body = document.createElement("div");
+      body.className = "rec-body";
+      var txt = document.createElement("div");
+      txt.className = "rec-text";
+      txt.textContent = item.text;
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "rec-del";
+      del.textContent = "この録画を消す";
+      del.onclick = function () {
+        var l = loadRecs();
+        l.splice(idx, 1);
+        saveRecs(l);
+        renderRecs();
+        el("recStatus").textContent = "録画を1件消しました（残り" + l.length + "件）。";
+      };
+      head.onclick = function () {
+        body.style.display = (body.style.display === "block") ? "none" : "block";
+      };
+      body.appendChild(txt);
+      body.appendChild(del);
+      wrap.appendChild(head);
+      wrap.appendChild(body);
+      box.appendChild(wrap);
+    })(i, list[i]);
+  }
+}
+
+function toggleRecBox() {
+  var box = el("recBox");
+  if (box.style.display === "none") {
+    renderRecs();
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+  }
+}
+
+function clearRecs() {
+  saveRecs([]);
+  renderRecs();
+  el("recStatus").textContent = "録画を全部消しました。";
 }
 
 /* ===== ボタン ===== */
@@ -790,6 +1002,9 @@ function bind() {
     }
   };
   el("guideBtn").onclick = function () { buildGuide(); };
+  el("recBtn").onclick = function () { recNow(); };
+  el("recListBtn").onclick = function () { toggleRecBox(); };
+  el("recClearBtn").onclick = function () { clearRecs(); };
   for (i = 1; i <= 6; i++) {
     (function (n) {
       el("guideRow" + n).onclick = function () { playGuide(n); };

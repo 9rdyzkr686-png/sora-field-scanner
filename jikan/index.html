@@ -116,6 +116,20 @@
   .zukanList .zname { font-weight: bold; }
   .zukanList .zcount { float: right; color: #8a2b23; font-weight: bold; }
   .zukanList .zcount.none { color: #8a8064; font-weight: normal; }
+  .ctField { margin: 10px 0; }
+  .ctField label { display: block; font-size: 14px; font-weight: bold; color: #5a5342; margin-bottom: 4px; }
+  .ctField input, .ctField select {
+    width: 100%; min-height: 48px; font-size: 17px; padding: 8px 10px;
+    border: 2px solid #1d2a4a; border-radius: 6px; background: #fffdf4;
+    color: #1d2a4a; font-family: inherit;
+  }
+  .ctMsg { margin-top: 8px; font-size: 15px; color: #8a2b23; min-height: 22px; }
+  .ctDel {
+    float: right; min-height: 44px; min-width: 64px; padding: 6px 10px;
+    font-size: 15px; font-weight: bold; cursor: pointer;
+    background: #fdf8e7; border: 2px solid #8a2b23; color: #8a2b23; border-radius: 6px;
+  }
+  .ctMeta { font-size: 14px; color: #5a5342; }
   .quizBox {
     background: #fdf8e7; border: 2px solid #1d2a4a; border-radius: 6px;
     padding: 12px; margin-top: 12px;
@@ -186,6 +200,44 @@
 <button class="bigBtn goBtn" id="goBtn" style="display:none;">しゅっぱつ！</button>
 
 <div class="log" id="journeyLog"></div>
+
+<h2>カスタム切符を作る</h2>
+<div class="zukanBox">
+  <div class="ctField">
+    <label for="ctFrom">出発</label>
+    <input type="text" id="ctFrom" value="ふじみ野">
+  </div>
+  <div class="ctField">
+    <label for="ctTo">行き先</label>
+    <input type="text" id="ctTo" placeholder="例：月面基地">
+  </div>
+  <div class="ctField">
+    <label for="ctEra">年代</label>
+    <select id="ctEra"></select>
+  </div>
+  <button class="bigBtn goBtn" id="ctIssueBtn">切符を発行</button>
+  <div class="ctMsg" id="ctMsg"></div>
+</div>
+<div class="ticketWrap">
+  <div class="placeholder" id="ctPlaceholder">まだマイ切符がありません。<br>上のフォームから発行してください。</div>
+  <div class="ticket" id="ctTicket" style="display:none;">
+    <div class="stamp" id="ctStamp">特製<br>JIKAN-6</div>
+    <div class="route"><span id="ctRouteFrom">―</span> <span class="arrow">→</span> <span id="ctRouteTo">―</span></div>
+    <div class="rows">
+      <div class="row"><span class="k">年代：</span><span id="ctEraVal">―</span></div>
+      <div class="row"><span class="k">発行日：</span><span id="ctDateVal">―</span></div>
+      <div class="row"><span class="k">発行番号：</span><span id="ctNoVal">―</span></div>
+      <div class="row"><span class="k">種別：</span>マイ切符（カスタム）</div>
+    </div>
+  </div>
+</div>
+
+<h2>マイ切符コレクション</h2>
+<div class="zukanBox">
+  <div class="zukanHead" id="ctHead">0 枚</div>
+  <ul class="zukanList" id="ctList"></ul>
+  <div id="ctEmpty" style="font-size:15px; color:#8a8064; margin-top:6px;">まだ保存されたマイ切符はありません。</div>
+</div>
 
 <h2>切符図鑑</h2>
 <div class="zukanBox">
@@ -645,6 +697,7 @@ function init() {
   el("quizStartBtn").onclick = startQuiz;
   el("quizNextBtn").onclick = nextQuizQ;
   renderZukan();
+  initCustom();
   initShowa();
 }
 
@@ -801,6 +854,127 @@ function nextQuizQ() {
     return;
   }
   showQuizQ();
+}
+
+/* ==== (272) カスタム切符（マイ切符） ==== */
+var MYTICKET_KEY = "jikan6_mytickets_v1";
+var MYTICKET_MAX = 20;
+
+function escHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function loadMyTickets() {
+  try {
+    var s = localStorage.getItem(MYTICKET_KEY);
+    if (s) {
+      var o = JSON.parse(s);
+      if (o && typeof o === "object" && typeof o.length === "number") { return o; }
+    }
+  } catch (e) { }
+  return [];
+}
+
+function saveMyTickets(list) {
+  try { localStorage.setItem(MYTICKET_KEY, JSON.stringify(list)); } catch (e) { }
+}
+
+function todayText() {
+  var d = new Date();
+  return d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日";
+}
+
+function showMyTicket(t) {
+  el("ctPlaceholder").style.display = "none";
+  el("ctTicket").style.display = "block";
+  el("ctRouteFrom").innerHTML = escHtml(t.from);
+  el("ctRouteTo").innerHTML = escHtml(t.to);
+  el("ctEraVal").innerHTML = escHtml(t.era);
+  el("ctDateVal").innerHTML = escHtml(t.date);
+  el("ctNoVal").innerHTML = escHtml(t.no);
+}
+
+function renderMyTickets() {
+  var list = loadMyTickets();
+  var html = "";
+  var i, t;
+  for (i = 0; i < list.length; i++) {
+    t = list[i];
+    html += "<li><span class=\"zname\">" + escHtml(t.from) + " → " + escHtml(t.to) + "</span>" +
+      "<button type=\"button\" class=\"ctDel\" data-idx=\"" + i + "\">削除</button>" +
+      "<br><span class=\"ctMeta\">" + escHtml(t.era) + " ／ " + escHtml(t.date) +
+      " ／ No. " + escHtml(t.no) + "</span></li>";
+  }
+  el("ctList").innerHTML = html;
+  el("ctHead").innerHTML = list.length + " 枚";
+  el("ctEmpty").style.display = list.length ? "none" : "block";
+  var btns = el("ctList").getElementsByTagName("button");
+  for (i = 0; i < btns.length; i++) {
+    (function (b) {
+      b.onclick = function () { deleteMyTicket(parseInt(b.getAttribute("data-idx"), 10)); };
+    })(btns[i]);
+  }
+}
+
+function deleteMyTicket(idx) {
+  var list = loadMyTickets();
+  if (idx < 0 || idx >= list.length) { return; }
+  list.splice(idx, 1);
+  saveMyTickets(list);
+  renderMyTickets();
+  el("ctMsg").innerHTML = "マイ切符を1枚削除しました。";
+}
+
+function issueMyTicket() {
+  var from = el("ctFrom").value.replace(/^\s+|\s+$/g, "");
+  var to = el("ctTo").value.replace(/^\s+|\s+$/g, "");
+  var era = el("ctEra").value;
+  var list, seed, sameDay, i, t;
+  if (!from) { from = "ふじみ野"; }
+  if (!to) {
+    el("ctMsg").innerHTML = "行き先を入れてください。";
+    return;
+  }
+  list = loadMyTickets();
+  seed = dateSeed();
+  sameDay = 0;
+  for (i = 0; i < list.length; i++) {
+    if (list[i].seed === seed) { sameDay++; }
+  }
+  t = {
+    from: from,
+    to: to,
+    era: era,
+    date: todayText(),
+    seed: seed,
+    no: "M" + seed + "-" + pad2(sameDay + 1)
+  };
+  list.unshift(t);
+  while (list.length > MYTICKET_MAX) { list.pop(); }
+  saveMyTickets(list);
+  showMyTicket(t);
+  renderMyTickets();
+  el("ctMsg").innerHTML = "マイ切符を発行しました！コレクションに保存しました（最大" + MYTICKET_MAX + "枚まで）。";
+}
+
+function initCustom() {
+  var sel = el("ctEra");
+  var extras = ["未来（2100年）", "未来（3000年）"];
+  var i, o;
+  for (i = 0; i < ERAS.length; i++) {
+    o = document.createElement("option");
+    o.value = ERAS[i].name;
+    o.innerHTML = ERAS[i].name;
+    sel.appendChild(o);
+  }
+  for (i = 0; i < extras.length; i++) {
+    o = document.createElement("option");
+    o.value = extras[i];
+    o.innerHTML = extras[i];
+    sel.appendChild(o);
+  }
+  el("ctIssueBtn").onclick = issueMyTicket;
+  renderMyTickets();
 }
 
 init();

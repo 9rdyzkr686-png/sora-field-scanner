@@ -97,6 +97,18 @@
   }
   #chgResult { margin-top:10px; font-size:16px; line-height:1.7; color:#f2f6ff; white-space:pre-wrap; word-break:break-word; }
 
+  /* ===== 購入履歴 ===== */
+  #histSummary { font-size:16px; line-height:1.7; color:#ffe9a8; margin-bottom:6px; }
+  .hist-row { font-size:15px; line-height:1.55; padding:6px 0; border-bottom:1px solid rgba(44,74,124,.5); word-break:break-word; }
+  .hist-row:last-child { border-bottom:none; }
+  .hist-date { color:#8fa8d8; font-size:13px; }
+  #histClearBtn {
+    display:block; width:100%; min-height:48px; margin-top:10px; padding:8px 12px;
+    font-size:15px; font-weight:bold; color:#dfe8ff; cursor:pointer;
+    border-radius:10px; border:2px solid #2c4a7c; background:#173a6e;
+  }
+  #histClearBtn:active { transform:translateY(2px); }
+
   /* ===== 取り出し口 ===== */
   .slot {
     margin-top:12px; border-radius:10px; padding:12px;
@@ -169,6 +181,13 @@
   </div>
 
   <div class="counter">出てきた数：<span id="countNum">0</span> 個</div>
+
+  <div class="exchange">
+    <div class="ex-title">🧾 購入履歴</div>
+    <div id="histSummary">まだ何も出ていません。</div>
+    <div id="histList"></div>
+    <button id="histClearBtn" type="button">履歴を消す</button>
+  </div>
   <div class="foot">中身はAIがその場で作っています。同じボタンでも毎回ちがいます。<br>無料AI回線には1日の上限があります。</div>
 
 <script>
@@ -359,6 +378,7 @@ function dispense(idx) {
     clunk();
     count++;
     el('countNum').innerHTML = String(count);
+    recordHistory(NAMES[idx]);
     speak(text);
   }, function(msg, detail) {
     showError(btn, msg, detail);
@@ -461,9 +481,75 @@ function doExchange() {
   clunk();
 }
 
+/* (261) 購入履歴 */
+var HIST_KEY = 'jihanki6_history_v1';
+var HIST_MAX = 100;
+function histPad(x) { return (x < 10 ? '0' : '') + x; }
+function histNowStr() {
+  var n = new Date();
+  return n.getFullYear() + '/' + histPad(n.getMonth() + 1) + '/' + histPad(n.getDate()) + ' ' + histPad(n.getHours()) + ':' + histPad(n.getMinutes());
+}
+function loadHistory() {
+  try {
+    var s = localStorage.getItem(HIST_KEY);
+    if (s) { var a = JSON.parse(s); if (a && typeof a.length === 'number') { return a; } }
+  } catch (e) {}
+  return [];
+}
+function storeHistory(a) {
+  try { localStorage.setItem(HIST_KEY, JSON.stringify(a)); } catch (e) {}
+}
+function recordHistory(name) {
+  var a = loadHistory();
+  a.unshift({ name: name, date: histNowStr() });
+  while (a.length > HIST_MAX) { a.pop(); }
+  storeHistory(a);
+  renderHistory();
+}
+function renderHistory() {
+  var sum = el('histSummary'), list = el('histList');
+  if (!sum || !list) { return; }
+  var a = loadHistory(), i;
+  list.innerHTML = '';
+  sum.innerHTML = '';
+  if (a.length === 0) {
+    sum.appendChild(document.createTextNode('まだ何も出ていません。'));
+    return;
+  }
+  var now = new Date();
+  var ym = now.getFullYear() + '/' + histPad(now.getMonth() + 1);
+  var monthCount = 0, counts = {}, bestName = '', bestCount = 0;
+  for (i = 0; i < a.length; i++) {
+    if (a[i].date && a[i].date.indexOf(ym) === 0) { monthCount++; }
+    counts[a[i].name] = (counts[a[i].name] || 0) + 1;
+    if (counts[a[i].name] > bestCount) { bestCount = counts[a[i].name]; bestName = a[i].name; }
+  }
+  sum.appendChild(document.createTextNode('通算' + a.length + '本・今月' + monthCount + '本'));
+  sum.appendChild(document.createElement('br'));
+  sum.appendChild(document.createTextNode('一番人気：' + bestName + '（' + bestCount + '回）'));
+  var show = Math.min(20, a.length);
+  for (i = 0; i < show; i++) {
+    var row = document.createElement('div');
+    row.className = 'hist-row';
+    var d = document.createElement('span');
+    d.className = 'hist-date';
+    d.appendChild(document.createTextNode(a[i].date));
+    row.appendChild(d);
+    row.appendChild(document.createElement('br'));
+    row.appendChild(document.createTextNode(a[i].name));
+    list.appendChild(row);
+  }
+}
+function clearHistory() {
+  storeHistory([]);
+  renderHistory();
+}
+
 function init() {
   var i;
   var now = new Date();
+  renderHistory();
+  el('histClearBtn').addEventListener('click', clearHistory, false);
 
   /* 季節限定ボタン：季節でラベルとプロンプトを変える */
   var s = seasonInfo();

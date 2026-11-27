@@ -500,6 +500,7 @@ body.printing a.row:after { content: " (" attr(href) ")"; font-size: 10px; color
 
 <h1>PORTAL-6</h1>
 <div class="sub">全サイト一覧 — iPhone 6 専用ポータル</div>
+<div id="aiLineStatus" class="stat-line" style="text-align:center; margin-bottom:8px;"></div>
 
 <div id="seasonStrip"></div>
 
@@ -1590,7 +1591,37 @@ function init() {
   renderMyPage(st);
   renderTrophies(st);
   renderRally(st);
+  renderAiLineStatus();
   checkNewSites();
+}
+
+/* ===== (281) AI回線の調子（CHECK-6の診断結果を読み取り専用で表示） ===== */
+function renderAiLineStatus() {
+  var box = el("aiLineStatus");
+  if (!box) { return; }
+  var rec = null;
+  try {
+    var v = window.localStorage.getItem("check6_last_result_v1");
+    if (v) { rec = JSON.parse(v); }
+  } catch (e) { rec = null; }
+  if (!rec || typeof rec.ts !== "number") {
+    box.textContent = "AI回線の調子：未確認（CHECK-6で診断できます）";
+    return;
+  }
+  var d = new Date(rec.ts);
+  function p(x) { return (x < 10 ? "0" : "") + x; }
+  var when = (d.getMonth() + 1) + "月" + d.getDate() + "日" + d.getHours() + "時" + p(d.getMinutes()) + "分";
+  var whenDay = (d.getMonth() + 1) + "月" + d.getDate() + "日";
+  var text;
+  if (rec.ok) {
+    text = "AI回線の調子：良好（" + when + "に確認）";
+  } else {
+    text = "AI回線の調子：不調（" + (rec.detail || "不明") + "、" + whenDay + "確認）";
+  }
+  if (new Date().getTime() - rec.ts > 3 * 24 * 60 * 60 * 1000) {
+    text += "（古い情報です）";
+  }
+  box.textContent = text;
 }
 
 /* ===== (227) 今日のおすすめサイト ===== */

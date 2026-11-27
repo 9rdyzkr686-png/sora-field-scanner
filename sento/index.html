@@ -176,6 +176,8 @@
   }
   .bathnav .ym { font-size: 19px; font-weight: bold; color: #8a3324; }
   .bathsum { margin-top: 10px; font-size: 17px; font-weight: bold; }
+  .bathgoal { margin-top: 10px; font-size: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .bathgoal select { font-size: 16px; min-height: 48px; padding: 6px 10px; border-radius: 6px; }
   .bathtable { width: 100%; border-collapse: collapse; table-layout: fixed; }
   .bathtable th { font-size: 14px; padding: 4px 0; color: #6b4a2f; text-align: center; }
   .bathtable th.sun { color: #b03a2e; }
@@ -288,6 +290,17 @@
     <div>お風呂に入った日を記録しましょう。日付をタップすると、記録をつけたり消したりできます（あとから付け足すこともできます）。記録はこの端末の中だけに保存されます。</div>
     <button type="button" class="bigbtn" id="bathTodayBtn" style="margin-top:10px;">♨ 今日入った</button>
     <div class="bathsum" id="bathSum"></div>
+    <div class="bathgoal">
+      <label for="bathGoalSel">🎯 月の目標</label>
+      <select id="bathGoalSel">
+        <option value="0">未設定</option>
+        <option value="5">5回</option>
+        <option value="10">10回</option>
+        <option value="15">15回</option>
+        <option value="20">20回</option>
+        <option value="daily">毎日</option>
+      </select>
+    </div>
     <div class="bathnav">
       <button type="button" class="navbtn" id="bathPrev">◀ 前月</button>
       <span class="ym" id="bathYm"></span>
@@ -850,8 +863,21 @@ el("colNextBtn").onclick = function () {
 
 /* ---------- 入浴カレンダー ---------- */
 var BATH_KEY = "sento6_bath_cal_v1";
+var BATH_GOAL_KEY = "sento6_bath_goal_v1";
 var bathViewYear = 0;
 var bathViewMonth = 0;
+
+function loadBathGoal() {
+  try {
+    var v = window.localStorage.getItem(BATH_GOAL_KEY);
+    if (v === "5" || v === "10" || v === "15" || v === "20" || v === "daily") return v;
+  } catch (e) {}
+  return "0";
+}
+
+function saveBathGoal(v) {
+  try { window.localStorage.setItem(BATH_GOAL_KEY, v); } catch (e) {}
+}
 
 function loadBath() {
   try {
@@ -909,6 +935,16 @@ function renderBathCal() {
   } else {
     sumLabel = y + "年" + (m + 1) + "月は " + monthCount + "回";
   }
+  var goalVal = loadBathGoal();
+  var goalSel = el("bathGoalSel");
+  if (goalSel && goalSel.value !== goalVal) goalSel.value = goalVal;
+  if (goalVal !== "0") {
+    var goalCount = (goalVal === "daily") ? new Date(y, m + 1, 0).getDate() : parseInt(goalVal, 10);
+    var rate = Math.floor(monthCount * 100 / goalCount);
+    if (rate > 100) rate = 100;
+    sumLabel += " ／ 目標 " + goalCount + "回（達成率" + rate + "%）";
+    if (monthCount >= goalCount) sumLabel += " 🎉目標達成！";
+  }
   el("bathSum").innerHTML = sumLabel + " ／ 通算 " + total + "回";
 
   /* 今日ボタン */
@@ -960,6 +996,7 @@ function renderBathCal() {
 }
 
 el("bathTodayBtn").onclick = function () { toggleBath(todayStr()); };
+el("bathGoalSel").onchange = function () { saveBathGoal(this.value); renderBathCal(); };
 el("bathPrev").onclick = function () {
   bathViewMonth--;
   if (bathViewMonth < 0) { bathViewMonth = 11; bathViewYear--; }

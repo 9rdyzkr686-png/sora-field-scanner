@@ -97,6 +97,10 @@
   button.chip.sel { background: #0d4d24; border-color: #ffb000; color: #ffb000; }
   .mark-item { border: 1px dashed #1d7a3f; border-radius: 6px; padding: 8px; margin: 0 0 8px 0; white-space: pre-wrap; }
   .mark-kind { color: #00e5ff; font-size: 14px; }
+  .news-save { min-height: 44px; font-size: 15px; padding: 4px 14px; margin-top: 4px; }
+  .nfav-item { border: 1px dashed #1d7a3f; border-radius: 6px; padding: 8px; margin: 0 0 8px 0; }
+  .nfav-item a { color: #39ff6a; }
+  .nfav-date { color: #8fdc9f; font-size: 13px; }
   .greet-out { white-space: pre-wrap; border: 1px dashed #ffb000; border-radius: 8px; padding: 10px; margin-top: 8px; }
   button.zk-item.sel { background: #0d4d24; border-color: #ffb000; color: #ffb000; }
   .zk-name { color: #ffb000; font-size: 20px; margin-bottom: 4px; }
@@ -218,6 +222,12 @@
   <h2>■ ★ ブックマーク</h2>
   <div class="stat" id="markMsg">読み物コーナーの各読み物にある「★ 保存」で、気に入った読み物をここに残せます（この端末の中だけに保存されます）。</div>
   <div id="markList"></div>
+</div>
+
+<div class="card">
+  <h2>■ 保存したニュース</h2>
+  <div class="stat" id="newsFavMsg">ニュースの見出しにある「保存」ボタンで、気になる記事をここに残せます（この端末の中だけに保存されます）。</div>
+  <div id="newsFavList"></div>
 </div>
 
 <div class="card">
@@ -645,6 +655,7 @@ function fetchNews(rssUrl, boxId) {
       html += '<div class="news-item"><a href="' + esc(it.link) + '">' + esc(it.title) + '</a><br><span class="news-date">' + esc(it.pubDate || '') + '</span></div>';
     }
     box.innerHTML = html;
+    if (typeof attachNewsSave === 'function') { attachNewsSave(box, data.items, n); }
   };
   xhr.onerror = function () {
     el(boxId).innerHTML = '<span class="fail">取得できませんでした。↻で再試行できます</span>';
@@ -1371,6 +1382,78 @@ function initMarks() {
   renderMarks();
 }
 
+/* (258) ニュース見出しの保存（hima6_marks_v1は読み物テキスト専用なので、記事リンク用に別キーで管理） */
+var NFAV_KEY = 'hima6_news_favs_v1';
+var NFAV_MAX = 50;
+function loadNewsFavs() {
+  try {
+    var s = localStorage.getItem(NFAV_KEY);
+    if (s) { var a = JSON.parse(s); if (a && typeof a.length === 'number') { return a; } }
+  } catch (e) {}
+  return [];
+}
+function storeNewsFavs(a) {
+  try { localStorage.setItem(NFAV_KEY, JSON.stringify(a)); } catch (e) {}
+}
+function saveNewsFav(title, url, btn) {
+  var a = loadNewsFavs(), i;
+  for (i = 0; i < a.length; i++) {
+    if (a[i].url === url) {
+      if (btn) { btn.innerHTML = '保存済み'; }
+      el('newsFavMsg').innerHTML = 'その記事はすでに保存されています。';
+      return;
+    }
+  }
+  a.unshift({ title: title, url: url, date: todayStr() });
+  while (a.length > NFAV_MAX) { a.pop(); }
+  storeNewsFavs(a);
+  renderNewsFavs();
+  if (btn) { btn.innerHTML = '保存しました'; }
+  el('newsFavMsg').innerHTML = '「' + esc(title) + '」を保存しました。「保存したニュース」にあります。';
+}
+function renderNewsFavs() {
+  var a = loadNewsFavs(), box = el('newsFavList'), html = '', i, it;
+  if (!box) { return; }
+  if (a.length === 0) {
+    box.innerHTML = '<div class="stat">（まだ保存したニュースはありません）</div>';
+    return;
+  }
+  for (i = 0; i < a.length; i++) {
+    it = a[i];
+    html += '<div class="nfav-item"><a href="' + esc(it.url) + '">' + esc(it.title) + '</a><br><span class="nfav-date">保存日：' + esc(it.date) + '</span><br><button type="button" class="nfav-del" data-i="' + i + '">削除</button></div>';
+  }
+  box.innerHTML = html;
+  var dels = box.getElementsByClassName('nfav-del'), j;
+  for (j = 0; j < dels.length; j++) {
+    dels[j].onclick = function () {
+      var idx = parseInt(this.getAttribute('data-i'), 10);
+      var arr = loadNewsFavs();
+      arr.splice(idx, 1);
+      storeNewsFavs(arr);
+      renderNewsFavs();
+      el('newsFavMsg').innerHTML = '削除しました。';
+    };
+  }
+}
+function attachNewsSave(box, items, n) {
+  if (!box || !items) { return; }
+  var rows = box.getElementsByClassName('news-item'), i, it, btn;
+  var lim = Math.min(n, rows.length);
+  for (i = 0; i < lim; i++) {
+    it = items[i];
+    if (!it || !it.link) { continue; }
+    btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'news-save';
+    btn.innerHTML = '保存';
+    (function (t, u, b) {
+      b.onclick = function () { saveNewsFav(t, u, b); };
+    })(it.title, it.link, btn);
+    rows[i].appendChild(document.createElement('br'));
+    rows[i].appendChild(btn);
+  }
+}
+
 /* (47) ダックスニュース */
 var DAX_NEWS_RSS = 'https://news.google.com/rss/search?q=' + encodeURIComponent('ダックスフンド') + '&hl=ja&gl=JP&ceid=JP:ja';
 function loadDaxNews() {
@@ -1397,6 +1480,7 @@ function loadDaxNews() {
       html += '<div class="news-item"><a href="' + esc(it.link) + '">' + esc(it.title) + '</a><br><span class="news-date">' + esc(it.pubDate || '') + '</span></div>';
     }
     body.innerHTML = html;
+    attachNewsSave(body, data.items, n);
     st.innerHTML = '取得：' + timeStr() + '（Google News／rss2json経由）';
     el('daxNewsBtn').innerHTML = '↻ 更新';
   };
@@ -1588,6 +1672,7 @@ function loadMarket() {
 
 function initWave4() {
   initMarks();
+  renderNewsFavs();
   el('daxNewsBtn').onclick = loadDaxNews;
   initChips('gr-kind', function (v) { grKind = v; });
   initChips('gr-partner', function (v) { grPartner = v; });

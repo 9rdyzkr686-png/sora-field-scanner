@@ -151,6 +151,7 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 .rankPanel { border: 3px solid #3a3a6e; background: #0a0a20; border-radius: 10px; padding: 12px 14px; margin: 16px 0 4px 0;}
 .rankTitle { font-size: 18px; font-weight: bold; color: #ff8fd8; letter-spacing: 1px; margin-bottom: 6px;}
 .rankRow { font-size: 16px; color: #ccd; line-height: 1.9;}
+.titleLine { font-size: 17px; font-weight: bold; color: #ffe95e; line-height: 1.7; margin-bottom: 6px; text-shadow: 0 0 6px rgba(255,185,0,0.55);}
 </style>
 </head>
 <body>
@@ -198,6 +199,7 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 <button type="button" class="machine m-white" data-p="p9">9. AIキャッチフレーズ機<small>テーマを入れるとAIがキャッチフレーズを3つ作ります</small></button>
 <div class="rankPanel" id="rankPanel">
 <div class="rankTitle">🏆 人気ランキング</div>
+<div class="titleLine" id="titleLine">称号：見習いコイン（通算0回）</div>
 <div id="rankList"></div>
 </div>
 <p class="footNote">※ AI回線は無料枠のため、1日100回まで・朝9時に回復します。<br>※ スタンプカードと人気ランキングは、この端末に保存されます。</p>
@@ -526,6 +528,21 @@ html += '<div class="rankRow">' + (i + 1) + '位　' + rows[i].name + '　…　
 }
 }
 el('rankList').innerHTML = html;
+renderTitle();
+}
+function titleFor(total) {
+if (total >= 100) return '伝説の店長';
+if (total >= 60) return '店長代理';
+if (total >= 30) return '腕利きプレイヤー';
+if (total >= 10) return '常連さん';
+if (total >= 1) return '常連見込み';
+return '見習いコイン';
+}
+function renderTitle() {
+var c = loadCounts();
+var total = 0;
+for (var k in MACHINE_NAMES) { total += (c[k] || 0);}
+el('titleLine').textContent = '称号：' + titleFor(total) + '（通算' + total + '回）';
 }
 function todayStr() {
 var d = new Date();

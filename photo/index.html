@@ -37,6 +37,9 @@
   #photoFrame.frame-summer { border: 14px solid #3f9be0; box-shadow: inset 0 0 0 2px #e8f6ff; }
   #photoFrame.frame-autumn { border: 14px solid #c65d21; box-shadow: inset 0 0 0 2px #ffe9d6; }
   #photoFrame.frame-winter { border: 14px solid #f2f2f2; box-shadow: inset 0 0 0 2px #b0bec5; }
+  #photoFrame.frame-snow { border: 14px solid #a9d6f5; box-shadow: inset 0 0 0 2px #ffffff, inset 0 0 26px rgba(169,214,245,0.9); }
+  #photoFrame.frame-xmas { border: 14px solid #c62828; box-shadow: inset 0 0 0 2px #2e7d32, inset 0 0 0 4px #f9a825; }
+  #photoFrame.frame-newyear { border: 14px solid #d32f2f; box-shadow: inset 0 0 0 2px #ffffff, inset 0 0 0 4px #f9a825; }
   #photoFrame .fdec { position: absolute; font-size: 28px; line-height: 1; display: none; }
   #photoFrame.framed .fdec { display: block; }
   #photoFrame .fdec.tl { left: 3px; top: 1px; }
@@ -166,6 +169,9 @@
         <button type="button" class="seg frameBtn" data-frame="summer">🌻 夏</button>
         <button type="button" class="seg frameBtn" data-frame="autumn">🍁 秋</button>
         <button type="button" class="seg frameBtn" data-frame="winter">❄ 冬</button>
+        <button type="button" class="seg frameBtn" data-frame="snow">❄ 雪の結晶</button>
+        <button type="button" class="seg frameBtn" data-frame="xmas">🎄 クリスマス</button>
+        <button type="button" class="seg frameBtn" data-frame="newyear">🎍 お正月</button>
       </div>
       <div id="note">
         写真立てとして使うときは、iPhoneの「設定 → 画面表示と明るさ → 自動ロック」を「なし」にすると画面が消えません。<br>
@@ -329,7 +335,7 @@ el("clockMode").addEventListener("click", function () {
 
 /* ===== Seasonal frame ===== */
 var frameMode = "auto";   // auto | none | spring | summer | autumn | winter
-var FRAME_DECO = { spring: "🌸", summer: "🌻", autumn: "🍁", winter: "❄" };
+var FRAME_DECO = { spring: "🌸", summer: "🌻", autumn: "🍁", winter: "❄", snow: "❆", xmas: "🎄", newyear: "🎍" };
 
 function seasonOfMonth(m) {   // m: 0-11
   if (m >= 2 && m <= 4) return "spring";

@@ -287,8 +287,25 @@ function histClear() {
   renderHist();
 }
 
+/* (281) AI回線の最新結果を他サイト（PORTAL-6）と共有する */
+var LAST_KEY = "check6_last_result_v1";
+function saveLastResult(ok) {
+  try {
+    var det = $("det1").innerHTML || "";
+    var detail = "";
+    var m = det.match(/HTTP\s*[0-9]+/);
+    if (det.indexOf("時間切れ") >= 0) { detail = "タイムアウト"; }
+    else if (m) { detail = m[0].replace(/\s+/g, " "); }
+    else if (det.indexOf("通信エラー") >= 0) { detail = "通信エラー"; }
+    else { detail = det.replace(/<[^>]*>/g, ""); }
+    var rec = { ts: new Date().getTime(), ok: !!ok, detail: detail };
+    window.localStorage.setItem(LAST_KEY, JSON.stringify(rec));
+  } catch (e) {}
+}
+
 function finishOne(n, ok) {
   histAdd(n, ok);
+  if (n === 1) { saveLastResult(ok); }
   doneCount++;
   if (ok) { okCount++; }
   if (doneCount >= 6) {

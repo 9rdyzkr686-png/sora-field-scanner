@@ -219,6 +219,30 @@ margin-left: 8px;
 min-height: 48px;
 cursor: pointer;
 }
+#logSearchInput {
+-webkit-flex: 1;
+flex: 1;
+background: #000;
+color: var(--main);
+border: 1px solid var(--main);
+font-family: inherit;
+font-size: 16px;
+padding: 12px;
+min-height: 48px;
+}
+#logSearchBtn, #logSearchClearBtn {
+background: #000;
+color: var(--main);
+border: 1px solid var(--main);
+font-family: inherit;
+font-size: 16px;
+padding: 12px 14px;
+margin-left: 8px;
+min-height: 48px;
+cursor: pointer;
+}
+#logSearchBtn:active, #logSearchClearBtn:active { background: var(--main); color: #000;}
+#logSearchCount { color: var(--accent); font-size: 13px; min-height: 18px; margin-top: 4px;}
 #logBox {
 border: 1px solid var(--dim);
 height: 190px;
@@ -359,6 +383,12 @@ background: #fff;
 <div style="font-size:12px;color:var(--dim);text-shadow:none;margin-top:4px;">ヒント：「○○って言って」で真似シマス。「『言葉』を覚えて」で言葉ヲ覚エマス。「呼び名は○○にして」で呼ビ方ヲ変エラレマス。「記念日は○月○日にして」で記念日ヲ登録デキマス。「help」と打ツト隠シコマンド一覧ガ見ラレマス。</div>
 
 <div class="label">▼ 観測ログ</div>
+<div class="inputrow" style="margin-top:0;">
+<input id="logSearchInput" type="text" placeholder="ログ内ヲ検索…" autocomplete="off">
+<button id="logSearchBtn" type="button">検索</button>
+<button id="logSearchClearBtn" type="button">クリア</button>
+</div>
+<div id="logSearchCount"></div>
 <div id="logBox"></div>
 <div class="logbtns">
 <button id="exportBtn" type="button">.txtで保存</button>
@@ -850,6 +880,7 @@ var HISTORY_TEXT =
 "v2.0 進化 ― 日誌と伝言箱\n" +
 "v2.1 進化 ― 特別電文と質問が増えた\n" +
 "v2.2 進化 ― 観測ミッションが増えた\n" +
+"v2.3 進化 ― 観測ログ検索がついた\n" +
 "進化ハマダ続キマス、{A}。";
 
 var HOMEWORK = [
@@ -1214,6 +1245,7 @@ el("evoNote").innerHTML = "";
 wipeSave();
 logLines = [];
 el("logBox").innerHTML = "";
+resetLogSearchUI();
 renderStatus();
 renderChips();
 addLog("sys", "--- 観測記録ヲ初期化シマシタ ---");
@@ -1320,6 +1352,54 @@ if (cls) d.className = cls;
 d.innerHTML = esc(text);
 var box = el("logBox");
 box.appendChild(d);
+box.scrollTop = box.scrollHeight;
+logSearchAfterAdd(d);
+}
+
+var logSearchQuery = "";
+function logNodeText(node) {
+return node.textContent || node.innerText || "";
+}
+function applyLogFilter() {
+var box = el("logBox");
+var nodes = box.childNodes;
+var i, node, hits = 0, total = 0;
+for (i = 0; i < nodes.length; i++) {
+node = nodes[i];
+if (node.nodeType !== 1) continue;
+total++;
+if (!logSearchQuery || logNodeText(node).toLowerCase().indexOf(logSearchQuery) >= 0) {
+node.style.display = "";
+hits++;
+} else {
+node.style.display = "none";
+}
+}
+var cnt = el("logSearchCount");
+if (cnt) cnt.innerHTML = logSearchQuery ? (hits + "件ヒット（全" + total + "件中）") : "";
+}
+function doLogSearch() {
+var v = el("logSearchInput").value || "";
+logSearchQuery = v.replace(/^\s+|\s+$/g, "").toLowerCase();
+applyLogFilter();
+var box = el("logBox");
+box.scrollTop = box.scrollHeight;
+}
+function resetLogSearchUI() {
+logSearchQuery = "";
+var inp = el("logSearchInput");
+if (inp) inp.value = "";
+var cnt = el("logSearchCount");
+if (cnt) cnt.innerHTML = "";
+}
+function doLogSearchClear() {
+resetLogSearchUI();
+applyLogFilter();
+}
+function logSearchAfterAdd(d) {
+if (!logSearchQuery) return;
+applyLogFilter();
+var box = el("logBox");
 box.scrollTop = box.scrollHeight;
 }
 
@@ -3220,6 +3300,7 @@ function doClear() {
 if (!confirm("観測ログを消しますか？（会話数と進化はそのままです）")) return;
 logLines = [];
 el("logBox").innerHTML = "";
+resetLogSearchUI();
 addLog("sys", "--- ログヲ初期化シマシタ ---");
 el("sysMsg").innerHTML = "ログヲ消シマシタ。";
 }
@@ -3231,6 +3312,11 @@ if (e.keyCode === 13) doSend();
 el("exportBtn").onclick = doExport;
 el("copyBtn").onclick = doCopy;
 el("clearBtn").onclick = doClear;
+el("logSearchBtn").onclick = doLogSearch;
+el("logSearchClearBtn").onclick = doLogSearchClear;
+el("logSearchInput").onkeydown = function (e) {
+if (e.keyCode === 13) doLogSearch();
+};
 el("decodeBtn").onclick = function () { goSpeech(); doDecode();};
 el("missionBtn").onclick = function () { goSpeech(); completeMission();};
 el("storyBtn").onclick = function () { goSpeech(); advanceStory();};

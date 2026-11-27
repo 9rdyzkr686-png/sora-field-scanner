@@ -29,6 +29,8 @@ button.danger{background:#a33b2e;color:#fff;border:none;border-radius:8px;paddin
 .listitem:last-child{border-bottom:none;}
 .listitem .t{font-weight:bold;font-size:17px;}
 .listitem .m{font-size:13px;color:#8a7a5c;margin-top:2px;white-space:pre-wrap;word-break:break-all;}
+.pinbtn{float:right;min-width:48px;min-height:48px;font-size:20px;background:#fffdf4;border:1px solid #d8c690;border-radius:8px;margin-left:8px;padding:4px;}
+.pinbtn.off{opacity:.3;}
 .shopitem{display:flex;align-items:center;padding:12px 4px;border-bottom:1px solid #eee0bd;}
 .shopitem:last-child{border-bottom:none;}
 .shopitem .nm{flex:1;font-size:17px;padding-left:10px;word-break:break-all;}
@@ -351,14 +353,19 @@ function renderMemos(){
   var q = el("memoSearch").value.replace(/^\s+|\s+$/g, "").toLowerCase();
   var idx = [], i;
   for (i = 0; i < memos.length; i++) idx.push(i);
-  idx.sort(function(a,b){ return memos[b].u - memos[a].u; });
+  idx.sort(function(a,b){
+    var pa = memos[a].pin ? 1 : 0, pb = memos[b].pin ? 1 : 0;
+    if (pa !== pb) return pb - pa;
+    return memos[b].u - memos[a].u;
+  });
   var html = "";
   for (i = 0; i < idx.length; i++){
     var m = memos[idx[i]];
     if (q !== "" && (m.t + "\n" + m.b).toLowerCase().indexOf(q) < 0) continue;
     var snippet = m.b.length > 60 ? m.b.substring(0, 60) + "…" : m.b;
     html += '<div class="listitem" onclick="openMemo(' + idx[i] + ')">'
-      + '<div class="t">' + esc(m.t || "（無題）") + '</div>'
+      + '<button class="pinbtn' + (m.pin ? '' : ' off') + '" onclick="toggleMemoPin(' + idx[i] + ');event.stopPropagation();">📌</button>'
+      + '<div class="t">' + (m.pin ? '📌 ' : '') + esc(m.t || "（無題）") + '</div>'
       + '<div class="m">' + esc(snippet) + '</div>'
       + '<div class="m">更新: ' + fmtTime(m.u) + '</div></div>';
   }
@@ -399,6 +406,11 @@ function deleteMemo(){
   memos.splice(editMemoIdx, 1);
   saveData("techo_memos", memos);
   closeMemo();
+}
+function toggleMemoPin(i){
+  memos[i].pin = memos[i].pin ? 0 : 1;
+  saveData("techo_memos", memos);
+  renderMemos();
 }
 
 /* ---------- 買い物リスト ---------- */

@@ -747,7 +747,7 @@ function renderLives() {
     html += '<div class="logitem">';
     html += '<div class="ld">' + esc(fmtDate(ds)) + '</div>';
     html += '<div class="le">' + esc(L.e) + '</div>';
-    if (L.v) html += '<div class="lm">📍 ' + esc(L.v) + '</div>';
+    if (L.v) html += '<div class="lm">＠' + esc(L.v) + '</div>';
     html += '<button class="delbtn" type="button" data-lx="' + L.idx + '">削除</button>';
     html += '</div>';
   }

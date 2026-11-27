@@ -250,6 +250,26 @@
     overflow-wrap: break-word;
   }
   .ai-profile { margin: 0; color: #f5f0dc; white-space: pre-wrap; }
+  .reg-btn { margin-top: 12px; background: #14551a; border-color: #59d95e; }
+  .reg-status { min-height: 24px; margin: 8px 0 0; color: #ffe45e; font-size: 16px; }
+  .namedex-count { margin: 0 0 10px; color: #ffffff; font-weight: bold; }
+  .namedex-list { margin: 0; padding: 0; list-style: none; }
+  .namedex-list li { padding: 10px 4px; border-bottom: 1px solid #4c431e; }
+  .namedex-list li:last-child { border-bottom: 0; }
+  .namedex-name { color: #ffffff; font-weight: bold; font-size: 21px; overflow-wrap: break-word; }
+  .namedex-meta { color: #aaa; font-size: 15px; }
+  .namedex-profile { margin: 4px 0 0; color: #f5f0dc; font-size: 16px; white-space: pre-wrap; }
+  .namedex-del {
+    display: inline-block;
+    width: auto;
+    min-height: 48px;
+    margin-top: 8px;
+    padding: 8px 18px;
+    border-color: #ff3b1f;
+    background: #5a130b;
+    font-size: 16px;
+  }
+  .namedex-empty { color: #aaa; }
   .timeline-list { margin: 0; padding: 0; list-style: none; }
   .timeline-list li {
     padding: 9px 4px;
@@ -371,7 +391,15 @@
         <span class="ai-fiction">架空の怪獣です</span>
         <div class="ai-name" id="aiName">―</div>
         <p class="ai-profile" id="aiProfile"></p>
+        <button type="button" class="reg-btn" id="regNameBtn">📖 図鑑に登録</button>
+        <p class="reg-status" id="regStatus" aria-live="polite"></p>
       </div>
+    </section>
+
+    <section aria-labelledby="namedexHeading">
+      <h2 id="namedexHeading">■ 名づけ図鑑</h2>
+      <p class="namedex-count" id="namedexCount">登録0体</p>
+      <ul class="namedex-list" id="namedexList"></ul>
     </section>
 
     <section aria-labelledby="timelineHeading">
@@ -654,6 +682,8 @@
 
   /* ■ AI命名ジェネレーター */
   var naming = false;
+  var currentAiName = "";
+  var currentAiProfile = "";
 
   document.getElementById("nameButton").onclick = function () {
     if (naming) { return; }
@@ -729,6 +759,9 @@
           document.getElementById("aiName").textContent = name;
           document.getElementById("aiProfile").textContent = profile;
           document.getElementById("aiCard").style.display = "block";
+          currentAiName = name;
+          currentAiProfile = profile;
+          document.getElementById("regStatus").textContent = "";
         };
         xhr.ontimeout = function () {
           if (handled || attempt !== liveAttempt) { return; }
@@ -766,6 +799,102 @@
     }
     send(0);
   };
+
+  /* ■ 名づけ図鑑（名前コレクション） */
+  var NAMEDEX_KEY = "kaiju6_names_v1";
+  var NAMEDEX_MAX = 50;
+
+  function loadNameDex() {
+    try {
+      var raw = localStorage.getItem(NAMEDEX_KEY);
+      if (!raw) { return []; }
+      var list = JSON.parse(raw);
+      if (list && typeof list.length === "number") { return list; }
+    } catch (e) {}
+    return [];
+  }
+
+  function saveNameDex(list) {
+    try {
+      localStorage.setItem(NAMEDEX_KEY, JSON.stringify(list));
+    } catch (e) {}
+  }
+
+  function renderNameDex() {
+    var list = loadNameDex();
+    var ul = document.getElementById("namedexList");
+    document.getElementById("namedexCount").textContent = "登録" + list.length + "体";
+    while (ul.firstChild) { ul.removeChild(ul.firstChild); }
+    if (!list.length) {
+      var empty = document.createElement("li");
+      empty.className = "namedex-empty";
+      empty.textContent = "まだ登録がありません。AI命名局で名前を作って「図鑑に登録」を押してください。";
+      ul.appendChild(empty);
+      return;
+    }
+    for (var i = 0; i < list.length; i++) {
+      (function (entry, idx) {
+        var li = document.createElement("li");
+        var nameDiv = document.createElement("div");
+        nameDiv.className = "namedex-name";
+        nameDiv.textContent = entry.name;
+        li.appendChild(nameDiv);
+        var meta = document.createElement("div");
+        meta.className = "namedex-meta";
+        meta.textContent = "登録日：" + entry.date;
+        li.appendChild(meta);
+        if (entry.profile) {
+          var prof = document.createElement("p");
+          prof.className = "namedex-profile";
+          prof.textContent = entry.profile;
+          li.appendChild(prof);
+        }
+        var del = document.createElement("button");
+        del.type = "button";
+        del.className = "namedex-del";
+        del.textContent = "削除";
+        del.onclick = function () {
+          var cur = loadNameDex();
+          cur.splice(idx, 1);
+          saveNameDex(cur);
+          renderNameDex();
+        };
+        li.appendChild(del);
+        ul.appendChild(li);
+      })(list[i], i);
+    }
+  }
+
+  document.getElementById("regNameBtn").onclick = function () {
+    var status = document.getElementById("regStatus");
+    if (!currentAiName) {
+      status.textContent = "まず「新しい怪獣を命名」で名前を作ってください。";
+      return;
+    }
+    var list = loadNameDex();
+    var i;
+    for (i = 0; i < list.length; i++) {
+      if (list[i].name === currentAiName) {
+        status.textContent = "「" + currentAiName + "」はすでに図鑑に登録されています。";
+        return;
+      }
+    }
+    if (list.length >= NAMEDEX_MAX) {
+      status.textContent = "図鑑はいっぱいです（最大" + NAMEDEX_MAX + "体）。古い登録を削除してください。";
+      return;
+    }
+    var now = new Date();
+    list.unshift({
+      name: currentAiName,
+      profile: currentAiProfile,
+      date: now.getFullYear() + "/" + (now.getMonth() + 1) + "/" + now.getDate()
+    });
+    saveNameDex(list);
+    renderNameDex();
+    status.textContent = "「" + currentAiName + "」を図鑑に登録しました。";
+  };
+
+  renderNameDex();
 
   /* ■ 鳴き声ジェネレーター（WebAudio合成） */
   var audioCtx = null;

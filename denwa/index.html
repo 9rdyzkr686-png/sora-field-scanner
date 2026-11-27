@@ -94,6 +94,14 @@
     padding: 10px 16px;
   }
   .book b { color: #e8c97a; }
+  .histrow {
+    display: block; width: 100%; text-align: left;
+    min-height: 52px; margin: 6px 0; padding: 8px 12px;
+    font-size: 16px; line-height: 1.5; font-family: inherit;
+    border-radius: 10px; border: 1px solid #3d2c1c;
+    background: #241a12; color: #d9c9a3; cursor: pointer;
+  }
+  .histdate { font-size: 13px; color: #8a7a5c; }
   .ringlabel { font-size: 14px; color: #c9a86a; margin: 4px 0 0; }
   .anspanel {
     max-width: 360px; margin: 16px auto 0;
@@ -172,6 +180,11 @@
   117 … 時報<br>
   111 … 留守番電話<br>
   それ以外 … どうなるかは おたのしみ
+</div>
+
+<div class="book">
+  <b>つうわ履歴</b>（タップで かけ直し）<br>
+  <div id="histList"></div>
 </div>
 
 <footer>
@@ -319,6 +332,86 @@ function answer(who, text) {
   el("btnCall").disabled = true;
   startTimer();
   speak(text);
+  recordHistory();
+}
+
+/* つうわ履歴 */
+var NUMBER_NAMES = {
+  "606": "ダックス直通",
+  "333": "都市伝説ホットライン",
+  "808": "宇宙ステーション",
+  "555": "占い交換台",
+  "777": "占いダイヤル",
+  "767": "ニュース直通",
+  "909": "天気直通",
+  "117": "時報",
+  "111": "留守番電話"
+};
+var HISTORY_KEY = "denwa6_history_v1";
+var HISTORY_MAX = 30;
+
+function loadHistory() {
+  try {
+    var raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) { return []; }
+    var list = JSON.parse(raw);
+    if (list && typeof list.length === "number") { return list; }
+  } catch (e) {}
+  return [];
+}
+
+function saveHistory(list) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+  } catch (e) {}
+}
+
+function histPad(n) { return (n < 10 ? "0" : "") + n; }
+
+function recordHistory() {
+  if (!digits) { return; }
+  var list = loadHistory();
+  var now = new Date();
+  list.unshift({
+    number: digits,
+    name: NUMBER_NAMES[digits] || "案内",
+    date: now.getFullYear() + "/" + (now.getMonth() + 1) + "/" + now.getDate() +
+      " " + histPad(now.getHours()) + ":" + histPad(now.getMinutes())
+  });
+  while (list.length > HISTORY_MAX) { list.pop(); }
+  saveHistory(list);
+  renderHistory();
+}
+
+function renderHistory() {
+  var box = el("histList");
+  var list = loadHistory();
+  box.innerHTML = "";
+  if (!list.length) {
+    box.innerHTML = "まだ履歴がありません";
+    return;
+  }
+  for (var i = 0; i < list.length; i++) {
+    (function (entry) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "histrow";
+      b.innerHTML = escHtml(entry.number) + " … " + escHtml(entry.name) +
+        "<br><span class=\"histdate\">" + escHtml(entry.date) + "</span>";
+      b.onclick = function () { redial(entry.number); };
+      box.appendChild(b);
+    })(list[i]);
+  }
+}
+
+function redial(num) {
+  if (state !== "idle") {
+    setStatus("通話中は かけ直せません");
+    return;
+  }
+  digits = num;
+  showDisplay();
+  pressCall();
 }
 
 function escHtml(s) {
@@ -685,6 +778,7 @@ el("btnPlay").onclick = pressPlay;
 updateRingBtns();
 buildDial();
 showDisplay();
+renderHistory();
 </script>
 </body>
 </html>
