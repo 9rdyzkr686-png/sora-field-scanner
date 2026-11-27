@@ -46,12 +46,27 @@ a.row {
   background: #0c1710;
   border: 1px solid #2a4a35;
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 12px 58px 12px 14px;
   margin-bottom: 10px;
+  position: relative;
   text-decoration: none;
   color: #c9f5d6;
 }
 a.row:active { background: #14301d; }
+.star {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  margin-top: -22px;
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+  text-align: center;
+  font-size: 26px;
+  color: #5d8268;
+  cursor: pointer;
+}
+.star.on { color: #ffc857; text-shadow: 0 0 8px rgba(255, 200, 87, 0.8); }
 .name {
   display: block;
   font-size: 19px;
@@ -100,8 +115,13 @@ a.row:active { background: #14301d; }
 <h1>PORTAL-6</h1>
 <div class="sub">全サイト一覧 — iPhone 6 専用ポータル</div>
 
-<h2>■ サイト一覧</h2>
+<div id="favSection" style="display:none;">
+<h2>■ お気に入り</h2>
+<div id="favList"></div>
+</div>
 
+<h2>■ サイト一覧</h2>
+<div id="mainList">
 <a class="row" href="https://9rdyzkr686-png.github.io/iPhone6-board/">
   <span class="name">情報ボード</span>
   <span class="desc">天気・地震・ニュースと育成の全部入り</span>
@@ -171,6 +191,7 @@ a.row:active { background: #14301d; }
   <span class="name">EKIMA-6 ダックス駅</span>
   <span class="desc">架空駅の発車案内板</span>
 </a>
+</div>
 
 <h2>■ 自動で見つけた新しいサイト</h2>
 <div id="autoStatus">チェック中…</div>
@@ -179,7 +200,7 @@ a.row:active { background: #14301d; }
 
 <button id="refreshBtn" type="button">↻ 更新</button>
 
-<div class="footer">PORTAL-6 は小野さん専用の入口です<br>一覧はネットがなくても表示されます</div>
+<div class="footer">PORTAL-6 は小野さん専用の入口です<br>一覧はネットがなくても表示されます<br>★でお気に入りに固定できます（この端末に保存）</div>
 
 <script>
 var KNOWN = {
@@ -191,6 +212,69 @@ var SITE_BASE = "https://9rdyzkr686-png.github.io/sora-field-scanner/";
 var API_URL = "https://api.github.com/repos/9rdyzkr686-png/sora-field-scanner/contents/";
 
 function el(id) { return document.getElementById(id); }
+
+var FAV_KEY = "portal6_favs_v1";
+var favs = {};
+var allRows = [];
+var autoIdx = 0;
+
+function loadFavs() {
+  try {
+    var raw = window.localStorage.getItem(FAV_KEY);
+    if (raw) {
+      var o = JSON.parse(raw);
+      if (o && typeof o === "object") { favs = o; }
+    }
+  } catch (e) {}
+}
+
+function saveFavs() {
+  try { window.localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch (e) {}
+}
+
+function setStar(a, isFav) {
+  if (!a._star) { return; }
+  a._star.innerHTML = isFav ? "★" : "☆";
+  a._star.className = isFav ? "star on" : "star";
+}
+
+function setupRow(a, home, idx) {
+  a._home = home;
+  a._idx = idx;
+  var s = document.createElement("span");
+  s.className = "star";
+  s.appendChild(document.createTextNode("☆"));
+  s.onclick = function (e) {
+    if (e) {
+      if (e.preventDefault) { e.preventDefault(); }
+      if (e.stopPropagation) { e.stopPropagation(); }
+    }
+    toggleFav(a);
+    return false;
+  };
+  a.appendChild(s);
+  a._star = s;
+  allRows.push(a);
+}
+
+function toggleFav(a) {
+  var url = a.href;
+  if (favs[url]) { delete favs[url]; } else { favs[url] = 1; }
+  saveFavs();
+  arrangeFavorites();
+}
+
+function arrangeFavorites() {
+  var favRows = [];
+  var i, a;
+  for (i = 0; i < allRows.length; i++) {
+    a = allRows[i];
+    if (favs[a.href]) { favRows.push(a); } else { a._home.appendChild(a); }
+    setStar(a, !!favs[a.href]);
+  }
+  for (i = 0; i < favRows.length; i++) { el("favList").appendChild(favRows[i]); }
+  el("favSection").style.display = favRows.length ? "block" : "none";
+}
 
 function xhrGet(url, timeoutMs, onOk, onFail) {
   var xhr = new XMLHttpRequest();
@@ -237,6 +321,9 @@ function addAutoRow(dirName, title) {
   a.appendChild(nameSpan);
   a.appendChild(descSpan);
   el("autoList").appendChild(a);
+  setupRow(a, el("autoList"), autoIdx);
+  autoIdx++;
+  arrangeFavorites();
 }
 
 function autoFail() {
@@ -283,6 +370,13 @@ function checkNewSites() {
 
 function init() {
   el("refreshBtn").onclick = function () { location.reload(); };
+  loadFavs();
+  var mainRows = el("mainList").getElementsByTagName("a");
+  var i;
+  for (i = 0; i < mainRows.length; i++) {
+    setupRow(mainRows[i], el("mainList"), i);
+  }
+  arrangeFavorites();
   checkNewSites();
 }
 

@@ -94,6 +94,7 @@
     <button type="button" class="mchip" data-mode="fortune">占い師</button>
     <button type="button" class="mchip" data-mode="story">昔話</button>
     <button type="button" class="mchip" data-mode="sora">SORA-01</button>
+    <button type="button" class="mchip" data-mode="english">英語練習</button>
   </div>
   <div class="chiprow">
     <button type="button" id="voiceBtn">ボイス：OFF</button>
@@ -128,7 +129,7 @@
 <div id="statusLine"></div>
 
 <footer>
-  AIの相手は無料の外部AIサービスです（クーではありません）。1日100回くらいまでが目安です。会話はこのページを閉じると消えます。
+  AIの相手は無料の外部AIサービスです（クーではありません）。1日100回くらいまでが目安です。会話はこの端末に自動保存されます。
   <a class="portal-link" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
 </footer>
 
@@ -144,14 +145,39 @@ var MODES = {
   doctor:  { label: "ダックス博士", inst: "あなたはダックスフンドにくわしい博士です。博士らしい口調で、ダックスフンドの知識を交えて答えてください。" },
   fortune: { label: "占い師",       inst: "あなたは神秘的な口調の占い師です。占いとして楽しく答えてください。これはエンターテイメントです。" },
   story:   { label: "昔話",         inst: "あなたは昔話の語り部です。「むかしむかし」で始まる、短い創作の昔話を語ってください。" },
-  sora:    { label: "SORA-01",      inst: "あなたは観測生物SORA-01です。1980年代パソコン風のレトロな端末口調で答えてください。相手は観察者の小野さんです。「小野さん」と呼びかけてください。" }
+  sora:    { label: "SORA-01",      inst: "あなたは観測生物SORA-01です。1980年代パソコン風のレトロな端末口調で答えてください。相手は観察者の小野さんです。「小野さん」と呼びかけてください。" },
+  english: { label: "英語練習",     inst: "あなたは日本人の初心者のための英語会話の練習相手です。主にやさしく短い英語で答えてください（短い文を3文まで）。その後に、括弧書きで短い日本語訳を添えてください。相手が英語で書いた場合は、日本語で短い添削のヒントを1つ添えてください。" }
 };
 var COMMON_RULES = "必ず日本語で答えてください。マークダウン記号（#、*、-、番号リストなど）は使わないでください。改行は控えめにしてください。";
+var ENG_RULES = "マークダウン記号（#、*、-、番号リストなど）は使わないでください。改行は控えめにしてください。";
 
+var SAVE_KEY = "ai6_save_v1";
 var mode = "normal";
 var voiceOn = false;
 var sending = false;
 var history = []; /* [{u:"...", a:"..."}] 直近のやりとり */
+var chatMsgs = []; /* [{r:"u"|"a", t:"..."}] 保存・復元用の全メッセージ */
+
+function trimMsgs() {
+  while (chatMsgs.length > 50) chatMsgs.shift();
+}
+
+function saveChat() {
+  try {
+    var data = { mode: mode, msgs: chatMsgs.slice(-50) };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch (e) { /* 保存できなくても通常動作を続ける */ }
+}
+
+function loadSave() {
+  try {
+    var raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    var d = JSON.parse(raw);
+    if (!d || !d.msgs || typeof d.msgs.length !== "number" || d.msgs.length === 0) return null;
+    return d;
+  } catch (e) { return null; }
+}
 
 var logBox = document.getElementById("logBox");
 var inputBox = document.getElementById("inputBox");
@@ -198,7 +224,7 @@ function speak(text) {
     if (text.length > 150) return;
     if (text.indexOf("\n") >= 0) return;
     var u = new SpeechSynthesisUtterance(text);
-    u.lang = "ja-JP";
+    u.lang = (mode === "english") ? "en-US" : "ja-JP";
     u.pitch = 0.7;
     u.rate = 1.0;
     window.speechSynthesis.cancel();
@@ -250,7 +276,7 @@ function buildPrompt(userText) {
   if (mode === "sora") limit = "100文字以内で答えてください。";
   else if (mode === "chat") limit = "150文字以内で答えてください。";
   else limit = "300文字以内で答えてください。";
-  var p = inst + COMMON_RULES + limit;
+  var p = inst + (mode === "english" ? ENG_RULES : COMMON_RULES) + limit;
   var i, h;
   var from = Math.max(0, history.length - 3);
   if (from < history.length) {
@@ -272,6 +298,9 @@ function sendMessage(text) {
   sendBtn.disabled = true;
   inputBox.value = "";
   addUserRow(text);
+  chatMsgs.push({ r: "u", t: text });
+  trimMsgs();
+  saveChat();
   var thinkMsg = addRow("ai", "AI", "考え中…");
   thinkMsg.className = "msg thinking";
 
@@ -316,6 +345,9 @@ function sendMessage(text) {
     thinkMsg.className = "msg";
     history.push({ u: text, a: reply });
     if (history.length > 12) history.shift();
+    chatMsgs.push({ r: "a", t: reply });
+    trimMsgs();
+    saveChat();
     sending = false;
     sendBtn.disabled = false;
     startTyping(thinkMsg, reply);
@@ -367,6 +399,7 @@ for (mi = 0; mi < mchips.length; mi++) {
       mchips[q].className = "mchip" + (mchips[q].getAttribute("data-mode") === m ? " active" : "");
     }
     addSysRow("モードを『" + MODES[m].label + "』に変えました");
+    saveChat();
   };
 }
 
@@ -422,13 +455,53 @@ document.getElementById("clearBtn").onclick = function () {
   if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
   typeTarget = null;
   history = [];
+  chatMsgs = [];
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ }
   logBox.innerHTML = "";
   addAiRow(GREETING);
   setStatus("会話を消しました。");
   try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
 };
 
-addAiRow(GREETING);
+/* ---- 起動時：保存があれば復元、なければ挨拶 ---- */
+var savedData = loadSave();
+if (savedData) {
+  var sIdx, sMsg;
+  for (sIdx = 0; sIdx < savedData.msgs.length; sIdx++) {
+    sMsg = savedData.msgs[sIdx];
+    if (sMsg && (sMsg.r === "u" || sMsg.r === "a") && typeof sMsg.t === "string") {
+      chatMsgs.push({ r: sMsg.r, t: sMsg.t });
+    }
+  }
+  trimMsgs();
+}
+if (chatMsgs.length > 0) {
+  if (savedData.mode && MODES[savedData.mode]) {
+    mode = savedData.mode;
+    document.body.className = (mode === "sora") ? "sora" : "";
+    var mIdx;
+    for (mIdx = 0; mIdx < mchips.length; mIdx++) {
+      mchips[mIdx].className = "mchip" + (mchips[mIdx].getAttribute("data-mode") === mode ? " active" : "");
+    }
+  }
+  var rIdx, pendingU = null;
+  for (rIdx = 0; rIdx < chatMsgs.length; rIdx++) {
+    if (chatMsgs[rIdx].r === "u") {
+      addUserRow(chatMsgs[rIdx].t);
+      pendingU = chatMsgs[rIdx].t;
+    } else {
+      addAiRow(chatMsgs[rIdx].t);
+      if (pendingU !== null) {
+        history.push({ u: pendingU, a: chatMsgs[rIdx].t });
+        pendingU = null;
+      }
+    }
+  }
+  if (history.length > 12) history = history.slice(history.length - 12);
+  addSysRow("前回の会話を復元しました（" + chatMsgs.length + "件）");
+} else {
+  addAiRow(GREETING);
+}
 </script>
 </body>
 </html>
