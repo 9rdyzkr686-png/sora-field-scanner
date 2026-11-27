@@ -309,6 +309,122 @@ body.night .rallyslot.got { color: #ffc857; border-color: #ffc857; }
 body.night .trophy.locked { color: #777; }
 body.night #coinBar, body.night #seasonStrip { color: #ffc857; }
 body.night .footer { color: #777; }
+/* ===== 第3バッチ：アイコン／演出／片手／白黒／印刷／粒子／ふりがな ===== */
+.siteicon { display: inline-block; font-size: 20px; margin-right: 7px; vertical-align: -2px; }
+.pinput {
+  width: 100%;
+  min-height: 48px;
+  font-size: 17px;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: #050807;
+  color: #c9f5d6;
+  border: 1px solid #2a4a35;
+  border-radius: 8px;
+  font-family: inherit;
+}
+body.theme-paper .pinput { background: #fffdf4; color: #4a3520; border-color: #c9b489; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; }
+body.theme-sunset .pinput { background: rgba(20,8,40,.55); color: #ffeedd; border-color: rgba(255,215,110,.5); }
+body.night .pinput { background: #000; color: #d8d8d8; border-color: #3a3a3a; }
+.footer a { color: #39ff7a; }
+#commonFooter a { display: inline-block; padding: 8px 6px; }
+body.theme-paper .footer a { color: #7a4d12; }
+body.theme-sunset .footer a { color: #ffd76e; }
+body.night .footer a { color: #e8e8e8; }
+/* (192) フェード演出 */
+@-webkit-keyframes fadeUp { from { opacity: 0; -webkit-transform: translateY(8px); } to { opacity: 1; -webkit-transform: translateY(0); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.panel, a.row { -webkit-animation: fadeUp .35s ease both; animation: fadeUp .35s ease both; }
+#mainList a.row:nth-of-type(2) { -webkit-animation-delay: .03s; animation-delay: .03s; }
+#mainList a.row:nth-of-type(3) { -webkit-animation-delay: .06s; animation-delay: .06s; }
+#mainList a.row:nth-of-type(4) { -webkit-animation-delay: .09s; animation-delay: .09s; }
+#mainList a.row:nth-of-type(5) { -webkit-animation-delay: .12s; animation-delay: .12s; }
+#mainList a.row:nth-of-type(6) { -webkit-animation-delay: .15s; animation-delay: .15s; }
+#mainList a.row:nth-of-type(7) { -webkit-animation-delay: .18s; animation-delay: .18s; }
+#mainList a.row:nth-of-type(8) { -webkit-animation-delay: .21s; animation-delay: .21s; }
+body.theme-retro .panel, body.theme-retro a.row { -webkit-animation: none; animation: none; }
+body.theme-hand a.row { -webkit-animation: none; animation: none; }
+/* (193) 押し心地 */
+a.row, .pbtn, #refreshBtn { -webkit-tap-highlight-color: rgba(57,255,122,.25); transition: transform .08s ease; -webkit-transition: -webkit-transform .08s ease; }
+a.row:active, .pbtn:active, #refreshBtn:active { transform: scale(.98); -webkit-transform: scale(.98); }
+/* (197) ドット絵モード */
+body.pixel .siteicon {
+  border: 3px solid currentColor;
+  border-radius: 0;
+  padding: 1px 3px;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.35), inset 0 0 0 2px rgba(255,255,255,.18);
+  image-rendering: pixelated;
+  -webkit-image-rendering: pixelated;
+}
+body.pixel h2 { border-bottom-style: dotted; border-bottom-width: 3px; }
+/* (185) ふりがな */
+rt { display: none; }
+body.furigana rt { display: inline; font-size: 10px; }
+/* (187) 片手モード */
+#onehandNote { display: none; }
+body.onehand { padding-bottom: 90px; }
+body.onehand a.row { min-height: 64px; padding-top: 16px; padding-bottom: 16px; }
+body.onehand .pbtn { min-height: 56px; }
+body.onehand #randomBtn { margin-top: 56px; }
+body.onehand #onehandNote { display: block; }
+/* (196) フォントサイズ自動調整 */
+body.font-small { font-size: 15px; }
+body.font-large { font-size: 18px; }
+body.font-small .name { font-size: 18px; }
+body.font-large .name { font-size: 21px; }
+body.font-small .desc { font-size: 12px; }
+body.font-large .desc { font-size: 15px; }
+body.font-small .stat-line { font-size: 14px; }
+body.font-large .stat-line { font-size: 17px; }
+/* (194) 背景粒子 */
+#particles { position: fixed; left: 0; top: 0; right: 0; bottom: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+.pdot { position: absolute; border-radius: 50%; background: #d9ffe4; -webkit-animation: pfloat 8s ease-in-out infinite alternate; animation: pfloat 8s ease-in-out infinite alternate; }
+@-webkit-keyframes pfloat { from { -webkit-transform: translateY(0); } to { -webkit-transform: translateY(-16px); } }
+@keyframes pfloat { from { transform: translateY(0); } to { transform: translateY(-16px); } }
+body.theme-paper #particles { display: none !important; }
+/* (186) 白黒モード：パレット上書き方式（filterは固定表示のスプラッシュを壊すため使わない） */
+body.mono { background: #111; color: #ddd; }
+body.mono h1 { color: #f0f0f0; text-shadow: none; }
+body.mono h2 { color: #e0e0e0; border-bottom-color: #555; }
+body.mono .sub, body.mono .note, body.mono #autoStatus, body.mono .qrurl { color: #aaa; }
+body.mono a.row, body.mono .panel { background: #1a1a1a; border-color: #555; color: #ddd; }
+body.mono a.row:active { background: #2a2a2a; }
+body.mono .name { color: #f0f0f0; }
+body.mono .desc { color: #bbb; }
+body.mono .pbtn, body.mono #refreshBtn { background: #1a1a1a; color: #f0f0f0; border-color: #999; }
+body.mono .pbtn.on { background: #ddd; color: #111; }
+body.mono .star { color: #888; }
+body.mono .star.on { color: #fff; text-shadow: none; }
+body.mono .newbadge, body.mono .bellbadge { background: #777; color: #fff; }
+body.mono textarea.bk, body.mono .psel, body.mono .pinput { background: #000; color: #ddd; border-color: #555; }
+body.mono .rallyslot { background: #111; border-color: #555; color: #aaa; }
+body.mono .rallyslot.got { color: #fff; border-color: #ddd; }
+body.mono .trophy.earned, body.mono #coinBar, body.mono #seasonStrip, body.mono .rally-done { color: #fff; }
+body.mono .trophy.locked { color: #888; }
+body.mono #coinNote { color: #ddd; }
+body.mono .footer { color: #888; }
+body.mono .footer a { color: #eee; }
+body.mono .qrItem img { -webkit-filter: grayscale(1); filter: grayscale(1); }
+body.mono .pdot { background: #ccc; }
+body.mono #splash { background: #111; color: #f0f0f0; }
+body.mono #splashFact { color: #ddd; }
+body.mono #splash .tap { color: #fff; }
+/* (188) 印刷用レイアウト */
+body.printing { background: #fff; color: #000; }
+body.printing #splash, body.printing #particles, body.printing .pbtn, body.printing #refreshBtn, body.printing .panel, body.printing .btnrow, body.printing .star, body.printing #coinBar, body.printing #seasonStrip, body.printing #autoStatus, body.printing .note, body.printing #onehandNote { display: none !important; }
+body.printing h1, body.printing h2, body.printing .name, body.printing .desc { color: #000; }
+body.printing a.row { background: #fff; border: none; border-bottom: 1px solid #ccc; border-radius: 0; color: #000; min-height: 0; padding: 6px 0; -webkit-animation: none; animation: none; }
+body.printing a.row:after { content: " (" attr(href) ")"; font-size: 10px; color: #333; }
+@media print {
+  body { background: #fff !important; color: #000 !important; padding: 10px; }
+  #splash, #particles, .pbtn, #refreshBtn, .panel, .btnrow, .star, #coinBar, #seasonStrip, #autoStatus, .note, #onehandNote { display: none !important; }
+  h1, h2, .name, .desc { color: #000 !important; }
+  h2 { border-bottom: 1px solid #000; }
+  a.row { background: #fff !important; border: none; border-bottom: 1px solid #ccc; border-radius: 0; color: #000 !important; min-height: 0; padding: 6px 0; page-break-inside: avoid; -webkit-animation: none; animation: none; }
+  a.row:after { content: " (" attr(href) ")"; font-size: 10px; color: #333; }
+  .footer { color: #333 !important; }
+  .footer a { color: #000 !important; }
+}
 </style>
 </head>
 <body>
@@ -318,6 +434,8 @@ body.night .footer { color: #777; }
   <div id="splashFact"></div>
   <div class="tap">タップで入る</div>
 </div>
+
+<div id="particles" style="display:none;"></div>
 
 <h1>PORTAL-6</h1>
 <div class="sub">全サイト一覧 — iPhone 6 専用ポータル</div>
@@ -330,7 +448,7 @@ body.night .footer { color: #777; }
 <div id="bellPanel" class="panel" style="display:none;"><div id="bellList" class="stat-line"></div></div>
 
 <div id="campaignBanner" class="panel" style="display:none; border-color:#ff5470;">
-<div class="stat-line">🎄 冬の観測キャンペーン（11/27〜12/25）<br>スタンプラリーとクーコインで冬を楽しもう</div>
+<div class="stat-line">🎄 冬の<ruby>観測<rt>かんそく</rt></ruby>キャンペーン（11/27〜12/25）<br>スタンプラリーとクーコインで冬を楽しもう</div>
 <button id="campaignBtn" class="pbtn" type="button" style="margin-top:8px;">スタンプラリーを見る</button>
 </div>
 
@@ -338,6 +456,10 @@ body.night .footer { color: #777; }
 <div class="note" style="text-align:center;">ためるだけのポイントです。サイトを開くと、1日1回・サイトごとに+1枚もらえます</div>
 
 <button id="randomBtn" class="pbtn" type="button">🎲 おまかせで開く</button>
+<div class="btnrow">
+<button id="tourBtn" class="pbtn" type="button">🔊 音声ガイドツアー</button><button id="tourStopBtn" class="pbtn" type="button">⏹ 停止</button>
+</div>
+<div id="tourText" class="panel" style="display:none; font-size:15px; line-height:1.7;"></div>
 
 <h2>■ わたしの記録</h2>
 <div class="panel"><div id="myPageBody" class="stat-line"></div></div>
@@ -347,6 +469,15 @@ body.night .footer { color: #777; }
 
 <h2>■ スタンプラリー</h2>
 <div class="panel" id="rallyPanel"></div>
+
+<h2>■ 合言葉</h2>
+<div class="panel">
+<div class="stat-line">合言葉を言うと、いいことがあるかもしれません（ボーナスは1日1回）</div>
+<input id="wordInput" class="pinput" type="text" placeholder="合言葉を入力" autocomplete="off">
+<button id="wordBtn" class="pbtn" type="button">言う</button>
+<div id="wordMsg" class="stat-line" style="margin-top:6px;"></div>
+<div id="wordSecret" class="stat-line" style="display:none; margin-top:6px; color:#ffc857;">🤫 子クーからの内緒話：KUU-01は、小野さんが来るたび耳をぴんと立てて待っています</div>
+</div>
 
 <div id="favSection" style="display:none;">
 <h2>■ お気に入り</h2>
@@ -381,7 +512,7 @@ body.night .footer { color: #777; }
   <span class="desc">AIが書く番組をロボット声で放送（ニュース・通販・時代劇・天気・怪談）</span>
 </a>
 <a class="row" href="../jihanki/">
-  <span class="name">JIHANKI-6 深夜の自動販売機</span>
+  <span class="name">JIHANKI-6 深夜の<ruby>自動販売機<rt>じどうはんばいき</rt></ruby></span>
   <span class="desc">ボタンを押すとAIの短編・俳句・占いが出てくる</span>
 </a>
 <a class="row" href="../shinbun/">
@@ -389,7 +520,7 @@ body.night .footer { color: #777; }
   <span class="desc">開くたびAIが書く朝刊（創作）と本物の天気欄</span>
 </a>
 <a class="row" href="../sento/">
-  <span class="name">SENTO-6 銭湯いちばん</span>
+  <span class="name">SENTO-6 <ruby>銭湯<rt>せんとう</rt></ruby>いちばん</span>
   <span class="desc">本物の天気掲示板とAI番台さん、今日の湯</span>
 </a>
 
@@ -409,7 +540,7 @@ body.night .footer { color: #777; }
 </a>
 
 <a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/densetsu/">
-  <span class="name">DENSETSU-6 都市伝説アーカイブ</span>
+  <span class="name">DENSETSU-6 都市<ruby>伝説<rt>でんせつ</rt></ruby>アーカイブ</span>
   <span class="desc">最新トピックと定番の話</span>
 </a>
 
@@ -425,7 +556,7 @@ body.night .footer { color: #777; }
 
 <a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/jikan/">
   <span class="name">JIKAN-6 時間旅行券売機</span>
-  <span class="desc">時代行きの切符を発行</span>
+  <span class="desc">時代行きの<ruby>切符<rt>きっぷ</rt></ruby>を発行</span>
 </a>
 
 <a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/shokudo/">
@@ -439,7 +570,7 @@ body.night .footer { color: #777; }
 </a>
 
 <a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/museum/">
-  <span class="name">HAKUBUTSU-6 夜の博物館</span>
+  <span class="name">HAKUBUTSU-6 夜の<ruby>博物館<rt>はくぶつかん</rt></ruby></span>
   <span class="desc">音声ガイドつき展示</span>
 </a>
 
@@ -459,8 +590,8 @@ body.night .footer { color: #777; }
 </a>
 
 <a class="row" href="https://9rdyzkr686-png.github.io/sora-field-scanner/board6/">
-  <span class="name">BOARD-6 要望ボード</span>
-  <span class="desc">要望やメモを書いてクーに渡す掲示板</span>
+  <span class="name">BOARD-6 <ruby>要望<rt>ようぼう</rt></ruby>ボード</span>
+  <span class="desc"><ruby>要望<rt>ようぼう</rt></ruby>やメモを書いてクーに渡す掲示板</span>
 </a>
 <a class="row" href="../oshi/">
   <span class="name">OSHI-6 推し活ステーション</span>
@@ -491,7 +622,7 @@ body.night .footer { color: #777; }
   <span class="desc">行き先を選ぶとAIが旅程を組む</span>
 </a>
 <a class="row" href="../fortune/">
-  <span class="name">FORTUNE-6 占い横丁</span>
+  <span class="name">FORTUNE-6 <ruby>占い<rt>うらない</rt></ruby>横丁</span>
   <span class="desc">AI占い・数秘術・おみくじ・タロット風の横丁</span>
 </a>
 <a class="row" href="../gahaku/">
@@ -572,7 +703,7 @@ body.night .footer { color: #777; }
 </a>
 <a class="row" href="../train/">
   <span class="name">TRAIN-6 夜行列車</span>
-  <span class="desc">列車の音とAIの車窓物語、駅弁タイム</span>
+  <span class="desc">列車の音とAIの車窓物語、<ruby>駅弁<rt>えきべん</rt></ruby>タイム</span>
 </a>
 <a class="row" href="../market/">
   <span class="name">MARKET-6 夜市</span>
@@ -635,6 +766,19 @@ body.night .footer { color: #777; }
 <div class="note">QR画像は外部サービス（api.qrserver.com）で生成しています</div>
 </div>
 
+<h2>■ クレジット</h2>
+<div class="panel">
+<button id="creditBtn" class="pbtn" type="button">クレジットを開く</button>
+<div id="creditBody" style="display:none; margin-top:8px;" class="stat-line">
+作った人：クー（AI）と小野さん<br>
+動く場所：iPhone 6 + GitHub Pages<br>
+データ：Open-Meteo・NOAA・P2P地震情報・rss2json<br>
+AI：Pollinations（openai-fast）<br>
+ありがとう：CUTIE STREETの応援が原動力です<br>
+PORTAL-6 ver 2.0
+</div>
+</div>
+
 <h2>■ ポータル設定</h2>
 <div class="panel">
 <div class="stat-line">テーマ</div>
@@ -654,12 +798,34 @@ body.night .footer { color: #777; }
 <div class="btnrow">
 <button id="setNightBtn" class="pbtn" type="button">夜モード：OFF</button><button id="setSplashBtn" class="pbtn on" type="button">起動ロゴ：ON</button>
 </div>
+<div class="btnrow">
+<button id="setPixelBtn" class="pbtn" type="button">ドット絵モード：OFF</button><button id="setFuriBtn" class="pbtn" type="button">ふりがな：OFF</button>
+</div>
+<div class="btnrow">
+<button id="setMonoBtn" class="pbtn" type="button">白黒モード：OFF</button><button id="setOnehandBtn" class="pbtn" type="button">片手モード：OFF</button>
+</div>
+<div class="btnrow">
+<button id="setParticlesBtn" class="pbtn on" type="button">背景キラキラ：ON</button><button id="printBtn" class="pbtn" type="button">🖨 印刷用に開く</button>
+</div>
+<div class="stat-line">タップ音</div>
+<select id="setSound" class="psel">
+<option value="none">なし</option>
+<option value="beep">電子音</option>
+<option value="mokkin">木琴風</option>
+</select>
 <div class="note">設定はこの端末に保存されます。レトロ端末・紙テーマでは、それぞれ専用のフォントになります。</div>
 </div>
+
+<div id="onehandNote" class="note" style="text-align:center;">⬇ 下の方にボタン集約中（片手モード）</div>
 
 <button id="refreshBtn" type="button">↻ 更新</button>
 
 <div class="footer">PORTAL-6 は小野さん専用の入口です<br>一覧はネットがなくても表示されます<br>★でお気に入りに固定できます（この端末に保存）</div>
+
+<div class="footer" id="commonFooter">PORTAL-6 — 全サイト共通フッター<br>
+<a href="https://9rdyzkr686-png.github.io/iPhone6-board/">情報ボード</a> ／ <a href="https://9rdyzkr686-png.github.io/sora-field-scanner/">KUU FIELD SCANNER</a> ／ <a href="https://9rdyzkr686-png.github.io/sora-field-scanner/ai/">AI-6</a><br>
+<button id="footRandomBtn" class="pbtn" type="button">🎲 おまかせ訪問</button><br>
+どのサイトからもポータルに戻れます<br>PORTAL-6 ver 2.0</div>
 
 <script>
 var KNOWN = {
@@ -711,12 +877,18 @@ function setupRow(a, home, idx) {
   a._home = home;
   a._idx = idx;
   a._key = siteKeyOf(a);
+  var nameEl = null;
+  var ci;
+  for (ci = 0; ci < a.childNodes.length; ci++) {
+    if (a.childNodes[ci].className === "name") { nameEl = a.childNodes[ci]; break; }
+  }
+  if (nameEl) {
+    var ic = document.createElement("span");
+    ic.className = "siteicon";
+    ic.appendChild(document.createTextNode(ICONS[a._key] || "🔹"));
+    nameEl.insertBefore(ic, nameEl.firstChild);
+  }
   if (isNewSite(a._key)) {
-    var nameEl = null;
-    var ci;
-    for (ci = 0; ci < a.childNodes.length; ci++) {
-      if (a.childNodes[ci].className === "name") { nameEl = a.childNodes[ci]; break; }
-    }
     if (nameEl) {
       var bd = document.createElement("span");
       bd.className = "newbadge";
@@ -780,7 +952,7 @@ var VISIT_KEY = "portal6_visits_v1";
 var COIN_KEY = "kuu_coin_v1";
 var SORT_KEY = "portal6_sort_v1";
 var visits = {};
-var coinData = { balance: 0, lastEarn: {} };
+var coinData = { balance: 0, lastEarn: {}, lastWord: "" };
 var sortMode = "default";
 var curatedRows = [];
 
@@ -838,6 +1010,7 @@ function loadCoins() {
       if (o && typeof o === "object") {
         if (typeof o.balance === "number") { coinData.balance = o.balance; }
         if (o.lastEarn && typeof o.lastEarn === "object") { coinData.lastEarn = o.lastEarn; }
+        if (typeof o.lastWord === "string") { coinData.lastWord = o.lastWord; }
       }
     }
   } catch (e) {}
@@ -1212,6 +1385,7 @@ function init() {
   el("bkCopyBtn").onclick = bkCopy;
   el("bkImportBtn").onclick = bkImport;
   initBatch2();
+  initBatch3();
   var st = gatherStats();
   renderMyPage(st);
   renderTrophies(st);
@@ -1222,7 +1396,7 @@ function init() {
 /* ===== デザイン・設定（テーマ／フォント／夜モード／起動ロゴ／お知らせ／季節） ===== */
 
 var SET_KEY = "portal6_settings_v1";
-var settings = { theme: "standard", font: "gothic", night: false, splashOff: false };
+var settings = { theme: "standard", font: "gothic", night: false, splashOff: false, pixel: false, furigana: false, mono: false, onehand: false, particles: true, sound: "none" };
 var THEME_CLASSES = ["theme-retro", "theme-paper", "theme-sunset", "theme-hand"];
 var FONT_CLASSES = ["font-gothic", "font-mincho", "font-maru"];
 var KEY_NAMES = {
@@ -1256,6 +1430,12 @@ function loadSettings() {
     if (o.font === "gothic" || o.font === "mincho" || o.font === "maru") { settings.font = o.font; }
     settings.night = !!o.night;
     settings.splashOff = !!o.splashOff;
+    settings.pixel = !!o.pixel;
+    settings.furigana = !!o.furigana;
+    settings.mono = !!o.mono;
+    settings.onehand = !!o.onehand;
+    if (typeof o.particles === "boolean") { settings.particles = o.particles; }
+    if (o.sound === "none" || o.sound === "beep" || o.sound === "mokkin") { settings.sound = o.sound; }
   }
 }
 
@@ -1271,6 +1451,10 @@ function applyAppearance() {
   if (settings.theme !== "standard") { b.classList.add("theme-" + settings.theme); }
   b.classList.add("font-" + settings.font);
   if (settings.night) { b.classList.add("night"); } else { b.classList.remove("night"); }
+  if (settings.pixel) { b.classList.add("pixel"); } else { b.classList.remove("pixel"); }
+  if (settings.furigana) { b.classList.add("furigana"); } else { b.classList.remove("furigana"); }
+  if (settings.mono) { b.classList.add("mono"); } else { b.classList.remove("mono"); }
+  if (settings.onehand) { b.classList.add("onehand"); } else { b.classList.remove("onehand"); }
   var st = el("setTheme");
   if (st) { st.value = settings.theme; }
   var sf = el("setFont");
@@ -1285,6 +1469,34 @@ function applyAppearance() {
     sb.innerHTML = "起動ロゴ：" + (settings.splashOff ? "OFF" : "ON");
     sb.className = settings.splashOff ? "pbtn" : "pbtn on";
   }
+  setToggleBtn("setPixelBtn", "ドット絵モード", settings.pixel);
+  setToggleBtn("setFuriBtn", "ふりがな", settings.furigana);
+  setToggleBtn("setMonoBtn", "白黒モード", settings.mono);
+  setToggleBtn("setOnehandBtn", "片手モード", settings.onehand);
+  setToggleBtn("setParticlesBtn", "背景キラキラ", settings.particles);
+  var ss = el("setSound");
+  if (ss) { ss.value = settings.sound; }
+  var pt = el("particles");
+  if (pt) { pt.style.display = settings.particles ? "block" : "none"; }
+  applyFontAuto();
+}
+
+function setToggleBtn(id, label, on) {
+  var b = el(id);
+  if (b) {
+    b.innerHTML = label + "：" + (on ? "ON" : "OFF");
+    b.className = on ? "pbtn on" : "pbtn";
+  }
+}
+
+function applyFontAuto() {
+  var w = 0;
+  try { w = window.innerWidth || (window.screen && window.screen.width) || 0; } catch (e) {}
+  var b = document.body;
+  b.classList.remove("font-small");
+  b.classList.remove("font-large");
+  if (w > 0 && w <= 350) { b.classList.add("font-small"); }
+  else if (w > 430) { b.classList.add("font-large"); }
 }
 
 function seasonInfo() {
@@ -1382,6 +1594,224 @@ function initBatch2() {
     settings.splashOff = !settings.splashOff;
     saveSettings();
     applyAppearance();
+  };
+}
+
+/* ===== 第3バッチ：アイコン／合言葉／音声ツアー／タップ音／粒子 ===== */
+
+var ICONS = {
+  "board": "📰", "kuu": "🐶", "ai": "🤖", "geesen": "🕹", "tv": "📺",
+  "jihanki": "🥤", "shinbun": "🗞", "sento": "♨", "orbit": "🛰", "radar": "📡",
+  "hima": "🎲", "densetsu": "👻", "radio": "📻", "denwa": "☎️", "jikan": "🎫",
+  "shokudo": "🍜", "kaiju": "🦖", "museum": "🏛", "ekima": "🚉", "techo": "📔",
+  "photo": "🖼", "board6": "📋", "oshi": "🎤", "oyasumi": "🌙", "lite": "⚡",
+  "check": "🩺", "kami": "🎭", "news": "📢", "tabi": "🧳", "fortune": "🔮",
+  "gahaku": "🎨", "yoru": "🌌", "hon": "📚", "umi": "🌊", "mori": "🌲",
+  "sakaba": "🍶", "hotel": "🏨", "yubin": "💌", "tenki": "🌦", "jishin": "📳",
+  "tsuki": "🌕", "amayadori": "☔", "juke": "🎵", "meisho": "🗺", "sauna": "🧖",
+  "camp": "🔥", "aqua": "🐠", "sky": "☁️", "letter": "🌳", "train": "🚃",
+  "market": "🏮", "moonbase": "🚀"
+};
+
+/* (178) 合言葉 */
+function wordSubmit() {
+  var v = el("wordInput").value.replace(/^\s+|\s+$/g, "");
+  var msg = el("wordMsg");
+  if (v === "ダックス" || v === "だっくす") {
+    var secret = el("wordSecret");
+    if (secret) { secret.style.display = "block"; }
+    var t = todayStr();
+    if (coinData.lastWord !== t) {
+      coinData.balance += 5;
+      coinData.lastWord = t;
+      saveCoins();
+      renderCoin();
+      msg.innerHTML = "🎉 正解です！合言葉ボーナス +5 コイン！<br>下に内緒話が出ました";
+    } else {
+      msg.innerHTML = "🎉 正解です！（今日のボーナスは受け取り済みです）";
+    }
+  } else if (!v) {
+    msg.innerHTML = "合言葉を入力してください";
+  } else {
+    msg.innerHTML = "ちがうみたいです…<br>ヒント：長い犬";
+  }
+}
+
+/* (184) 音声ガイドツアー */
+var TOUR_STOPS = [
+  "ポータル6へようこそ。ここは、アイフォーン6専用の入口です。",
+  "クー・フィールド・スキャナーでは、相棒のクーゼロワンとお話しできます。",
+  "情報ボードには、天気や地震、ニュースがまとまっています。",
+  "エーアイ6では、本物のエーアイとチャットができます。",
+  "ラジオ6は、ロボット音声で読み上げる、聞く暇つぶしです。ツアーは以上です。"
+];
+var tourIdx = 0;
+var tourPlaying = false;
+
+function tourShow(text) {
+  var p = el("tourText");
+  if (p) {
+    p.style.display = "block";
+    p.innerHTML = text;
+  }
+}
+
+function tourSpeakNext() {
+  if (!tourPlaying) { return; }
+  if (tourIdx >= TOUR_STOPS.length) {
+    tourPlaying = false;
+    tourShow("ツアーは終わりました。ありがとうございました");
+    return;
+  }
+  var text = TOUR_STOPS[tourIdx];
+  tourShow("🔊 " + text);
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = "ja-JP";
+  u.onend = function () { tourIdx++; tourSpeakNext(); };
+  u.onerror = function () { tourIdx++; tourSpeakNext(); };
+  try { window.speechSynthesis.speak(u); } catch (e) { tourPlaying = false; }
+}
+
+function tourStart() {
+  if (!("speechSynthesis" in window)) {
+    tourShow(TOUR_STOPS.join("<br>"));
+    return;
+  }
+  try { window.speechSynthesis.cancel(); } catch (e) {}
+  tourIdx = 0;
+  tourPlaying = true;
+  tourSpeakNext();
+}
+
+function tourStop() {
+  tourPlaying = false;
+  try {
+    if ("speechSynthesis" in window) { window.speechSynthesis.cancel(); }
+  } catch (e) {}
+  tourShow("ツアーを止めました");
+}
+
+/* (199) タップ音テーマ */
+var audioCtx = null;
+
+function tapSound() {
+  if (settings.sound === "none") { return; }
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) { return; }
+    if (!audioCtx) { audioCtx = new AC(); }
+    if (audioCtx.state === "suspended" && audioCtx.resume) { audioCtx.resume(); }
+    var t = audioCtx.currentTime;
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    if (settings.sound === "mokkin") {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1318, t);
+      osc.frequency.setValueAtTime(1760, t + 0.07);
+      gain.gain.setValueAtTime(0.12, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      osc.start(t);
+      osc.stop(t + 0.24);
+    } else {
+      osc.type = "square";
+      osc.frequency.setValueAtTime(880, t);
+      gain.gain.setValueAtTime(0.05, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      osc.start(t);
+      osc.stop(t + 0.09);
+    }
+  } catch (e) {}
+}
+
+function setupTapSound() {
+  if (!document.addEventListener) { return; }
+  document.addEventListener("click", function (e) {
+    var t = e.target;
+    var guard = 0;
+    while (t && t !== document.body && guard < 8) {
+      if (t.className && typeof t.className === "string") {
+        if (t.className.indexOf("pbtn") >= 0 || t.className.indexOf("row") >= 0 || t.id === "refreshBtn") {
+          tapSound();
+          return;
+        }
+      }
+      t = t.parentNode;
+      guard++;
+    }
+  }, false);
+}
+
+/* (194) 背景粒子 */
+function buildParticles() {
+  var wrap = el("particles");
+  if (!wrap || wrap.childNodes.length) { return; }
+  var i;
+  for (i = 0; i < 20; i++) {
+    var d = document.createElement("span");
+    d.className = "pdot";
+    var size = 2 + Math.floor(Math.random() * 3);
+    d.style.width = size + "px";
+    d.style.height = size + "px";
+    d.style.left = Math.floor(Math.random() * 98) + "%";
+    d.style.top = Math.floor(Math.random() * 96) + "%";
+    d.style.opacity = (0.25 + Math.random() * 0.35).toFixed(2);
+    var dur = 6 + Math.floor(Math.random() * 9);
+    d.style.webkitAnimationDuration = dur + "s";
+    d.style.animationDuration = dur + "s";
+    d.style.webkitAnimationDelay = "-" + Math.floor(Math.random() * 8) + "s";
+    d.style.animationDelay = "-" + Math.floor(Math.random() * 8) + "s";
+    wrap.appendChild(d);
+  }
+}
+
+function initBatch3() {
+  buildParticles();
+  setupTapSound();
+  el("wordBtn").onclick = wordSubmit;
+  el("tourBtn").onclick = tourStart;
+  el("tourStopBtn").onclick = tourStop;
+  el("creditBtn").onclick = function () {
+    var cb = el("creditBody");
+    var open = cb.style.display !== "none";
+    cb.style.display = open ? "none" : "block";
+    el("creditBtn").innerHTML = open ? "クレジットを開く" : "クレジットを閉じる";
+  };
+  el("footRandomBtn").onclick = function () { el("randomBtn").click(); };
+  el("setPixelBtn").onclick = function () {
+    settings.pixel = !settings.pixel;
+    saveSettings();
+    applyAppearance();
+  };
+  el("setFuriBtn").onclick = function () {
+    settings.furigana = !settings.furigana;
+    saveSettings();
+    applyAppearance();
+  };
+  el("setMonoBtn").onclick = function () {
+    settings.mono = !settings.mono;
+    saveSettings();
+    applyAppearance();
+  };
+  el("setOnehandBtn").onclick = function () {
+    settings.onehand = !settings.onehand;
+    saveSettings();
+    applyAppearance();
+  };
+  el("setParticlesBtn").onclick = function () {
+    settings.particles = !settings.particles;
+    saveSettings();
+    applyAppearance();
+  };
+  el("setSound").onchange = function () {
+    settings.sound = this.value;
+    saveSettings();
+  };
+  el("printBtn").onclick = function () {
+    document.body.classList.add("printing");
+    try { window.print(); } catch (e) {}
+    setTimeout(function () { document.body.classList.remove("printing"); }, 800);
   };
 }
 
