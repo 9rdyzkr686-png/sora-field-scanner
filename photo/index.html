@@ -372,9 +372,30 @@ var fi;
 for (fi = 0; fi < frameBtns.length; fi++) {
   frameBtns[fi].addEventListener("click", function () {
     frameMode = this.getAttribute("data-frame");
+    saveFrameMode();
     applyFrame();
     showUI();
   });
+}
+
+/* ===== Remember the last chosen frame (including 自動) ===== */
+var FRAME_KEY = "photo6_last_frame_v1";
+
+function saveFrameMode() {
+  try { localStorage.setItem(FRAME_KEY, frameMode); } catch (e) {}
+}
+
+function restoreFrameMode() {
+  var saved = null;
+  try { saved = localStorage.getItem(FRAME_KEY); } catch (e) {}
+  if (!saved) return;
+  var i;
+  for (i = 0; i < frameBtns.length; i++) {
+    if (frameBtns[i].getAttribute("data-frame") === saved) {
+      frameMode = saved;
+      return;
+    }
+  }
 }
 
 /* Tap on the stage: toggle pause and reveal UI */
@@ -387,6 +408,7 @@ el("stage").addEventListener("click", function () {
 el("ui").addEventListener("click", function (e) { e.stopPropagation(); });
 
 /* ===== Init ===== */
+restoreFrameMode();
 applyFrame();
 updateClock();
 setInterval(updateClock, 1000);

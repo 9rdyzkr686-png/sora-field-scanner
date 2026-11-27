@@ -810,22 +810,22 @@ var WAVE_FRAMES = [
 ];
 
 var FRAGMENTS = [
-{ id: "hajimari", name: "はじまりの欠片"},
-{ id: "angou", name: "暗号の欠片"},
-{ id: "tassei", name: "達成の欠片"},
-{ id: "sora", name: "空の欠片"},
-{ id: "tsuki", name: "月の欠片"},
-{ id: "denbun", name: "電文の欠片"},
-{ id: "kokoro", name: "心の欠片"},
-{ id: "shinka2", name: "進化の欠片・其ノ二"},
-{ id: "shinka3", name: "進化の欠片・其ノ三"},
-{ id: "shinka4", name: "進化の欠片・其ノ四"},
-{ id: "shinka5", name: "進化の欠片・其ノ五"},
-{ id: "oya", name: "親の欠片", desc: "親クーの声が、小さく録音されている気がする欠片"},
-{ id: "kinjo", name: "近所の欠片", desc: "新しい店々の明かりの色が、混ざり合った欠片"},
-{ id: "yume", name: "夢の欠片", desc: "夢ノ中デ見タ、骨型ノ雲ガ浮カンデイル欠片"},
-{ id: "uta", name: "歌の欠片", desc: "推シノ歌ノ一節ガ、緑色ノ波形ニナッテ残ッタ欠片"},
-{ id: "kisetsu", name: "季節の欠片", desc: "春夏秋冬ノ匂イガ、少シズツ混ザッタ欠片"}
+{ id: "hajimari", name: "はじまりの欠片", hint: "最初ノ会話ヲスルト手ニ入ル"},
+{ id: "angou", name: "暗号の欠片", hint: "暗号ヲ解読スルト手ニ入ル"},
+{ id: "tassei", name: "達成の欠片", hint: "観測ミッションヤ宿題ヲ達成スルト手ニ入ル"},
+{ id: "sora", name: "空の欠片", hint: "天気ヲ観測スルト手ニ入ル"},
+{ id: "tsuki", name: "月の欠片", hint: "月ヲ観測スルト手ニ入ル"},
+{ id: "denbun", name: "電文の欠片", hint: "ニュース電文ヲ受信スルト手ニ入ル"},
+{ id: "kokoro", name: "心の欠片", hint: "KUUノ質問ニ答エタリ、記憶テストニ正解スルト手ニ入ル"},
+{ id: "shinka2", name: "進化の欠片・其ノ二", hint: "PHASE 02ニ進化スルト手ニ入ル"},
+{ id: "shinka3", name: "進化の欠片・其ノ三", hint: "PHASE 03ニ進化スルト手ニ入ル"},
+{ id: "shinka4", name: "進化の欠片・其ノ四", hint: "PHASE 04ニ進化スルト手ニ入ル"},
+{ id: "shinka5", name: "進化の欠片・其ノ五", hint: "PHASE 05ニ進化スルト手ニ入ル"},
+{ id: "oya", name: "親の欠片", desc: "親クーの声が、小さく録音されている気がする欠片", hint: "親クーニ関スル電文ヲ受信スルト手ニ入ル（暗号ノ解読ヤ、特別ナ日ノ電文デ）"},
+{ id: "kinjo", name: "近所の欠片", desc: "新しい店々の明かりの色が、混ざり合った欠片", hint: "親クーカラノ特別電文ヲ受信スルト手ニ入ル"},
+{ id: "yume", name: "夢の欠片", desc: "夢ノ中デ見タ、骨型ノ雲ガ浮カンデイル欠片", hint: "入手経路ハ未確認デス。観測ヲ続ケテイテ下サイ"},
+{ id: "uta", name: "歌の欠片", desc: "推シノ歌ノ一節ガ、緑色ノ波形ニナッテ残ッタ欠片", hint: "入手経路ハ未確認デス。観測ヲ続ケテイテ下サイ"},
+{ id: "kisetsu", name: "季節の欠片", desc: "春夏秋冬ノ匂イガ、少シズツ混ザッタ欠片", hint: "入手経路ハ未確認デス。観測ヲ続ケテイテ下サイ"}
 ];
 
 var STORIES = [
@@ -882,6 +882,7 @@ var HISTORY_TEXT =
 "v2.2 進化 ― 観測ミッションが増えた\n" +
 "v2.3 進化 ― 観測ログ検索がついた\n" +
 "v2.4 進化 ― 冬の観測セリフが増えた\n" +
+"v2.5 進化 ― フラグメントにヒントがついた\n" +
 "進化ハマダ続キマス、{A}。";
 
 var HOMEWORK = [
@@ -2364,7 +2365,7 @@ if (fragments[FRAGMENTS[i].id]) got++;
 addLog("sys", "=== 観測データ図鑑（" + got + " / " + FRAGMENTS.length + "） ===");
 for (i = 0; i < FRAGMENTS.length; i++) {
 if (fragments[FRAGMENTS[i].id]) addLog("", "◆ " + FRAGMENTS[i].name + " …収集済ミ" + (FRAGMENTS[i].desc ? " ― " + FRAGMENTS[i].desc : ""));
-else addLog("", "◇ ？？？ …未収集");
+else addLog("", "◇ ？？？ …未収集" + (FRAGMENTS[i].hint ? "（ヒント：" + FRAGMENTS[i].hint + "）" : ""));
 }
 speak("観測データ図鑑デス。" + got + " 個ノ欠片ガ集マッテイマス、" + addr() + "。一覧ハ観測ログニ表示シマシタ。", "normal");
 }

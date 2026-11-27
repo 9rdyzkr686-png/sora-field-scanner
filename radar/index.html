@@ -44,6 +44,9 @@
   }
   #alertLine { font-size:15px; color:#ff8a80; margin-top:6px; min-height:22px; line-height:1.5; letter-spacing:1px; }
   #seasonTargetLine { font-size:15px; color:#ff6ec8; margin-top:6px; min-height:22px; line-height:1.5; letter-spacing:1px; }
+  #featName { font-size:19px; color:#ffb000; font-weight:bold; letter-spacing:1px; }
+  #featMeta { font-size:15px; color:#33ffee; margin-top:2px; line-height:1.5; }
+  #featDesc { font-size:15px; color:#c8ffd6; line-height:1.6; margin-top:6px; }
   .trow {
     display:block; width:100%; text-align:left; flex:none;
     border:1px solid #14532a; background:rgba(0,24,8,.5); color:#c8ffd6;
@@ -81,6 +84,9 @@
   body.night #statusLine { color:#ff8a70; }
   body.night #detailLine { color:#ff9a5c; border-color:#7a3a00; background:rgba(40,10,0,.35); }
   body.night #alertLine { color:#ff5040; }
+  body.night #featName { color:#ff9a5c; }
+  body.night #featMeta { color:#ff8a70; }
+  body.night #featDesc { color:#ffd6c8; }
   body.night .trow { border-color:#531d14; background:rgba(24,2,0,.5); color:#ffd6c8; }
   body.night .trow .nm { color:#ff7a6b; }
   body.night .trow .ds { color:#ff8a70; }
@@ -139,6 +145,16 @@
 <div id="statusLine">探知中： --件 / 全--件　スイープ方位： 000°</div>
 <div id="detailLine">探知リストの項目をタップすると詳細を表示します。</div>
 <div id="alertLine"></div>
+
+<div class="panel">
+  <div class="panel-title">TODAY'S FEATURE / 今日の特集ターゲット</div>
+  <div id="featName">--</div>
+  <div id="featMeta">--</div>
+  <div id="featDesc">--</div>
+  <div class="btnrow" style="margin-top:8px;">
+    <button type="button" id="featBtn">◎ レーダーで探す</button>
+  </div>
+</div>
 
 <div class="panel">
   <div class="panel-title">SYSTEM / 機能</div>
@@ -1134,6 +1150,67 @@ cv.onclick = function (e) {
   var w = WINDS[Math.round(brg / 22.5) % 16];
   detailEl.innerHTML = "📐 測距結果：中心から " + fmtDist(dkm) + "km ／ 方角：" + w + "（" + Math.round(brg) + "°）";
 };
+
+/* ---- 今日の特集ターゲット（日替わり・固定ランドマークから日付シードで選出） ---- */
+var FEAT_DESC = {
+  "ふじみ野駅": "東武東上線の駅で、レーダーの中心・ふじみ野市の玄関口です。駅ビルや駅前の商業施設が集まり、朝夕は通勤・通学の人でにぎわいます。",
+  "上福岡駅": "ふじみ野市にある東武東上線の駅です。駅前には商店街やスーパーが並び、地域の暮らしの拠点になっています。ふじみ野駅の隣の駅です。",
+  "鶴瀬駅": "富士見市にある東武東上線の駅です。周辺には住宅地が広がり、大型商業施設のららぽーと富士見へも徒歩圏内です。",
+  "みずほ台駅": "富士見市にある東武東上線の駅です。静かな住宅地の中にあり、近くを柳瀬川が流れています。",
+  "川越駅": "JR川越線と東武東上線が乗り入れる、川越市の主要駅です。駅ビルや商業施設が集まり、通勤にも観光にも利用されます。",
+  "本川越駅": "西武新宿線の終点駅です。蔵造りの町並みや時の鐘まで徒歩圏内で、川越観光の玄関口のひとつになっています。",
+  "新河岸駅": "川越市にある東武東上線の駅です。駅名は、江戸時代に舟運で栄えた新河岸川の河岸（かし）に由来すると言われます。",
+  "川越氷川神社": "古い歴史を持つ神社で、縁結びの神様として知られます。夏に境内に多数の風鈴が飾られる「縁むすび風鈴」でも有名です。",
+  "ららぽーと富士見": "富士見市にある大型ショッピングモールです。映画館や多数の店舗が入り、休日は家族連れでにぎわいます。",
+  "ベルーナドーム": "所沢市にある、プロ野球・埼玉西武ライオンズの本拠地です。屋根のある半屋外型の球場で、コンサートなども開かれます。",
+  "所沢駅": "西武池袋線と西武新宿線が交わる、所沢市の中心駅です。駅ビルや商業施設が集まっています。",
+  "航空公園": "所沢市にある公園で、日本初の飛行場・所沢飛行場の跡地です。園内には航空発祥記念館があり、飛行機の展示も見られます。",
+  "狭山湖": "所沢市と入間市にまたがる人造湖で、正式名は山口貯水池です。東京の水がめのひとつで、周囲は狭山丘陵の緑に囲まれています。",
+  "さいたまスーパーアリーナ": "さいたま新都心にある国内最大級の多目的アリーナです。コンサートやスポーツなど、大きなイベントが開かれます。",
+  "大宮駅": "新幹線や多数の在来線が集まる、鉄道の要衝です。近くに鉄道博物館があり、「鉄道のまち」大宮の玄関口になっています。",
+  "入間基地": "入間市と狭山市にまたがる航空自衛隊の基地です。秋ごろに開かれる入間航空祭では、ブルーインパルスの飛行が見られます。",
+  "池袋駅": "JR・私鉄・地下鉄が集まる巨大ターミナルです。サンシャインシティをはじめ商業施設が集まる、東京北西部の繁華街です。",
+  "新宿駅": "1日の乗降客数が世界一とも言われる巨大な駅です。駅の東西に繁華街やオフィス街が広がっています。",
+  "東京ドーム": "プロ野球・読売ジャイアンツの本拠地として知られるドーム球場です。野球のほか、コンサートなどのイベントも開かれます。",
+  "東京スカイツリー": "高さ634m、自立式電波塔としては世界一の高さを誇ります。ふじみ野方面からも、よく晴れた日には遠くに姿が見えることがあります。",
+  "横浜駅": "JRや私鉄各線が集まる、神奈川県最大級のターミナルです。みなとみらいや中華街への玄関口にもなっています。",
+  "千葉駅": "千葉市の中心駅で、JRと千葉都市モノレールが乗り入れます。懸垂型のモノレールは街のシンボルのひとつです。",
+  "富士山": "標高3776mの日本一の山です。ふじみ野からも、冬のよく晴れた朝には西の空にくっきりと姿が見えます。このレーダーでも特別な存在です。"
+};
+var featPool = [], ffi;
+for (ffi = 0; ffi < TARGETS.length; ffi++) { if (ffi !== SEASON_IDX) featPool.push(ffi); }
+var featSeed = parseInt(todayKey().replace(/-/g, ""), 10);
+var featIdx = featPool[featSeed % featPool.length];
+function renderFeature() {
+  var t = TARGETS[featIdx];
+  document.getElementById("featName").innerHTML = "★ " + t.name;
+  document.getElementById("featMeta").innerHTML = "中心（ふじみ野市）から " + fmtDist(t.dist) + "km ／ 方角：" + t.wind +
+    "（" + Math.round(t.bearing) + "°）／ " + CAT_NAME[t.cat] + (t.note ? " ／ " + t.note : "");
+  document.getElementById("featDesc").innerHTML = FEAT_DESC[t.name] || "";
+}
+document.getElementById("featBtn").onclick = function () {
+  var t = TARGETS[featIdx];
+  /* 方面フィルターで隠れている場合は「すべて」に戻す */
+  if (!passDir(t)) {
+    dirFilter = null;
+    var q;
+    for (q = 0; q < fbtns.length; q++) {
+      fbtns[q].className = "fbtn small" + (fbtns[q].getAttribute("data-f") === "all" ? " active" : "");
+    }
+  }
+  /* 現在の探知範囲の外なら、収まる最小の範囲に切り替える */
+  if (t.dist > rangeKm) {
+    var ranges = [5, 15, 40, 100], rj;
+    for (rj = 0; rj < ranges.length; rj++) {
+      if (t.dist <= ranges[rj]) { setRange(ranges[rj]); break; }
+    }
+  }
+  highlight(featIdx);
+  hlUntil = new Date().getTime() + 20000; /* highlight の強調を20秒に延長 */
+  var cvEl = document.getElementById("radar");
+  if (cvEl && cvEl.scrollIntoView) cvEl.scrollIntoView();
+};
+renderFeature();
 
 litDate = todayKey();
 fujiEl.innerHTML = "富士山視程：" + fujiVisText() + "（演出）";

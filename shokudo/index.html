@@ -55,6 +55,25 @@ letter-spacing: 1px;
 }
 #osusumeName { font-size: 23px; font-weight: bold; color: #ffe1ae;}
 #osusumeText { font-size: 16px; line-height: 1.6; margin-top: 6px;}
+.ippincard {
+background: #3d2412;
+border: 2px solid #ffb45e;
+border-radius: 12px;
+padding: 14px;
+margin-bottom: 14px;
+box-shadow: 0 0 18px rgba(255,150,50,.35), inset 0 0 24px rgba(0,0,0,.4);
+}
+.ippincard h2 {
+font-size: 19px;
+color: #ffb45e;
+border-bottom: 1px dashed #ffb45e;
+padding-bottom: 6px;
+margin-bottom: 10px;
+letter-spacing: 1px;
+}
+#ippinName { font-size: 24px; font-weight: bold; color: #ffe1ae;}
+#ippinText { font-size: 16px; line-height: 1.6; margin-top: 6px;}
+#ippinMaster { font-size: 17px; line-height: 1.7; margin-top: 10px; color: #ffcf87;}
 .menuitem {
 border-bottom: 1px solid #4a2d16;
 padding: 10px 0;
@@ -300,6 +319,13 @@ body.noren-kinari .portallink { color: #ecd9a8;}
 <p id="osusumeText">考え中…</p>
 </div>
 
+<div class="ippincard">
+<h2>★ 今日の一品</h2>
+<div id="ippinName">―</div>
+<p id="ippinText">考え中…</p>
+<p id="ippinMaster"></p>
+</div>
+
 <div class="card">
 <h2>■ お品書き</h2>
 <div id="menuList"></div>
@@ -528,6 +554,26 @@ var idx = seed % MENU.length;
 var dish = MENU[idx];
 el("osusumeName").innerHTML = dish.name + "（" + dish.price + "円）";
 el("osusumeText").innerHTML = dish.memo + " 今夜はこれを、ゆっくり味わっていってください。";
+}
+
+var IPPIN_WORDS = [
+"今日の一品はこれだ。自信を持って出せる味だよ。",
+"これを食べると、夜の疲れが少しほどけるはずだ。",
+"仕込みに一番時間をかけたのがこれだ。ゆっくり味わっておくれ。",
+"常連さんの評判がいい一品だ。初めてなら、まずこれからだね。",
+"今日の空気には、この味が合うと思って選んだんだ。",
+"迷ったらこれにしなさい。大将が太鼓判を押すよ。"
+];
+
+function pickIppin() {
+var now = new Date();
+var seed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+var idx = (seed * 31 + 17) % MENU.length;
+var dish = MENU[idx];
+el("ippinName").innerHTML = "今日の一品：" + dish.name + "（" + dish.price + "円）";
+el("ippinText").innerHTML = dish.memo;
+var word = IPPIN_WORDS[(seed * 7 + 5) % IPPIN_WORDS.length];
+el("ippinMaster").innerHTML = "大将：「" + word + "」";
 }
 
 el("voiceBtn").onclick = function () {
@@ -1034,6 +1080,7 @@ el("visitStatus").innerHTML = "来店スタンプを押しました。通算" + 
 
 buildMenu();
 pickOsusume();
+pickIppin();
 initDiary();
 loadNoren();
 renderVisits();

@@ -105,6 +105,25 @@
     font-size:18px; min-height:56px; letter-spacing:2px;
   }
   .nextBtn:disabled { opacity:0.4; }
+  .saveBtn {
+    display:block; width:100%; margin-top:8px; background:#1b2450; color:#cfd6f5;
+    border:1px solid #3a4680; font-size:16px; min-height:52px; letter-spacing:1px;
+  }
+  .savedTitle {
+    font-size:16px; color:#ffe9c4; letter-spacing:2px; margin:22px 0 8px;
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  }
+  .storyItem { overflow:hidden; margin-bottom:8px; }
+  .storyOpen {
+    float:left; width:77%; text-align:left; background:rgba(10,16,48,0.75);
+    border:1px solid #3a4680; color:#e8e4d8; min-height:52px; font-size:15px; line-height:1.5;
+  }
+  .storyOpen .sdate { display:block; font-size:12px; color:#9aa5d6; margin-top:2px; }
+  .storyDel {
+    float:right; width:21%; background:#2a1220; color:#f0b8c8;
+    border:1px solid #6e2a3d; min-height:52px; font-size:14px;
+  }
+  .storyEmpty { font-size:13px; color:#7783b5; line-height:1.7; }
   .bentoArea { margin-top:18px; }
   .bentoBtn {
     display:block; width:100%; background:linear-gradient(180deg,#7a4a21,#5d3715);
@@ -164,6 +183,12 @@
   <div class="sceneText" id="sceneText">「乗車する」を押すと、夜行列車の旅が始まります。車窓の外は、静かな夜です。</div>
 </div>
 <button class="nextBtn" id="nextBtn" type="button" disabled>次の駅へ</button>
+<button class="saveBtn" id="saveStoryBtn" type="button">この物語を保存</button>
+<div class="status" id="saveStatus"></div>
+
+<div class="savedTitle">保存した物語</div>
+<div id="storyList"></div>
+<p class="storyEmpty" id="storyEmpty">まだ保存した物語はありません。「乗車する」で物語を作ってから保存できます。</p>
 
 <div class="bentoArea">
   <button class="bentoBtn" id="bentoBtn" type="button">駅弁タイム</button>
@@ -550,6 +575,112 @@ el("bentoBtn").onclick = function() {
     el("bentoCard").style.display = "block";
   });
 };
+
+/* ---------- 物語の保存 ---------- */
+var STORY_KEY = "train6_stories_v1";
+
+function loadStories() {
+  try {
+    var raw = window.localStorage.getItem(STORY_KEY);
+    if (!raw) { return []; }
+    var arr = JSON.parse(raw);
+    if (arr && arr.length !== undefined) { return arr; }
+  } catch (e) {}
+  return [];
+}
+function saveStories(arr) {
+  try { window.localStorage.setItem(STORY_KEY, JSON.stringify(arr)); } catch (e) {}
+}
+function fmtStoryDate(d) {
+  function p(n) { return (n < 10 ? "0" : "") + n; }
+  return d.getFullYear() + "/" + p(d.getMonth() + 1) + "/" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+function renderStories() {
+  var list = loadStories();
+  var box = el("storyList");
+  box.innerHTML = "";
+  el("storyEmpty").style.display = list.length ? "none" : "block";
+  var i, entry, row, open, del, titleSpan, dateSpan;
+  for (i = 0; i < list.length; i++) {
+    entry = list[i];
+    row = document.createElement("div");
+    row.className = "storyItem";
+    open = document.createElement("button");
+    open.type = "button";
+    open.className = "storyOpen";
+    titleSpan = document.createElement("span");
+    titleSpan.textContent = entry.title;
+    dateSpan = document.createElement("span");
+    dateSpan.className = "sdate";
+    dateSpan.textContent = entry.date + "／" + (entry.mode === "day" ? "昼の車窓" : "夜行列車");
+    open.appendChild(titleSpan);
+    open.appendChild(dateSpan);
+    open.onclick = (function(ent) {
+      return function() { restoreStory(ent); };
+    })(entry);
+    del = document.createElement("button");
+    del.type = "button";
+    del.className = "storyDel";
+    del.textContent = "消す";
+    del.onclick = (function(ent) {
+      return function() { deleteStory(ent); };
+    })(entry);
+    row.appendChild(open);
+    row.appendChild(del);
+    box.appendChild(row);
+  }
+}
+function restoreStory(entry) {
+  if (busy) { return; }
+  stopSpeak();
+  trainMode = (entry.mode === "day") ? "day" : "night";
+  try { window.localStorage.setItem("train6_night_v1", trainMode); } catch (e) {}
+  scenes = parseScenes(entry.text);
+  if (!scenes.length) {
+    el("saveStatus").textContent = "この物語は開けませんでした";
+    return;
+  }
+  applyMode();
+  el("saveStatus").textContent = "";
+  showScene(0);
+  el("sceneCard").scrollIntoView();
+}
+function deleteStory(entry) {
+  var list = loadStories();
+  var out = [];
+  var i, removed = false;
+  for (i = 0; i < list.length; i++) {
+    if (!removed && list[i].title === entry.title && list[i].date === entry.date && list[i].text === entry.text) {
+      removed = true;
+      continue;
+    }
+    out.push(list[i]);
+  }
+  saveStories(out);
+  renderStories();
+  el("saveStatus").textContent = "物語を消しました";
+}
+el("saveStoryBtn").onclick = function() {
+  if (busy) { return; }
+  if (!scenes.length || sceneIdx < 0) {
+    el("saveStatus").textContent = "まず「乗車する」で物語を作ってください";
+    return;
+  }
+  var title = scenes[0];
+  if (title.length > 26) { title = title.substring(0, 26) + "…"; }
+  var list = loadStories();
+  list.unshift({
+    title: title,
+    text: scenes.join("\n===\n"),
+    date: fmtStoryDate(new Date()),
+    mode: trainMode
+  });
+  while (list.length > 20) { list.pop(); }
+  saveStories(list);
+  renderStories();
+  el("saveStatus").textContent = "物語を保存しました";
+};
+renderStories();
 
 /* ---------- 車窓モードの初期表示 ---------- */
 applyMode();

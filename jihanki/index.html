@@ -79,6 +79,14 @@
   }
   .clerk-btn:active { transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.5); }
   .clerk-btn.busy { opacity:.55; }
+  .usual-btn {
+    display:block; width:100%; min-height:52px; margin:10px 0 2px; padding:8px 12px;
+    font-size:16px; font-weight:bold; color:#d8ffe2; cursor:pointer;
+    border-radius:12px; border:3px solid #2c7c4a; background:rgba(10,48,26,.9);
+    box-shadow:0 4px 0 rgba(0,0,0,.5);
+  }
+  .usual-btn:active { transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.5); }
+  .usual-btn.off { opacity:.5; }
 
   /* ===== 両替機コーナー ===== */
   .exchange {
@@ -162,6 +170,7 @@
       <button class="drink-btn b3" id="b3" type="button">🔮 AI占い<span class="price">むりょう</span></button>
       <button class="drink-btn b4" id="b4" type="button">🐶 ダックス便り<span class="price">むりょう</span></button>
       <button class="drink-btn b5" id="b5" type="button">🍁 季節限定<span class="price">むりょう</span></button>
+      <button class="usual-btn off" id="usualBtn" type="button">いつもの（まだ履歴がありません）</button>
       <button class="clerk-btn" id="clerkBtn" type="button">🛎 店員さんを呼ぶ（売り切れのとき）</button>
     </div>
 
@@ -514,6 +523,7 @@ function renderHistory() {
   sum.innerHTML = '';
   if (a.length === 0) {
     sum.appendChild(document.createTextNode('まだ何も出ていません。'));
+    updateUsualBtn();
     return;
   }
   var now = new Date();
@@ -539,10 +549,48 @@ function renderHistory() {
     row.appendChild(document.createTextNode(a[i].name));
     list.appendChild(row);
   }
+  updateUsualBtn();
 }
 function clearHistory() {
   storeHistory([]);
   renderHistory();
+}
+
+/* (326) いつものボタン */
+function mostBoughtName() {
+  var a = loadHistory();
+  var counts = {}, bestName = '', bestCount = 0, i;
+  for (i = 0; i < a.length; i++) {
+    counts[a[i].name] = (counts[a[i].name] || 0) + 1;
+    if (counts[a[i].name] > bestCount) { bestCount = counts[a[i].name]; bestName = a[i].name; }
+  }
+  return bestName;
+}
+function updateUsualBtn() {
+  var btn = el('usualBtn');
+  if (!btn) { return; }
+  var name = mostBoughtName();
+  btn.innerHTML = '';
+  if (!name) {
+    btn.appendChild(document.createTextNode('いつもの（まだ履歴がありません）'));
+    btn.disabled = true;
+    btn.classList.add('off');
+    return;
+  }
+  btn.appendChild(document.createTextNode('⭐ いつもの（' + name + '）'));
+  btn.disabled = false;
+  btn.classList.remove('off');
+}
+function dispenseUsual() {
+  var name = mostBoughtName();
+  if (!name) { return; }
+  var idx = -1, i;
+  for (i = 0; i < NAMES.length; i++) {
+    if (NAMES[i] === name) { idx = i; break; }
+  }
+  if (idx < 0) { return; }
+  if (idx === soldOutIdx && !restocked) { soldOutTap(); }
+  else { dispense(idx); }
 }
 
 function init() {
@@ -572,6 +620,7 @@ function init() {
       }, false);
     })(i);
   }
+  el('usualBtn').addEventListener('click', dispenseUsual, false);
   el('clerkBtn').addEventListener('click', callClerk, false);
   el('chgBtn').addEventListener('click', doExchange, false);
   el('voiceBtn').addEventListener('click', function() {

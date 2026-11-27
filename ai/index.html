@@ -125,6 +125,12 @@
   .favmeta { font-size:12px; color:#a9bde0; margin-top:4px; }
   .favdel { font-size:13px; min-height:48px; margin-top:6px; padding:6px 14px; }
   .favempty { font-size:14px; color:#a9bde0; line-height:1.6; }
+  .sentitem { border:1px dashed #7a5fd0; padding:8px; margin-bottom:8px; }
+  body.sora .sentitem { border-color:#33ff66; }
+  .sentdate { font-size:12px; color:#a9bde0; margin-bottom:4px; }
+  .senttext { font-size:15px; line-height:1.6; white-space:pre-wrap; word-break:break-word; }
+  .sentnote { font-size:13px; color:#a9bde0; line-height:1.6; margin-top:6px; }
+  .sentempty { font-size:14px; color:#a9bde0; line-height:1.6; }
 
   body.voiceonly #chatPanel { display:none; }
   #voiceStatus { font-size:22px; line-height:1.6; min-height:64px; color:#fdfaff; word-break:break-word; }
@@ -234,6 +240,12 @@
   <div class="utilrow">
     <button type="button" id="favClearBtn">お気に入りを全部消す</button>
   </div>
+</div>
+
+<div class="panel" id="sentLogPanel">
+  <div class="panel-title">MESSAGE LOG / 伝言の履歴</div>
+  <div id="sentLogList"></div>
+  <div class="sentnote">※ KUU-01に届く伝言は最新の1件だけです。新しい伝言を置くと、前の伝言は上書きされます。KUU-01は、KUU FIELD SCANNERを次に開いた時に最新の伝言を受け取ります。ここには送った伝言の控えが残ります。</div>
 </div>
 
 <footer>
@@ -1244,12 +1256,55 @@ document.getElementById("kuuMsgBtn").onclick = function () {
     ok = true;
   } catch (e) { ok = false; }
   if (ok) {
+    try {
+      var sentLog = loadSentLog();
+      sentLog.push({ text: text, date: dateStr });
+      while (sentLog.length > 20) sentLog.shift();
+      localStorage.setItem(SENTLOG_KEY, JSON.stringify(sentLog));
+    } catch (e) {}
+    renderSentLog();
     inputBox.value = "";
     setStatus("KUU-01へ伝言を置きました。KUU FIELD SCANNERを開くと届きます。");
   } else {
     setStatus("伝言を保存できませんでした。");
   }
 };
+
+/* ---- 伝言の履歴（AI-6側の控え） ---- */
+var SENTLOG_KEY = "ai6_sentlog_v1";
+var sentLogListEl = document.getElementById("sentLogList");
+function loadSentLog() {
+  try {
+    var s = localStorage.getItem(SENTLOG_KEY);
+    if (s) { var a = JSON.parse(s); if (a && typeof a.length === "number") return a; }
+  } catch (e) {}
+  return [];
+}
+function renderSentLog() {
+  var log = loadSentLog();
+  sentLogListEl.innerHTML = "";
+  if (log.length === 0) {
+    var d = document.createElement("div");
+    d.className = "sentempty";
+    d.innerHTML = "まだ伝言を送っていません。入力欄に書いて「KUU-01へ伝言」を押すと、ここに控えが残ります。";
+    sentLogListEl.appendChild(d);
+    return;
+  }
+  var i;
+  for (i = log.length - 1; i >= 0; i--) {
+    var item = document.createElement("div");
+    item.className = "sentitem";
+    var dt = document.createElement("div");
+    dt.className = "sentdate";
+    dt.innerHTML = esc(log[i].date || "");
+    item.appendChild(dt);
+    var tx = document.createElement("div");
+    tx.className = "senttext";
+    tx.innerHTML = esc(log[i].text || "");
+    item.appendChild(tx);
+    sentLogListEl.appendChild(item);
+  }
+}
 
 /* ---- お気に入りパネル ---- */
 var favPanel = document.getElementById("favPanel");
@@ -1357,6 +1412,7 @@ document.getElementById("searchClearBtn").onclick = function () {
 /* お気に入りを読み込んで一覧を用意（パネルは開いたときに再描画） */
 loadFavs();
 renderFavs();
+renderSentLog();
 
 /* ---- 起動時：保存があれば復元、なければ挨拶 ---- */
 var savedData = loadSave();

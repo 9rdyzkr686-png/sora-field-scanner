@@ -275,9 +275,13 @@ select{width:100%;font-size:17px;padding:10px;border:1px solid #c9b98f;border-ra
 
   <div class="card" id="tbBousaiSec">
     <h3>防災メモ</h3>
+    <div class="m" id="tbBousaiCheckInfo" style="font-size:14px;margin-bottom:6px;"></div>
+    <div class="m" id="tbBousaiRemind" style="font-size:14px;color:#b3543f;margin-bottom:6px;display:none;">半年に一度は防災メモと備蓄の見直しをおすすめします</div>
     <textarea id="tbBousaiText" rows="10"></textarea>
     <div style="height:10px;"></div>
     <button class="btn" style="width:100%;" onclick="tbSaveBousai()">防災メモを保存</button>
+    <div style="height:8px;"></div>
+    <button class="btn" style="width:100%;" onclick="tbBousaiCheck()">点検した</button>
     <div class="m" id="tbBousaiNote" style="font-size:13px;color:#8a7a5c;margin-top:6px;"></div>
     <div style="height:10px;"></div>
     <a href="https://www.jma.go.jp/" style="display:block;background:#efe3c8;color:#3a2f23;border:1px solid #d9c491;border-radius:8px;padding:12px 14px;font-size:16px;text-align:center;text-decoration:none;margin-bottom:8px;">気象庁（天気・地震・警報）</a>
@@ -1126,12 +1130,42 @@ function tbSaveBousai(){
   }
 }
 
+/* ---------- (330) 防災メモの点検リマインド ---------- */
+var TB_BOUSAI_CHECK_KEY = "techo6_bousai_check_v1";
+function tbRenderBousaiCheck(){
+  var info = tbEl("tbBousaiCheckInfo"), rem = tbEl("tbBousaiRemind");
+  if (!info) return;
+  var v = null;
+  try { v = localStorage.getItem(TB_BOUSAI_CHECK_KEY); } catch(e){ v = null; }
+  var need = false;
+  var p = v ? String(v).split("-") : [];
+  if (!v || p.length < 3){
+    info.innerHTML = "前回の点検：まだ点検していません";
+    need = true;
+  } else {
+    var last = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    var now = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var days = Math.round((today.getTime() - last.getTime()) / 86400000);
+    if (isNaN(days) || days < 0) days = 0;
+    info.innerHTML = "前回の点検：" + Number(p[1]) + "月" + Number(p[2]) + "日（" + (days === 0 ? "今日" : days + "日前") + "）";
+    need = (days >= 180);
+  }
+  if (rem) rem.style.display = need ? "block" : "none";
+}
+function tbBousaiCheck(){
+  try { localStorage.setItem(TB_BOUSAI_CHECK_KEY, todayStr()); } catch(e){}
+  tbRenderBousaiCheck();
+  tbEl("tbBousaiNote").innerHTML = "点検日を記録しました。";
+}
+
 /* ---------- part B 初期化 ---------- */
 tbRenderThanks();
 tbRenderNenga();
 tbRenderLent();
 tbRenderBorrow();
 tbInitBousai();
+tbRenderBousaiCheck();
 </script>
 </body>
 </html>

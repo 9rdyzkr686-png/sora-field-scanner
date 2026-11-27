@@ -148,6 +148,14 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 }
 .stampSlot.on { border: 2px solid #ffe95e; background: #3a2c00; color: #ffe95e; font-size: 19px; text-shadow: 0 0 8px #ffb700;}
 .stampMsg { color: #aab; font-size: 14px; margin: 4px 0 0 0;}
+.visitCalHead { font-size: 16px; font-weight: bold; color: #ffe95e; margin: 14px 0 6px 0;}
+.visitCal { width: 100%; border-collapse: collapse;}
+.visitCal th { font-size: 13px; color: #aab; padding: 4px 0; text-align: center;}
+.visitCal th.sun { color: #ff9f9f;}
+.visitCal th.sat { color: #9fc2ff;}
+.visitCal td { font-size: 15px; color: #889; padding: 6px 0; text-align: center;}
+.visitCal td.on { color: #ffe95e; font-weight: bold; background: #3a2c00; text-shadow: 0 0 8px #ffb700;}
+.visitCal td.today { box-shadow: inset 0 0 0 2px #ff8fd8;}
 .rankPanel { border: 3px solid #3a3a6e; background: #0a0a20; border-radius: 10px; padding: 12px 14px; margin: 16px 0 4px 0;}
 .rankTitle { font-size: 18px; font-weight: bold; color: #ff8fd8; letter-spacing: 1px; margin-bottom: 6px;}
 .rankRow { font-size: 16px; color: #ccd; line-height: 1.9;}
@@ -187,6 +195,8 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 <div class="stampTitle">🎫 来店スタンプカード　<span id="stampCount"></span></div>
 <div class="stampSlots" id="stampSlots"></div>
 <p class="stampMsg" id="stampMsg"></p>
+<div class="visitCalHead" id="visitCalHead"></div>
+<table class="visitCal" id="visitCal"></table>
 </div>
 <button type="button" class="machine m-pink" data-p="p1">1. うらないマシン<small>今日の運勢をAIが占います</small></button>
 <button type="button" class="machine m-cyan" data-p="p2">2. AI店長<small>店長と雑談できます</small></button>
@@ -578,6 +588,47 @@ html += '<span class="stampSlot' + (j < filled? ' on': '') + '">' + (j < filled?
 }
 el('stampSlots').innerHTML = html;
 el('stampMsg').textContent = added? '本日のスタンプを押しました！': '今日のスタンプは押してあります';
+renderVisitCal();
+}
+function renderVisitCal() {
+var stamps = loadStamps();
+var now = new Date();
+var y = now.getFullYear(), mo = now.getMonth();
+var t = todayStr();
+var prefix = y + '-' + (mo + 1 < 10 ? '0' : '') + (mo + 1);
+var set = {};
+var monthCount = 0;
+for (var i = 0; i < stamps.length; i++) {
+set[stamps[i]] = true;
+if (stamps[i].indexOf(prefix) === 0) monthCount++;
+}
+el('visitCalHead').textContent = '📅 ' + y + '年' + (mo + 1) + '月　今月の来店：' + monthCount + '日';
+var firstDay = new Date(y, mo, 1).getDay();
+var daysInMonth = new Date(y, mo + 1, 0).getDate();
+var wds = ['日', '月', '火', '水', '木', '金', '土'];
+var html = '<tr>';
+for (var w = 0; w < 7; w++) {
+html += '<th' + (w === 0 ? ' class="sun"' : (w === 6 ? ' class="sat"' : '')) + '>' + wds[w] + '</th>';
+}
+html += '</tr>';
+var day = 1;
+while (day <= daysInMonth) {
+html += '<tr>';
+for (var c = 0; c < 7; c++) {
+if ((day === 1 && c < firstDay) || day > daysInMonth) {
+html += '<td></td>';
+} else {
+var ds = prefix + '-' + (day < 10 ? '0' : '') + day;
+var cls = '';
+if (set[ds]) cls = 'on';
+if (ds === t) cls += (cls ? ' ' : '') + 'today';
+html += '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + day + (set[ds] ? '★' : '') + '</td>';
+day++;
+}
+}
+html += '</tr>';
+}
+el('visitCal').innerHTML = html;
 }
 
 /* ---------- 占い連携 ---------- */

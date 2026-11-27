@@ -219,6 +219,17 @@
   .month-dot.lv5 { border-color: #ff1744; background: #8c001d; color: #ffffff; }
   .month-summary { margin: 12px 0 0; color: #ffffff; font-weight: bold; }
   .month-note { margin: 6px 0 0; color: #ffda45; font-size: 15px; }
+  .month-dist { margin: 10px 0 0; }
+  .dist-row { margin-top: 5px; font-size: 15px; color: #ffffff; white-space: nowrap; }
+  .dist-label { display: inline-block; width: 62px; font-weight: bold; }
+  .dist-track { display: inline-block; width: 42%; height: 14px; background: #1a1a1a; border: 1px solid #555555; vertical-align: middle; }
+  .dist-bar { display: block; height: 100%; }
+  .dist-bar.lv1 { background: #59d95e; }
+  .dist-bar.lv2 { background: #ffe45e; }
+  .dist-bar.lv3 { background: #ff9f1c; }
+  .dist-bar.lv4 { background: #ff5d3a; }
+  .dist-bar.lv5 { background: #ff1744; }
+  .dist-count { margin-left: 8px; }
   .ai-status {
     min-height: 28px;
     margin: 9px 0 0;
@@ -379,6 +390,7 @@
       <h2 id="monthHeading">■ 今月の出現まとめ<span id="monthName"></span></h2>
       <div id="monthGrid"></div>
       <p class="month-summary" id="monthSummary">今月の出現データを集計しています。</p>
+      <div class="month-dist" id="monthDist"></div>
       <p class="month-note">※丸の中の数字は警戒レベル（1〜5）です。レベル1は「気配のみ」のため、出現日数には数えていません。</p>
     </section>
 
@@ -676,6 +688,26 @@
     }
     setText("monthName", "（" + year + "年" + (month + 1) + "月）");
     setText("monthSummary", "出現日数" + appearCount + "日・最大レベルは" + maxText + "（レベル" + maxLevel + "）");
+
+    /* (335) レベル分布：同じ levels 配列から再集計（保存なし） */
+    var dist = [0, 0, 0, 0, 0, 0];
+    var distMax = 0;
+    var distHtml = "";
+    var pct;
+    for (i = 0; i < levels.length; i++) {
+      dist[levels[i]]++;
+    }
+    for (i = 1; i <= 5; i++) {
+      if (dist[i] > distMax) { distMax = dist[i]; }
+    }
+    for (i = 1; i <= 5; i++) {
+      pct = distMax ? Math.round(dist[i] / distMax * 100) : 0;
+      distHtml += "<div class=\"dist-row\">" +
+        "<span class=\"dist-label\">レベル" + i + "</span>" +
+        "<span class=\"dist-track\"><span class=\"dist-bar lv" + i + "\" style=\"width:" + pct + "%\"></span></span>" +
+        "<span class=\"dist-count\">" + dist[i] + "日</span></div>";
+    }
+    document.getElementById("monthDist").innerHTML = distHtml;
   }
 
   renderMonthSummary(new Date());

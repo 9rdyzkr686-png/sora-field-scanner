@@ -136,6 +136,7 @@
   }
   .quizBox .qlabel { font-size: 13px; font-weight: bold; color: #8a2b23; letter-spacing: 2px; }
   .quizProg { font-size: 14px; color: #5a5342; margin-top: 4px; }
+  .quizStats { font-size: 14px; font-weight: bold; color: #1d2a4a; margin-top: 6px; }
   .quizQText { font-size: 19px; font-weight: bold; margin-top: 6px; min-height: 28px; }
   .quizChoice {
     display: block; width: 100%; min-height: 52px; margin-top: 8px;
@@ -258,6 +259,7 @@
 <h2>年代クイズ</h2>
 <div class="quizBox">
   <div class="qlabel">クイズ ― あの出来事は何年？</div>
+  <div class="quizStats" id="quizStats"></div>
   <div class="quizProg" id="quizProg">全5問。出来事が起きた年を3択で当ててください。</div>
   <div class="quizQText" id="quizQ"></div>
   <div id="quizChoices"></div>
@@ -851,10 +853,57 @@ function nextQuizQ() {
     sb = el("quizStartBtn");
     sb.innerHTML = "もう一度挑戦する";
     sb.style.display = "block";
+    recordQuizResult();
     return;
   }
   showQuizQ();
 }
+
+/* ==== (334) 年代クイズの成績記録 ==== */
+var QUIZLOG_KEY = "jikan6_quiz_v1";
+var QUIZLOG_MAX = 30;
+
+function loadQuizLog() {
+  try {
+    var s = localStorage.getItem(QUIZLOG_KEY);
+    if (s) {
+      var o = JSON.parse(s);
+      if (o && typeof o === "object" && typeof o.length === "number") { return o; }
+    }
+  } catch (e) { }
+  return [];
+}
+
+function saveQuizLog(list) {
+  try { localStorage.setItem(QUIZLOG_KEY, JSON.stringify(list)); } catch (e) { }
+}
+
+function renderQuizStats() {
+  var box = el("quizStats");
+  var list = loadQuizLog();
+  var i, best = 0;
+  if (!box) { return; }
+  if (!list.length) {
+    box.innerHTML = "成績記録：まだありません。クイズを最後まで解くと、ここに成績が残ります。";
+    return;
+  }
+  for (i = 0; i < list.length; i++) {
+    if (list[i].score > best) { best = list[i].score; }
+  }
+  box.innerHTML = "自己ベスト：" + best + "/" + QUIZ.length +
+    " ・ 前回：" + list[list.length - 1].score + "/" + QUIZ.length +
+    " ・ 通算プレイ" + list.length + "回";
+}
+
+function recordQuizResult() {
+  var list = loadQuizLog();
+  list.push({ date: todayText(), score: quizScore });
+  while (list.length > QUIZLOG_MAX) { list.shift(); }
+  saveQuizLog(list);
+  renderQuizStats();
+}
+
+renderQuizStats();
 
 /* ==== (272) カスタム切符（マイ切符） ==== */
 var MYTICKET_KEY = "jikan6_mytickets_v1";

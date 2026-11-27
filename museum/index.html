@@ -179,6 +179,7 @@
     padding: 10px;
   }
   #btnSpMemoSave { width: 100%; margin-top: 10px; background: #241436; border-color: #c9a959; }
+  #btnSpMemoCopy { width: 100%; margin-top: 8px; }
   #spMemoMsg { font-size: 13px; color: #cdb1e0; margin-top: 8px; min-height: 18px; text-align: center; }
   footer { text-align: center; margin-top: 18px; }
   .portal-link {
@@ -216,6 +217,7 @@
     <div id="spMemoTitle">📝 企画展の感想メモ</div>
     <textarea id="spMemoText" placeholder="この企画展の感想を書いておけます（この端末に保存されます）"></textarea>
     <button id="btnSpMemoSave" type="button">感想メモを保存</button>
+    <button id="btnSpMemoCopy" type="button">全メモをコピー</button>
     <div id="spMemoMsg"></div>
   </div>
 
@@ -489,6 +491,41 @@ function saveSpMemo() {
   }
 }
 
+function copyAllMemos() {
+  var obj = {};
+  try {
+    var raw = localStorage.getItem(MEMO_KEY);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed) { obj = parsed; }
+    }
+  } catch (e) {}
+  var blocks = [];
+  var i;
+  for (i = 0; i < SPECIALS.length; i++) {
+    var memo = obj["sp" + i];
+    if (memo && memo.replace(/^\s+|\s+$/g, "") !== "") {
+      blocks.push("【" + SPECIALS[i].title + "】\n" + memo);
+    }
+  }
+  if (blocks.length === 0) {
+    el("spMemoMsg").innerHTML = "まだメモがありません。";
+    return;
+  }
+  var ta = document.createElement("textarea");
+  ta.value = blocks.join("\n\n");
+  ta.readOnly = true;
+  ta.style.position = "fixed";
+  ta.style.left = "-9999px";
+  ta.style.top = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  el("spMemoMsg").innerHTML = ok ? "全メモをコピーしました。" : "コピーできませんでした。";
+}
+
 function updateSpCounter() {
   el("specialCounter").innerHTML = "企画展の観覧：" + spOpenedCount + " / 3";
   if (spOpenedCount >= 3) {
@@ -559,6 +596,7 @@ function init() {
     window.scrollTo(0, 0);
   };
   el("btnSpMemoSave").onclick = saveSpMemo;
+  el("btnSpMemoCopy").onclick = copyAllMemos;
 }
 
 init();

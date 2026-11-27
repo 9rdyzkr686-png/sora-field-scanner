@@ -103,6 +103,9 @@ footer { text-align:center; color:#9a86b8; font-size:13px; margin-top:26px;}
 <button class="backbtn" onclick="closeShops()">もどる</button>
 </div>
 
+<button class="bigbtn" id="summaryCopyBtn" onclick="copyDailySummary()">📋 今日の占いまとめをコピー</button>
+<div class="status" id="summaryStatus"></div>
+
 <div class="hist" id="historyPanel">
 <h2>📜 占いの履歴</h2>
 <div id="historyList"></div>
@@ -235,10 +238,16 @@ xhr.send(body);
 sendFortune();
 }
 
+/* ---- 今日の占いまとめ用（このセッションで出た結果だけを覚える） ---- */
+var aiSessionText = '';
+var numSessionText = '';
+var tarotSessionCard = '';
+
 /* ---- 1. AI占い屋 ---- */
 function aiFortune() {
 var prompt = 'あなたは夜市の占い師です。今日の運勢を日本語で150文字以内で占ってください。順位（12位中○位）、ラッキーアイテム、ラッキーカラー、一言アドバイスを必ず入れて、改行せず1行で答えてください。';
 callAI(prompt, 'aiStatus', 'aiDetail', 'aiBtn', function (text) {
+aiSessionText = text;
 document.getElementById('aiResult').innerHTML = decorateLuckyColor(escapeHtml(text));
 speak(text);
 });
@@ -285,6 +294,7 @@ for (i = 0; i < s.length; i++) { t += parseInt(s.charAt(i), 10);}
 sum = t;
 }
 var meaning = NUM_MEANINGS[sum] || NUM_MEANINGS[9];
+numSessionText = '運命数' + sum + '：' + meaning;
 resultEl.innerHTML = 'あなたの運命数は ' + sum + ' です\n' + escapeHtml(meaning) + '\n\nAIからの一言を聞いています…';
 var prompt = '数秘術で運命数' + sum + '（意味：' + meaning + '）の人への一言コメントを、日本語で60文字以内、改行なしでください。';
 callAI(prompt, 'numStatus', 'numDetail', 'numBtn', function (text) {
@@ -330,6 +340,7 @@ if (tarotBusy) { return;}
 tarotBusy = true;
 var idx = (dateSeed() + pick * 3) % TAROT_CARDS.length;
 var card = TAROT_CARDS[idx];
+tarotSessionCard = card;
 var i;
 for (i = 0; i < 3; i++) { document.getElementById('card' + i).disabled = true;}
 document.getElementById('tarotResult').innerHTML = 'あなたが選んだカードは「' + card + '」です。AIが読み解いています…';
@@ -378,6 +389,34 @@ return html.substring(0, at) + colorSwatch(name) + html.substring(at);
 }
 }
 return html;
+}
+
+/* ---- 今日の占いまとめコピー ---- */
+/* ルール：おみくじは日付シードで今日の結果をその場で再計算して常に入れる。
+   AI占い・数秘術・タロットは、このセッションで実際に出た結果がある時だけ入れる
+   （数秘術はAIコメントを除いた「運命数＋意味」、タロットはカード名のみ）。
+   まとめのために追加のAI呼び出しは一切しない。 */
+function copyDailySummary() {
+var now = new Date();
+var lines = [];
+lines.push('【' + (now.getMonth() + 1) + '月' + now.getDate() + '日の占いまとめ】');
+var o = OMIKUJI[dateSeed() % OMIKUJI.length];
+lines.push('おみくじ：' + o.rank + '｜' + o.comment);
+if (numSessionText) { lines.push('数秘術：' + numSessionText); }
+if (tarotSessionCard) { lines.push('タロット：カード「' + tarotSessionCard + '」'); }
+if (aiSessionText) { lines.push('AI占い：' + aiSessionText); }
+var text = lines.join('\n');
+var st = document.getElementById('summaryStatus');
+var ta = document.createElement('textarea');
+ta.value = text;
+ta.style.position = 'absolute';
+ta.style.left = '-9999px';
+document.body.appendChild(ta);
+ta.select();
+var ok = false;
+try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+document.body.removeChild(ta);
+st.innerHTML = ok ? '今日の占いまとめをコピーしました。' : 'コピーできませんでした。';
 }
 
 /* ---- 占いの履歴 ---- */

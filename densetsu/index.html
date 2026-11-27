@@ -345,6 +345,8 @@
   <div class="chips" id="regionBox"></div>
   <p class="filterlabel">年代で絞り込む（噂が広まった時代）</p>
   <div class="chips" id="eraBox"></div>
+  <p class="filterlabel">怖さで絞り込む</p>
+  <div class="chips" id="fearBox"></div>
   <p class="filterlabel">キーワードで検索（タイトル・本文から探します）</p>
   <div class="searchrow">
     <input class="searchinput" id="searchInput" type="text" placeholder="例：鏡、トイレ、駅、電話">
@@ -711,6 +713,8 @@ var REGIONS = ["すべて", "北海道", "東北", "関東", "中部", "関西",
 var ERAS = ["すべて", "昭和", "平成", "令和"];
 var currentRegion = "すべて";
 var currentEra = "すべて";
+var FEARS = ["すべて", "★3", "★4", "★5"];
+var fearFilter = "すべて";
 var readFilter = "すべて";
 var searchQuery = "";
 
@@ -805,6 +809,7 @@ function buildChips() {
   buildChipRow(el("filterBox"), CATS, currentCat, function (v) { currentCat = v; });
   buildChipRow(el("regionBox"), REGIONS, currentRegion, function (v) { currentRegion = v; });
   buildChipRow(el("eraBox"), ERAS, currentEra, function (v) { currentEra = v; });
+  buildChipRow(el("fearBox"), FEARS, fearFilter, function (v) { fearFilter = v; });
   buildReadChips();
 }
 
@@ -836,6 +841,7 @@ function renderArchive() {
       if (currentCat !== "すべて" && L.cat !== currentCat) { return; }
       if (currentRegion !== "すべて" && L.region !== currentRegion) { return; }
       if (currentEra !== "すべて" && L.era !== currentEra) { return; }
+      if (fearFilter !== "すべて" && L.fear !== parseInt(fearFilter.substring(1), 10)) { return; }
       if (searchQuery && !legendMatches(L, searchQuery)) { return; }
       if (favOnly && marksData.fav.indexOf(idx) < 0) { return; }
       if (readFilter === "未読" && marksData.read.indexOf(idx) >= 0) { return; }
@@ -1002,6 +1008,7 @@ function openCard(idx) {
   currentCat = "すべて";
   currentRegion = "すべて";
   currentEra = "すべて";
+  fearFilter = "すべて";
   favOnly = false;
   readFilter = "すべて";
   searchQuery = "";

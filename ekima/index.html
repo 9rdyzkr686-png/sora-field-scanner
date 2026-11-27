@@ -135,6 +135,23 @@
     text-align: center;
     letter-spacing: 1px;
   }
+  .fav-chip {
+    display: inline-block;
+    min-height: 48px;
+    line-height: 44px;
+    padding: 0 16px;
+    margin: 0 6px 8px 0;
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffb000;
+    background: #241a00;
+    border: 2px solid #ffb000;
+    border-radius: 24px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .fav-empty { font-size: 14px; color: #cc8f00; letter-spacing: 1px; }
+  .stn-flash { outline: 3px solid #ffd34d; outline-offset: 3px; }
   .footer {
     margin-top: 16px;
     text-align: center;
@@ -418,6 +435,8 @@
   <button class="btn" id="btnMelody" type="button">♪ 発車メロディ</button>
   <button class="btn btn-sub" id="btnMelodyStop" type="button">停 止</button>
   <div class="msg" id="melodyMsg"></div>
+  <div class="tt-dir">お気に入りの駅</div>
+  <div id="favChips"></div>
 </div>
 
 <div class="tt-section">
@@ -455,6 +474,7 @@
   <div class="stn-name" id="stnName">池袋</div>
   <div class="lost-box" id="stnText"></div>
   <button class="btn" id="btnStnNext" type="button">次の駅へ ▶</button>
+  <button class="btn btn-sub" id="btnFavStn1" type="button">☆ お気に入りに登録</button>
   <div class="msg" id="stnCount"></div>
 </div>
 
@@ -464,6 +484,7 @@
   <div class="stn-name" id="stn2Name">川越市</div>
   <div class="lost-box" id="stn2Text"></div>
   <button class="btn" id="btnStn2Next" type="button">次の駅へ ▶</button>
+  <button class="btn btn-sub" id="btnFavStn2" type="button">☆ お気に入りに登録</button>
   <div class="msg" id="stn2Count"></div>
 </div>
 
@@ -953,6 +974,7 @@ var stnIdx = 0;
 function renderStation() {
   var s = STATIONS[stnIdx];
   document.getElementById("stnName").textContent = s.name;
+  if (typeof renderFavStars === "function") renderFavStars();
   document.getElementById("stnText").textContent = s.text;
   document.getElementById("stnCount").textContent =
     "駅 " + (stnIdx + 1) + " / " + STATIONS.length + "（池袋 → 川越）";
@@ -989,6 +1011,7 @@ var stn2Idx = 0;
 function renderStation2() {
   var s = STATIONS2[stn2Idx];
   document.getElementById("stn2Name").textContent = s.name;
+  if (typeof renderFavStars === "function") renderFavStars();
   document.getElementById("stn2Text").textContent = s.text;
   document.getElementById("stn2Count").textContent =
     "駅 " + (stn2Idx + 1) + " / " + STATIONS2.length + "（川越市 → 東松山）";
@@ -1008,6 +1031,92 @@ function nextStation2() {
 
 document.getElementById("btnStn2Next").addEventListener("click", nextStation2);
 renderStation2();
+
+/* ==== (333) お気に入り駅メロディ ==== */
+var FAV_ST_KEY = "ekima6_fav_st_v1";
+function favLoad(){
+  try {
+    var v = localStorage.getItem(FAV_ST_KEY);
+    if (!v) return [];
+    var a = JSON.parse(v);
+    return (a && typeof a.length === "number") ? a : [];
+  } catch(e){ return []; }
+}
+function favSave(a){
+  try { localStorage.setItem(FAV_ST_KEY, JSON.stringify(a)); } catch(e){}
+}
+function favId(group, idx){ return (group === 2 ? "g2-" : "g1-") + idx; }
+function favStation(id){
+  var p = String(id).split("-");
+  var idx = Number(p[1]);
+  if (p[0] === "g2") return { group: 2, idx: idx, name: (STATIONS2[idx] ? STATIONS2[idx].name : "") };
+  return { group: 1, idx: idx, name: (STATIONS[idx] ? STATIONS[idx].name : "") };
+}
+function favHas(id){
+  var a = favLoad();
+  for (var i = 0; i < a.length; i++) if (a[i] === id) return true;
+  return false;
+}
+function favToggle(group, idx){
+  var id = favId(group, idx);
+  var a = favLoad();
+  var found = -1;
+  for (var i = 0; i < a.length; i++) if (a[i] === id) found = i;
+  if (found >= 0) a.splice(found, 1); else a.push(id);
+  favSave(a);
+  renderFavAll();
+}
+function renderFavStars(){
+  var b1 = document.getElementById("btnFavStn1");
+  if (b1) b1.textContent = favHas(favId(1, stnIdx)) ? "★ お気に入り登録ずみ（解除する）" : "☆ お気に入りに登録";
+  var b2 = document.getElementById("btnFavStn2");
+  if (b2) b2.textContent = favHas(favId(2, stn2Idx)) ? "★ お気に入り登録ずみ（解除する）" : "☆ お気に入りに登録";
+}
+function renderFavChips(){
+  var box = document.getElementById("favChips");
+  if (!box) return;
+  box.innerHTML = "";
+  var a = favLoad();
+  var made = 0;
+  for (var i = 0; i < a.length; i++){
+    (function(id){
+      var st = favStation(id);
+      if (!st.name) return;
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "fav-chip";
+      b.textContent = "★ " + st.name;
+      b.addEventListener("click", function(){ favPlay(id); });
+      box.appendChild(b);
+      made++;
+    })(a[i]);
+  }
+  if (made === 0){
+    var s = document.createElement("span");
+    s.className = "fav-empty";
+    s.textContent = "★で登録できます（下の駅名読み物の駅にボタンがあります）";
+    box.appendChild(s);
+  }
+}
+function favPlay(id){
+  var st = favStation(id);
+  if (!st.name) return;
+  var nameEl;
+  if (st.group === 2){ stn2Idx = st.idx; renderStation2(); nameEl = document.getElementById("stn2Name"); }
+  else { stnIdx = st.idx; renderStation(); nameEl = document.getElementById("stnName"); }
+  renderFavStars();
+  if (nameEl){
+    try { nameEl.scrollIntoView(); } catch(e){}
+    nameEl.className += " stn-flash";
+    setTimeout(function(){ nameEl.className = nameEl.className.replace(" stn-flash", ""); }, 1600);
+  }
+  playMelody();
+  document.getElementById("melodyMsg").textContent = "♪ お気に入り「" + st.name + "」駅を表示しました";
+}
+function renderFavAll(){ renderFavStars(); renderFavChips(); }
+document.getElementById("btnFavStn1").addEventListener("click", function(){ favToggle(1, stnIdx); });
+document.getElementById("btnFavStn2").addEventListener("click", function(){ favToggle(2, stn2Idx); });
+renderFavAll();
 </script>
 </body>
 </html>

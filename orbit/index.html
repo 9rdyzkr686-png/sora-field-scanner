@@ -179,6 +179,7 @@ button:active { background: #33ff66; color: #000; }
     <div class="cell"><div class="k">月までの距離 MOON DISTANCE</div><div class="v" style="font-size:16px;" id="moonDist">---</div></div>
     <div class="cell"><div class="k">近地点〜遠地点</div><div class="v" style="font-size:16px;">約35.6万〜40.7万<small>km</small></div></div>
   </div>
+  <div id="superMoon" style="font-size:16px; color:#ffe9a8; line-height:1.6; margin-top:6px;">---</div>
   <div class="note">※ 距離は月の公転周期（近点月）からの簡易計算による概算です。月は楕円軌道を回るため、距離は日々変化します。</div>
   <div class="panel-title" style="margin-top:12px;">MOON MAP <span class="jp">月面マップ（海の名前）</span></div>
   <canvas id="moonMapCanvas" width="320" height="320"></canvas>
@@ -574,6 +575,16 @@ function fetchISS() {
 }
 
 /* ---------- MOON ---------- */
+/* 月までの距離（概算）を任意の日時（日数・epoch ms/86400000）で求める。
+   moonCalc 内の簡易モデル（近点月27.55455日周期・356,100〜407,000km）をそのまま関数化。 */
+function moonDistAt(nowDays) {
+  var refNewMoon = Date.UTC(2000, 0, 6, 18, 14) / 86400000;
+  var anom = 27.55455;
+  var ageAnom = (nowDays - refNewMoon) % anom;
+  if (ageAnom < 0) { ageAnom += anom; }
+  return 381550 - 25450 * Math.cos(2 * Math.PI * ageAnom / anom);
+}
+
 function moonCalc() {
   var synodic = 29.530588853;
   var newMoon = Date.UTC(2000, 0, 6, 18, 14) / 86400000;
@@ -591,12 +602,24 @@ function moonCalc() {
   el("nextFull").innerHTML = (fDate.getMonth() + 1) + "月" + fDate.getDate() + "日ごろ <small>あと" + Math.ceil(toFull) + "日</small>";
   el("nextNew").innerHTML = (nDate.getMonth() + 1) + "月" + nDate.getDate() + "日ごろ <small>あと" + Math.ceil(toNew) + "日</small>";
   /* 月までの距離（概算）：近点月27.55455日を周期とする簡易モデル。基準は朔望月と同じ
-     2000-01-06 18:14 UTC。356,100〜407,000kmの範囲に収まる近似式。 */
-  var anom = 27.55455;
-  var ageAnom = (nowDays - newMoon) % anom;
-  if (ageAnom < 0) { ageAnom += anom; }
-  var distKm = 381550 - 25450 * Math.cos(2 * Math.PI * ageAnom / anom);
+     2000-01-06 18:14 UTC。356,100〜407,000kmの範囲に収まる近似式（moonDistAt に共通化）。 */
+  var distKm = moonDistAt(nowDays);
   el("moonDist").innerHTML = "約" + fmtNum(Math.round(distKm)) + " <small>km（概算）</small>";
+  /* スーパームーン目安：満月（月齢＝朔望月の半分）から±1日以内なら今夜の満月の大きさ目安を、
+     それ以外は次の満月の日付と、その頃の距離（同じ概算モデルで計算）を表示する。 */
+  var smEl = el("superMoon");
+  var dFull = Math.abs(age - synodic / 2);
+  if (dFull <= 1) {
+    var smWord;
+    if (distKm < 360000) { smWord = "今夜の満月は大きめ（スーパームーン級の目安）"; }
+    else if (distKm <= 400000) { smWord = "今夜は標準サイズの満月（目安）"; }
+    else { smWord = "今夜の満月は小さめ（マイクロムーン級の目安）"; }
+    smEl.innerHTML = "🌕 " + smWord + " ／ 距離 約" + fmtNum(Math.round(distKm)) + "km（概算）";
+  } else {
+    var fDist = moonDistAt(nowDays + toFull);
+    smEl.innerHTML = "🌕 次の満月は" + (fDate.getMonth() + 1) + "月" + fDate.getDate() +
+      "日ごろ。その頃の距離は約" + fmtNum(Math.round(fDist)) + "km（目安・概算）です。";
+  }
   drawMoon(age / synodic);
 }
 

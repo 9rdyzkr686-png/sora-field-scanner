@@ -64,6 +64,14 @@ input[type="date"], input[type="text"] { width: 100%; min-height: 48px; font-siz
   border-bottom: 1px solid #ffe3ee; margin: 0; }
 .chkrow:last-child { border-bottom: none; }
 .chkrow input { width: 24px; height: 24px; vertical-align: middle; margin-right: 8px; }
+.packrow { display: block; width: 100%; min-height: 52px; padding: 10px 6px; font-size: 17px; text-align: left;
+  background: #ffffff; border: none; border-bottom: 1px solid #ffe3ee; color: #4a2436; font-family: inherit; cursor: pointer; }
+.packrow:last-child { border-bottom: none; }
+.packbox { display: inline-block; width: 30px; height: 30px; line-height: 30px; text-align: center; vertical-align: middle;
+  border: 2px solid #ffc2d9; border-radius: 8px; margin-right: 10px; color: #ffffff; font-size: 20px; font-weight: bold; background: #fffafd; }
+.packrow.on .packbox { background: #d6336c; border-color: #d6336c; }
+.packrow.on .packname { font-weight: bold; color: #d6336c; }
+.packprog { font-size: 18px; font-weight: bold; color: #d6336c; text-align: center; margin: 12px 0 2px; }
 .subbtn { width: 100%; min-height: 48px; font-size: 16px; font-weight: bold; color: #d6336c;
   background: #fff0f6; border: 2px solid #ffc2d9; border-radius: 10px; margin-top: 10px; }
 .okline { display: none; font-size: 18px; font-weight: bold; color: #d6336c; text-align: center; margin: 10px 0 2px; }
@@ -155,6 +163,15 @@ input[type="number"] { width: 100%; min-height: 48px; font-size: 17px; padding: 
   <div class="livesum" id="liveSummary"></div>
   <div id="liveList"></div>
   <p class="note" id="liveEmpty">まだ記録がありません。記録はこの端末の中にだけ保存されます。</p>
+</div>
+
+<div class="card">
+  <h2>🎒 参戦持ち物チェックリスト</h2>
+  <p class="note">ライブ当日の持ち物を、タップでチェックできます。</p>
+  <div id="packList"></div>
+  <p class="packprog" id="packProg"></p>
+  <button class="subbtn" id="packReset" type="button">リセット</button>
+  <p class="note">チェック状態はこの端末の中にだけ保存されます。</p>
 </div>
 
 <div class="card">
@@ -782,6 +799,60 @@ function addLive() {
   vEl.value = "";
 }
 
+/* ---------- 12. 参戦持ち物チェックリスト ---------- */
+var PACK_KEY = "oshi6_pack_v1";
+var PACK_ITEMS = ["チケット", "スマホ", "ペンライト", "タオル", "双眼鏡", "モバイルバッテリー", "現金", "身分証", "推しのグッズ", "飲み物"];
+var packState = [];
+function loadPack() {
+  packState = [];
+  for (var i = 0; i < PACK_ITEMS.length; i++) packState.push(false);
+  try {
+    var raw = localStorage.getItem(PACK_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && p.length !== undefined) {
+        for (var j = 0; j < p.length; j++) {
+          var idx = parseInt(p[j], 10);
+          if (idx >= 0 && idx < PACK_ITEMS.length) packState[idx] = true;
+        }
+      }
+    }
+  } catch (e) {}
+}
+function savePack() {
+  var arr = [];
+  for (var i = 0; i < packState.length; i++) if (packState[i]) arr.push(i);
+  try { localStorage.setItem(PACK_KEY, JSON.stringify(arr)); } catch (e) {}
+}
+function renderPack() {
+  var html = "";
+  for (var i = 0; i < PACK_ITEMS.length; i++) {
+    html += '<button class="packrow' + (packState[i] ? " on" : "") + '" type="button" data-pi="' + i + '"><span class="packbox">' + (packState[i] ? "✓" : "") + '</span><span class="packname">' + esc(PACK_ITEMS[i]) + "</span></button>";
+  }
+  var box = document.getElementById("packList");
+  box.innerHTML = html;
+  var btns = box.getElementsByTagName("button");
+  for (var k = 0; k < btns.length; k++) {
+    btns[k].onclick = function () {
+      var idx = parseInt(this.getAttribute("data-pi"), 10);
+      packState[idx] = !packState[idx];
+      savePack();
+      renderPack();
+    };
+  }
+  updatePackProg();
+}
+function updatePackProg() {
+  var n = 0;
+  for (var i = 0; i < packState.length; i++) if (packState[i]) n++;
+  document.getElementById("packProg").innerHTML = n + "/" + PACK_ITEMS.length + " 準備OK";
+}
+function resetPack() {
+  for (var i = 0; i < packState.length; i++) packState[i] = false;
+  savePack();
+  renderPack();
+}
+
 /* ---------- 起動 ---------- */
 document.getElementById("ytRetry").onclick = loadYT;
 document.getElementById("newsRetry").onclick = loadNews;
@@ -793,6 +864,7 @@ document.getElementById("tradeAdd").onclick = addTrade;
 document.getElementById("tripAdd").onclick = addTrip;
 document.getElementById("tripClear").onclick = clearTrips;
 document.getElementById("liveAdd").onclick = addLive;
+document.getElementById("packReset").onclick = resetPack;
 (function () {
   var t = new Date();
   var mm = t.getMonth() + 1; if (mm < 10) mm = "0" + mm;
@@ -814,6 +886,8 @@ loadTrips();
 renderTrips();
 loadLives();
 renderLives();
+loadPack();
+renderPack();
 loadYT();
 loadNews();
 </script>

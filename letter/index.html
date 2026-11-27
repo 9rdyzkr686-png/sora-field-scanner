@@ -110,6 +110,37 @@
     background: #fff8ea; color: #7a4b21; font-size: 16px;
   }
 
+  /* ===== 便箋テーマ ===== */
+  .themerow { text-align: center; margin: 12px 0 0; }
+  .themelabel { font-size: 14px; color: #8a6a45; margin-right: 2px; }
+  .themechip {
+    min-height: 48px; padding: 0 15px; margin: 2px 1px; border-radius: 24px;
+    border: 2px solid #b98d5f; background: #fff8ea; color: #7a4b21; font-size: 16px;
+  }
+  .themechip.sel { background: #8a5a33; color: #fff6e3; }
+  body.lt-ruled #letterCard {
+    background: repeating-linear-gradient(180deg, #fffdf4 0, #fffdf4 30px, #e3d3ab 30px, #e3d3ab 31px);
+  }
+  body.lt-floral #letterCard {
+    background-color: #fff8f1;
+    background-image:
+      radial-gradient(circle at 7px 7px, rgba(233, 150, 170, 0.40) 3px, transparent 4.5px),
+      radial-gradient(circle at 21px 21px, rgba(140, 180, 110, 0.35) 3px, transparent 4.5px);
+    background-size: 28px 28px;
+  }
+  body.lt-night #letterCard {
+    background-color: #1d2542;
+    background-image:
+      radial-gradient(circle at 10px 14px, rgba(255, 255, 255, 0.95) 1.3px, transparent 2px),
+      radial-gradient(circle at 34px 40px, rgba(255, 244, 190, 0.80) 1px, transparent 1.6px);
+    background-size: 52px 52px, 78px 78px;
+    border-color: #46507a;
+  }
+  body.lt-night #letterCard .from { color: #f2e3b3; }
+  body.lt-night #letterCard .body { color: #eef0ff; }
+  body.lt-night #letterCard .stamp { background: #2b3460; color: #d9c98e; border-color: #7d744f; }
+  body.lt-night #letterCard .readbtn { background: #2b3460; color: #f2e3b3; border-color: #7d744f; }
+
   /* ===== 読んだ手紙 ===== */
   h2 { font-size: 18px; color: #6d4423; margin: 20px 0 8px; border-bottom: 2px dotted #c9a86f; padding-bottom: 4px; }
   .readitem {
@@ -148,6 +179,10 @@
   <button class="bigbtn" id="takeBtn" type="button">木から手紙を取る</button>
   <button class="bigbtn sub" id="aiBtn" type="button">新しい便りを待つ（AI）</button>
   <p class="status" id="status"></p>
+
+  <div class="themerow">
+    <span class="themelabel">便箋：</span><button class="themechip" id="themePlain" type="button">無地</button><button class="themechip" id="themeRuled" type="button">罫線</button><button class="themechip" id="themeFloral" type="button">花柄</button><button class="themechip" id="themeNight" type="button">夜空</button>
+  </div>
 
   <div class="card" id="letterCard">
     <div class="stamp">手紙<br>の木<br>郵便</div>
@@ -410,6 +445,31 @@ function toggleVoice() {
   if (!voiceOn) { stopSpeak(); }
 }
 
+/* ===== 便箋テーマ ===== */
+var THEMES = ["plain", "ruled", "floral", "night"];
+var THEME_BTNS = { plain: "themePlain", ruled: "themeRuled", floral: "themeFloral", night: "themeNight" };
+var curTheme = "plain";
+
+function applyTheme(t, save) {
+  curTheme = t;
+  document.body.className = "lt-" + t;
+  var i, id;
+  for (i = 0; i < THEMES.length; i++) {
+    id = THEME_BTNS[THEMES[i]];
+    el(id).className = "themechip" + (THEMES[i] === t ? " sel" : "");
+  }
+  if (save) {
+    try { localStorage.setItem("letter6_theme_v1", t); } catch (e) {}
+  }
+}
+
+function loadTheme() {
+  var t = "plain";
+  try { t = localStorage.getItem("letter6_theme_v1") || "plain"; } catch (e) {}
+  if (THEMES.indexOf(t) < 0) { t = "plain"; }
+  applyTheme(t, false);
+}
+
 function init() {
   var i;
   for (i = 0; i < LETTERS.length; i++) { readFlags[i] = false; }
@@ -419,6 +479,11 @@ function init() {
   el("aiBtn").onclick = callAI;
   el("readBtn").onclick = speakCurrent;
   el("voiceBtn").onclick = toggleVoice;
+  loadTheme();
+  el("themePlain").onclick = function () { applyTheme("plain", true); };
+  el("themeRuled").onclick = function () { applyTheme("ruled", true); };
+  el("themeFloral").onclick = function () { applyTheme("floral", true); };
+  el("themeNight").onclick = function () { applyTheme("night", true); };
 }
 
 init();
