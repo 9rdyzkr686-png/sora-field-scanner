@@ -133,6 +133,16 @@
   }
   .yucard .yuname { font-size: 24px; font-weight: bold; color: #8a3324; letter-spacing: 2px; }
   .yucard .yunote { font-size: 16px; margin-top: 6px; }
+  /* クイズ */
+  .choicebtn {
+    display: block; width: 100%; min-height: 48px; margin-top: 8px;
+    font-size: 16px; font-weight: bold; text-align: left;
+    background: #ffffff; color: #3a2418;
+    border: 2px solid #c9a86a; border-radius: 10px; cursor: pointer; padding: 10px 12px;
+  }
+  .choicebtn:disabled { opacity: 0.7; cursor: default; }
+  .quizq { font-size: 18px; font-weight: bold; margin-top: 6px; }
+  .quizfb { margin-top: 10px; font-size: 16px; }
   .footer { text-align: center; font-size: 13px; color: #8a7a5f; margin-top: 22px; }
 </style>
 </head>
@@ -164,6 +174,7 @@
     <div id="weatherBox">天気を読み込み中…</div>
     <div class="stamp" id="weatherStamp"></div>
     <button type="button" class="subbtn" id="weatherBtn">天気を読み直す</button>
+    <button type="button" class="subbtn" id="wxSpeakBtn">🔊 天気を読み上げ</button>
   </div>
 
   <!-- AI番台さん -->
@@ -174,6 +185,7 @@
       <input type="text" id="chatInput" placeholder="例：今日は寒いねえ">
       <button type="button" id="chatSend">送る</button>
     </div>
+    <button type="button" class="subbtn" id="drinkBtn">🥛 お風呂上がりのドリンク談義を聞く</button>
     <div class="status" id="chatStatus"></div>
   </div>
 
@@ -189,6 +201,23 @@
       </div>
     </div>
     <div class="status" id="yuStatus"></div>
+  </div>
+
+  <!-- 銭湯雑学クイズ -->
+  <div class="panel">
+    <h2>🎓 銭湯雑学クイズ</h2>
+    <div>銭湯の文化にまつわるクイズが5問あります。気軽にどうぞ。</div>
+    <div id="quizArea">
+      <button type="button" class="bigbtn" id="quizStartBtn" style="margin-top:10px;">クイズをはじめる</button>
+    </div>
+  </div>
+
+  <!-- 行った気分スタンプ -->
+  <div class="panel">
+    <h2>♨ 行った気分スタンプ</h2>
+    <div>実際に来たつもりで、今日の日付のスタンプを押せます（この端末の中だけに記録されます）。</div>
+    <button type="button" class="bigbtn" id="stampBtn" style="margin-top:10px;">♨ 今日のスタンプを押す</button>
+    <div class="stamp" id="stampInfo"></div>
   </div>
 
   <div class="footer">SENTO-6 銭湯いちばん ／ お湯は熱め、心はぬくめ</div>
@@ -293,9 +322,12 @@ function weatherName(code) {
   return "不明";
 }
 
+var wxSpeech = "天気はまだ読み込み中です。少し待ってから読み上げてください。";
+
 function loadWeather() {
   var box = el("weatherBox");
   box.innerHTML = "天気を読み込み中…";
+  wxSpeech = "天気はまだ読み込み中です。少し待ってから読み上げてください。";
   var url = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=Asia%2FTokyo";
   var xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
@@ -303,16 +335,19 @@ function loadWeather() {
   xhr.onload = function () {
     if (xhr.status !== 200) {
       box.innerHTML = "天気が取れませんでした。電波の良いところで、もう一度読み直してみてください。";
+      wxSpeech = "天気が取れませんでした。電波の良いところで、もう一度読み直してみてください。";
       return;
     }
     var data;
     try { data = JSON.parse(xhr.responseText); } catch (e) {
       box.innerHTML = "天気の読み取りに失敗しました。もう一度読み直してみてください。";
+      wxSpeech = "天気の読み取りに失敗しました。もう一度読み直してみてください。";
       return;
     }
     var d = data.daily;
     if (!d || !d.time || d.time.length < 2) {
       box.innerHTML = "天気の内容が空でした。もう一度読み直してみてください。";
+      wxSpeech = "天気の内容が空でした。もう一度読み直してみてください。";
       return;
     }
     var labels = ["今日", "明日"];
@@ -329,17 +364,38 @@ function loadWeather() {
     box.innerHTML = html;
     var now = new Date();
     el("weatherStamp").innerHTML = now.getHours() + "時" + now.getMinutes() + "分取得（Open-Meteo）";
+    var sp = [];
+    for (var j = 0; j < 2; j++) {
+      var rj = d.precipitation_probability_max[j];
+      var rjText = (rj === null || rj === undefined) ? "不明" : rj + "パーセント";
+      sp.push(labels[j] + "の天気は" + weatherName(d.weather_code[j]) + "、最高気温" + Math.round(d.temperature_2m_max[j]) + "度、最低気温" + Math.round(d.temperature_2m_min[j]) + "度、雨の確率は" + rjText + "です");
+    }
+    wxSpeech = "ふじみ野の天気です。" + sp.join("。") + "。";
   };
   xhr.ontimeout = function () {
     box.innerHTML = "天気が取れませんでした（時間切れ）。もう一度読み直してみてください。";
+    wxSpeech = "天気が取れませんでした。もう一度読み直してみてください。";
   };
   xhr.onerror = function () {
     box.innerHTML = "天気が取れませんでした。電波の良いところで、もう一度読み直してみてください。";
+    wxSpeech = "天気が取れませんでした。電波の良いところで、もう一度読み直してみてください。";
   };
   xhr.send(null);
 }
 el("weatherBtn").onclick = function () { loadWeather(); };
 loadWeather();
+
+/* ---------- 天気の読み上げ ---------- */
+el("wxSpeakBtn").onclick = function () {
+  try {
+    var u = new SpeechSynthesisUtterance(wxSpeech);
+    u.lang = "ja-JP";
+    u.pitch = 0.8;
+    u.rate = 1.0;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+};
 
 /* ---------- AI番台さん ---------- */
 var chatHistory = []; // {r:"u"|"a", t:"..."}
@@ -414,6 +470,181 @@ el("yuBtn").onclick = function () {
     speak(name + "。" + note);
   });
 };
+
+/* ---------- お風呂上がりドリンク談義 ---------- */
+el("drinkBtn").onclick = function () {
+  if (aiBusy) {
+    el("chatStatus").innerHTML = "いま番台さんが考え中です。少し待ってください。";
+    return;
+  }
+  addMsg("guest", "小野さん", "お風呂上がりのドリンクの話を聞かせて");
+  var prompt = "あなたは銭湯『銭湯いちばん』の番台に座るおばちゃんです。お風呂上がりのドリンク（コーヒー牛乳、フルーツ牛乳、ラムネ、瓶のコーラなど）について、懐かしく楽しい談義をしてください。腰に手を当てて飲む話など、銭湯らしい小ネタを交えて、120文字以内、マークダウンなしの普通の文章で答えてください。相手は常連の小野さんです。";
+  callAI(prompt, el("chatStatus"), function (reply) {
+    if (reply.length > 280) reply = reply.substring(0, 280);
+    addMsg("bandai", "番台さん", reply);
+    chatHistory.push({ r: "a", t: reply });
+    speak(reply);
+  });
+};
+
+/* ---------- 銭湯雑学クイズ ---------- */
+var QUIZ = [
+  {
+    q: "銭湯の壁に富士山の絵が多いのは、なぜでしょう？",
+    c: ["富士山が見える場所に銭湯が多かったから", "縁起物として人気になり、大正時代に東京の銭湯で描かれたのが広まったから", "法律で決まっていたから"],
+    a: 1,
+    e: "大正時代、東京の銭湯で日本画家が子供たちのために富士山を描いたのが始まりとされ、縁起の良さで全国に広まりました。"
+  },
+  {
+    q: "銭湯でよく見る黄色い「ケロリン桶」。ケロリンとは何の名前でしょう？",
+    c: ["頭痛薬の名前", "洗剤の名前", "入浴剤の名前"],
+    a: 0,
+    e: "ケロリンは頭痛薬の名前です。広告として名前入りの桶が銭湯に配られ、そのまま銭湯の風景になりました。"
+  },
+  {
+    q: "「番台」は、もともとどんな場所でしょう？",
+    c: ["お湯の温度を調節する場所", "入口で料金を受け取り、男湯と女湯の両方を見渡せる場所", "タオルを干す場所"],
+    a: 1,
+    e: "番台は入口の高い台で、料金の受け取りと、脱衣場の見守りを兼ねた場所です。最近はフロント式も増えています。"
+  },
+  {
+    q: "東京の銭湯のお湯は、一般的にどのくらいの温度でしょう？",
+    c: ["38度くらい", "42度前後の熱め", "50度くらい"],
+    a: 1,
+    e: "東京の銭湯は42度前後の熱めが標準とされます。江戸っ子の「熱い湯が好き」という気風の名残とも言われます。"
+  },
+  {
+    q: "お風呂上がりに腰に手を当てて飲む、定番の瓶ドリンクといえば？",
+    c: ["コーヒー牛乳", "オレンジジュース", "炭酸水"],
+    a: 0,
+    e: "コーヒー牛乳です。大正時代に生まれ、昭和の銭湯文化と一緒に広まりました。フルーツ牛乳も人気者です。"
+  }
+];
+var quizIdx = 0;
+var quizScore = 0;
+var quizLock = false;
+
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function showQuestion() {
+  quizLock = false;
+  var area = el("quizArea");
+  var item = QUIZ[quizIdx];
+  var html = "<div class=\"quizq\">第" + (quizIdx + 1) + "問（全" + QUIZ.length + "問）：" + esc(item.q) + "</div>";
+  for (var i = 0; i < item.c.length; i++) {
+    html += "<button type=\"button\" class=\"choicebtn\" id=\"quizChoice" + i + "\">" + esc(item.c[i]) + "</button>";
+  }
+  html += "<div class=\"quizfb\" id=\"quizFb\"></div>";
+  area.innerHTML = html;
+  for (var j = 0; j < item.c.length; j++) {
+    (function (n) {
+      el("quizChoice" + n).onclick = function () { answerQuiz(n); };
+    })(j);
+  }
+}
+
+function answerQuiz(n) {
+  if (quizLock) return;
+  quizLock = true;
+  var item = QUIZ[quizIdx];
+  for (var i = 0; i < item.c.length; i++) {
+    el("quizChoice" + i).disabled = true;
+  }
+  var fb = el("quizFb");
+  var head;
+  if (n === item.a) {
+    quizScore++;
+    head = "⭕ 正解！";
+  } else {
+    head = "❌ 残念。正解は「" + esc(item.c[item.a]) + "」でした。";
+  }
+  fb.innerHTML = head + "<br>" + esc(item.e)
+    + "<button type=\"button\" class=\"subbtn\" id=\"quizNextBtn\">" + (quizIdx + 1 < QUIZ.length ? "次の問題へ" : "結果を見る") + "</button>";
+  el("quizNextBtn").onclick = function () {
+    quizIdx++;
+    if (quizIdx < QUIZ.length) {
+      showQuestion();
+    } else {
+      showQuizResult();
+    }
+  };
+}
+
+function showQuizResult() {
+  var area = el("quizArea");
+  var msg;
+  if (quizScore === QUIZ.length) msg = "全問正解！銭湯博士です。番台さんも感心しています。";
+  else if (quizScore >= 3) msg = "なかなかの銭湯通ですね。";
+  else msg = "お疲れさまでした。お湯に浸かって、また挑戦してください。";
+  area.innerHTML = "<div class=\"quizq\">結果：" + QUIZ.length + "問中 " + quizScore + "問 正解</div>"
+    + "<div class=\"quizfb\">" + msg + "</div>"
+    + "<button type=\"button\" class=\"subbtn\" id=\"quizRetryBtn\">もう一度挑戦する</button>";
+  el("quizRetryBtn").onclick = function () { startQuiz(); };
+}
+
+function startQuiz() {
+  quizIdx = 0;
+  quizScore = 0;
+  showQuestion();
+}
+el("quizStartBtn").onclick = function () { startQuiz(); };
+
+/* ---------- 行った気分スタンプ ---------- */
+var STAMP_KEY = "sento6_stamps_v1";
+
+function loadStamps() {
+  try {
+    var raw = window.localStorage.getItem(STAMP_KEY);
+    if (!raw) return [];
+    var arr = JSON.parse(raw);
+    if (arr && typeof arr.length === "number") return arr;
+  } catch (e) {}
+  return [];
+}
+
+function saveStamps(arr) {
+  try { window.localStorage.setItem(STAMP_KEY, JSON.stringify(arr)); } catch (e) {}
+}
+
+function todayStr() {
+  var d = new Date();
+  var m = d.getMonth() + 1;
+  var day = d.getDate();
+  return d.getFullYear() + "-" + (m < 10 ? "0" + m : m) + "-" + (day < 10 ? "0" + day : day);
+}
+
+function renderStamps(note) {
+  var arr = loadStamps();
+  var info = el("stampInfo");
+  if (arr.length === 0) {
+    info.innerHTML = (note ? note + "<br>" : "") + "まだスタンプはありません。";
+    return;
+  }
+  var shown = [];
+  var start = arr.length - 5;
+  if (start < 0) start = 0;
+  for (var i = arr.length - 1; i >= start; i--) {
+    shown.push(arr[i].replace(/-/g, "/"));
+  }
+  info.innerHTML = (note ? note + "<br>" : "") + "通算 " + arr.length + " 回<br>最近のスタンプ：" + shown.join("、");
+}
+
+el("stampBtn").onclick = function () {
+  var arr = loadStamps();
+  var t = todayStr();
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i] === t) {
+      renderStamps("今日のスタンプは、もう押してあります。");
+      return;
+    }
+  }
+  arr.push(t);
+  saveStamps(arr);
+  renderStamps("♨ 今日のスタンプを押しました！");
+};
+renderStamps("");
 </script>
 </body>
 </html>

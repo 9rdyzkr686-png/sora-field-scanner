@@ -121,6 +121,32 @@ padding: 14px; font-size: 19px; line-height: 1.6; min-height: 54px; color: #ffd8
 }
 .note { color: #99a; font-size: 14px; line-height: 1.6; margin-top: 8px;}
 .footNote { text-align: center; color: #667; font-size: 13px; margin-top: 24px; line-height: 1.7;}
+.managerLine { text-align: center; color: #8ff6ff; font-size: 16px; line-height: 1.7; margin: 12px 0 0 0; text-shadow: 0 0 6px rgba(41,216,232,0.6);}
+.nightSign {
+display: none; text-align: center; margin: 8px 0 2px 0; font-size: 19px; color: #ff5e7a;
+text-shadow: 0 0 10px #ff2e63, 0 0 22px #a100f2; letter-spacing: 4px; font-family: "Courier New", monospace;
+}
+body.night .nightSign { display: block;}
+body.night { background: #01010a;}
+body.night h1.logo { color: #b98cff; text-shadow: 0 0 6px #a55eff, 0 0 20px #7a1fff, 2px 2px 0 #000;}
+body.night .subtitle { color: #5e8bff; text-shadow: 0 0 8px #2e5eff;}
+body.night .neonSign { color: #ff5e7a; text-shadow: 0 0 8px #ff2e63;}
+body.night .coinBtn {
+background: #0d0221; border-color: #b98cff; color: #e6ccff;
+text-shadow: 0 0 10px #a55eff; box-shadow: 0 0 18px rgba(165,94,255,0.5), inset 0 0 24px rgba(165,94,255,0.18);
+}
+.stampCard { border: 3px solid #b8860b; background: #171126; border-radius: 10px; padding: 12px 14px; margin: 14px 0 4px 0;}
+.stampTitle { font-size: 18px; font-weight: bold; color: #ffe95e; letter-spacing: 1px;}
+.stampSlots { margin-top: 10px;}
+.stampSlot {
+display: inline-block; width: 44px; height: 44px; line-height: 44px; text-align: center;
+margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667; font-size: 15px;
+}
+.stampSlot.on { border: 2px solid #ffe95e; background: #3a2c00; color: #ffe95e; font-size: 19px; text-shadow: 0 0 8px #ffb700;}
+.stampMsg { color: #aab; font-size: 14px; margin: 4px 0 0 0;}
+.rankPanel { border: 3px solid #3a3a6e; background: #0a0a20; border-radius: 10px; padding: 12px 14px; margin: 16px 0 4px 0;}
+.rankTitle { font-size: 18px; font-weight: bold; color: #ff8fd8; letter-spacing: 1px; margin-bottom: 6px;}
+.rankRow { font-size: 16px; color: #ccd; line-height: 1.9;}
 </style>
 </head>
 <body>
@@ -138,16 +164,24 @@ padding: 14px; font-size: 19px; line-height: 1.6; min-height: 54px; color: #ffd8
 <!-- ===== スタート画面 ===== -->
 <div id="startScreen">
 <div class="neonSign">★ OPEN ★</div>
+<div class="nightSign" id="nightSign1">🌙 深夜営業中 🌙</div>
 <button type="button" class="coinBtn blink" id="coinBtn">▶ COINを入れる</button>
 <p class="startNote">
 ここは昭和のゲームセンター……の見た目をした、AIマシンの店です。<br>
 台は全部、最新AIが中身。コインを入れて入店してください。
 </p>
+<p class="managerLine" id="managerLine"></p>
 </div>
 
 <!-- ===== 店内 ===== -->
 <div id="interior" style="display:none;">
 <div class="neonSign">＼ 店内 ／</div>
+<div class="nightSign" id="nightSign2">🌙 深夜営業中 🌙</div>
+<div class="stampCard" id="stampCard">
+<div class="stampTitle">🎫 来店スタンプカード　<span id="stampCount"></span></div>
+<div class="stampSlots" id="stampSlots"></div>
+<p class="stampMsg" id="stampMsg"></p>
+</div>
 <button type="button" class="machine m-pink" data-p="p1">1. うらないマシン<small>今日の運勢をAIが占います</small></button>
 <button type="button" class="machine m-cyan" data-p="p2">2. AI店長<small>店長と雑談できます</small></button>
 <button type="button" class="machine m-yellow" data-p="p3">3. おすすめクレーン<small>AIが提案を1つ、つかんで出します</small></button>
@@ -155,7 +189,11 @@ padding: 14px; font-size: 19px; line-height: 1.6; min-height: 54px; color: #ffd8
 <button type="button" class="machine m-purple" data-p="p5">5. ポエムプリント機<small>AIの俳句・川柳をカードに印刷</small></button>
 <button type="button" class="machine m-orange" data-p="p6">6. おなやみメダル相談所<small>悩みを書くとAIが短くアドバイス</small></button>
 <button type="button" class="machine m-red" data-p="p7">7. AIニュース解説台<small>最新ニュースをAIが一文で解説</small></button>
-<p class="footNote">※ AI回線は無料枠のため、1日100回まで・朝9時に回復します。<br>※ このページの内容は開いている間だけ有効です。</p>
+<div class="rankPanel" id="rankPanel">
+<div class="rankTitle">🏆 人気ランキング</div>
+<div id="rankList"></div>
+</div>
+<p class="footNote">※ AI回線は無料枠のため、1日100回まで・朝9時に回復します。<br>※ スタンプカードと人気ランキングは、この端末に保存されます。</p>
 </div>
 
 <!-- ===== 1. うらないマシン ===== -->
@@ -307,6 +345,7 @@ el('interior').style.display = 'block';
 window.scrollTo(0, 0);
 }
 function openPanel(pid) {
+currentMachine = pid;
 el('startScreen').style.display = 'none';
 el('interior').style.display = 'none';
 hideAllPanels();
@@ -341,6 +380,7 @@ el(statusId).textContent = '前の通信が終わるまで少し待ってくだ�
 return;
 }
 aiBusy = true;
+bumpCount(currentMachine);
 var st = el(statusId);
 var sec = 0;
 st.textContent = '考え中… 0秒';
@@ -379,6 +419,141 @@ var r = el(resId);
 r.style.display = 'block';
 r.textContent = text;
 }
+
+/* ---------- 店内データ（スタンプ・人気ランキング） ---------- */
+var MACHINE_NAMES = {
+p1: 'うらないマシン', p2: 'AI店長', p3: 'おすすめクレーン',
+p4: 'ものしり博士マシン', p5: 'ポエムプリント機',
+p6: 'おなやみメダル相談所', p7: 'AIニュース解説台'
+};
+var currentMachine = '';
+var COUNT_KEY = 'geesen6_counts_v1';
+var STAMP_KEY = 'geesen6_stamps_v1';
+function loadCounts() {
+try {
+var s = localStorage.getItem(COUNT_KEY);
+if (s) { var o = JSON.parse(s); if (o && typeof o === 'object') return o;}
+} catch (e) {}
+return {};
+}
+function bumpCount(pid) {
+if (!MACHINE_NAMES[pid]) return;
+var c = loadCounts();
+c[pid] = (c[pid] || 0) + 1;
+try { localStorage.setItem(COUNT_KEY, JSON.stringify(c));} catch (e) {}
+renderRanking();
+}
+function renderRanking() {
+var c = loadCounts();
+var rows = [];
+for (var k in MACHINE_NAMES) { if (c[k] > 0) rows.push({ name: MACHINE_NAMES[k], n: c[k]});}
+rows.sort(function (a, b) { return b.n - a.n;});
+var html = '';
+if (rows.length === 0) {
+html = '<div class="rankRow">まだ記録なし</div>';
+} else {
+for (var i = 0; i < rows.length; i++) {
+html += '<div class="rankRow">' + (i + 1) + '位　' + rows[i].name + '　…　' + rows[i].n + '回</div>';
+}
+}
+el('rankList').innerHTML = html;
+}
+function todayStr() {
+var d = new Date();
+var m = d.getMonth() + 1; if (m < 10) m = '0' + m;
+var day = d.getDate(); if (day < 10) day = '0' + day;
+return d.getFullYear() + '-' + m + '-' + day;
+}
+function loadStamps() {
+try {
+var s = localStorage.getItem(STAMP_KEY);
+if (s) { var a = JSON.parse(s); if (a && typeof a.length === 'number') return a;}
+} catch (e) {}
+return [];
+}
+function stampVisit() {
+var stamps = loadStamps();
+var t = todayStr();
+var found = false;
+for (var i = 0; i < stamps.length; i++) { if (stamps[i] === t) found = true;}
+var added = false;
+if (!found) {
+stamps.push(t);
+added = true;
+try { localStorage.setItem(STAMP_KEY, JSON.stringify(stamps));} catch (e) {}
+}
+var total = stamps.length;
+el('stampCount').textContent = '来店 ' + total + '日';
+var filled = total % 10;
+if (total > 0 && filled === 0) filled = 10;
+var html = '';
+for (var j = 0; j < 10; j++) {
+html += '<span class="stampSlot' + (j < filled? ' on': '') + '">' + (j < filled? '★': (j + 1)) + '</span>';
+}
+el('stampSlots').innerHTML = html;
+el('stampMsg').textContent = added? '本日のスタンプを押しました！': '今日のスタンプは押してあります';
+}
+
+/* ---------- 店長の日替わり挨拶 ---------- */
+var GREETINGS = [
+'いらっしゃい！今日もいい台そろってますよ。',
+'やあ、待ってましたよ。ゆっくりしていってください。',
+'いらっしゃいませ。コイン1枚で、AIが7台お相手します。',
+'おお、常連さん。今日はどの台からいきますか。',
+'いらっしゃい。雨の日も風の日も、うちは年中無休です。',
+'ようこそGEESEN-6へ。店長の私がご案内しますよ。',
+'いらっしゃい！新台は無いけど、AIはいつも新品です。',
+'やあやあ、よく来てくださいました。楽しんでいってくださいね。'
+];
+function weatherLabel(code) {
+if (code === 0 || code === 1) return '晴れ';
+if (code === 2) return '晴れ時々くもり';
+if (code === 3) return 'くもり';
+if (code === 45 || code === 48) return '霧';
+if (code === 51 || code === 53 || code === 55) return '小雨';
+if (code === 56 || code === 57) return '凍る雨';
+if (code === 61 || code === 63 || code === 65) return '雨';
+if (code === 66 || code === 67) return '強い雨';
+if (code === 71 || code === 73 || code === 75 || code === 77) return '雪';
+if (code === 80 || code === 81 || code === 82) return 'にわか雨';
+if (code === 85 || code === 86) return '雪';
+if (code === 95 || code === 96 || code === 99) return '雷雨';
+return '';
+}
+function managerGreeting() {
+var now = new Date();
+var seed = now.getFullYear() * 372 + (now.getMonth() + 1) * 31 + now.getDate();
+var g = GREETINGS[seed % GREETINGS.length];
+el('managerLine').textContent = '店長：' + g;
+var xhr = new XMLHttpRequest();
+xhr.open('GET', 'https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&current=weather_code&timezone=Asia%2FTokyo', true);
+xhr.timeout = 15000;
+xhr.onreadystatechange = function () {
+if (xhr.readyState!== 4) return;
+if (xhr.status!== 200) return;
+try {
+var data = JSON.parse(xhr.responseText);
+if (!data ||!data.current) return;
+var label = weatherLabel(data.current.weather_code);
+if (label) { el('managerLine').textContent = '店長：' + g + '今日は' + label + 'ですな。';}
+} catch (e) {}
+};
+try { xhr.send();} catch (e) {}
+}
+
+/* ---------- 深夜営業モード ---------- */
+function applyNight() {
+var h = new Date().getHours();
+if (h >= 22 || h < 5) {
+if (document.body.className.indexOf('night') < 0) { document.body.className += ' night';}
+}
+}
+
+/* ---------- 初期化（新機能） ---------- */
+applyNight();
+stampVisit();
+renderRanking();
+managerGreeting();
 
 /* ---------- 1. うらないマシン ---------- */
 el('uranaiBtn').onclick = function () {

@@ -165,6 +165,37 @@ font-weight: bold;
 text-decoration: none;
 margin-bottom: 12px;
 }
+.woodcard {
+background: #54371c;
+background: linear-gradient(180deg, #5d3d1f, #3c2512);
+border: 2px solid #8a5a28;
+border-radius: 8px;
+padding: 14px;
+margin-top: 12px;
+display: none;
+box-shadow: inset 0 0 18px rgba(0,0,0,.55);
+}
+#uraDate { font-size: 14px; color: #ffcf87; letter-spacing: 1px; border-bottom: 1px dashed #8a5a28; padding-bottom: 6px;}
+#uraName { font-size: 24px; font-weight: bold; color: #ffe9c4; margin-top: 10px;}
+#uraDesc { font-size: 16px; line-height: 1.65; margin-top: 6px; color: #f3e2c7;}
+#uraPrice { font-size: 21px; font-weight: bold; color: #ffb45e; margin-top: 10px; text-align: right;}
+#uraStatus { font-size: 15px; color: #ffb45e; min-height: 22px; margin-top: 8px; text-align: center; line-height: 1.5;}
+#diaryText { font-size: 17px; line-height: 1.75; min-height: 60px;}
+#diaryMeta { font-size: 13px; color: #9a7748; margin-top: 8px;}
+.wariLabel { display: block; font-size: 15px; color: #d9b47e; margin-bottom: 4px;}
+.wariInput {
+width: 100%;
+min-height: 52px;
+background: #1d120b;
+color: #f3e2c7;
+border: 2px solid #6b4423;
+border-radius: 10px;
+font-size: 19px;
+padding: 10px;
+margin-bottom: 12px;
+}
+#wariResult { font-size: 27px; font-weight: bold; color: #ffb45e; margin-top: 14px; line-height: 1.5;}
+#wariNote { font-size: 17px; color: #ffe1ae; margin-top: 4px; min-height: 24px;}
 .credit { text-align: center; font-size: 12px; color: #9a7748; line-height: 1.6;}
 </style>
 </head>
@@ -209,6 +240,38 @@ margin-bottom: 12px;
 <div class="aiSendCell"><button type="button" id="aiSendBtn">送信</button></div>
 </div>
 </div>
+</div>
+
+<div class="card">
+<h2>■ 本日の裏メニュー</h2>
+<p style="font-size:15px;color:#d9b47e;line-height:1.6;">表のお品書きには載っていない、大将の気まぐれ一品。今夜だけの創作です。</p>
+<button type="button" class="orderbtn" id="uraBtn">裏メニューを聞く</button>
+<p id="uraStatus"></p>
+<div class="woodcard" id="uraPanel">
+<div id="uraDate"></div>
+<div id="uraName"></div>
+<p id="uraDesc"></p>
+<div id="uraPrice"></div>
+</div>
+</div>
+
+<div class="card">
+<h2>■ 常連さん観察日誌</h2>
+<p id="diaryText">読み込み中…</p>
+<p id="diaryMeta"></p>
+<button type="button" class="orderbtn" id="diaryNextBtn">次の日誌</button>
+</div>
+
+<div class="card">
+<h2>■ 割り勘計算</h2>
+<label class="wariLabel" for="wariTotal">合計金額（円）</label>
+<input type="number" class="wariInput" id="wariTotal" placeholder="例：5000" min="0">
+<label class="wariLabel" for="wariPeople">人数</label>
+<input type="number" class="wariInput" id="wariPeople" placeholder="例：3" min="1">
+<button type="button" class="togglebtn" id="wariRoundBtn">切り上げ（100円単位）：OFF</button>
+<button type="button" class="orderbtn" id="wariCalcBtn">計算する</button>
+<div id="wariResult"></div>
+<p id="wariNote"></p>
 </div>
 
 <div class="card">
@@ -498,8 +561,162 @@ el("aiInput").onkeydown = function (e) {
 if (e && (e.keyCode === 13 || e.key === "Enter")) { sendAi();}
 };
 
+var uraBusy = false;
+var uraTimer = null;
+var uraSeconds = 0;
+
+function startUraTimer() {
+uraSeconds = 0;
+el("uraStatus").innerHTML = "大将が裏メニューを考え中… 0秒";
+uraTimer = setInterval(function () {
+uraSeconds = uraSeconds + 1;
+el("uraStatus").innerHTML = "大将が裏メニューを考え中… " + uraSeconds + "秒";
+}, 1000);
+}
+
+function stopUraTimer() {
+if (uraTimer!== null) { clearInterval(uraTimer); uraTimer = null;}
+el("uraStatus").innerHTML = "";
+}
+
+function uraError(msg, detail) {
+if (uraTimer!== null) { clearInterval(uraTimer); uraTimer = null;}
+uraBusy = false;
+if (detail === null) {
+el("uraStatus").innerHTML = msg;
+} else {
+el("uraStatus").innerHTML = msg + "<br>詳細：HTTP " + detail;
+}
+}
+
+function showUra(text) {
+var name = "";
+var desc = "";
+var price = "";
+var lines = text.split("\n");
+for (var i = 0; i < lines.length; i++) {
+var ln = lines[i].replace(/^\s+|\s+$/g, "");
+if (ln.indexOf("品名：") === 0 || ln.indexOf("品名:") === 0) { name = ln.substring(3);}
+else if (ln.indexOf("説明：") === 0 || ln.indexOf("説明:") === 0) { desc = ln.substring(3);}
+else if (ln.indexOf("価格：") === 0 || ln.indexOf("価格:") === 0) { price = ln.substring(3);}
+}
+if (!name) { name = "大将のおまかせ裏メニュー";}
+if (!desc) { desc = text;}
+var now = new Date();
+var wd = ["日", "月", "火", "水", "木", "金", "土"];
+el("uraDate").textContent = "本日の裏メニュー（架空）：" + (now.getMonth() + 1) + "月" + now.getDate() + "日（" + wd[now.getDay()] + "）";
+el("uraName").textContent = name;
+el("uraDesc").textContent = desc;
+el("uraPrice").textContent = price;
+el("uraPanel").style.display = "block";
+}
+
+el("uraBtn").onclick = function () {
+if (uraBusy) { return;}
+uraBusy = true;
+startUraTimer();
+var prompt = "あなたは深夜だけ開く小さな食堂の大将です。今日の裏メニューとして、実在しない架空の創作料理を1品考えてください。少し変わっていて、でも食べたくなる一品にしてください。必ず次の3行の形式だけで答えてください。前置きや飾りは禁止です。\n品名：（料理名）\n説明：（40文字以内の一言説明）\n価格：（○○円）";
+var xhr = new XMLHttpRequest();
+xhr.open("POST", "https://text.pollinations.ai/", true);
+xhr.setRequestHeader("Content-Type", "application/json");
+xhr.timeout = 90000;
+xhr.onreadystatechange = function () {
+if (xhr.readyState!== 4) { return;}
+var body = xhr.responseText || "";
+if (xhr.status === 402 || body.indexOf("Free limit")!== -1) {
+uraError("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", null);
+return;
+}
+if (xhr.status === 200) {
+var text = body.replace(/^\s+|\s+$/g, "");
+if (text) {
+uraBusy = false;
+stopUraTimer();
+showUra(text);
+return;
+}
+}
+uraError("AI回線が混み合っています", xhr.status);
+};
+xhr.ontimeout = function () {
+uraError("大将の返事が時間切れになりました。もう一度押してみてください", null);
+};
+xhr.onerror = function () {
+uraError("AI回線が混み合っています", 0);
+};
+try {
+xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt}], model: "openai-fast"}));
+} catch (e) {
+uraError("AI回線が混み合っています", 0);
+}
+};
+
+var DIARY = [
+{ name: "佐藤さん（タクシー運転手）", text: "夜勤明けに必ず寄ってくれる。注文はおでんの大根、二つだけ。「大根は世界を救う」が口癖だ。先日ついに玉子も頼んだ日は、私まで少し誇らしかった。"},
+{ name: "ミキさん（看護師）", text: "病院の夜勤帰り、手作りプリンを食べてから帰るのが日課。疲れた顔で来ても、カラメルのほろ苦さで少し笑顔になる。「甘いものは立派な薬です」と本気で言っていた。"},
+{ name: "ケンジくん（大学生）", text: "レポートの締切前だけ現れる大学生。カレーを食べながらノートとにらめっこする。単位が取れた週は、食後にコーヒーまで頼む余裕を見せるのが可愛い。"},
+{ name: "ハナさん（花屋の店主）", text: "朝が早い仕事なのに、閉店間際にふらりと来る。厚焼き卵を半分食べて、半分は「明日の楽しみ」と包んでもらう。小さな幸せの分け方が上手な人だ。"},
+{ name: "ゴウさん（長距離トラック運転手）", text: "全国を走るゴウさんは、ラーメンの感想をいつも一言でくれる。「今日のは故郷の味に近い」。その一言で私の背筋が伸びる。安全運転の守り神みたいな常連さんだ。"},
+{ name: "ユリさん（作家志望）", text: "カウンターの端でノートを広げるユリさん。物語の相談に乗るふりをして、私はつい続きを催促してしまう。肉じゃがは「登場人物の気持ちが分かる味」だそうだ。"},
+{ name: "田中さん（警備員）", text: "制服のまま静かに座る田中さん。ホットコーヒー一杯で一時間、店の平和を見守ってくれる。田中さんがいると、夜の店が少しだけ凛とする。"},
+{ name: "リュウくん（バンドマン）", text: "ライブ帰りに仲間と来るリュウくん。売れない時代も今も、注文は焼き魚定食ひと筋。「売れてもここには来ますよ」が口癖で、私はその日を静かに待っている。"},
+{ name: "オサムさん（郵便配達員）", text: "雨の日ほど元気に現れるオサムさん。「濡れた日の肉じゃがは格別だね」と笑う。配達で冷えた体に温かいものが染みるのだろう。つい少し多めによそってしまう。"},
+{ name: "名も知らぬ紳士", text: "名前も仕事も聞いたことがない紳士。毎週木曜、ホットコーヒーだけを飲んで帰る。先日、三年目にして初めて「いい店だね」と言ってくれた。短い一言が今も温かい。"}
+];
+
+var diaryCursor = 0;
+
+function showDiary() {
+var d = DIARY[diaryCursor % DIARY.length];
+el("diaryText").innerHTML = "■ " + d.name + "<br>" + d.text;
+el("diaryMeta").innerHTML = "日誌 " + (diaryCursor % DIARY.length + 1) + " / " + DIARY.length + "（架空の観察日誌です）";
+}
+
+function initDiary() {
+var now = new Date();
+var seed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+diaryCursor = seed % DIARY.length;
+showDiary();
+}
+
+el("diaryNextBtn").onclick = function () {
+diaryCursor = diaryCursor + 1;
+showDiary();
+};
+
+var wariRound = false;
+
+el("wariRoundBtn").onclick = function () {
+wariRound =!wariRound;
+el("wariRoundBtn").innerHTML = wariRound? "切り上げ（100円単位）：ON": "切り上げ（100円単位）：OFF";
+};
+
+el("wariCalcBtn").onclick = function () {
+var total = parseInt(el("wariTotal").value, 10);
+var people = parseInt(el("wariPeople").value, 10);
+if (isNaN(total) || isNaN(people) || total <= 0 || people <= 0) {
+el("wariResult").innerHTML = "金額と人数を入れてください";
+el("wariNote").innerHTML = "";
+return;
+}
+var per = 0;
+var note = "";
+if (wariRound) {
+per = Math.ceil(total / people / 100) * 100;
+var amari = per * people - total;
+note = "端数（余り）：" + amari + "円";
+} else {
+per = Math.floor(total / people);
+var rest = total - per * people;
+if (rest > 0) { note = "端数：" + rest + "円（そのまま残ります）";}
+}
+el("wariResult").innerHTML = "一人あたり " + per + "円";
+el("wariNote").innerHTML = note;
+};
+
 buildMenu();
 pickOsusume();
+initDiary();
 </script>
 </body>
 </html>

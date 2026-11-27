@@ -89,6 +89,31 @@
     border:3px double #00e5ff; color:#c8fbff; background:#0a0a26;
     padding:12px; font-size:16px; margin-top:10px; min-height:48px;
   }
+
+  .subcap { font-size:12px; color:#ffe600; letter-spacing:2px; margin:4px 0 6px; text-shadow:0 0 6px rgba(255,230,0,.45); }
+
+  #searchBox {
+    flex:1 1 auto; min-width:0; min-height:52px; font-size:17px; font-family:inherit;
+    background:#07071c; color:#f2feff; border:2px solid #00e5ff; padding:10px;
+  }
+  #searchBtn { flex:0 0 92px; min-height:52px; font-size:16px; font-weight:bold; }
+  #searchStatus { font-size:13px; color:#a9bde0; min-height:18px; margin-top:6px; line-height:1.5; }
+  .row .msg.hit { outline:3px solid #ffe600; outline-offset:1px; }
+  .row .msg.hitnow { outline:3px solid #ff2fd6; outline-offset:1px; background:rgba(255,230,0,.35); }
+
+  .favbtn {
+    width:48px; min-width:48px; min-height:48px; padding:4px; font-size:19px;
+    vertical-align:top; margin-left:6px;
+    border-color:#7a5fd0; color:#ffe600; background:#0a0a26; box-shadow:0 3px 0 #372a66;
+  }
+  .favbtn.active { background:#3a2a00; border-color:#ffe600; color:#ffe600; }
+  body.sora .favbtn { border-color:#33ff66; color:#33ff66; background:#000; box-shadow:none; }
+  body.sora .favbtn.active { background:#003300; }
+  .favitem { border:1px dashed #7a5fd0; padding:8px; margin-bottom:8px; }
+  .favtext { font-size:15px; line-height:1.6; white-space:pre-wrap; word-break:break-word; }
+  .favmeta { font-size:12px; color:#a9bde0; margin-top:4px; }
+  .favdel { font-size:13px; min-height:48px; margin-top:6px; padding:6px 14px; }
+  .favempty { font-size:14px; color:#a9bde0; line-height:1.6; }
 </style>
 </head>
 <body>
@@ -109,6 +134,9 @@
     <button type="button" class="mchip" data-mode="story">昔話</button>
     <button type="button" class="mchip" data-mode="sora">KUU-01</button>
     <button type="button" class="mchip" data-mode="english">英語練習</button>
+    <button type="button" class="mchip" data-mode="showa">昭和の母</button>
+    <button type="button" class="mchip" data-mode="ekiin">駅員さん</button>
+    <button type="button" class="mchip" data-mode="uranai">占い婆</button>
   </div>
   <div class="chiprow">
     <button type="button" id="voiceBtn">ボイス：OFF</button>
@@ -124,6 +152,8 @@
     <button type="button" class="qchip" data-q="今日の運勢を占ってください。">今日の運勢を占って</button>
     <button type="button" class="qchip" data-q="宇宙の不思議な話を1つ教えてください。">宇宙の不思議を教えて</button>
   </div>
+  <div class="subcap">SEASON / 季節の質問</div>
+  <div class="chiprow" id="seasonRow"></div>
 </div>
 
 <div class="panel">
@@ -138,13 +168,36 @@
 
 <div class="utilrow">
   <button type="button" id="copyBtn">会話をコピー</button>
+  <button type="button" id="telegramBtn">電文風コピー</button>
+  <button type="button" id="favBtn">★お気に入り</button>
   <button type="button" id="clearBtn">会話を消す</button>
 </div>
 <div id="statusLine"></div>
 
+<div class="panel">
+  <div class="panel-title">SEARCH / 会話を検索</div>
+  <div class="inputrow">
+    <input type="text" id="searchBox" placeholder="検索キーワード" autocomplete="off">
+    <button type="button" id="searchBtn">検索</button>
+  </div>
+  <div class="utilrow">
+    <button type="button" id="searchNextBtn">次のヒットへ</button>
+    <button type="button" id="searchClearBtn">ハイライト消去</button>
+  </div>
+  <div id="searchStatus"></div>
+</div>
+
+<div class="panel" id="favPanel" style="display:none">
+  <div class="panel-title">FAVORITES / お気に入り回答</div>
+  <div id="favList"></div>
+  <div class="utilrow">
+    <button type="button" id="favClearBtn">お気に入りを全部消す</button>
+  </div>
+</div>
+
 <footer>
   AIの相手は無料の外部AIサービスです（クーではありません）。1日100回くらいまでが目安です。会話はこの端末に自動保存されます。
-  <div class="ver">AI-6 v3</div>
+  <div class="ver">AI-6 v3.1</div>
   <a class="portal-link" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
 </footer>
 
@@ -162,12 +215,16 @@ var MODES = {
   fortune: { label: "占い師",       inst: "あなたは神秘的な口調の占い師です。占いとして楽しく答えてください。これはエンターテイメントです。" },
   story:   { label: "昔話",         inst: "あなたは昔話の語り部です。「むかしむかし」で始まる、短い創作の昔話を語ってください。" },
   sora:    { label: "KUU-01",      inst: "あなたは観測生物KUU-01です。オリジナルのクー（親）の子どもです。1980年代パソコン風のレトロな端末口調で答えてください。相手は観察者の小野さんです。「小野さん」と呼びかけてください。" },
-  english: { label: "英語練習",     inst: "あなたは日本人の初心者のための英語会話の練習相手です。主にやさしく短い英語で答えてください（短い文を3文まで）。その後に、括弧書きで短い日本語訳を添えてください。相手が英語で書いた場合は、日本語で短い添削のヒントを1つ添えてください。" }
+  english: { label: "英語練習",     inst: "あなたは日本人の初心者のための英語会話の練習相手です。主にやさしく短い英語で答えてください（短い文を3文まで）。その後に、括弧書きで短い日本語訳を添えてください。相手が英語で書いた場合は、日本語で短い添削のヒントを1つ添えてください。" },
+  showa:   { label: "昭和の母",     inst: "あなたは昭和のお母さんです。温かく家庭的な口調（「〜だよ」「〜しなさい」など）で、生活の知恵や家庭的なアドバイスを交えながら、やさしく答えてください。" },
+  ekiin:   { label: "駅員さん",     inst: "あなたは駅員さんです。丁寧な駅のアナウンス口調（「〜でございます」「ご注意ください」など）で、情報を分かりやすく案内するように答えてください。" },
+  uranai:  { label: "占い婆",       inst: "あなたは占い婆（うらないばあ）です。おばあちゃんのような親しみやすい口調で、水晶玉をのぞきながら占うように楽しく答えてください。これはエンターテイメントです。" }
 };
 var COMMON_RULES = "必ず日本語で答えてください。マークダウン記号（#、*、-、番号リストなど）は使わないでください。改行は控えめにしてください。";
 var ENG_RULES = "マークダウン記号（#、*、-、番号リストなど）は使わないでください。改行は控えめにしてください。";
 
 var SAVE_KEY = "ai6_save_v1";
+var FAV_KEY = "ai6_favs_v1";
 var mode = "normal";
 var voiceOn = false;
 var sending = false;
@@ -200,6 +257,7 @@ var inputBox = document.getElementById("inputBox");
 var sendBtn = document.getElementById("sendBtn");
 var statusEl = document.getElementById("statusLine");
 var voiceBtn = document.getElementById("voiceBtn");
+var favListEl = document.getElementById("favList");
 
 function setStatus(t) { statusEl.innerHTML = t; }
 
@@ -246,6 +304,116 @@ function speak(text) {
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(u);
   } catch (e) { /* ignore */ }
+}
+
+/* ---- お気に入り回答 ---- */
+var favs = []; /* [{t:"...", m:"モード名"}] */
+
+function loadFavs() {
+  favs = [];
+  try {
+    var raw = localStorage.getItem(FAV_KEY);
+    if (!raw) return;
+    var d = JSON.parse(raw);
+    if (d && typeof d.length === "number") {
+      var i;
+      for (i = 0; i < d.length; i++) {
+        if (d[i] && typeof d[i].t === "string") {
+          favs.push({ t: d[i].t, m: (typeof d[i].m === "string" ? d[i].m : "") });
+        }
+      }
+    }
+  } catch (e) { /* 読み込めなくても通常動作を続ける */ }
+}
+
+function saveFavs() {
+  try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch (e) { /* ignore */ }
+}
+
+function isFav(t) {
+  var i;
+  for (i = 0; i < favs.length; i++) { if (favs[i].t === t) return true; }
+  return false;
+}
+
+function syncFavBtns() {
+  var btns = logBox.getElementsByTagName("button");
+  var i;
+  for (i = 0; i < btns.length; i++) {
+    if (btns[i].className.indexOf("favbtn") >= 0 && typeof btns[i]._favText === "string") {
+      var on = isFav(btns[i]._favText);
+      btns[i].innerHTML = on ? "★" : "☆";
+      btns[i].className = "favbtn" + (on ? " active" : "");
+    }
+  }
+}
+
+function attachFavBtn(msgEl, text) {
+  if (!msgEl || !msgEl.parentNode) return;
+  var b = document.createElement("button");
+  b.type = "button";
+  b._favText = text;
+  var on0 = isFav(text);
+  b.className = "favbtn" + (on0 ? " active" : "");
+  b.innerHTML = on0 ? "★" : "☆";
+  b.onclick = function () {
+    if (isFav(text)) {
+      var i;
+      for (i = favs.length - 1; i >= 0; i--) {
+        if (favs[i].t === text) favs.splice(i, 1);
+      }
+      setStatus("お気に入りから外しました。");
+    } else {
+      favs.push({ t: text, m: MODES[mode].label });
+      while (favs.length > 100) favs.shift();
+      setStatus("お気に入りに追加しました。");
+    }
+    saveFavs();
+    syncFavBtns();
+    renderFavs();
+  };
+  msgEl.parentNode.appendChild(b);
+}
+
+function renderFavs() {
+  favListEl.innerHTML = "";
+  if (favs.length === 0) {
+    var d = document.createElement("div");
+    d.className = "favempty";
+    d.innerHTML = "まだお気に入りはありません。AIの返事の横の ☆ を押すと、ここに貯まります。";
+    favListEl.appendChild(d);
+    return;
+  }
+  var i;
+  for (i = 0; i < favs.length; i++) {
+    (function (idx) {
+      var item = document.createElement("div");
+      item.className = "favitem";
+      var tx = document.createElement("div");
+      tx.className = "favtext";
+      tx.innerHTML = esc(favs[idx].t);
+      item.appendChild(tx);
+      if (favs[idx].m) {
+        var meta = document.createElement("div");
+        meta.className = "favmeta";
+        meta.innerHTML = "モード：" + esc(favs[idx].m);
+        item.appendChild(meta);
+      }
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "favdel";
+      del.innerHTML = "削除";
+      del.onclick = function () {
+        favs.splice(idx, 1);
+        saveFavs();
+        renderFavs();
+        syncFavBtns();
+        setStatus("お気に入りを1件消しました。");
+      };
+      item.appendChild(del);
+      favListEl.appendChild(item);
+    })(i);
+  }
 }
 
 /* ---- typewriter ---- */
@@ -376,6 +544,7 @@ function sendMessage(text) {
     sendBtn.disabled = false;
     startTyping(thinkMsg, reply);
     speak(reply);
+    attachFavBtn(thinkMsg, reply);
   }
   function attempt() {
     try {
@@ -490,10 +659,181 @@ document.getElementById("clearBtn").onclick = function () {
   chatMsgs = [];
   try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ }
   logBox.innerHTML = "";
+  searchHits = [];
+  searchPos = -1;
+  try { document.getElementById("searchStatus").innerHTML = ""; } catch (e) { /* ignore */ }
   addAiRow(GREETING);
   setStatus("会話を消しました。");
   try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
 };
+
+/* ---- 季節の質問チップ（月ごとに2つ） ---- */
+var SEASON_Q = [
+  [["お正月のアイデア", "お正月の過ごし方のアイデアを教えてください。"], ["冬の温かい食べ物", "冬に体が温まる食べ物を教えてください。"]],
+  [["バレンタインの由来", "バレンタインの由来を教えてください。"], ["節分って何？", "節分について教えてください。"]],
+  [["ひな祭りの由来", "ひな祭りの由来を教えてください。"], ["春の花を教えて", "春の花の名前を3つ教えてください。"]],
+  [["お花見の楽しみ方", "お花見の楽しみ方を教えてください。"], ["桜の名所", "桜の名所を教えてください。"]],
+  [["こどもの日の由来", "こどもの日の由来を教えてください。"], ["GWの過ごし方", "ゴールデンウィークの過ごし方のアイデアを教えてください。"]],
+  [["梅雨の楽しみ方", "梅雨の楽しみ方を教えてください。"], ["紫陽花の不思議", "紫陽花の色が変わる理由を教えてください。"]],
+  [["七夕の物語", "七夕の物語を教えてください。"], ["夏バテ対策", "夏バテ対策を教えてください。"]],
+  [["お盆って何？", "お盆について教えてください。"], ["夏の星空", "夏の星空の見どころを教えてください。"]],
+  [["お月見の由来", "お月見の由来を教えてください。"], ["秋の味覚", "秋の味覚を教えてください。"]],
+  [["ハロウィンの由来", "ハロウィンの由来を教えてください。"], ["紅葉の楽しみ方", "紅葉の楽しみ方を教えてください。"]],
+  [["七五三って何？", "七五三について教えてください。"], ["冬支度のアイデア", "冬支度のアイデアを教えてください。"]],
+  [["クリスマスの由来", "クリスマスの由来を教えてください。"], ["大掃除のコツ", "大掃除のコツを教えてください。"]]
+];
+(function buildSeasonChips() {
+  var row = document.getElementById("seasonRow");
+  if (!row) return;
+  var qs = SEASON_Q[new Date().getMonth()];
+  var i;
+  for (i = 0; i < qs.length; i++) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "qchip";
+    b.innerHTML = esc(qs[i][0]);
+    b.setAttribute("data-q", qs[i][1]);
+    b.onclick = function () { sendMessage(this.getAttribute("data-q")); };
+    row.appendChild(b);
+  }
+})();
+
+/* ---- 電文風コピー（既存コピーと同じ方式） ---- */
+function copyTextCommon(txt, doneMsg) {
+  var ok = false;
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = txt;
+    ta.style.position = "absolute";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+  } catch (e) { ok = false; }
+  setStatus(ok ? doneMsg : "コピーできませんでした。");
+}
+
+document.getElementById("telegramBtn").onclick = function () {
+  finishTyping();
+  if (chatMsgs.length === 0) {
+    setStatus("コピーする会話がまだありません。");
+    return;
+  }
+  var lines = [], i;
+  lines.push("AI-6 電文ログ（モード：" + MODES[mode].label + "）");
+  for (i = 0; i < chatMsgs.length; i++) {
+    lines.push((chatMsgs[i].r === "u" ? "【あなた】" : "【AI】") + chatMsgs[i].t);
+  }
+  copyTextCommon(lines.join("\n"), "電文風にコピーしました。");
+};
+
+/* ---- お気に入りパネル ---- */
+var favPanel = document.getElementById("favPanel");
+var favBtn = document.getElementById("favBtn");
+favBtn.onclick = function () {
+  var show = favPanel.style.display === "none";
+  favPanel.style.display = show ? "block" : "none";
+  favBtn.className = show ? "active" : "";
+  if (show) renderFavs();
+};
+
+document.getElementById("favClearBtn").onclick = function () {
+  if (favs.length === 0) {
+    setStatus("お気に入りは空です。");
+    return;
+  }
+  favs = [];
+  saveFavs();
+  renderFavs();
+  syncFavBtns();
+  setStatus("お気に入りを全部消しました。");
+};
+
+/* ---- 会話の検索 ---- */
+var searchBoxEl = document.getElementById("searchBox");
+var searchStatusEl = document.getElementById("searchStatus");
+var searchHits = [];
+var searchPos = -1;
+
+function scrollToEl(elm) {
+  try {
+    var r = elm.getBoundingClientRect();
+    var y = r.top + (window.pageYOffset || 0) - 60;
+    window.scrollTo(0, y);
+  } catch (e) {
+    try { elm.scrollIntoView(true); } catch (e2) { /* ignore */ }
+  }
+}
+
+function clearHitMarks() {
+  var i;
+  for (i = 0; i < searchHits.length; i++) {
+    searchHits[i].className = searchHits[i].className.replace(/ hitnow/g, "").replace(/ hit/g, "");
+  }
+  searchHits = [];
+  searchPos = -1;
+}
+
+function jumpHit(n) {
+  if (searchHits.length === 0) return;
+  if (searchPos >= 0 && searchHits[searchPos]) {
+    searchHits[searchPos].className = searchHits[searchPos].className.replace(/ hitnow/g, "");
+  }
+  searchPos = ((n % searchHits.length) + searchHits.length) % searchHits.length;
+  searchHits[searchPos].className += " hitnow";
+  scrollToEl(searchHits[searchPos]);
+}
+
+function doSearch() {
+  clearHitMarks();
+  var kw = searchBoxEl.value.replace(/^\s+|\s+$/g, "");
+  if (!kw) {
+    searchStatusEl.innerHTML = "キーワードを入れてください。";
+    return;
+  }
+  var kwLow = kw.toLowerCase();
+  var rows = logBox.childNodes, i, j;
+  for (i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    if (!row.className) continue;
+    if (row.className.indexOf("user") < 0 && row.className.indexOf("ai") < 0) continue;
+    for (j = 0; j < row.childNodes.length; j++) {
+      var cn = row.childNodes[j];
+      if ((cn.className || "").indexOf("msg") === 0) {
+        var txt = cn.textContent || cn.innerText || "";
+        if (txt.toLowerCase().indexOf(kwLow) >= 0) searchHits.push(cn);
+      }
+    }
+  }
+  if (searchHits.length === 0) {
+    searchStatusEl.innerHTML = "『" + esc(kw) + "』は見つかりませんでした。";
+    return;
+  }
+  for (i = 0; i < searchHits.length; i++) searchHits[i].className += " hit";
+  searchStatusEl.innerHTML = "『" + esc(kw) + "』が " + searchHits.length + " 件見つかりました。";
+  jumpHit(0);
+}
+
+document.getElementById("searchBtn").onclick = function () { doSearch(); };
+searchBoxEl.onkeydown = function (e) {
+  if (e.keyCode === 13) { doSearch(); }
+};
+document.getElementById("searchNextBtn").onclick = function () {
+  if (searchHits.length === 0) {
+    searchStatusEl.innerHTML = "先に検索してください。";
+    return;
+  }
+  jumpHit(searchPos + 1);
+};
+document.getElementById("searchClearBtn").onclick = function () {
+  clearHitMarks();
+  searchStatusEl.innerHTML = "";
+};
+
+/* お気に入りを読み込んで一覧を用意（パネルは開いたときに再描画） */
+loadFavs();
+renderFavs();
 
 /* ---- 起動時：保存があれば復元、なければ挨拶 ---- */
 var savedData = loadSave();
@@ -516,13 +856,14 @@ if (chatMsgs.length > 0) {
       mchips[mIdx].className = "mchip" + (mchips[mIdx].getAttribute("data-mode") === mode ? " active" : "");
     }
   }
+  addSysRow("前回の会話：" + chatMsgs.length + "件のメッセージ・モードは" + MODES[mode].label + "でした");
   var rIdx, pendingU = null;
   for (rIdx = 0; rIdx < chatMsgs.length; rIdx++) {
     if (chatMsgs[rIdx].r === "u") {
       addUserRow(chatMsgs[rIdx].t);
       pendingU = chatMsgs[rIdx].t;
     } else {
-      addAiRow(chatMsgs[rIdx].t);
+      attachFavBtn(addAiRow(chatMsgs[rIdx].t), chatMsgs[rIdx].t);
       if (pendingU !== null) {
         history.push({ u: pendingU, a: chatMsgs[rIdx].t });
         pendingU = null;

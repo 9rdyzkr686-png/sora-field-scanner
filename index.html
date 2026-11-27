@@ -42,6 +42,32 @@ body[data-theme="ice"] {
 --chipbg: #00141f;
 --actbg: #1a1000;
 }
+body[data-theme="pink"] {
+--main: #ff5da2;
+--dim: #8a2a52;
+--glow: rgba(255,93,162,.55);
+--accent: #ffe14d;
+--accentglow: rgba(255,225,77,.6);
+--chipbg: #1f0a14;
+--actbg: #1a1000;
+}
+body[data-theme="red"] {
+--main: #ff4444;
+--dim: #8a2222;
+--glow: rgba(255,68,68,.55);
+--accent: #ffb000;
+--accentglow: rgba(255,176,0,.6);
+--chipbg: #1f0505;
+--actbg: #1a1000;
+}
+select.mini2 {
+background: #000;
+color: var(--main);
+border: 1px solid var(--main);
+font-family: inherit;
+font-size: 13px;
+padding: 2px;
+}
 body:after {
 content: "";
 position: fixed;
@@ -238,7 +264,7 @@ background: #fff;
 </head>
 <body>
 
-<h1>KUU FIELD SCANNER</h1>
+<h1>KUU FIELD SCANNER <span id="seasonMotif"></span></h1>
 <div class="sub">■ OBSERVATION UNIT: KUU-01 / KANINCHEN DACHSHUND TYPE ■</div>
 <div id="dailyMemo"></div>
 
@@ -251,7 +277,13 @@ background: #fff;
 <span>LINK TIME: <b id="stTime">00:00:00</b></span>
 <span>元気度: <b id="stEnergy">70%</b> <span id="energyBar"></span></span>
 <span>シンクロ率: <b id="stSync">0%</b> <span id="syncBar"></span></span>
-<span><button id="themeBtn" class="mini" type="button">色：グリーン</button><button id="soundBtn" class="mini" type="button">音：ON</button><button id="voiceBtn" class="mini" type="button">ボイス：ON</button><button id="cipherLvBtn" class="mini" type="button">暗号：初級</button></span>
+<span><button id="themeBtn" class="mini" type="button">色：グリーン</button><button id="soundBtn" class="mini" type="button">音：ON</button><button id="voiceBtn" class="mini" type="button">ボイス：ON</button><button id="cipherLvBtn" class="mini" type="button">暗号：初級</button><button id="pitchBtn" class="mini" type="button">声：ふつう</button></span>
+</div>
+
+<div class="statusbar" style="margin-top:6px;">
+<span>設定:</span>
+<span>誕生日 <select id="bdayM" class="mini2"></select> 月 <select id="bdayD" class="mini2"></select> 日 <button id="bdaySaveBtn" class="mini" type="button">登録</button></span>
+<span><button id="muteNewsBtn" class="mini" type="button">ニュース話題：ON</button><button id="muteWxBtn" class="mini" type="button">天気話題：ON</button></span>
 </div>
 
 <div id="faceWrap">
@@ -571,7 +603,8 @@ var QUESTIONS = [
 { key: "moodq", label: "今ノ気分", q: "質問：今ノ{A}ノ気分ヲ、一言デ言ウト？", react: "『{ans}』トイウ気分、受信シマシタ。KUUハイツデモ側ニイマスヨ。"},
 { key: "animal", label: "好キナ動物", q: "質問デス、{A}。ダックス以外デ、好キナ動物ハ？…ダックス以外デ、デスヨ。", react: "『{ans}』！覚エマシタ。デモ一番ハ、ヤッパリKUUデスヨネ？…冗談デス。"},
 { key: "bath", label: "オフロノ温度", q: "小野さんに聞きたい。お風呂は熱い派か、ぬるい派か？", react: "『{ans}』派、覚エマシタ。KUUハオフロニ入レマセンガ、{A}ノ好ミハ記録済ミデス。"},
-{ key: "shop", label: "近所ニ欲シイ店", q: "小野さんの近所に欲しい店はあるか？ 私が観測しておく。", react: "『{ans}』…覚エマシタ。観測範囲ニ出来ナイカ、耳センサーデ探ッテオキマス、{A}。"}
+{ key: "shop", label: "近所ニ欲シイ店", q: "小野さんの近所に欲しい店はあるか？ 私が観測しておく。", react: "『{ans}』…覚エマシタ。観測範囲ニ出来ナイカ、耳センサーデ探ッテオキマス、{A}。"},
+{ key: "favfood", label: "好物", q: "質問デス、{A}。コレダケハ譲レナイ、トイウ『好物』ハ何デス？", react: "『{ans}』ガ好物…覚エマシタ！{A}ノ好物ハ『{ans}』。特別ナ日ニ思イ出シマス。"}
 ];
 
 var SEASONAL = {
@@ -622,6 +655,22 @@ var MUTTERS = [
 "親クーに似てきたと、小野さんに言われたい。密かに思っている。"
 ];
 
+var SEASON_MUTTERS = {
+spring: ["…桜ノ花ビラ、観測範囲ヲ通過。春デスネ。", "…春ノ風、耳ニ優シイ。センサー良好。", "…ポカポカ陽気。シッポガ勝手ニユルミマス。"],
+summer: ["…蝉ノ声、受信中。夏ハ賑ヤカデス。", "…暑サ対策、耳ヲパタパタ。コレガKUU式冷房。", "…夕立ノ匂イ、近ヅイテイル気ガシマス。"],
+autumn: ["…金木犀ノ香リ、微カニ検知。秋デスネ。", "…落チ葉ノ音、観測中。静カデ、良イ音。", "…秋ノ空ハ高イ。観測ノし甲斐ガアリマス。"],
+winter: ["…寒イ日ハ、丸クナリマス。観測体ノ習性デス。", "…吐ク息ガ白イ季節。{A}、温カクシテ下サイ。", "…雪ノ日ハ音ガ消エル。耳センサー、冴エマス。"]
+};
+
+var FOOD_MUTTERS = [
+"…好物ノ『{F}』、思イ出シテイタ。{A}ガ食ベル顔、想像シテイル。",
+"…今日ノ観測オヤツハ『{F}』ノ気分。…気分ダケ、ネ。",
+"…『{F}』ノ匂イガシタラ、KUUノ鼻センサーガ一番ニ反応スル。"
+];
+
+var VOICE_PITCHES = [0.3, 0.4, 0.55];
+var VOICE_PITCH_LABELS = ["低め", "ふつう", "高め"];
+
 var SCAN_RESULTS = [
 "スキャン完了：カワイサ、確認。異常値デス（良イ意味デ）。",
 "スキャン完了：シッポノ揺レ、良好。元気デス。",
@@ -641,7 +690,9 @@ var BOOT_LINES = [
 var THEMES = [
 { key: "", label: "グリーン"},
 { key: "amber", label: "アンバー"},
-{ key: "ice", label: "アイスブルー"}
+{ key: "ice", label: "アイスブルー"},
+{ key: "pink", label: "推しピンク"},
+{ key: "red", label: "推しレッド"}
 ];
 
 var MILE_COUNT = { "10": 1, "25": 1, "50": 1, "77": 1, "100": 1};
@@ -717,6 +768,7 @@ var HISTORY_TEXT =
 "v1.6 観測記録ノ保存（ページヲ閉ジても進化ガ残ル）\n" +
 "v1.7 KUU-01に改名（親クーの子どもとして再起動）\n" +
 "v1.8 進化 ― 親クーを知り、近所の仲間が増えた\n" +
+"v1.9 進化 ― 推し色と季節を身につけた\n" +
 "進化ハマダ続キマス、{A}。";
 
 var HOMEWORK = [
@@ -815,6 +867,13 @@ var soloTimer = null;
 var wordCollection = {};
 var userMemorial = "";
 var cipherLevel = 1;
+var voicePitchIdx = 1;
+var muteNews = false;
+var muteWx = false;
+var bdayM = 0;
+var bdayD = 0;
+var awayDays = 0;
+var addrWarm = false;
 var uraMode = false;
 var typeSpeed = 30;
 var lastTimeSignalHour = -1;
@@ -846,7 +905,13 @@ userMemorial: userMemorial,
 themeIdx: themeIdx,
 soundOn: soundOn,
 voiceOn: voiceOn,
-cipherLevel: cipherLevel
+cipherLevel: cipherLevel,
+voicePitchIdx: voicePitchIdx,
+muteNews: muteNews,
+muteWx: muteWx,
+bdayM: bdayM,
+bdayD: bdayD,
+lastVisit: new Date().getTime()
 };
 localStorage.setItem(SAVE_KEY, JSON.stringify(data));
 } catch (e) {}
@@ -868,6 +933,40 @@ el("themeBtn").innerHTML = "色：" + t.label;
 el("soundBtn").innerHTML = soundOn ? "音：ON" : "音：OFF";
 el("voiceBtn").innerHTML = voiceOn ? "ボイス：ON" : "ボイス：OFF";
 el("cipherLvBtn").innerHTML = cipherLevel >= 2 ? "暗号：上級" : "暗号：初級";
+el("pitchBtn").innerHTML = "声：" + VOICE_PITCH_LABELS[voicePitchIdx];
+el("muteNewsBtn").innerHTML = muteNews ? "ニュース話題：OFF" : "ニュース話題：ON";
+el("muteWxBtn").innerHTML = muteWx ? "天気話題：OFF" : "天気話題：ON";
+setBdaySelects();
+}
+
+function setBdaySelects() {
+try {
+if (el("bdayM")) el("bdayM").value = "" + bdayM;
+if (el("bdayD")) el("bdayD").value = "" + bdayD;
+} catch (e) {}
+}
+
+function initSettings() {
+var i, o;
+var sm = el("bdayM"), sd = el("bdayD");
+if (sm) {
+for (i = 0; i <= 12; i++) {
+o = document.createElement("option");
+o.value = "" + i;
+o.innerHTML = i === 0 ? "--" : "" + i;
+sm.appendChild(o);
+}
+}
+if (sd) {
+for (i = 0; i <= 31; i++) {
+o = document.createElement("option");
+o.value = "" + i;
+o.innerHTML = i === 0 ? "--" : "" + i;
+sd.appendChild(o);
+}
+}
+var motifs = { spring: "🌸", summer: "🎐", autumn: "🍁", winter: "❄" };
+el("seasonMotif").innerHTML = motifs[seasonKey()] || "";
 }
 
 function loadState() {
@@ -897,6 +996,20 @@ if (typeof d.themeIdx === "number" && d.themeIdx >= 0 && d.themeIdx < THEMES.len
 if (typeof d.soundOn === "boolean") soundOn = d.soundOn;
 if (typeof d.voiceOn === "boolean") voiceOn = d.voiceOn;
 if (typeof d.cipherLevel === "number" && d.cipherLevel >= 1) cipherLevel = d.cipherLevel;
+if (typeof d.voicePitchIdx === "number" && d.voicePitchIdx >= 0 && d.voicePitchIdx < VOICE_PITCHES.length) voicePitchIdx = Math.floor(d.voicePitchIdx);
+muteNews = !!d.muteNews;
+muteWx = !!d.muteWx;
+if (typeof d.bdayM === "number" && d.bdayM >= 0 && d.bdayM <= 12) bdayM = Math.floor(d.bdayM);
+if (typeof d.bdayD === "number" && d.bdayD >= 0 && d.bdayD <= 31) bdayD = Math.floor(d.bdayD);
+if (bdayM < 1 || bdayD < 1) { bdayM = 0; bdayD = 0; }
+if (typeof d.lastVisit === "number" && d.lastVisit > 0) {
+var lv = new Date(d.lastVisit);
+lv.setHours(0, 0, 0, 0);
+var td = new Date();
+td.setHours(0, 0, 0, 0);
+awayDays = Math.floor((td.getTime() - lv.getTime()) / 86400000);
+if (awayDays < 0) awayDays = 0;
+}
 restoredCount = count;
 applyPrefs();
 } catch (e) {}
@@ -926,11 +1039,22 @@ themeIdx = 0;
 soundOn = true;
 voiceOn = true;
 cipherLevel = 1;
+voicePitchIdx = 1;
+muteNews = false;
+muteWx = false;
+bdayM = 0;
+bdayD = 0;
+awayDays = 0;
+addrWarm = false;
 try { document.body.removeAttribute("data-theme");} catch (e) {}
 el("themeBtn").innerHTML = "色：グリーン";
 el("soundBtn").innerHTML = "音：ON";
 el("voiceBtn").innerHTML = "ボイス：ON";
 el("cipherLvBtn").innerHTML = "暗号：初級";
+el("pitchBtn").innerHTML = "声：ふつう";
+el("muteNewsBtn").innerHTML = "ニュース話題：ON";
+el("muteWxBtn").innerHTML = "天気話題：ON";
+setBdaySelects();
 el("decodeBtn").style.display = "none";
 el("missionBtn").style.display = "none";
 el("evoNote").innerHTML = "";
@@ -956,7 +1080,8 @@ function phaseName() { return PHASES[phaseNum() - 1].name;}
 function addr() {
 if (customAddr) return customAddr;
 var p = phaseNum();
-if (p >= 5) return "ともだち";
+if (p >= 5) return addrWarm ? "親友" : "ともだち";
+if (p >= 4) return addrWarm ? "相棒" : "パートナー";
 if (p >= 3) return "パートナー";
 return "観察者さん";
 }
@@ -990,7 +1115,13 @@ if (h >= 11 && h < 17) return "コンニチハ、{A}。日中ノ観測、順調�
 if (h >= 17 && h < 22) return "コンバンハ、{A}。夕方ノ空、観測シマシタカ？";
 return "コンバンハ、{A}。夜ノ観測中デス。ムリハ禁物デスヨ。";
 }
-function greetingLine() { return fill(greetingRaw());}
+function greetingLine() {
+if (bdayM >= 1 && bdayD >= 1) {
+var bd = new Date();
+if ((bd.getMonth() + 1) === bdayM && bd.getDate() === bdayD) return "オメデトウゴザイマス、" + addr() + "！今日ハ誕生日デスネ。特別ナ一日ノ観測、開始デス。";
+}
+return fill(greetingRaw());
+}
 
 var now0 = new Date();
 var daySeed = now0.getFullYear() * 10000 + (now0.getMonth() + 1) * 100 + now0.getDate();
@@ -1120,6 +1251,8 @@ b.type = "button";
 if (t.unlock <= p) {
 b.className = "chip";
 b.innerHTML = esc(t.label);
+if (t.id === "news" && muteNews) b.innerHTML = esc(t.label) + "（OFF中）";
+if (t.id === "weatherobs" && muteWx) b.innerHTML = esc(t.label) + "（OFF中）";
 b.setAttribute("data-topic", t.id);
 b.onclick = (function (tid) {
 return function () { doTopic(tid);};
@@ -1253,7 +1386,7 @@ try {
 speechSynthesis.cancel();
 var u = new SpeechSynthesisUtterance(text);
 u.lang = "ja-JP";
-u.pitch = 0.4;
+u.pitch = VOICE_PITCHES[voicePitchIdx];
 u.rate = uraMode ? 1.35 : 0.95;
 try {
 var vs = speechSynthesis.getVoices();
@@ -1297,6 +1430,7 @@ if (energy > 100) energy = 100;
 addSync(1);
 if (count === 1) grantFrag("hajimari");
 var np = phaseNum();
+addrWarm = (np >= 4 && Math.random() < 0.35);
 renderStatus();
 var notes = [];
 if (np > oldPhase) {
@@ -1688,6 +1822,14 @@ return (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95;
 }
 
 function doWeatherObs() {
+if (muteWx) {
+var oldW = phaseNum();
+clearCipher();
+addLog("you", "あなた: ");
+speak("天気話題ハ現在OFF設定デス。設定ノ『天気話題』ヲONニスルト、観測デキマス、" + addr() + "。", "sleepy");
+afterExchange(oldW);
+return;
+}
 clearCipher();
 addLog("you", "あなた: ");
 finishType();
@@ -1736,6 +1878,16 @@ afterExchange(old);
 }
 
 function doNews(fromText) {
+if (muteNews) {
+var oldM = phaseNum();
+if (!fromText) {
+clearCipher();
+addLog("you", "あなた: ");
+}
+speak("ニュース話題ハ現在OFF設定デス。設定ノ『ニュース話題』ヲONニスルト、受信デキマス、" + addr() + "。", "sleepy");
+afterExchange(oldM);
+return;
+}
 if (!fromText) {
 clearCipher();
 addLog("you", "あなた: ");
@@ -1926,6 +2078,7 @@ function specialDayMsg() {
 var d = new Date();
 var md = (d.getMonth() + 1) + "/" + d.getDate();
 if (userMemorial && md === userMemorial) return "★特別電文★ 本日ハ " + addr() + " ノ記念日デス。登録サレタ大切ナ日、KUUモ一緒ニ祝イマス。特別ナ一日ニナリマスヨウニ。";
+if (bdayM >= 1 && bdayD >= 1 && md === (bdayM + "/" + bdayD)) return "★誕生日電文★ オメデトウゴザイマス、" + addr() + "！本日ハ誕生日。KUUカラ最大級ノ祝福電文ヲ送信シマス。今年モ一緒ニ観測シテイキマショウ。";
 if (md === "12/31") return "★特別電文★ 今年モ観測ニ付キ合ッテ下サイ、感謝デス。" + addr() + "、良イ年ヲ迎エマショウ。";
 if (md === "1/1") return "★特別電文★ 新年アケマシテオメデトウゴザイマス。" + addr() + "、今年モ観測ハ続キマス。";
 if (md === "12/25") return "★特別電文★ メリークリスマス、" + addr() + "。KUUカラノ贈リ物ハ、コノ電文デス。";
@@ -2661,6 +2814,38 @@ sndTap();
 saveState();
 addLog("sys", "暗号難易度ヲ『" + (cipherLevel >= 2 ? "上級" : "初級") + "』ニ切リ替エマシタ。");
 };
+el("pitchBtn").onclick = function () {
+voicePitchIdx = (voicePitchIdx + 1) % VOICE_PITCHES.length;
+el("pitchBtn").innerHTML = "声：" + VOICE_PITCH_LABELS[voicePitchIdx];
+sndTap();
+saveState();
+addLog("sys", "ボイスノ高サヲ『" + VOICE_PITCH_LABELS[voicePitchIdx] + "』ニ切リ替エマシタ。");
+};
+el("muteNewsBtn").onclick = function () {
+muteNews = !muteNews;
+el("muteNewsBtn").innerHTML = muteNews ? "ニュース話題：OFF" : "ニュース話題：ON";
+sndTap();
+saveState();
+renderChips();
+addLog("sys", "ニュース話題ヲ" + (muteNews ? "OFF" : "ON") + "ニシマシタ。");
+};
+el("muteWxBtn").onclick = function () {
+muteWx = !muteWx;
+el("muteWxBtn").innerHTML = muteWx ? "天気話題：OFF" : "天気話題：ON";
+sndTap();
+saveState();
+renderChips();
+addLog("sys", "天気話題ヲ" + (muteWx ? "OFF" : "ON") + "ニシマシタ。");
+};
+el("bdaySaveBtn").onclick = function () {
+var bm = parseInt(el("bdayM").value, 10);
+var bd2 = parseInt(el("bdayD").value, 10);
+if (isNaN(bm) || isNaN(bd2) || bm < 1 || bd2 < 1) { bdayM = 0; bdayD = 0; }
+else { bdayM = bm; bdayD = bd2; }
+sndTap();
+saveState();
+addLog("sys", (bdayM >= 1) ? ("誕生日ヲ " + bdayM + "月" + bdayD + "日 ニ登録シマシタ。当日ハ特別電文ガ届キマス。") : "誕生日ノ登録ヲ解除シマシタ。");
+};
 el("aiBtn").onclick = function () {
 aiMode = !aiMode;
 el("aiBtn").innerHTML = aiMode ? "AI回線：ON" : "AI回線：OFF";
@@ -2713,13 +2898,32 @@ document.addEventListener("touchstart", poke, false);
 document.addEventListener("click", poke, false);
 document.addEventListener("keydown", poke, false);
 }
+function mutterText() {
+var pool = [], i;
+for (i = 0; i < MUTTERS.length; i++) {
+if (muteNews && (MUTTERS[i].indexOf("CUTIE") >= 0 || MUTTERS[i].indexOf("ニュース") >= 0)) continue;
+if (muteWx && (MUTTERS[i].indexOf("雲") >= 0 || MUTTERS[i].indexOf("天気") >= 0)) continue;
+pool.push(MUTTERS[i]);
+}
+var sm = SEASON_MUTTERS[seasonKey()];
+if (sm) {
+for (i = 0; i < sm.length; i++) pool.push(sm[i]);
+}
+var fav = answers.favfood || answers.food || "";
+if (fav) {
+for (i = 0; i < FOOD_MUTTERS.length; i++) pool.push(FOOD_MUTTERS[i].split("{F}").join(fav));
+}
+if (!pool.length) pool = MUTTERS.slice(0);
+return fill(pick(pool));
+}
+
 setInterval(function () {
 var idle = new Date().getTime() - lastAct;
 if (!sleeping && !devScanning && !soloMode && idle > 60000) { goSleep(); return;}
 if (!sleeping && !booting && !devScanning && !soloMode && !mutterDone && !typeTimer && !cipherPending && !missionActive && idle >= 35000) {
 mutterDone = true;
 hideCursor();
-el("speechText").innerHTML = esc(fill(pick(MUTTERS)));
+el("speechText").innerHTML = esc(mutterText());
 }
 }, 5000);
 
@@ -2800,7 +3004,10 @@ if (spDay.indexOf("親クーからの電文") >= 0) { grantFrag("oya"); grantFra
 speak(spDay + "\n" + greetingLine(), "happy");
 } else if (restoredCount > 0) {
 addLog("sys", "◆前回ノ観測記録ヲ読ミ込ミマシタ（会話数 " + count + "回カラ再開）");
-speak("オカエリナサイ、" + addr() + "。前回ノ観測記録ヲ読ミ込ミマシタ。会話数ハ " + count + "回、現在 PHASE 0" + phaseNum() + "「" + phaseName() + "」デス。観測ノ続キヲ始メマショウ。\n" + greetingLine() + "\n" + pick(RETURN_LINES), "happy");
+var awayLine = "";
+if (awayDays >= 7) awayLine = awayDays + "日ブリデスネ…！待ッテイタンデスヨ、" + addr() + "。耳モシッポモ、ズット待機シテイマシタ。";
+else if (awayDays >= 3) awayLine = awayDays + "日ブリノ観測デス。少シ寂シカッタ…ナンテネ。オカエリナサイ。";
+speak("オカエリナサイ、" + addr() + "。前回ノ観測記録ヲ読ミ込ミマシタ。会話数ハ " + count + "回、現在 PHASE 0" + phaseNum() + "「" + phaseName() + "」デス。観測ノ続キヲ始メマショウ。\n" + greetingLine() + "\n" + pick(RETURN_LINES) + (awayLine ? "\n" + awayLine : ""), "happy");
 } else {
 speak(greetingLine(), "happy");
 }
@@ -2809,6 +3016,7 @@ voiceMute = false;
 
 el("faceArt").innerHTML = esc(FACES.sleepy);
 el("dailyMemo").innerHTML = "▼ 本日ノ観測メモ：" + esc(dailyMemo);
+initSettings();
 loadState();
 renderStatus();
 renderChips();

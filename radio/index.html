@@ -41,6 +41,7 @@
   .footer { margin-top: 16px; font-size: 13px; line-height: 1.8; color: #7ddb96; border-top: 1px solid #1d5c2c; padding-top: 8px; }
   .links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .links a { display: inline-block; padding: 12px 14px; border: 2px solid #33ff66; border-radius: 8px; color: #33ff66; text-decoration: none; font-size: 15px; min-height: 48px; }
+  .ptext { width: 100%; font-size: 17px; line-height: 1.5; padding: 10px; border-radius: 8px; border: 2px solid #33ff66; background: #031007; color: #ffffff; font-family: inherit; }
 </style>
 </head>
 <body>
@@ -56,9 +57,23 @@
   <div class="chips" id="chBox">
     <button type="button" class="chip sel" id="ch-sogo">📻 総合</button>
     <button type="button" class="chip" id="ch-news">📰 ニュース</button>
+    <button type="button" class="chip" id="ch-econ">💹 経済</button>
+    <button type="button" class="chip" id="ch-sports">⚾ スポーツ実況</button>
     <button type="button" class="chip" id="ch-trivia">🌌 雑学</button>
     <button type="button" class="chip" id="ch-legend">👻 都市伝説</button>
     <button type="button" class="chip" id="ch-weather">🌦 天気</button>
+    <button type="button" class="chip" id="ch-oyasumi">🌙 おやすみ</button>
+    <button type="button" class="chip" id="ch-ai">🎙 AIパーソナリティ</button>
+  </div>
+
+  <div id="aiPanel" style="display:none;">
+    <div class="label">■ AIパーソナリティの話題（押すとAIが台本を作って読み上げます）</div>
+    <div class="chips">
+      <button type="button" class="chip" id="aiTopicZatsu">🎲 雑学</button>
+      <button type="button" class="chip" id="aiTopicOmoide">📼 思い出話</button>
+      <button type="button" class="chip" id="aiTopicKisetsu">🍂 季節の話</button>
+    </div>
+    <div class="note" id="aiStatus"></div>
   </div>
 
   <div class="label">■ 声の高さ</div>
@@ -78,6 +93,15 @@
   <button type="button" class="toggle" id="loopBtn">🔁 ループ再生：OFF</button>
   <button type="button" class="toggle" id="refetchBtn">↻ ニュース再取得</button>
   <div class="note" id="fetchNote"></div>
+
+  <div class="label">■ 貼り付け読み上げ</div>
+  <textarea class="ptext" id="pasteText" rows="5" placeholder="ここに読み上げたい文章を貼り付けてください"></textarea>
+  <div class="controls">
+    <button type="button" class="cbtn main" id="pastePlayBtn">▶ 読み上げ開始</button>
+    <button type="button" class="cbtn" id="pasteStopBtn">■ 停止</button>
+  </div>
+  <div class="note">貼った文章を読むだけです。外部に送信されません。</div>
+  <div class="note" id="pasteStatus"></div>
 
   <div class="nowbox">
     <span class="nowch" id="nowCh">総合チャンネル</span>
@@ -100,15 +124,19 @@
   </div>
 
 <script>
-var CH_FREQ = { sogo: "76.6", news: "80.0", trivia: "82.5", legend: "79.5", weather: "84.7" };
-var CH_POS = { sogo: "20%", news: "38%", trivia: "55%", legend: "46%", weather: "72%" };
-var CH_LABEL = { sogo: "総合チャンネル", news: "ニュースチャンネル", trivia: "雑学チャンネル", legend: "都市伝説チャンネル", weather: "天気チャンネル" };
+var CH_FREQ = { sogo: "76.6", news: "80.0", econ: "91.3", sports: "85.5", trivia: "82.5", legend: "79.5", weather: "84.7", oyasumi: "77.7", ai: "88.8" };
+var CH_POS = { sogo: "20%", news: "38%", econ: "79%", sports: "63%", trivia: "55%", legend: "46%", weather: "72%", oyasumi: "29%", ai: "90%" };
+var CH_LABEL = { sogo: "総合チャンネル", news: "ニュースチャンネル", econ: "経済ニュースチャンネル", sports: "スポーツ実況風チャンネル", trivia: "雑学チャンネル", legend: "都市伝説チャンネル", weather: "天気チャンネル", oyasumi: "おやすみチャンネル", ai: "AIパーソナリティチャンネル" };
 var CH_INTRO = {
   sogo: "ラジオ・シックス、総合チャンネル。ニュースと雑学と、ダジャレ少々。のんびりお付き合いください。",
   news: "ラジオ・シックス、ニュースチャンネル。最新の見出しを読み上げます。",
+  econ: "ラジオ・シックス、経済ニュースの時間です。最新の経済の見出しをお伝えします。",
+  sports: "ラジオ・シックス、スポーツ実況風チャンネル。最新のスポーツの見出しを、実況風にお届けします。",
   trivia: "ラジオ・シックス、雑学チャンネル。宇宙とダックスと、ためになる話をお届けします。",
   legend: "ラジオ・シックス、都市伝説チャンネル。明かりは、消さない方がいいかもしれません。",
-  weather: "ラジオ・シックス、天気チャンネル。ふじみ野市の空模様をお伝えします。"
+  weather: "ラジオ・シックス、天気チャンネル。ふじみ野市の空模様をお伝えします。",
+  oyasumi: "ラジオ・シックス、おやすみチャンネル。短いお話を読みます。チャンネルボタンをもう一度押すと、別のお話になります。",
+  ai: "ラジオ・シックス、AIパーソナリティチャンネル。AIがその場でトークの台本を作ります。上の話題ボタンを押してください。"
 };
 
 var SPACE_TRIVIA = [
@@ -164,8 +192,61 @@ var SPACE_FALLBACK = [
   "今夜は月が見頃です。少しだけ、空を見上げてみてください。"
 ];
 
+var OYASUMI_STORIES = [
+  { t: "ねむるダックス", lines: [
+    "小さなダックスのソラは、今日もたくさん歩きました。",
+    "夕ごはんを食べて、お気に入りのクッションにまるくなります。",
+    "窓の外では、月が静かに光っています。",
+    "ソラは小さくあくびをして、目を閉じました。",
+    "夢の中では、広い野原をのんびり歩いています。おやすみなさい。"
+  ] },
+  { t: "星の駅", lines: [
+    "夜空の駅には、星の列車がやってきます。",
+    "車掌さんは、眠たいお客さんをそっと座らせます。",
+    "列車は音もなく、雲の上を進んでいきます。",
+    "窓からは、遠くの町の明かりが小さく見えます。",
+    "終点は、静かな夢の国。どうぞ、ゆっくりお休みください。"
+  ] },
+  { t: "雨の音の子守歌", lines: [
+    "ポツ、ポツ、ポツ。雨が窓をたたく音が聞こえます。",
+    "雨の日は、世界が少しだけ静かになります。",
+    "温かいお茶を飲んで、毛布にくるまります。",
+    "雨の音は、自然の子守歌です。",
+    "音に耳をすませているうちに、まぶたが重くなってきます。おやすみなさい。"
+  ] },
+  { t: "森の小さな家", lines: [
+    "森の奥の小さな家に、明かりが灯りました。",
+    "おばあさんは、今日摘んだハーブでお茶を入れます。",
+    "フクロウが、ホー、ホーと鳴いています。",
+    "家の中は、木の香りでいっぱいです。",
+    "おばあさんは本を閉じて、ベッドに入りました。森も一緒に眠ります。"
+  ] },
+  { t: "月のお使い", lines: [
+    "月は毎晩、眠れない人の窓をのぞきます。",
+    "今夜は、あなたの窓にもやってきました。",
+    "月の光は、冷たくて、とても優しい光です。",
+    "心配なことは、明日の朝までお預けです。",
+    "月が見守っていますから、安心してお休みなさい。"
+  ] },
+  { t: "海辺の灯台", lines: [
+    "海辺の灯台は、今夜も光を回しています。",
+    "船は、その光を見て安心して進みます。",
+    "波の音が、ザブン、ザブンと聞こえてきます。",
+    "灯台守は、最後の点検をして、湯呑みを手に取りました。",
+    "海も、空も、みんな静かです。おやすみなさい、良い夢を。"
+  ] }
+];
+var SPORTS_FRAMES = [
+  "さあ、飛び込んできました！",
+  "これはビッグニュースです！",
+  "スタンドが沸いています！",
+  "実況席も大興奮です！"
+];
+
 var CS_ITEMS = null, SPACE_ITEMS = null;
+var ECON_ITEMS = null, SPORTS_ITEMS = null;
 var WX_LINES = null;
+var oyasumiIdx = 0;
 
 var curCh = "sogo";
 var playlist = [];
@@ -223,6 +304,33 @@ function fetchNews(done) {
     } catch (e) { SPACE_ITEMS = SPACE_FALLBACK.slice(0); failed = true; }
     fin();
   }, function () { SPACE_ITEMS = SPACE_FALLBACK.slice(0); failed = true; fin(); });
+}
+
+function fetchBiz(done) {
+  var remain = 2, failed = false;
+  function fin() { remain--; if (remain <= 0 && done) done(failed); }
+  var u1 = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://news.google.com/rss/search?q=経済 OR 株価&hl=ja&gl=JP&ceid=JP:ja");
+  getJSON(u1, function (j) {
+    try {
+      var arr = [];
+      var items = (j && j.items) || [];
+      for (var i = 0; i < items.length && arr.length < 6; i++) { var t1 = cleanTitle(items[i].title || ""); if (t1) arr.push(t1); }
+      ECON_ITEMS = arr.length ? arr : null;
+      if (!arr.length) failed = true;
+    } catch (e) { ECON_ITEMS = null; failed = true; }
+    fin();
+  }, function () { ECON_ITEMS = null; failed = true; fin(); });
+  var u2 = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://news.google.com/rss/search?q=プロ野球 OR サッカー&hl=ja&gl=JP&ceid=JP:ja");
+  getJSON(u2, function (j) {
+    try {
+      var arr = [];
+      var items = (j && j.items) || [];
+      for (var i = 0; i < items.length && arr.length < 6; i++) { var t2 = cleanTitle(items[i].title || ""); if (t2) arr.push(t2); }
+      SPORTS_ITEMS = arr.length ? arr : null;
+      if (!arr.length) failed = true;
+    } catch (e) { SPORTS_ITEMS = null; failed = true; }
+    fin();
+  }, function () { SPORTS_ITEMS = null; failed = true; fin(); });
 }
 
 var WMO = { 0: "晴れ", 1: "ほぼ晴れ", 2: "晴れ時々くもり", 3: "くもり", 45: "霧", 48: "霧", 51: "霧雨", 53: "霧雨", 55: "霧雨", 56: "凍る霧雨", 57: "凍る霧雨", 61: "雨", 63: "雨", 65: "強い雨", 66: "凍る雨", 67: "凍る雨", 71: "雪", 73: "雪", 75: "大雪", 77: "雪", 80: "にわか雨", 81: "にわか雨", 82: "激しいにわか雨", 85: "にわか雪", 86: "にわか雪", 95: "雷雨", 96: "雷雨とひょう", 99: "雷雨とひょう" };
@@ -285,6 +393,30 @@ function buildPlaylist() {
   } else if (curCh === "weather") {
     var w = WX_LINES || ["天気を取得中です。少々お待ちください。"];
     for (i = 0; i < w.length; i++) list.push(w[i]);
+  } else if (curCh === "econ") {
+    if (ECON_ITEMS && ECON_ITEMS.length) {
+      for (i = 0; i < ECON_ITEMS.length; i++) list.push(ECON_ITEMS[i]);
+    } else {
+      list.push("経済ニュースを取得できませんでした。通信環境を確認して、「ニュース再取得」を押してください。");
+    }
+    list.push("以上、経済ニュースでした。");
+  } else if (curCh === "sports") {
+    if (SPORTS_ITEMS && SPORTS_ITEMS.length) {
+      for (i = 0; i < SPORTS_ITEMS.length; i++) {
+        list.push(SPORTS_FRAMES[i % SPORTS_FRAMES.length]);
+        list.push(SPORTS_ITEMS[i]);
+      }
+    } else {
+      list.push("スポーツニュースを取得できませんでした。通信環境を確認して、「ニュース再取得」を押してください。");
+    }
+    list.push("以上、スポーツの時間でした。");
+  } else if (curCh === "oyasumi") {
+    var st = OYASUMI_STORIES[oyasumiIdx];
+    list.push("おやすみストーリー、その" + (oyasumiIdx + 1) + "。" + st.t + "。");
+    for (i = 0; i < st.lines.length; i++) list.push(st.lines[i]);
+    list.push("お話はおしまいです。良い夢を。おやすみなさい。");
+  } else if (curCh === "ai") {
+    /* AI台本ができるまではイントロのみ。生成後に genAiTalk が playlist を差し替える */
   }
   playlist = list;
   idx = 0;
@@ -368,8 +500,9 @@ function jumpTo(n) {
 function setChannel(ch) {
   stopSpeech();
   curCh = ch;
-  var ids = ["sogo", "news", "trivia", "legend", "weather"];
+  var ids = ["sogo", "news", "econ", "sports", "trivia", "legend", "weather", "oyasumi", "ai"];
   for (var i = 0; i < ids.length; i++) el("ch-" + ids[i]).className = "chip" + (ids[i] === ch ? " sel" : "");
+  el("aiPanel").style.display = (ch === "ai") ? "block" : "none";
   if (ch === "weather" && !WX_LINES) {
     fetchWeather(function () { if (curCh === "weather") { buildPlaylist(); updateDisplay(); } });
   }
@@ -389,6 +522,13 @@ el("ch-news").onclick = function () { setChannel("news"); };
 el("ch-trivia").onclick = function () { setChannel("trivia"); };
 el("ch-legend").onclick = function () { setChannel("legend"); };
 el("ch-weather").onclick = function () { setChannel("weather"); };
+el("ch-econ").onclick = function () { setChannel("econ"); };
+el("ch-sports").onclick = function () { setChannel("sports"); };
+el("ch-oyasumi").onclick = function () {
+  if (curCh === "oyasumi") oyasumiIdx = (oyasumiIdx + 1) % OYASUMI_STORIES.length;
+  setChannel("oyasumi");
+};
+el("ch-ai").onclick = function () { setChannel("ai"); };
 el("v-robo").onclick = function () { setPitch(0.3, "v-robo"); };
 el("v-norm").onclick = function () { setPitch(0.7, "v-norm"); };
 el("v-high").onclick = function () { setPitch(1.1, "v-high"); };
@@ -407,10 +547,121 @@ el("loopBtn").onclick = function () {
 };
 el("refetchBtn").onclick = function () {
   el("fetchNote").textContent = "ニュースを取得中…";
-  fetchNews(function (failed) {
-    el("fetchNote").textContent = failed ? "一部のニュースを取得できませんでした（保存済みの文章で代用しています）" : "ニュースを更新しました。";
-    if (curCh === "news" || curCh === "sogo") { stopSpeech(); buildPlaylist(); updateDisplay(); }
-  });
+  var remain = 2, anyFail = false;
+  function fin() {
+    remain--;
+    if (remain > 0) return;
+    el("fetchNote").textContent = anyFail ? "一部のニュースを取得できませんでした（保存済みの文章で代用しています）" : "ニュースを更新しました。";
+    if (curCh === "news" || curCh === "sogo" || curCh === "econ" || curCh === "sports") { stopSpeech(); buildPlaylist(); updateDisplay(); }
+  }
+  fetchNews(function (f) { if (f) anyFail = true; fin(); });
+  fetchBiz(function (f) { if (f) anyFail = true; fin(); });
+};
+
+/* ===== AIパーソナリティ (49) ===== */
+var aiBusy = false;
+function splitScript(t) {
+  t = t.replace(/[*#`>]/g, "").replace(/\s+/g, "");
+  var parts = t.split("。");
+  var out = [];
+  for (var i = 0; i < parts.length; i++) { if (parts[i]) out.push(parts[i] + "。"); }
+  return out;
+}
+function genAiTalk(topic) {
+  if (aiBusy) return;
+  aiBusy = true;
+  stopSpeech();
+  var status = el("aiStatus");
+  var sec = 0, finished = false;
+  status.textContent = "AIが台本を書いています… 0秒";
+  var timer = setInterval(function () { sec++; status.textContent = "AIが台本を書いています… " + sec + "秒"; }, 1000);
+  function fail(msg) {
+    if (finished) return;
+    finished = true;
+    clearInterval(timer);
+    aiBusy = false;
+    status.textContent = msg;
+  }
+  var prompt = "あなたは日本のラジオ番組のパーソナリティです。テーマは「" + topic + "」です。リスナーに語りかけるトークの台本を書いてください。条件：約400文字、改行なし、箇条書きなし、マークダウン記号なし、普通の文章だけにしてください。最初は挨拶から始めてください。";
+  var x = new XMLHttpRequest();
+  x.open("POST", "https://text.pollinations.ai/", true);
+  x.setRequestHeader("Content-Type", "application/json");
+  x.timeout = 90000;
+  x.onreadystatechange = function () {
+    if (x.readyState !== 4 || finished) return;
+    var body = x.responseText || "";
+    if (x.status === 402 || body.indexOf("Free limit") >= 0) { fail("本日の無料AI回線は上限に達しました。明日の朝9時に回復します。"); return; }
+    if (x.status !== 200) { fail("AI回線が混み合っています。少し待って、もう一度お試しください。（詳細：HTTP " + x.status + "）"); return; }
+    var lines = splitScript(body);
+    if (!lines.length) { fail("台本が空でした。もう一度お試しください。"); return; }
+    finished = true;
+    clearInterval(timer);
+    aiBusy = false;
+    playlist = ["それでは、AIパーソナリティのトークをお聞きください。テーマは「" + topic + "」です。"];
+    for (var i = 0; i < lines.length; i++) playlist.push(lines[i]);
+    playlist.push("以上、AIパーソナリティチャンネルでした。");
+    idx = 0;
+    status.textContent = "台本ができました（" + lines.length + "行）。読み上げます。";
+    updateDisplay();
+    speakCurrent();
+  };
+  x.ontimeout = function () { fail("AI回線の応答が時間切れになりました。もう一度お試しください。"); };
+  x.onerror = function () { fail("AI回線が混み合っています。少し待って、もう一度お試しください。（詳細：HTTP 0）"); };
+  x.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+}
+el("aiTopicZatsu").onclick = function () { genAiTalk("雑学"); };
+el("aiTopicOmoide").onclick = function () { genAiTalk("思い出話"); };
+el("aiTopicKisetsu").onclick = function () { genAiTalk("季節の話"); };
+
+/* ===== 貼り付け読み上げ (51) ===== */
+var pasteGen = 0, pasteLines = [], pasteIdx = 0;
+function splitSentences(t) {
+  var out = [], cur = "", i, c;
+  for (i = 0; i < t.length; i++) {
+    c = t.charAt(i);
+    if (c === "\n" || c === "\r") { if (cur) { out.push(cur); cur = ""; } continue; }
+    cur += c;
+    if (c === "。" || c === "！" || c === "？" || c === "!" || c === "?") { out.push(cur); cur = ""; }
+    else if (cur.length >= 120) { out.push(cur); cur = ""; }
+  }
+  if (cur) out.push(cur);
+  var res = [];
+  for (i = 0; i < out.length; i++) {
+    var s = out[i].replace(/^\s+|\s+$/g, "");
+    if (s) res.push(s);
+  }
+  return res;
+}
+function pasteSpeakNext() {
+  if (pasteIdx >= pasteLines.length) { el("pasteStatus").textContent = "読み上げが終わりました。"; return; }
+  var myGen = pasteGen;
+  el("pasteStatus").textContent = "読み上げ中 " + (pasteIdx + 1) + " / " + pasteLines.length;
+  var u = new SpeechSynthesisUtterance(pasteLines[pasteIdx]);
+  u.lang = "ja-JP";
+  u.rate = 1.0;
+  u.pitch = pitchVal;
+  u.onend = function () {
+    if (myGen !== pasteGen) return;
+    setTimeout(function () { if (myGen !== pasteGen) return; pasteIdx++; pasteSpeakNext(); }, 300);
+  };
+  u.onerror = u.onend;
+  speechSynthesis.speak(u);
+}
+el("pastePlayBtn").onclick = function () {
+  if (!window.speechSynthesis) { el("pasteStatus").textContent = "この端末では音声読み上げに対応していません。"; return; }
+  var lines = splitSentences(el("pasteText").value || "");
+  if (!lines.length) { el("pasteStatus").textContent = "まず文章を貼り付けてください。"; return; }
+  stopSpeech();
+  updateDisplay();
+  pasteGen++;
+  pasteLines = lines;
+  pasteIdx = 0;
+  pasteSpeakNext();
+};
+el("pasteStopBtn").onclick = function () {
+  pasteGen++;
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  el("pasteStatus").textContent = "停止しました。";
 };
 
 buildPlaylist();
@@ -418,6 +669,10 @@ updateDisplay();
 fetchNews(function (failed) {
   if (failed) el("fetchNote").textContent = "一部のニュースを取得できませんでした（保存済みの文章で代用しています）";
   if (!speaking && (curCh === "news" || curCh === "sogo")) { buildPlaylist(); updateDisplay(); }
+});
+fetchBiz(function (failed) {
+  if (failed && !el("fetchNote").textContent) el("fetchNote").textContent = "経済・スポーツの見出しを取得できませんでした。";
+  if (!speaking && (curCh === "econ" || curCh === "sports")) { buildPlaylist(); updateDisplay(); }
 });
 </script>
 </body>

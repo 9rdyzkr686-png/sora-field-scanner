@@ -74,6 +74,57 @@ background: #faf6ec; color: #1a1a1a; border: 2px solid #1a1a1a; cursor: pointer;
 margin-top: 16px; text-align: center; font-size: 12px; color: #555;
 font-family: sans-serif; border-top: 1px solid #999; padding-top: 8px;
 }
+.edition-name { font-size: 20px; font-weight: bold; letter-spacing: 0.5em; margin-top: 2px;}
+.edition-bar { margin-top: 12px; text-align: center; font-family: sans-serif;}
+.edition-bar button {
+min-height: 48px; width: 47%; font-size: 16px; padding: 0 8px;
+background: #faf6ec; color: #1a1a1a; border: 1px solid #1a1a1a; cursor: pointer;
+font-family: sans-serif;
+}
+.edition-bar button.sel { background: #1a1a1a; color: #faf6ec; font-weight: bold;}
+.gogai-btn {
+display: block; width: 100%; min-height: 56px; margin-top: 10px;
+font-size: 20px; font-weight: bold; letter-spacing: 0.2em;
+font-family: "Hiragino Mincho ProN", serif;
+background: #8c1d18; color: #faf6ec; border: none; cursor: pointer;
+}
+.gogai-btn:disabled { background: #777;}
+.gogai-head {
+font-size: 52px; font-weight: bold; text-align: center; letter-spacing: 0.4em;
+border: 3px solid #8c1d18; color: #8c1d18; padding: 6px 0 6px 0.4em; margin-top: 16px; line-height: 1.2;
+}
+.gogai-headline { font-size: 26px; font-weight: bold; line-height: 1.4; margin-top: 12px; text-align: center;}
+.gogai-body { font-size: 16px; margin-top: 8px; text-align: justify;}
+.gogai-note { font-size: 12px; color: #555; text-align: center; margin-top: 8px; font-family: sans-serif;}
+.back-btn {
+display: block; width: 100%; min-height: 52px; margin-top: 14px;
+font-size: 17px; font-family: sans-serif;
+background: #faf6ec; color: #1a1a1a; border: 2px solid #1a1a1a; cursor: pointer;
+}
+.post-box { margin-top: 16px; border: 1px solid #1a1a1a; padding: 8px 10px; background: #efe9dc;}
+.post-box-title { font-size: 13px; font-weight: bold; letter-spacing: 0.2em; border-bottom: 1px solid #999; padding-bottom: 2px;}
+.post-box-body { font-size: 16px; margin-top: 4px;}
+.archive-box { margin-top: 18px; border-top: 2px solid #1a1a1a; padding-top: 8px;}
+.archive-title { font-size: 14px; font-weight: bold; letter-spacing: 0.3em; text-align: center;}
+.archive-item {
+display: block; width: 100%; min-height: 48px; margin-top: 8px; text-align: left;
+font-size: 14px; font-family: sans-serif; line-height: 1.5;
+background: #f7f3e8; color: #1a1a1a; border: 1px solid #1a1a1a; padding: 8px 10px; cursor: pointer;
+}
+.archive-empty { font-size: 13px; color: #555; text-align: center; margin-top: 6px; font-family: sans-serif;}
+.post-form { margin-top: 18px; border-top: 2px solid #1a1a1a; padding-top: 8px;}
+.post-form-title { font-size: 14px; font-weight: bold; letter-spacing: 0.3em; text-align: center;}
+.post-form-note { font-size: 12px; color: #555; text-align: center; margin-top: 4px; font-family: sans-serif;}
+.post-input {
+width: 100%; min-height: 48px; font-size: 16px; padding: 8px; margin-top: 8px;
+font-family: sans-serif; border: 1px solid #1a1a1a; background: #fff; color: #1a1a1a;
+}
+.post-save-btn {
+display: block; width: 100%; min-height: 48px; margin-top: 8px;
+font-size: 16px; font-family: sans-serif;
+background: #1a1a1a; color: #faf6ec; border: none; cursor: pointer;
+}
+.post-save-note { text-align: center; font-size: 13px; color: #555; margin-top: 4px; min-height: 18px; font-family: sans-serif;}
 .hidden { display: none;}
 </style>
 </head>
@@ -84,6 +135,7 @@ font-family: sans-serif; border-top: 1px solid #999; padding-top: 8px;
 <div class="paper">
 <div class="masthead">
 <div class="paper-name">クー新聞</div>
+<div class="edition-name" id="editionName">朝刊</div>
 <div class="date-line" id="dateLine">----年--月--日</div>
 </div>
 <div class="fiction-note">この新聞の記事はAIが書いた創作です。本当のニュースではありません</div>
@@ -94,7 +146,13 @@ font-family: sans-serif; border-top: 1px solid #999; padding-top: 8px;
 <div class="w-src">出典：Open-Meteo（埼玉県ふじみ野市）</div>
 </div>
 
+<div class="edition-bar">
+<button type="button" id="edMorningBtn">朝刊</button>
+<button type="button" id="edEveningBtn">夕刊</button>
+</div>
+
 <button class="issue-btn" id="issueBtn" type="button">今日の新聞を発行する</button>
+<button class="gogai-btn" id="gogaiBtn" type="button">号外を出す</button>
 <div class="status-line" id="statusLine"></div>
 <div class="status-detail" id="statusDetail"></div>
 
@@ -116,6 +174,32 @@ font-family: sans-serif; border-top: 1px solid #999; padding-top: 8px;
 <button class="copy-btn" id="copyBtn" type="button">全文コピー</button>
 <div class="copy-note" id="copyNote"></div>
 </div>
+
+<div id="gogaiBody" class="hidden">
+<div class="gogai-head">号外</div>
+<div class="gogai-headline" id="gogaiHeadline"></div>
+<div class="gogai-body" id="gogaiText"></div>
+<div class="gogai-note">この号外はAIが書いた創作です。本当のニュースではありません</div>
+</div>
+<button class="back-btn hidden" id="backBtn" type="button">朝刊に戻る</button>
+
+<div class="post-box hidden" id="postBox">
+<div class="post-box-title">読者投稿（この端末から）</div>
+<div class="post-box-body" id="postBoxBody"></div>
+</div>
+
+<div class="archive-box">
+<div class="archive-title">過去の新聞</div>
+<div id="archiveList"></div>
+</div>
+
+<div class="post-form">
+<div class="post-form-title">読者投稿欄</div>
+<div class="post-form-note">ひとこと投稿すると、発行した新聞の下に載ります（この端末だけに保存されます）</div>
+<input class="post-input" type="text" id="postInput" maxlength="60" placeholder="ひとこと（60字まで）">
+<button class="post-save-btn" id="postSaveBtn" type="button">投稿を保存</button>
+<div class="post-save-note" id="postSaveNote"></div>
+</div>
 </div>
 
 <div class="footer">SHINBUN-6 クー新聞 ／ 一面・コラムはAIの創作、天気欄だけ本物です</div>
@@ -132,6 +216,13 @@ var issueNo = 1;
 var dateText = "";
 var weatherText = "";
 var paperData = null;
+var edition = "morning";
+var lastNormalPaper = null;
+var showingGogai = false;
+var anyPaperShown = false;
+var savedPost = "";
+var ARCHIVE_KEY = "shinbun6_archive_v1";
+var POST_KEY = "shinbun6_post_v1";
 var busy = false;
 var printTimer = null;
 var printSec = 0;
@@ -147,6 +238,25 @@ var today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 issueNo = Math.floor((today0.getTime() - base.getTime()) / 86400000) + 1;
 dateText = now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日（" + WEEKDAYS[now.getDay()] + "）";
 el("dateLine").textContent = dateText + "　第" + issueNo + "号";
+}
+
+function initEdition() {
+var h = new Date().getHours();
+edition = (h >= 16)? "evening": "morning";
+applyEdition();
+}
+
+function applyEdition() {
+el("editionName").textContent = (edition === "evening")? "夕刊": "朝刊";
+el("edMorningBtn").className = (edition === "morning")? "sel": "";
+el("edEveningBtn").className = (edition === "evening")? "sel": "";
+}
+
+function setEdition(ed) {
+if (edition === ed) return;
+edition = ed;
+applyEdition();
+issuePaper();
 }
 
 function weatherName(code) {
@@ -279,6 +389,10 @@ return result;
 
 function showPaper(p) {
 paperData = p;
+showingGogai = false;
+anyPaperShown = true;
+el("gogaiBody").className = "hidden";
+el("backBtn").className = "back-btn hidden";
 el("topHeadline").textContent = p.headline || "";
 el("topHeadline").style.display = p.headline? "": "none";
 el("topBody").textContent = p.top || "";
@@ -286,6 +400,7 @@ el("colBody").textContent = p.col || "（コラムはお休みです）";
 el("hitokotoBody").textContent = p.hitokoto || "";
 el("paperBody").className = "";
 el("copyNote").textContent = "";
+refreshPostBox();
 }
 
 function callAI(seeds) {
@@ -295,7 +410,11 @@ seedText = seeds.join("／");
 } else {
 seedText = "（種になる見出しが取れなかったので、テーマは「ふじみ野市の穏やかな一日」でお願いします）";
 }
+var editionNote = (edition === "evening")
+? "これは夕刊です。一日を締めくくる夕刊らしく、落ち着いたトーンで書いてください。\n"
+: "これは朝刊です。一日の始まりらしく、明るいトーンで書いてください。\n";
 var prompt = "あなたはユーモア新聞『クー新聞』の編集長です。次の本当のニュース見出しを種にして、ほのぼのした創作記事を書いてください。事実として断定する書き方は避け、ジョークとして楽しめる内容にしてください。\n"
++ editionNote
 + "種の見出し：" + seedText + "\n"
 + "出力は必ず次の形式ちょうどで、各マーカーは単独の行に置いてください。全体で700文字以内、マークダウンや記号の装飾は使わず、プレーンテキストのみで書いてください。\n"
 + "\n"
@@ -317,6 +436,7 @@ if (xhr.readyState!== 4) return;
 stopPrintTimer();
 busy = false;
 el("issueBtn").disabled = false;
+el("gogaiBtn").disabled = false;
 var resp = xhr.responseText || "";
 if (xhr.status === 402 || resp.indexOf("Free limit") >= 0) {
 setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
@@ -324,7 +444,10 @@ return;
 }
 if (xhr.status === 200 && resp.replace(/\s+/g, "")!== "") {
 setStatus("発行しました！", "");
-showPaper(parsePaper(resp));
+var parsed = parsePaper(resp);
+lastNormalPaper = parsed;
+showPaper(parsed);
+saveToArchive((edition === "evening")? "夕刊": "通常", resp);
 return;
 }
 setStatus("AI回線が混み合っています。少し待って、もう一度発行してみてください", "詳細：HTTP " + xhr.status);
@@ -333,12 +456,14 @@ xhr.ontimeout = function () {
 stopPrintTimer();
 busy = false;
 el("issueBtn").disabled = false;
+el("gogaiBtn").disabled = false;
 setStatus("AIの返事が時間切れになりました。もう一度発行してみてください", "詳細：timeout");
 };
 xhr.onerror = function () {
 stopPrintTimer();
 busy = false;
 el("issueBtn").disabled = false;
+el("gogaiBtn").disabled = false;
 setStatus("AI回線が混み合っています。少し待って、もう一度発行してみてください", "詳細：HTTP " + xhr.status);
 };
 xhr.send(body);
@@ -348,7 +473,10 @@ function issuePaper() {
 if (busy) return;
 busy = true;
 el("issueBtn").disabled = true;
+el("gogaiBtn").disabled = true;
 el("paperBody").className = "hidden";
+el("gogaiBody").className = "hidden";
+el("backBtn").className = "back-btn hidden";
 setStatus("見出しを集めています…", "");
 fetchWeather();
 var seeds = [];
@@ -360,6 +488,177 @@ if (pending === 0) callAI(seeds);
 }
 fetchFeedTitles(CUTIE_FEED, oneDone);
 fetchFeedTitles(SPACE_FEED, oneDone);
+}
+
+function parseGogai(text) {
+var t = String(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(/^\s+|\s+$/g, "");
+var nl = t.indexOf("\n");
+if (nl > 0) {
+return {
+headline: t.substring(0, nl).replace(/^\s+|\s+$/g, ""),
+body: t.substring(nl + 1).replace(/^\s+|\s+$/g, "")
+};
+}
+return { headline: "", body: t};
+}
+
+function showGogai(g) {
+showingGogai = true;
+anyPaperShown = true;
+el("paperBody").className = "hidden";
+el("gogaiHeadline").textContent = g.headline || "号外";
+el("gogaiText").textContent = g.body || "";
+el("gogaiBody").className = "";
+el("backBtn").className = "back-btn";
+refreshPostBox();
+}
+
+function callGogaiAI(titles) {
+var seed = (titles && titles.length > 0)? titles[0]
+: "（見出しが取れなかったので、ふじみ野市のほのぼのした日常の話題で書いてください）";
+var prompt = "あなたはユーモア新聞『クー新聞』の編集長です。次の本当のニュース見出しを種にして、号外の記事を書いてください。号外らしい勢いのある文体で、ただし事実として断定する書き方は避け、ジョークとして楽しめる創作にしてください。\n"
++ "種の見出し：" + seed + "\n"
++ "出力形式：1行目に号外の見出し（短く、1行だけ）、2行目以降に本文（250文字以内）。マークダウンや記号の装飾は使わず、プレーンテキストのみで書いてください。";
+
+startPrintTimer();
+var xhr = new XMLHttpRequest();
+xhr.open("POST", AI_URL, true);
+xhr.setRequestHeader("Content-Type", "application/json");
+xhr.timeout = 90000;
+var body = JSON.stringify({ messages: [{ role: "user", content: prompt}], model: "openai-fast"});
+xhr.onreadystatechange = function () {
+if (xhr.readyState!== 4) return;
+stopPrintTimer();
+busy = false;
+el("issueBtn").disabled = false;
+el("gogaiBtn").disabled = false;
+var resp = xhr.responseText || "";
+if (xhr.status === 402 || resp.indexOf("Free limit") >= 0) {
+setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+return;
+}
+if (xhr.status === 200 && resp.replace(/\s+/g, "")!== "") {
+setStatus("号外を発行しました！", "");
+showGogai(parseGogai(resp));
+saveToArchive("号外", resp);
+return;
+}
+setStatus("AI回線が混み合っています。少し待って、もう一度試してみてください", "詳細：HTTP " + xhr.status);
+};
+xhr.ontimeout = function () {
+stopPrintTimer();
+busy = false;
+el("issueBtn").disabled = false;
+el("gogaiBtn").disabled = false;
+setStatus("AIの返事が時間切れになりました。もう一度試してみてください", "詳細：timeout");
+};
+xhr.onerror = function () {
+stopPrintTimer();
+busy = false;
+el("issueBtn").disabled = false;
+el("gogaiBtn").disabled = false;
+setStatus("AI回線が混み合っています。少し待って、もう一度試してみてください", "詳細：HTTP " + xhr.status);
+};
+xhr.send(body);
+}
+
+function issueGogai() {
+if (busy) return;
+busy = true;
+el("issueBtn").disabled = true;
+el("gogaiBtn").disabled = true;
+setStatus("号外の見出しを取っています…", "");
+fetchFeedTitles(CUTIE_FEED, function (titles) { callGogaiAI(titles);});
+}
+
+function backToNormal() {
+if (lastNormalPaper) {
+showPaper(lastNormalPaper);
+setStatus("通常の新聞に戻りました", "");
+} else {
+issuePaper();
+}
+}
+
+function loadArchive() {
+try {
+var s = localStorage.getItem(ARCHIVE_KEY);
+if (s) {
+var a = JSON.parse(s);
+if (a && typeof a.length === "number") return a;
+}
+} catch (e) {}
+return [];
+}
+
+function saveToArchive(kind, text) {
+var a = loadArchive();
+a.unshift({ date: dateText, kind: kind, text: text});
+if (a.length > 10) a.length = 10;
+try { localStorage.setItem(ARCHIVE_KEY, JSON.stringify(a));} catch (e) {}
+renderArchive();
+}
+
+function renderArchive() {
+var a = loadArchive();
+var wrap = el("archiveList");
+wrap.innerHTML = "";
+if (a.length === 0) {
+var d = document.createElement("div");
+d.className = "archive-empty";
+d.textContent = "まだ保存された新聞はありません。発行するとここに貯まります";
+wrap.appendChild(d);
+return;
+}
+for (var i = 0; i < a.length; i++) {
+(function (idx, item) {
+var b = document.createElement("button");
+b.type = "button";
+b.className = "archive-item";
+var snippet = String(item.text || "").replace(/\s+/g, " ").substring(0, 24);
+b.textContent = item.date + "（" + item.kind + "） " + snippet + "…";
+b.addEventListener("click", function () { openArchiveItem(idx);}, false);
+wrap.appendChild(b);
+})(i, a[i]);
+}
+}
+
+function openArchiveItem(idx) {
+var a = loadArchive();
+var item = a[idx];
+if (!item) return;
+if (item.kind === "号外") {
+showGogai(parseGogai(item.text));
+setStatus("過去の号外を表示しています", "");
+} else {
+var p = parsePaper(item.text);
+lastNormalPaper = p;
+showPaper(p);
+setStatus("過去の新聞を表示しています", "");
+}
+}
+
+function loadPost() {
+try { savedPost = localStorage.getItem(POST_KEY) || "";} catch (e) { savedPost = "";}
+if (savedPost) el("postInput").value = savedPost;
+}
+
+function savePost() {
+var v = el("postInput").value.replace(/^\s+|\s+$/g, "");
+if (v.length > 60) v = v.substring(0, 60);
+savedPost = v;
+try { localStorage.setItem(POST_KEY, v);} catch (e) {}
+el("postSaveNote").textContent = v? "保存しました。新聞を発行すると下の投稿欄に載ります": "投稿を消しました";
+refreshPostBox();
+}
+
+function refreshPostBox() {
+if (savedPost && anyPaperShown) {
+el("postBoxBody").textContent = savedPost;
+el("postBox").className = "post-box";
+} else {
+el("postBox").className = "post-box hidden";
+}
 }
 
 function copyAll() {
@@ -393,7 +692,15 @@ el("copyNote").textContent = ok? "コピーしました": "コピーできませ
 
 el("issueBtn").addEventListener("click", issuePaper, false);
 el("copyBtn").addEventListener("click", copyAll, false);
+el("gogaiBtn").addEventListener("click", issueGogai, false);
+el("backBtn").addEventListener("click", backToNormal, false);
+el("edMorningBtn").addEventListener("click", function () { setEdition("morning");}, false);
+el("edEveningBtn").addEventListener("click", function () { setEdition("evening");}, false);
+el("postSaveBtn").addEventListener("click", savePost, false);
 initDate();
+initEdition();
+loadPost();
+renderArchive();
 </script>
 </body>
 </html>
