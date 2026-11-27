@@ -152,6 +152,12 @@
   .quizChoice.right { background: #8a2b23; color: #fff8ea; border-color: #8a2b23; }
   .quizChoice.wrong { background: #b9a894; color: #5a5342; border-color: #b9a894; }
   .quizMsg { margin-top: 10px; font-size: 17px; min-height: 24px; }
+  .quizCopyBtn {
+    display: block; width: 100%; min-height: 48px; margin-top: 8px;
+    font-size: 16px; font-weight: bold; color: #1d2a4a;
+    background: #fdf8e7; border: 2px solid #1d2a4a; border-radius: 6px; cursor: pointer;
+  }
+  .quizCopyMsg { margin-top: 6px; font-size: 15px; color: #8a2b23; min-height: 22px; }
   .log {
     margin-top: 12px; background: #1d2a4a; color: #f3ead2; border-radius: 6px;
     padding: 12px 14px; min-height: 60px; font-size: 17px; display: none;
@@ -265,6 +271,8 @@
 <div class="quizBox">
   <div class="qlabel">クイズ ― あの出来事は何年？</div>
   <div class="quizStats" id="quizStats"></div>
+  <button class="quizCopyBtn" id="quizCopyBtn" type="button">成績をコピー</button>
+  <div class="quizCopyMsg" id="quizCopyMsg"></div>
   <div class="quizProg" id="quizProg">全5問。出来事が起きた年を3択で当ててください。</div>
   <div class="quizQText" id="quizQ"></div>
   <div id="quizChoices"></div>
@@ -908,7 +916,39 @@ function recordQuizResult() {
   renderQuizStats();
 }
 
+/* (423) クイズ成績の全文コピー：見出し（自己ベスト・通算プレイ）＋全記録をプレーンな行で */
+function copyQuizLog() {
+  var msgEl = el("quizCopyMsg");
+  var list = loadQuizLog();
+  if (!list.length) {
+    msgEl.innerHTML = "成績記録がまだありません。";
+    return;
+  }
+  var i, best = 0;
+  for (i = 0; i < list.length; i++) {
+    if (list[i].score > best) { best = list[i].score; }
+  }
+  var text = "【JIKAN-6 年代クイズ成績】\n" +
+    "自己ベスト：" + best + "/" + QUIZ.length +
+    " ・ 通算プレイ" + list.length + "回\n";
+  for (i = 0; i < list.length; i++) {
+    text += list[i].date + "：" + list[i].score + "/" + QUIZ.length + "問正解\n";
+  }
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "readonly");
+  ta.style.position = "absolute";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  msgEl.innerHTML = ok ? "成績をコピーしました。" : "コピーできませんでした。";
+}
+
 renderQuizStats();
+el("quizCopyBtn").onclick = copyQuizLog;
 
 /* ==== (272) カスタム切符（マイ切符） ==== */
 var MYTICKET_KEY = "jikan6_mytickets_v1";

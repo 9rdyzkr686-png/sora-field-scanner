@@ -326,6 +326,21 @@ function loadSave() {
   } catch (e) { return null; }
 }
 
+/* ---- (417) 下書き保持：メイン入力欄（inputBox）のみ対象 ---- */
+var DRAFT_KEY = "ai6_draft_v1";
+function saveDraft() {
+  try { localStorage.setItem(DRAFT_KEY, inputBox.value || ""); } catch (e) { /* 保存できなくても通常動作を続ける */ }
+}
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) { /* ignore */ }
+}
+function loadDraft() {
+  try {
+    var v = localStorage.getItem(DRAFT_KEY);
+    return (typeof v === "string") ? v : "";
+  } catch (e) { return ""; }
+}
+
 /* ---- (246) 回答の長さトグル ---- */
 var LEN_KEY = "ai6_len_v1";
 var replyLen = "normal"; /* short | normal | long */
@@ -659,6 +674,7 @@ function sendMessage(text) {
   sendBtn.disabled = true;
   multiBtn.disabled = true;
   inputBox.value = "";
+  clearDraft();
   addUserRow(text);
   chatMsgs.push({ r: "u", t: text });
   trimMsgs();
@@ -849,6 +865,7 @@ function sendMulti() {
   sendBtn.disabled = true;
   multiBtn.disabled = true;
   inputBox.value = "";
+  clearDraft();
   addUserRow(text);
   chatMsgs.push({ r: "u", t: text });
   trimMsgs();
@@ -1051,6 +1068,7 @@ sendBtn.onclick = function () { sendMessage(inputBox.value); };
 inputBox.onkeydown = function (e) {
   if (e.keyCode === 13) { sendMessage(inputBox.value); }
 };
+inputBox.oninput = function () { saveDraft(); };
 
 /* length chips (246) */
 loadLen();
@@ -1308,6 +1326,7 @@ document.getElementById("kuuMsgBtn").onclick = function () {
     } catch (e) {}
     renderSentLog();
     inputBox.value = "";
+    clearDraft();
     setStatus("KUU-01へ伝言を置きました。KUU FIELD SCANNERを開くと届きます。");
   } else {
     setStatus("伝言を保存できませんでした。");
@@ -1320,6 +1339,7 @@ var ki;
 for (ki = 0; ki < kchips.length; ki++) {
   kchips[ki].onclick = function () {
     inputBox.value = this.getAttribute("data-msg");
+    saveDraft();
     setStatus("伝言を入力欄に入れました。「KUU-01へ伝言」を押すと届きます。");
     try { inputBox.focus(); } catch (e) { /* ignore */ }
   };
@@ -1539,6 +1559,13 @@ if (chatMsgs.length > 0) {
   addSysRow("前回の会話を復元しました（" + chatMsgs.length + "件）");
 } else {
   addAiRow(GREETING);
+}
+
+/* ---- 下書きの復元（417）：メイン入力欄のみ ---- */
+var draftRestored = loadDraft();
+if (draftRestored) {
+  inputBox.value = draftRestored;
+  setStatus("下書きを復元しました。");
 }
 </script>
 </body>

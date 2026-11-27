@@ -256,7 +256,7 @@
 
 <div class="title-card" id="titleCard" style="display:none;">
   <div class="work-title" id="workTitle"></div>
-  <div class="work-note">AI画伯 作</div>
+  <div class="work-note" id="workNote">AI画伯 作</div>
 </div>
 
 <div class="save-note">絵を長押しすると保存できます</div>
@@ -302,7 +302,7 @@
 <div class="section" style="margin-top:26px;">
   <div class="section-label">画廊（保存した作品）</div>
   <div class="gallery" id="gallery"></div>
-  <div class="gal-note">絵は外部サービス（Pollinations）で表示しています</div>
+  <div class="gal-note">絵は外部サービス（Pollinations）で表示しています。絵をタップすると、上の額縁に大きく表示します</div>
 </div>
 
 <div class="footer">GAHAKU-6 ― 絵はAIがその場で描きます</div>
@@ -348,6 +348,7 @@ var emptyMsg = document.getElementById("emptyMsg");
 var statusEl = document.getElementById("status");
 var titleCard = document.getElementById("titleCard");
 var workTitle = document.getElementById("workTitle");
+var workNote = document.getElementById("workNote");
 
 var pendingWork = null;
 
@@ -382,6 +383,7 @@ drawBtn.onclick = function () {
     selected.mood.getAttribute("data-ja") + " × " +
     selected.style.getAttribute("data-ja");
   workTitle.innerHTML = "「" + titleJa + "」";
+  workNote.innerHTML = "AI画伯 作";
   titleCard.style.display = "block";
 
   emptyMsg.style.display = "none";
@@ -466,6 +468,7 @@ function viewWork(i) {
   emptyMsg.style.display = "none";
   artImg.style.display = "block";
   workTitle.innerHTML = "「" + it.title + "」";
+  workNote.innerHTML = "画廊から表示中（" + it.date + "） ― AI画伯 作";
   titleCard.style.display = "block";
   statusEl.innerHTML = "";
   artImg.src = it.url;

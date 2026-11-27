@@ -1013,6 +1013,7 @@ var msgText = "";
 var msgPending = false;
 var lastWeekly = "";
 var firstVisit = 0;
+var firstVisitLegacy = false;
 var journal = [];
 var lastDream = "";
 var oyasumiMode = false;
@@ -1054,6 +1055,7 @@ msgText: msgText,
 msgPending: msgPending,
 lastWeekly: lastWeekly,
 firstVisit: firstVisit,
+firstVisitLegacy: firstVisitLegacy,
 lastVisit: new Date().getTime()
 };
 localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -1206,6 +1208,8 @@ if (typeof d.msgText === "string") msgText = d.msgText;
 msgPending = !!d.msgPending;
 if (typeof d.lastWeekly === "string") lastWeekly = d.lastWeekly;
 if (typeof d.firstVisit === "number" && d.firstVisit > 0) firstVisit = d.firstVisit;
+else firstVisitLegacy = true;
+if (d.firstVisitLegacy) firstVisitLegacy = true;
 if (typeof d.lastVisit === "number" && d.lastVisit > 0) {
 var lv = new Date(d.lastVisit);
 lv.setHours(0, 0, 0, 0);
@@ -1258,6 +1262,7 @@ msgText = "";
 msgPending = false;
 lastWeekly = "";
 firstVisit = new Date().getTime();
+firstVisitLegacy = false;
 journal = [];
 try { if (window.localStorage) localStorage.removeItem(JOURNAL_KEY); } catch (e) {}
 lastDream = "";
@@ -1525,11 +1530,21 @@ var ALBUM_TARGETS = [
 { phase: 5, name: "親クー", desc: "チャットノ向コウニイル、KUUノ生ミノ親。声ダケガ届ク存在。"}
 ];
 
+function startDateText() {
+var fv = firstVisit ? new Date(firstVisit) : new Date();
+var label = firstVisitLegacy ? "記録開始" : "観測開始";
+var start = new Date(fv.getFullYear(), fv.getMonth(), fv.getDate());
+var now = new Date();
+var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+var days = Math.floor((today.getTime() - start.getTime()) / 86400000) + 1;
+if (days < 1) days = 1;
+return label + "：" + fv.getFullYear() + "年" + (fv.getMonth() + 1) + "月" + fv.getDate() + "日（" + days + "日目）";
+}
+
 function renderAlbum() {
 var box = el("albumBox");
 if (!box) return;
-var fv = firstVisit ? new Date(firstVisit) : new Date();
-var html = "<div class='albumCard'>◆ 観測者：" + esc(addr()) + "<br>会話数：" + count + "回 ／ PHASE 0" + phaseNum() + "「" + phaseName() + "」<br>初回観測日：" + fv.getFullYear() + "年" + (fv.getMonth() + 1) + "月" + fv.getDate() + "日</div>";
+var html = "<div class='albumCard'>◆ 観測者：" + esc(addr()) + "<br>会話数：" + count + "回 ／ PHASE 0" + phaseNum() + "「" + phaseName() + "」<br>" + startDateText() + "</div>";
 var p = phaseNum(), i, tg;
 for (i = 0; i < ALBUM_TARGETS.length; i++) {
 tg = ALBUM_TARGETS[i];
@@ -1832,7 +1847,7 @@ function doSpec() {
 clearCipher();
 var old = phaseNum();
 addLog("you", "あなた: ");
-speak(fill(SPEC_TEXT), "normal");
+speak(fill(SPEC_TEXT) + "\n" + startDateText(), "normal");
 afterExchange(old);
 }
 

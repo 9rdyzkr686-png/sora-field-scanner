@@ -86,10 +86,28 @@ function escHtml(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function fmtDate(pub) {
-  var d = new Date(pub);
-  if (isNaN(d.getTime())) return "";
-  return (d.getMonth() + 1) + "/" + d.getDate();
+function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+/* rss2jsonのpubDate（UTC "YYYY-MM-DD HH:MM:SS"）を手動パースして端末の時刻に直す。
+   今日なら「HH:MM」、それ以外は「MM/DD HH:MM」。解釈できなければ元の文字列を返す */
+function fmtPub(pub) {
+  var s = String(pub);
+  var d = null;
+  var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (m) {
+    d = new Date(Date.UTC(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10),
+      parseInt(m[4], 10), parseInt(m[5], 10), m[6] ? parseInt(m[6], 10) : 0));
+  } else {
+    var t = new Date(s);
+    if (!isNaN(t.getTime())) d = t;
+  }
+  if (!d || isNaN(d.getTime())) return s;
+  var now = new Date();
+  var hm = pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+  if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()) {
+    return hm;
+  }
+  return pad2(d.getMonth() + 1) + "/" + pad2(d.getDate()) + " " + hm;
 }
 
 function fmtTime(d) {
@@ -179,7 +197,7 @@ function renderSection(sec, items) {
     var title = String(it.title);
     if (seen[title]) continue;
     seen[title] = true;
-    var dateStr = it.pubDate ? fmtDate(it.pubDate) : "";
+    var dateStr = it.pubDate ? fmtPub(it.pubDate) : "";
     html += '<li><a href="' + escHtml(it.link) + '" target="_blank" rel="noopener">'
       + (dateStr ? '<span class="h-date">' + escHtml(dateStr) + '</span>' : '')
       + '<span class="h-title">' + escHtml(title) + '</span>'

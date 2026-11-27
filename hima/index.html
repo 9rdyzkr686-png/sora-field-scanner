@@ -228,6 +228,7 @@
 <div class="card">
   <h2>■ ★ ブックマーク</h2>
   <div class="stat" id="markMsg">読み物コーナーの各読み物にある「★ 保存」で、気に入った読み物をここに残せます（この端末の中だけに保存されます）。</div>
+  <button type="button" id="markCopyBtn">ブックマークをコピー</button>
   <div id="markList"></div>
 </div>
 
@@ -1417,6 +1418,40 @@ function renderMarks() {
     };
   }
 }
+/* (418) ブックマークの全文コピー（種類ごとにまとめて、日付つき） */
+function copyMarks() {
+  var a = loadMarks(), i, j, it;
+  if (a.length === 0) {
+    el('markMsg').innerHTML = 'コピーできるブックマークはまだありません。';
+    return;
+  }
+  var kinds = [];
+  for (i = 0; i < a.length; i++) {
+    if (kinds.indexOf(a[i].kind) < 0) { kinds.push(a[i].kind); }
+  }
+  var lines = [];
+  lines.push('【HIMA-6 ブックマーク】全' + a.length + '件');
+  for (i = 0; i < kinds.length; i++) {
+    lines.push('');
+    lines.push('■ ' + kinds[i]);
+    for (j = 0; j < a.length; j++) {
+      it = a[j];
+      if (it.kind !== kinds[i]) { continue; }
+      lines.push('（' + it.date + '）');
+      lines.push(it.text);
+    }
+  }
+  var ta = document.createElement('textarea');
+  ta.value = lines.join('\n');
+  ta.style.position = 'absolute';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  el('markMsg').innerHTML = ok ? 'ブックマークを全文コピーしました（' + a.length + '件）。' : 'コピーできませんでした。文章を長押ししてコピーしてください。';
+}
 function captureText(id) {
   var node = el(id), txt = '';
   if (node) { txt = node.textContent || node.innerText || ''; }
@@ -1479,6 +1514,8 @@ function initMarks() {
     };
     node.parentNode.insertBefore(btn, node.nextSibling);
   }
+  var cb = el('markCopyBtn');
+  if (cb) { cb.onclick = copyMarks; }
   renderMarks();
 }
 

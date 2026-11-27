@@ -419,6 +419,14 @@
     font-size: 17px;
     text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
   }
+  .stamp-monthly {
+    font-size: 15px;
+    color: #ffca7a;
+    text-align: center;
+    letter-spacing: 1px;
+    margin-top: 4px;
+    min-height: 20px;
+  }
   .stn-name {
     font-size: 28px;
     font-weight: bold;
@@ -500,6 +508,7 @@
     <div class="stamp-progress-text" id="stampProgressText">今月 0 / 0 日 スタンプ（達成率 0%）</div>
     <div class="stamp-bar-wrap"><div class="stamp-bar" id="stampBar"></div></div>
     <div class="stamp-tier" id="stampTier"></div>
+    <div class="stamp-monthly" id="stampMonthly"></div>
   </div>
   <div class="cal-head" id="stampInfo">通算 0 日</div>
   <div id="stampGrid"></div>
@@ -989,19 +998,26 @@ function renderStamps() {
   var year = now.getFullYear();
   var month = now.getMonth();
   var monthPrefix = year + "-" + pad2(month + 1) + "-";
+  var lastDate = new Date(year, month - 1, 1);
+  var lastPrefix = lastDate.getFullYear() + "-" + pad2(lastDate.getMonth() + 1) + "-";
   document.getElementById("stampInfo").textContent =
     year + "年" + (month + 1) + "月 ／ 通算 " + stamps.length + " 日";
   var firstDow = new Date(year, month, 1).getDay();
   var daysInMonth = new Date(year, month + 1, 0).getDate();
   /* (250) スタンプ達成率：今月スタンプを押した日数 / 今月の日数 で計算 */
   var stampedThisMonth = 0;
+  var stampedLastMonth = 0;
   var si;
   for (si = 0; si < stamps.length; si++) {
     if (stamps[si].indexOf(monthPrefix) === 0) { stampedThisMonth++; }
+    else if (stamps[si].indexOf(lastPrefix) === 0) { stampedLastMonth++; }
   }
   var pct = daysInMonth > 0 ? Math.round(stampedThisMonth * 100 / daysInMonth) : 0;
   document.getElementById("stampProgressText").textContent =
     "今月 " + stampedThisMonth + " / " + daysInMonth + " 日 スタンプ（達成率 " + pct + "%）";
+  /* (422) スタンプの月別まとめ：日付文字列から今月・先月・通算を再計算するだけの表示 */
+  document.getElementById("stampMonthly").textContent =
+    "今月 " + stampedThisMonth + "日分 ・ 先月 " + stampedLastMonth + "日分 ・ 通算 " + stamps.length + "日分";
   var barEl = document.getElementById("stampBar");
   barEl.style.width = pct + "%";
   barEl.className = "stamp-bar" + (pct >= 100 ? " full" : "");

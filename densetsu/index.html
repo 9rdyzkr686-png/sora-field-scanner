@@ -359,6 +359,8 @@
   <div class="chips" id="filterBox"></div>
   <p class="filterlabel">読んだ状態で絞り込む</p>
   <div class="chips" id="readBox"></div>
+  <button id="favCopyBtn" type="button" style="width:100%;margin-bottom:4px;">お気に入り一覧をコピー</button>
+  <p class="status" id="favCopyStatus"></p>
   <p class="filterlabel">地域で絞り込む（舞台・発祥とされる地域）</p>
   <div class="chips" id="regionBox"></div>
   <p class="filterlabel">年代で絞り込む（噂が広まった時代）</p>
@@ -1301,6 +1303,36 @@ function toggleMark(kind, idx) {
   saveMarks();
 }
 
+/* ===== (419) お気に入り一覧コピー（タイトルとメタ情報のみ） ===== */
+function copyFavList() {
+  var st = el("favCopyStatus");
+  var i, L, count = 0;
+  for (i = 0; i < LEGENDS.length; i++) {
+    if (marksData.fav.indexOf(i) >= 0) { count++; }
+  }
+  if (count === 0) {
+    st.textContent = "お気に入りはまだありません。";
+    return;
+  }
+  var lines = [];
+  lines.push("【DENSETSU-6 お気に入りの都市伝説】" + count + "件");
+  for (i = 0; i < LEGENDS.length; i++) {
+    if (marksData.fav.indexOf(i) < 0) { continue; }
+    L = LEGENDS[i];
+    lines.push("・" + L.name + "（怖さ★" + L.fear + "・" + L.cat + "）");
+  }
+  var ta = document.createElement("textarea");
+  ta.value = lines.join("\n");
+  ta.style.position = "absolute";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  st.textContent = ok ? "お気に入り一覧をコピーしました（" + count + "件）。" : "コピーできませんでした。";
+}
+
 /* ===== 怪談読み上げ（🔊 読む＋全体の止めるバー） ===== */
 var readBtnNow = null;
 
@@ -2197,6 +2229,7 @@ function init() {
   renderTaisei();
   initMap();
   el("randomBtn").onclick = randomStory;
+  el("favCopyBtn").onclick = copyFavList;
   el("paperBtn").onclick = togglePaper;
   el("searchBtn").onclick = doLegendSearch;
   el("searchClearBtn").onclick = clearLegendSearch;

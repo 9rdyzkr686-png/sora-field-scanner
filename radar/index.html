@@ -47,6 +47,7 @@
   #featName { font-size:19px; color:#ffb000; font-weight:bold; letter-spacing:1px; }
   #featMeta { font-size:15px; color:#33ffee; margin-top:2px; line-height:1.5; }
   #featDesc { font-size:15px; color:#c8ffd6; line-height:1.6; margin-top:6px; }
+  #featHist { font-size:13px; color:#8fd8a8; line-height:1.6; margin-top:10px; letter-spacing:.5px; }
   .trow {
     display:block; width:100%; text-align:left; flex:none;
     border:1px solid #14532a; background:rgba(0,24,8,.5); color:#c8ffd6;
@@ -87,6 +88,7 @@
   body.night #featName { color:#ff9a5c; }
   body.night #featMeta { color:#ff8a70; }
   body.night #featDesc { color:#ffd6c8; }
+  body.night #featHist { color:#ff8a70; }
   body.night .trow { border-color:#531d14; background:rgba(24,2,0,.5); color:#ffd6c8; }
   body.night .trow .nm { color:#ff7a6b; }
   body.night .trow .ds { color:#ff8a70; }
@@ -154,6 +156,7 @@
   <div class="btnrow" style="margin-top:8px;">
     <button type="button" id="featBtn">◎ レーダーで探す</button>
   </div>
+  <div id="featHist"></div>
 </div>
 
 <div class="panel">
@@ -1206,12 +1209,56 @@ var featPool = [], ffi;
 for (ffi = 0; ffi < TARGETS.length; ffi++) { if (ffi !== SEASON_IDX) featPool.push(ffi); }
 var featSeed = parseInt(todayKey().replace(/-/g, ""), 10);
 var featIdx = featPool[featSeed % featPool.length];
+/* ---- 特集の履歴（localStorage rdr6_feat_v1） ---- */
+var FEAT_KEY = "rdr6_feat_v1";
+var featHist = [];
+function loadFeatHist() {
+  try {
+    var raw = localStorage.getItem(FEAT_KEY);
+    if (raw) {
+      var arr = JSON.parse(raw);
+      if (arr && typeof arr.length === "number") featHist = arr;
+    }
+  } catch (e) { featHist = []; }
+}
+function saveFeatHist() {
+  try { localStorage.setItem(FEAT_KEY, JSON.stringify(featHist)); } catch (e) { /* ignore */ }
+}
+function recordFeature() {
+  var date = todayKey();
+  var name = TARGETS[featIdx].name;
+  var j;
+  for (j = 0; j < featHist.length; j++) {
+    if (featHist[j].date === date) {
+      if (featHist[j].name !== name) { featHist[j].name = name; saveFeatHist(); }
+      return;
+    }
+  }
+  featHist.unshift({ date: date, name: name });
+  while (featHist.length > 30) featHist.pop();
+  saveFeatHist();
+}
+function renderFeatHist() {
+  var box = document.getElementById("featHist");
+  if (!box) return;
+  if (!featHist.length) { box.innerHTML = ""; return; }
+  var html = "【最近の特集】";
+  var i, n = Math.min(featHist.length, 7);
+  for (i = 0; i < n; i++) {
+    var parts = String(featHist[i].date).split("-");
+    var label = (parts.length === 3) ? (parseInt(parts[1], 10) + "/" + parseInt(parts[2], 10)) : featHist[i].date;
+    html += (i === 0 ? " " : " ／ ") + label + " " + featHist[i].name;
+  }
+  box.innerHTML = html;
+}
 function renderFeature() {
   var t = TARGETS[featIdx];
   document.getElementById("featName").innerHTML = "★ " + t.name;
   document.getElementById("featMeta").innerHTML = "中心（ふじみ野市）から " + fmtDist(t.dist) + "km ／ 方角：" + t.wind +
     "（" + Math.round(t.bearing) + "°）／ " + CAT_NAME[t.cat] + (t.note ? " ／ " + t.note : "");
   document.getElementById("featDesc").innerHTML = FEAT_DESC[t.name] || "";
+  recordFeature();
+  renderFeatHist();
 }
 document.getElementById("featBtn").onclick = function () {
   var t = TARGETS[featIdx];
@@ -1235,6 +1282,7 @@ document.getElementById("featBtn").onclick = function () {
   var cvEl = document.getElementById("radar");
   if (cvEl && cvEl.scrollIntoView) cvEl.scrollIntoView();
 };
+loadFeatHist();
 renderFeature();
 
 litDate = todayKey();

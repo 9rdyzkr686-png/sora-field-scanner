@@ -469,6 +469,7 @@ button:active { background: #33ff66; color: #000; }
 <div class="panel">
   <div class="panel-title">LAUNCH <span class="jp">ロケット打ち上げ予定</span></div>
   <div id="launchList"></div>
+  <div class="msg" id="launchCountdown"></div>
   <div class="msg" id="launchMsg">打ち上げ予定を取得中…</div>
   <button id="launchRetryBtn" style="display:none;">再試行 RETRY</button>
   <div class="msg" id="launchTime"></div>
@@ -1771,6 +1772,34 @@ function fetchRocketNews() {
 }
 
 /* ---------- LAUNCH SCHEDULE ---------- */
+var launchTimes = [];
+
+function launchCountdownText(ms) {
+  var m = Math.floor(ms / 60000);
+  var d = Math.floor(m / 1440);
+  var h = Math.floor((m % 1440) / 60);
+  var mm = m % 60;
+  if (d > 0) { return d + "日" + h + "時間" + mm + "分"; }
+  if (h > 0) { return h + "時間" + mm + "分"; }
+  return mm + "分";
+}
+
+function updateLaunchCountdown() {
+  var box = el("launchCountdown");
+  if (!box) { return; }
+  if (!launchTimes.length) { box.innerHTML = ""; return; }
+  var now = Date.now();
+  var i, t = 0;
+  for (i = 0; i < launchTimes.length; i++) {
+    if (launchTimes[i] > now) { t = launchTimes[i]; break; }
+  }
+  if (!t) {
+    box.innerHTML = "打ち上げ時刻を過ぎました（次回取得で更新）";
+    return;
+  }
+  box.innerHTML = "🚀 次の打ち上げまで あと" + launchCountdownText(t - now);
+}
+
 function launchRemain(ms) {
   var m = Math.floor(ms / 60000);
   var d = Math.floor(m / 1440);
@@ -1782,7 +1811,9 @@ function launchRemain(ms) {
 }
 
 function launchFail() {
+  launchTimes = [];
   el("launchList").innerHTML = "";
+  el("launchCountdown").innerHTML = "";
   el("launchMsg").innerHTML = "打ち上げ予定を取得できませんでした。時間をおいて再度お試しください。";
   el("launchRetryBtn").style.display = "";
   el("launchTime").innerHTML = "";
@@ -1796,6 +1827,7 @@ function fetchLaunches() {
     if (!d.results || d.results.length === 0) { launchFail(); return; }
     var now = Date.now();
     var html = "";
+    var times = [];
     var shown = 0;
     var i, r, t, dt, sub, loc, pad;
     for (i = 0; i < d.results.length && shown < 5; i++) {
@@ -1803,6 +1835,7 @@ function fetchLaunches() {
       if (!r.net) { continue; }
       t = new Date(r.net).getTime();
       if (isNaN(t) || t < now - 3600000) { continue; }
+      times.push(t);
       dt = new Date(t);
       pad = r.pad || {};
       loc = (pad.location && pad.location.name) ? pad.location.name : "";
@@ -1820,13 +1853,17 @@ function fetchLaunches() {
       shown++;
     }
     if (shown === 0) {
+      launchTimes = [];
       el("launchList").innerHTML = "";
+      el("launchCountdown").innerHTML = "";
       el("launchMsg").innerHTML = "直近の打ち上げ予定が見つかりませんでした。";
       el("launchRetryBtn").style.display = "";
       el("launchTime").innerHTML = "";
       return;
     }
+    launchTimes = times;
     el("launchList").innerHTML = html;
+    updateLaunchCountdown();
     el("launchMsg").innerHTML = "";
     var n = new Date();
     el("launchTime").innerHTML = "取得：" + (n.getMonth() + 1) + "月" + n.getDate() + "日 " + pad2(n.getHours()) + ":" + pad2(n.getMinutes()) + "（日本時間）";
@@ -1834,6 +1871,7 @@ function fetchLaunches() {
 }
 
 el("launchRetryBtn").addEventListener("click", function () { fetchLaunches(); });
+setInterval(updateLaunchCountdown, 60000);
 
 /* ---------- INIT ---------- */
 function refreshAll() {

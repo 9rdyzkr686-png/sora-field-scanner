@@ -234,6 +234,8 @@ select{width:100%;font-size:17px;padding:10px;border:1px solid #c9b98f;border-ra
       <input type="text" id="tbThanksInput" placeholder="例：田中さんに旅行のお土産のお礼">
       <button class="btn" style="flex:none;" onclick="tbAddThanks()">追加</button>
     </div>
+    <button class="btn" style="width:100%;min-height:48px;margin-top:8px;" onclick="tbCopyThanks()">お礼メモを全文コピー</button>
+    <div id="tbThanksCopyMsg" style="font-size:13px;color:#8a7a5c;margin-top:4px;"></div>
     <div id="tbThanksList"></div>
   </div>
 
@@ -1024,6 +1026,30 @@ function tbDelThanks(i){
   tbThanks.splice(i, 1);
   tbSave("techo6_thanks_v1", tbThanks);
   tbRenderThanks();
+}
+function tbCopyThanks(){
+  var msg = tbEl("tbThanksCopyMsg");
+  if (!tbThanks.length){
+    if (msg) msg.innerHTML = "まだお礼メモがありません。";
+    return;
+  }
+  var lines = ["【お礼メモ】全" + tbThanks.length + "件"], i, e;
+  for (i = 0; i < tbThanks.length; i++){
+    e = tbThanks[i];
+    lines.push((e.date ? tbFmtDate(e.date) + " " : "") + e.text);
+  }
+  var ta = document.createElement("textarea");
+  ta.value = lines.join("\n");
+  ta.setAttribute("readonly", "readonly");
+  ta.style.position = "absolute";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  try { ta.setSelectionRange(0, ta.value.length); } catch(err){}
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch(err2){ ok = false; }
+  document.body.removeChild(ta);
+  if (msg) msg.innerHTML = ok ? ("コピーしました（" + tbThanks.length + "件）。") : "コピーできませんでした。";
 }
 
 /* ---------- (147) 年賀状リスト ---------- */
