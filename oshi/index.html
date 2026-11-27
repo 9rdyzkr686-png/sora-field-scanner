@@ -161,6 +161,8 @@ input[type="number"] { width: 100%; min-height: 48px; font-size: 17px; padding: 
   <input type="text" id="liveVenue" placeholder="例：Zepp Haneda">
   <button class="addbtn" id="liveAdd" type="button">参戦記録を追加</button>
   <div class="livesum" id="liveSummary"></div>
+  <button class="subbtn" id="liveYearCopy" type="button">今年のまとめをコピー</button>
+  <div class="status" id="liveCopyStatus"></div>
   <div id="liveList"></div>
   <p class="note" id="liveEmpty">まだ記録がありません。記録はこの端末の中にだけ保存されます。</p>
 </div>
@@ -798,6 +800,42 @@ function addLive() {
   eEl.value = "";
   vEl.value = "";
 }
+function copyYearSummary() {
+  var st = document.getElementById("liveCopyStatus");
+  var year = new Date().getFullYear();
+  var ys = String(year);
+  var rows = [];
+  var i;
+  for (i = 0; i < lives.length; i++) {
+    if (String(lives[i].d || "").substring(0, 4) === ys) rows.push(lives[i]);
+  }
+  if (!rows.length) {
+    st.innerHTML = "今年の参戦記録はまだありません。";
+    return;
+  }
+  rows.sort(function (a, b) {
+    if (a.d < b.d) return -1;
+    if (a.d > b.d) return 1;
+    return 0;
+  });
+  var lines = [];
+  lines.push("【" + ys + "年の参戦記録】全" + rows.length + "回");
+  for (i = 0; i < rows.length; i++) {
+    var line = fmtDate(rows[i].d) + " " + (rows[i].e || "");
+    if (rows[i].v) line += " ＠" + rows[i].v;
+    lines.push(line);
+  }
+  var ta = document.createElement("textarea");
+  ta.value = lines.join("\n");
+  ta.style.position = "absolute";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  st.innerHTML = ok ? "今年のまとめをコピーしました。" : "コピーできませんでした。";
+}
 
 /* ---------- 12. 参戦持ち物チェックリスト ---------- */
 var PACK_KEY = "oshi6_pack_v1";
@@ -864,6 +902,7 @@ document.getElementById("tradeAdd").onclick = addTrade;
 document.getElementById("tripAdd").onclick = addTrip;
 document.getElementById("tripClear").onclick = clearTrips;
 document.getElementById("liveAdd").onclick = addLive;
+document.getElementById("liveYearCopy").onclick = copyYearSummary;
 document.getElementById("packReset").onclick = resetPack;
 (function () {
   var t = new Date();

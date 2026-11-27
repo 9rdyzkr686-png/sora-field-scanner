@@ -87,6 +87,7 @@ textarea {
 .kanpaiBtn:active { background: #a32415; }
 #kanpaiLine { font-size: 19px; color: #ffd9a0; min-height: 30px; margin: 12px 0 6px; line-height: 1.5; }
 #kanpaiStats { font-size: 15px; color: #c9a06a; }
+#kanpaiMonth { font-size: 15px; color: #c9a06a; margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -107,6 +108,7 @@ textarea {
   <button class="kanpaiBtn" id="kanpaiBtn" onclick="tapKanpai()">🍻 乾杯！</button>
   <div id="kanpaiLine">ボタンで乾杯の練習ができます</div>
   <div id="kanpaiStats">今日0回 ・ 通算0回</div>
+  <div id="kanpaiMonth">今月 0回 ・ 自己ベスト 0回</div>
 </div>
 
 <div class="sectionTitle">■ お品書き（話題）</div>
@@ -383,12 +385,32 @@ function storeKanpai(o) {
 
 function renderKanpai() {
   var o = loadKanpai();
-  var today = o[kanpaiTodayStr()] || 0;
+  var todayStr = kanpaiTodayStr();
+  var today = o[todayStr] || 0;
   var total = 0;
+  var monthPrefix = todayStr.substring(0, 7);
+  var monthTotal = 0;
+  var best = 0;
+  var bestKey = "";
   for (var k in o) {
-    if (o.hasOwnProperty(k)) { total += o[k]; }
+    if (o.hasOwnProperty(k)) {
+      var v = o[k] || 0;
+      total += v;
+      if (k.substring(0, 7) === monthPrefix) { monthTotal += v; }
+      if (v > best) { best = v; bestKey = k; }
+    }
   }
   $("kanpaiStats").innerHTML = "今日" + today + "回 ・ 通算" + total + "回";
+  var monthEl = $("kanpaiMonth");
+  if (monthEl) {
+    if (bestKey) {
+      var parts = bestKey.split("-");
+      var bestLabel = best + "回（" + parseInt(parts[1], 10) + "月" + parseInt(parts[2], 10) + "日）";
+      monthEl.innerHTML = "今月 " + monthTotal + "回 ・ 自己ベスト " + bestLabel;
+    } else {
+      monthEl.innerHTML = "今月 " + monthTotal + "回 ・ 自己ベスト 0回";
+    }
+  }
 }
 
 function tapKanpai() {

@@ -238,6 +238,7 @@
   <div class="panel-title">FAVORITES / お気に入り回答</div>
   <div id="favList"></div>
   <div class="utilrow">
+    <button type="button" id="favCopyBtn">お気に入りを全文コピー</button>
     <button type="button" id="favClearBtn">お気に入りを全部消す</button>
   </div>
 </div>
@@ -1314,6 +1315,35 @@ favBtn.onclick = function () {
   favPanel.style.display = show ? "block" : "none";
   favBtn.className = show ? "active" : "";
   if (show) renderFavs();
+};
+
+document.getElementById("favCopyBtn").onclick = function () {
+  if (favs.length === 0) {
+    setStatus("お気に入りは空です。");
+    return;
+  }
+  var lines = [];
+  var i;
+  for (i = 0; i < favs.length; i++) {
+    var head = "【" + (i + 1) + "】";
+    if (favs[i].m) head += " モード：" + favs[i].m;
+    lines.push(head);
+    lines.push(favs[i].t);
+    lines.push("");
+  }
+  var txt = "AI-6 お気に入り回答（" + favs.length + "件）\n\n" + lines.join("\n");
+  var ok = false;
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = txt;
+    ta.style.position = "absolute";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+  } catch (e) { ok = false; }
+  setStatus(ok ? "お気に入りを全文コピーしました。" : "コピーできませんでした。");
 };
 
 document.getElementById("favClearBtn").onclick = function () {

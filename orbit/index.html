@@ -76,6 +76,13 @@ canvas { display: block; width: 100%; background: #000a10; border: 1px solid #0e
 .txt-item .hd { color: #33ff66; }
 .bar-row { margin: 7px 0; font-size: 14px; }
 .bar { background: #33ff66; height: 10px; margin-top: 2px; }
+.kpt { width: 100%; border-collapse: collapse; margin-top: 2px; }
+.kpc { width: 12.5%; vertical-align: bottom; text-align: center; padding: 0 2px; }
+.kpv { font-size: 11px; color: #7fb8a8; }
+.kpv-last { color: #eafff8; font-weight: bold; }
+.kpb { margin: 1px auto 0; width: 62%; min-height: 2px; }
+.kph { width: 12.5%; text-align: center; font-size: 11px; color: #7fb8a8; padding-top: 2px; }
+.kph-last { color: #eafff8; font-weight: bold; }
 .mw-wrap { overflow: hidden; }
 .mw-cell { float: left; width: 25%; text-align: center; padding: 5px 0; border: 1px solid #0e5a4a; font-size: 13px; color: #7fb8a8; }
 .mw-cell .mw-sym { display: block; font-size: 18px; color: #eafff8; }
@@ -239,6 +246,7 @@ button:active { background: #33ff66; color: #000; }
     <div class="cell"><div class="k">Kp指数 KP INDEX（0〜9）</div><div class="v" id="kpNow">---</div></div>
     <div class="cell"><div class="k">日本でオーロラが見える可能性</div><div class="v" id="kpChance">---</div></div>
   </div>
+  <div id="kpChart"></div>
   <div class="msg" id="swMsg">宇宙天気データ取得中…</div>
   <div class="note">※ Kp指数は地球の磁場の乱れ具合を0〜9で表す指標です。本州でオーロラが見えるのは、Kp7以上の大きな磁気嵐の時に北の低空でごくまれに、が目安。北海道ではKp5〜6でもチャンスがあります。データ：NOAA SWPC。</div>
 </div>
@@ -1631,6 +1639,7 @@ function fetchKp() {
     if (kp >= 7) { chance = "高"; }
     else if (kp >= 5) { chance = "中"; }
     el("kpChance").innerHTML = chance;
+    renderKpChart(d);
     var tt = last.time_tag ? String(last.time_tag) : "";
     el("swMsg").innerHTML = "NOAA SWPC 実測値" + (tt ? "（" + tt.substring(0, 10) + " " + tt.substring(11, 16) + " UTC）" : "");
   }, function () {
@@ -1638,6 +1647,44 @@ function fetchKp() {
     el("kpChance").innerHTML = "---";
     el("swMsg").innerHTML = "宇宙天気データを取得できませんでした。次回更新で再試行します。";
   });
+}
+
+function renderKpChart(rows) {
+  var box = el("kpChart");
+  if (!box || !rows || rows.length === 0) { return; }
+  var start = rows.length > 8 ? rows.length - 8 : 0;
+  var vals = [];
+  var i, r, v, tt, hh;
+  for (i = start; i < rows.length; i++) {
+    r = rows[i];
+    v = parseFloat(r.Kp);
+    if (isNaN(v)) { continue; }
+    tt = r.time_tag ? String(r.time_tag) : "";
+    hh = parseInt(tt.substring(11, 13), 10);
+    if (isNaN(hh)) { hh = 0; }
+    hh += 9;
+    if (hh >= 24) { hh -= 24; }
+    vals.push({ kp: v, hour: hh });
+  }
+  if (vals.length < 2) { box.innerHTML = ""; return; }
+  var html = "<div class=\"k\" style=\"margin:6px 0 2px;\">過去24時間の推移（3時間ごと・日本時間）</div>";
+  html += "<table class=\"kpt\"><tr>";
+  var lastIdx = vals.length - 1;
+  for (i = 0; i < vals.length; i++) {
+    v = vals[i].kp;
+    var h = Math.round(v / 9 * 48);
+    if (h < 2) { h = 2; }
+    var col = v >= 5 ? "#ffb000" : "#33ff66";
+    var bord = i === lastIdx ? "border:1px solid #eafff8;" : "";
+    html += "<td class=\"kpc\"><div class=\"kpv" + (i === lastIdx ? " kpv-last" : "") + "\">" + v.toFixed(1) + "</div>" +
+      "<div class=\"kpb\" style=\"height:" + h + "px;background:" + col + ";" + bord + "\"></div></td>";
+  }
+  html += "</tr><tr>";
+  for (i = 0; i < vals.length; i++) {
+    html += "<td class=\"kph" + (i === lastIdx ? " kph-last" : "") + "\">" + vals[i].hour + "時</td>";
+  }
+  html += "</tr></table>";
+  box.innerHTML = html;
 }
 
 /* ---------- MOON CALENDAR ---------- */

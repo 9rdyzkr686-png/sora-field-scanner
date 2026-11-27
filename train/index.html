@@ -123,6 +123,11 @@
     float:right; width:21%; background:#2a1220; color:#f0b8c8;
     border:1px solid #6e2a3d; min-height:52px; font-size:14px;
   }
+  .storyCopy {
+    display:block; width:100%; clear:both; margin-top:6px;
+    background:#12283a; color:#b8dcf0; border:1px solid #2a5a6e;
+    min-height:48px; font-size:14px; letter-spacing:1px;
+  }
   .storyEmpty { font-size:13px; color:#7783b5; line-height:1.7; }
   .bentoArea { margin-top:18px; }
   .bentoBtn {
@@ -600,7 +605,7 @@ function renderStories() {
   var box = el("storyList");
   box.innerHTML = "";
   el("storyEmpty").style.display = list.length ? "none" : "block";
-  var i, entry, row, open, del, titleSpan, dateSpan;
+  var i, entry, row, open, del, copyBtn, titleSpan, dateSpan;
   for (i = 0; i < list.length; i++) {
     entry = list[i];
     row = document.createElement("div");
@@ -625,8 +630,16 @@ function renderStories() {
     del.onclick = (function(ent) {
       return function() { deleteStory(ent); };
     })(entry);
+    copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.className = "storyCopy";
+    copyBtn.textContent = "全文コピー";
+    copyBtn.onclick = (function(ent) {
+      return function() { copyStoryText(ent); };
+    })(entry);
     row.appendChild(open);
     row.appendChild(del);
+    row.appendChild(copyBtn);
     box.appendChild(row);
   }
 }
@@ -659,6 +672,39 @@ function deleteStory(entry) {
   saveStories(out);
   renderStories();
   el("saveStatus").textContent = "物語を消しました";
+}
+function storyBodyText(text) {
+  var lines = (text || "").replace(/\r/g, "").split("\n");
+  var out = [];
+  var i;
+  for (i = 0; i < lines.length; i++) {
+    if (lines[i].replace(/\s/g, "") === "===") { out.push(""); }
+    else { out.push(lines[i]); }
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").replace(/^\s+|\s+$/g, "");
+}
+function copyStoryText(entry) {
+  var dstr = entry.date || "";
+  var dparts = dstr.split(" ")[0].split("/");
+  var mlabel = dstr;
+  if (dparts.length >= 3) {
+    mlabel = parseInt(dparts[1], 10) + "月" + parseInt(dparts[2], 10) + "日";
+  }
+  var header = "【" + entry.title + "】（" + mlabel + "・" + (entry.mode === "day" ? "昼" : "夜行") + "）";
+  var full = header + "\n\n" + storyBodyText(entry.text);
+  var ta = document.createElement("textarea");
+  ta.value = full;
+  ta.style.position = "fixed";
+  ta.style.left = "-9999px";
+  ta.style.top = "0";
+  ta.setAttribute("readonly", "readonly");
+  document.body.appendChild(ta);
+  ta.select();
+  try { ta.setSelectionRange(0, full.length); } catch (e) {}
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(ta);
+  el("saveStatus").textContent = ok ? "全文をコピーしました" : "コピーできませんでした";
 }
 el("saveStoryBtn").onclick = function() {
   if (busy) { return; }

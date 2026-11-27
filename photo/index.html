@@ -100,6 +100,7 @@
   }
   #note { font-size: 11px; color: #999; line-height: 1.6; margin-top: 8px; }
   #note a { color: #90caf9; }
+  #nextFrameNote { font-size: 12px; color: #ccc; line-height: 1.6; margin-top: 6px; }
 
   /* ===== Clock-only mode ===== */
   #clockMode {
@@ -173,6 +174,7 @@
         <button type="button" class="seg frameBtn" data-frame="xmas">🎄 クリスマス</button>
         <button type="button" class="seg frameBtn" data-frame="newyear">🎍 お正月</button>
       </div>
+      <div id="nextFrameNote"></div>
       <div id="note">
         写真立てとして使うときは、iPhoneの「設定 → 画面表示と明るさ → 自動ロック」を「なし」にすると画面が消えません。<br>
         <a href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
@@ -196,6 +198,7 @@ var timer = null;
 var frontIsA = true;    // which <img> is currently visible
 var showClock = true;
 var uiHideTimer = null;
+var lastNoteDay = "";
 
 var WEEK = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -215,6 +218,8 @@ function updateClock() {
   el("clockDate").textContent = dt;
   el("clockModeTime").textContent = t;
   el("clockModeDate").textContent = dt;
+  var dk = now.getFullYear() + "-" + now.getMonth() + "-" + now.getDate();
+  if (dk !== lastNoteDay) { lastNoteDay = dk; updateNextFrameNote(); }
 }
 
 function updateCounter() {
@@ -364,6 +369,50 @@ function applyFrame() {
     } else {
       btns[i].className = "seg frameBtn";
     }
+  }
+  updateNextFrameNote();
+}
+
+/* ===== Next seasonal frame preview (自動モードの予告) ===== */
+/* Season boundaries come from seasonOfMonth(): spring from Mar, summer from
+   Jun, autumn from Sep, winter from Dec — so the next switch is the 1st of
+   the next season-start month in that same mapping. */
+var SEASON_STARTS = [
+  { m: 2, s: "spring" },
+  { m: 5, s: "summer" },
+  { m: 8, s: "autumn" },
+  { m: 11, s: "winter" }
+];
+var FRAME_NAME = { spring: "🌸 春", summer: "🌻 夏", autumn: "🍁 秋", winter: "❄ 冬" };
+
+function nextSeasonInfo() {
+  var now = new Date();
+  var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var bestSeason = null;
+  var bestDate = null;
+  var i, y, cand;
+  for (i = 0; i < SEASON_STARTS.length; i++) {
+    for (y = now.getFullYear(); y <= now.getFullYear() + 1; y++) {
+      cand = new Date(y, SEASON_STARTS[i].m, 1);
+      if (cand.getTime() > today.getTime() && (bestDate === null || cand.getTime() < bestDate.getTime())) {
+        bestDate = cand;
+        bestSeason = SEASON_STARTS[i].s;
+      }
+    }
+  }
+  return { season: bestSeason, month: bestDate.getMonth() + 1, day: bestDate.getDate() };
+}
+
+function updateNextFrameNote() {
+  var note = el("nextFrameNote");
+  if (!note) return;
+  var info = nextSeasonInfo();
+  var name = FRAME_NAME[info.season] || info.season;
+  var when = info.month + "月" + info.day + "日から";
+  if (frameMode === "auto") {
+    note.textContent = "次の季節フレーム：" + name + "（" + when + "）";
+  } else {
+    note.textContent = "自動モードの予告：次の季節フレームは" + name + "（" + when + "）";
   }
 }
 

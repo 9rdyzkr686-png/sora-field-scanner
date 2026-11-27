@@ -3307,7 +3307,10 @@ addLog("sys", "子守歌モード：ユックリ表示シマシタ。");
 
 function doReport() {
 var now = new Date();
+var linkSec = Math.floor((now.getTime() - startTime) / 1000);
+var linkTxt = pad2(Math.floor(linkSec / 3600)) + ":" + pad2(Math.floor((linkSec % 3600) / 60)) + ":" + pad2(linkSec % 60);
 var txt = "KUU-01 観測報告： 会話" + count + "回 / PHASE 0" + phaseNum() + "「" + phaseName() + "」 / 断片 " + fragCount() + "個 / 最終観測 " + (now.getMonth() + 1) + "月" + now.getDate() + "日\n" +
+"詳細： 交換回数 " + count + "回 / フラグメント収集 " + fragCount() + "/" + FRAGMENTS.length + " / ミッション達成 " + missionsDone + "件 / ボイスで聞いた回数 " + voiceCount + "回 / LINK TIME " + linkTxt + "\n" +
 "この報告をチャットのクーに貼ると、進化の材料になります";
 var ta = document.createElement("textarea");
 ta.value = txt;

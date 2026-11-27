@@ -45,6 +45,7 @@ label { display:block; font-size:15px; color:#e8a0bf; margin:6px 0;}
 .hist h2 { font-size:20px; color:#ffd98a; text-align:center; margin-bottom:10px;}
 .hist .hrow { border-bottom:1px solid #4a3468; padding:8px 2px; font-size:16px;}
 .hist .hdate { color:#e8a0bf; font-size:14px;}
+.hist .hmonth { background:#3a2350; border:1px solid #6b4a8f; border-radius:10px; padding:9px 10px; font-size:16px; color:#ffd98a; text-align:center; margin-bottom:10px; line-height:1.5;}
 .hist .hempty { text-align:center; color:#9a86b8; font-size:15px; padding:8px 0;}
 .histclear { display:block; width:100%; min-height:48px; font-size:16px; background:#3a2350; color:#ffd98a; border:2px solid #ffd98a; border-radius:12px; padding:10px; margin-top:12px;}
 footer { text-align:center; color:#9a86b8; font-size:13px; margin-top:26px;}
@@ -108,6 +109,7 @@ footer { text-align:center; color:#9a86b8; font-size:13px; margin-top:26px;}
 
 <div class="hist" id="historyPanel">
 <h2>📜 占いの履歴</h2>
+<div id="historyMonthSummary"></div>
 <div id="historyList"></div>
 <button class="histclear" id="historyClearBtn" onclick="clearHistory()">履歴を消す</button>
 </div>
@@ -459,11 +461,43 @@ saveFortuneLog(log);
 renderHistory();
 }
 
+function renderFortuneMonthSummary(log) {
+var el = document.getElementById('historyMonthSummary');
+if (!el) { return;}
+if (!log.length) { el.innerHTML = ''; return;}
+var prefix = fortuneTodayStr().substring(0, 7);
+var counts = {};
+var order = [];
+var total = 0;
+for (var i = 0; i < log.length; i++) {
+if (!log[i] || typeof log[i].date !== 'string') { continue;}
+if (log[i].date.substring(0, 7) !== prefix) { continue;}
+var summary = (typeof log[i].summary === 'string') ? log[i].summary : '';
+var bar = summary.indexOf('｜');
+var rank = (bar >= 0) ? summary.substring(0, bar) : summary;
+rank = rank.replace(/^\s+|\s+$/g, '');
+if (!rank) { rank = '不明';}
+if (!counts[rank]) { counts[rank] = 0; order.push(rank);}
+counts[rank]++;
+total++;
+}
+if (!total) {
+el.innerHTML = '<div class="hmonth">今月：まだ記録がありません（全0回）</div>';
+return;
+}
+var parts = [];
+for (var j = 0; j < order.length; j++) {
+parts.push(escapeHtml(order[j]) + counts[order[j]] + '回');
+}
+el.innerHTML = '<div class="hmonth">今月：' + parts.join(' ・ ') + '（全' + total + '回）</div>';
+}
+
 function renderHistory() {
 var el = document.getElementById('historyList');
 var btn = document.getElementById('historyClearBtn');
 if (!el) { return;}
 var log = loadFortuneLog();
+renderFortuneMonthSummary(log);
 if (!log.length) {
 el.innerHTML = '<div class="hempty">まだ履歴がありません。おみくじを引くと、ここに残ります。</div>';
 if (btn) { btn.style.display = 'none';}

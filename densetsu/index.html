@@ -352,7 +352,7 @@
   <h2>■ 定番アーカイブ</h2>
   <p class="readprogress" id="readProgress">読了 0/28話（0%）</p>
   <div class="readbar"><div class="readbar-fill" id="readBarFill"></div></div>
-  <button id="randomBtn" type="button" style="width:100%;margin-bottom:12px;">ランダムで1話ひらく</button>
+  <button id="randomBtn" type="button" style="width:100%;margin-bottom:12px;">🎲 ランダムで読む（未読を優先）</button>
   <button id="paperBtn" type="button" style="width:100%;margin-bottom:12px;">新聞モードで読む</button>
   <div class="paperhead" id="paperHead">伝 説 新 聞 ― 号 外 ―</div>
   <p class="filterlabel">分類で絞り込む</p>
@@ -1061,7 +1061,17 @@ function openCard(idx) {
 }
 
 function randomStory() {
-  var idx = Math.floor(Math.random() * LEGENDS.length);
+  var unread = [];
+  var i;
+  for (i = 0; i < LEGENDS.length; i++) {
+    if (marksData.read.indexOf(i) < 0) { unread.push(i); }
+  }
+  var idx;
+  if (unread.length > 0) {
+    idx = unread[Math.floor(Math.random() * unread.length)];
+  } else {
+    idx = Math.floor(Math.random() * LEGENDS.length);
+  }
   openCard(idx);
 }
 

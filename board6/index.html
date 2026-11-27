@@ -62,6 +62,10 @@ background: #e08a2e; color: #fff;
 .copybtn:active { background: #2f6f3c;}
 .counter { font-size: 18px; font-weight: bold; color: #6b4f1d; margin: 4px 0 10px 0;}
 .sitesum { font-size: 15px; color: #6b4f1d; background: #fff8e6; border: 1px solid #d9b45b; border-radius: 8px; padding: 8px 10px; margin: 0 0 10px 0; line-height: 1.6;}
+.searchrow { margin: 0 0 6px 0;}
+.searchrow input[type="text"] { width: 66%;}
+.searchrow button { width: 31%; float: right; min-height: 48px; font-size: 16px; border-radius: 8px; border: 2px solid #b39b57; background: #fff; color: #6b4f1d;}
+.searchhit { font-size: 15px; font-weight: bold; color: #6b4f1d; margin: 0 0 8px 0;}
 .entry {
 background: #fff; border: 1px solid #d8c9a3; border-left: 8px solid #b39b57;
 border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;
@@ -161,6 +165,8 @@ font-family: inherit; display: none;
 <h2>📋 貼ったもの</h2>
 <div class="counter" id="counter">未済み 0件</div>
 <div class="sitesum" id="siteSummary">要望0件（★優先0件）（対応済み0件）</div>
+<div class="searchrow"><input type="text" id="searchInput" placeholder="要望を検索（ことば・サイト名）"><button type="button" id="searchClear">検索を消す</button></div>
+<div class="searchhit" id="searchHit"></div>
 <div id="listBox"></div>
 
 <button type="button" class="bigbtn copybtn" id="copyBtn">全文コピー（未済みの分）</button>
@@ -177,6 +183,7 @@ var LS_KEY = "board6_entries_v1";
 var entries = [];
 var selCat = "新機能の要望";
 var formPri = false;
+var searchQuery = "";
 var nextId = 1;
 
 function el(id) { return document.getElementById(id);}
@@ -223,6 +230,11 @@ if (entries[i].id && entries[i].id >= max) max = entries[i].id + 1;
 nextId = max > 0? max: 1;
 }
 
+function entryMatches(e, q) {
+var hay = siteOf(e) + " " + (e.title? e.title: "") + " " + (e.body? e.body: "") + " " + (e.cat? e.cat: "");
+return hay.toLowerCase().indexOf(q.toLowerCase()) >= 0;
+}
+
 function catClass(cat) {
 if (cat === "直してほしい") return "cat-fix";
 if (cat === "感想・メモ") return "cat-memo";
@@ -258,6 +270,7 @@ sumHtml += "<br>" + sumParts.join(" ／ ");
 el("siteSummary").innerHTML = sumHtml;
 
 if (entries.length === 0) {
+el("searchHit").innerHTML = "";
 box.innerHTML = '<div class="empty">まだ何も貼られていません。<br>思いついたら書いてみてください。</div>';
 return;
 }
@@ -266,6 +279,18 @@ for (i = 0; i < entries.length; i++) { if (!entries[i].done && entries[i].pri) d
 for (i = 0; i < entries.length; i++) { if (!entries[i].done && !entries[i].pri) disp.push(entries[i]);}
 for (i = 0; i < entries.length; i++) { if (entries[i].done && entries[i].pri) disp.push(entries[i]);}
 for (i = 0; i < entries.length; i++) { if (entries[i].done && !entries[i].pri) disp.push(entries[i]);}
+if (searchQuery) {
+var filtered = [];
+for (i = 0; i < disp.length; i++) { if (entryMatches(disp[i], searchQuery)) filtered.push(disp[i]);}
+disp = filtered;
+el("searchHit").innerHTML = disp.length + "件ヒット";
+} else {
+el("searchHit").innerHTML = "";
+}
+if (disp.length === 0) {
+box.innerHTML = '<div class="empty">検索に合う要望はありません。</div>';
+return;
+}
 var html = "";
 for (i = 0; i < disp.length; i++) {
 var e = disp[i];
@@ -404,6 +429,17 @@ el("priBtn").innerHTML = formPri? "★ 優先にする": "☆ 優先にする";
 
 el("postBtn").addEventListener("click", post, false);
 el("copyBtn").addEventListener("click", doCopy, false);
+
+/* 要望の検索（表示だけの絞り込み。保存データは変えない） */
+el("searchInput").addEventListener("input", function () {
+searchQuery = el("searchInput").value.replace(/^\s+|\s+$/g, "");
+render();
+}, false);
+el("searchClear").addEventListener("click", function () {
+el("searchInput").value = "";
+searchQuery = "";
+render();
+}, false);
 
 load();
 render();

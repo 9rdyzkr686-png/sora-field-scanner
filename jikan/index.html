@@ -130,6 +130,11 @@
     background: #fdf8e7; border: 2px solid #8a2b23; color: #8a2b23; border-radius: 6px;
   }
   .ctMeta { font-size: 14px; color: #5a5342; }
+  .ctCopy {
+    float: right; min-height: 44px; min-width: 64px; padding: 6px 10px; margin-right: 6px;
+    font-size: 15px; font-weight: bold; cursor: pointer;
+    background: #fdf8e7; border: 2px solid #1d2a4a; color: #1d2a4a; border-radius: 6px;
+  }
   .quizBox {
     background: #fdf8e7; border: 2px solid #1d2a4a; border-radius: 6px;
     padding: 12px; margin-top: 12px;
@@ -951,6 +956,7 @@ function renderMyTickets() {
     t = list[i];
     html += "<li><span class=\"zname\">" + escHtml(t.from) + " → " + escHtml(t.to) + "</span>" +
       "<button type=\"button\" class=\"ctDel\" data-idx=\"" + i + "\">削除</button>" +
+      "<button type=\"button\" class=\"ctCopy\" data-idx=\"" + i + "\">コピー</button>" +
       "<br><span class=\"ctMeta\">" + escHtml(t.era) + " ／ " + escHtml(t.date) +
       " ／ No. " + escHtml(t.no) + "</span></li>";
   }
@@ -960,9 +966,33 @@ function renderMyTickets() {
   var btns = el("ctList").getElementsByTagName("button");
   for (i = 0; i < btns.length; i++) {
     (function (b) {
-      b.onclick = function () { deleteMyTicket(parseInt(b.getAttribute("data-idx"), 10)); };
+      b.onclick = function () {
+        var idx = parseInt(b.getAttribute("data-idx"), 10);
+        if (b.className.indexOf("ctCopy") >= 0) { copyMyTicket(idx); }
+        else { deleteMyTicket(idx); }
+      };
     })(btns[i]);
   }
+}
+
+function copyMyTicket(idx) {
+  var list = loadMyTickets();
+  if (idx < 0 || idx >= list.length) { return; }
+  var t = list[idx];
+  var text = "【時間旅行の切符】\n" +
+    "出発：" + t.from + " → 行き先：" + t.to + "\n" +
+    "年代：" + t.era + " ／ 発行日：" + t.date + " ／ 番号：" + t.no;
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "readonly");
+  ta.style.position = "absolute";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  el("ctMsg").innerHTML = ok ? "切符をコピーしました。" : "コピーできませんでした。";
 }
 
 function deleteMyTicket(idx) {

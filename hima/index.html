@@ -103,7 +103,11 @@
   .nfav-date { color: #8fdc9f; font-size: 13px; }
   .greet-out { white-space: pre-wrap; border: 1px dashed #ffb000; border-radius: 8px; padding: 10px; margin-top: 8px; }
   button.zk-item.sel { background: #0d4d24; border-color: #ffb000; color: #ffb000; }
+  button.zk-item.met { border-color: #00e5ff; }
   .zk-name { color: #ffb000; font-size: 20px; margin-bottom: 4px; }
+  #zkMetProgress { font-size: 17px; color: #ffb000; margin: 8px 0 4px 0; }
+  #zkMetBtn { display: block; width: 100%; margin-top: 10px; }
+  #zkMetBtn.met { background: #0d4d24; border-color: #ffb000; color: #ffb000; }
 </style>
 </head>
 <body>
@@ -391,10 +395,12 @@
 <div class="card">
   <h2>■ ダックス名鑑</h2>
   <div>ダックスフンドは、体の大きさ（胸囲）でカニンヘン／ミニチュア／スタンダードに、毛のタイプでロング／スムース／ワイヤーに分かれます。名前をタップすると説明が出ます。一般的な犬種情報です。</div>
+  <div id="zkMetProgress">見かけた 0/9種</div>
   <div id="zkList"></div>
   <div class="greet-out" id="zkDetail" style="display:none">
     <div class="zk-name" id="zkName"></div>
     <div id="zkBody"></div>
+    <button id="zkMetBtn" type="button">見かけた</button>
   </div>
   <div class="stat">※どのタイプも胴が長いので、段差の上り下りなど、腰への負担には気をつけてあげましょう。</div>
 </div>
@@ -1799,15 +1805,72 @@ var DAX_ZUKAN = [
     body: 'こちらも毛柄の名前。白地に色の斑（はん）が入る柄で、背中や耳に色が残る子が多いです。\nもとはアメリカで人気が出た柄と言われます。\n白が多い分、夏の強い日差しには少し注意してあげましょう。' }
 ];
 var zkCur = -1;
+var ZK_MET_KEY = 'hima6_zukan_met_v1';
+function zkMetLoad() {
+  try {
+    var raw = localStorage.getItem(ZK_MET_KEY);
+    if (!raw) { return []; }
+    var arr = JSON.parse(raw);
+    if (arr && typeof arr.length === 'number') { return arr; }
+    return [];
+  } catch (e) { return []; }
+}
+function zkMetSave(arr) {
+  try { localStorage.setItem(ZK_MET_KEY, JSON.stringify(arr)); } catch (e) {}
+}
+function zkMetHas(name) {
+  var arr = zkMetLoad();
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i] === name) { return true; }
+  }
+  return false;
+}
+function zkMetCount() {
+  var arr = zkMetLoad();
+  var count = 0;
+  for (var i = 0; i < DAX_ZUKAN.length; i++) {
+    for (var j = 0; j < arr.length; j++) {
+      if (arr[j] === DAX_ZUKAN[i].name) { count++; break; }
+    }
+  }
+  return count;
+}
+function zkMetRefresh() {
+  var prog = el('zkMetProgress');
+  if (prog) { prog.textContent = '見かけた ' + zkMetCount() + '/' + DAX_ZUKAN.length + '種'; }
+  for (var i = 0; i < DAX_ZUKAN.length; i++) {
+    var b = el('zkBtn' + i);
+    if (b) {
+      var met = zkMetHas(DAX_ZUKAN[i].name);
+      b.className = 'linkbtn zk-item' + (i === zkCur ? ' sel' : '') + (met ? ' met' : '');
+      b.textContent = (met ? '✓ ' : '') + DAX_ZUKAN[i].name;
+    }
+  }
+  var btn = el('zkMetBtn');
+  if (btn && zkCur >= 0) {
+    var curMet = zkMetHas(DAX_ZUKAN[zkCur].name);
+    btn.className = curMet ? 'met' : '';
+    btn.textContent = curMet ? '✓ 見かけた（タップで取り消し）' : '見かけた';
+  }
+}
+function zkMetToggle() {
+  if (zkCur < 0) { return; }
+  var name = DAX_ZUKAN[zkCur].name;
+  var arr = zkMetLoad();
+  var found = -1;
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i] === name) { found = i; break; }
+  }
+  if (found >= 0) { arr.splice(found, 1); } else { arr.push(name); }
+  zkMetSave(arr);
+  zkMetRefresh();
+}
 function zkShow(i) {
   zkCur = i;
-  for (var j = 0; j < DAX_ZUKAN.length; j++) {
-    var b = el('zkBtn' + j);
-    if (b) { b.className = 'linkbtn zk-item' + (j === i ? ' sel' : ''); }
-  }
   el('zkName').textContent = DAX_ZUKAN[i].name;
   el('zkBody').textContent = DAX_ZUKAN[i].body;
   el('zkDetail').style.display = 'block';
+  zkMetRefresh();
 }
 function initZukan() {
   var html = '';
@@ -1820,6 +1883,9 @@ function initZukan() {
       el('zkBtn' + n).onclick = function () { zkShow(n); };
     })(j);
   }
+  var metBtn = el('zkMetBtn');
+  if (metBtn) { metBtn.onclick = zkMetToggle; }
+  zkMetRefresh();
 }
 
 /* ---------- ダックス川柳（AI） ---------- */
