@@ -116,6 +116,22 @@
   .zukanList .zname { font-weight: bold; }
   .zukanList .zcount { float: right; color: #8a2b23; font-weight: bold; }
   .zukanList .zcount.none { color: #8a8064; font-weight: normal; }
+  .quizBox {
+    background: #fdf8e7; border: 2px solid #1d2a4a; border-radius: 6px;
+    padding: 12px; margin-top: 12px;
+  }
+  .quizBox .qlabel { font-size: 13px; font-weight: bold; color: #8a2b23; letter-spacing: 2px; }
+  .quizProg { font-size: 14px; color: #5a5342; margin-top: 4px; }
+  .quizQText { font-size: 19px; font-weight: bold; margin-top: 6px; min-height: 28px; }
+  .quizChoice {
+    display: block; width: 100%; min-height: 52px; margin-top: 8px;
+    font-size: 19px; font-weight: bold; color: #1d2a4a;
+    background: #fffdf4; border: 2px solid #1d2a4a; border-radius: 6px;
+    cursor: pointer;
+  }
+  .quizChoice.right { background: #8a2b23; color: #fff8ea; border-color: #8a2b23; }
+  .quizChoice.wrong { background: #b9a894; color: #5a5342; border-color: #b9a894; }
+  .quizMsg { margin-top: 10px; font-size: 17px; min-height: 24px; }
   .log {
     margin-top: 12px; background: #1d2a4a; color: #f3ead2; border-radius: 6px;
     padding: 12px 14px; min-height: 60px; font-size: 17px; display: none;
@@ -173,7 +189,7 @@
 
 <h2>切符図鑑</h2>
 <div class="zukanBox">
-  <div class="zukanHead" id="zukanHead">0/9 時代制覇</div>
+  <div class="zukanHead" id="zukanHead">0/15 時代制覇</div>
   <div class="zukanCeleb" id="zukanCeleb" style="display:none;">🎉 全時代制覇！あなたは真の時間旅行者です！</div>
   <ul class="zukanList" id="zukanList"></ul>
 </div>
@@ -186,6 +202,17 @@
   <div class="ttext" id="showaPrice" style="margin-top:8px; font-size:15px; color:#5a5342;"></div>
 </div>
 <button class="bigBtn nextBtn" id="showaBtn">つぎの読み物 ▶</button>
+
+<h2>年代クイズ</h2>
+<div class="quizBox">
+  <div class="qlabel">クイズ ― あの出来事は何年？</div>
+  <div class="quizProg" id="quizProg">全5問。出来事が起きた年を3択で当ててください。</div>
+  <div class="quizQText" id="quizQ"></div>
+  <div id="quizChoices"></div>
+  <div class="quizMsg" id="quizMsg"></div>
+  <button class="bigBtn goBtn" id="quizStartBtn">クイズをはじめる</button>
+  <button class="bigBtn nextBtn" id="quizNextBtn" style="display:none;">つぎの問題 ▶</button>
+</div>
 
 <footer>
   <a class="portalBtn" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
@@ -355,6 +382,114 @@ var ERAS = [
       "静かの海が見えてきました。",
       "到着！月面基地です。地球見をお楽しみください。"
     ]
+  },
+  {
+    name: "1959年・ご成婚",
+    stamp: "成婚",
+    price: "片道：お祝いの気持ち",
+    why: "今日はおめでたい気分に浸りたい日です。",
+    trivia: [
+      "1959年4月10日、皇太子明仁親王（今の上皇さま）と正田美智子さんの結婚式が行われました。",
+      "美智子さんは民間から迎えられた初めての皇太子妃で、大きな話題になりました。",
+      "「ミッチーブーム」が起こり、パレードをテレビで見たいという人が増えました。",
+      "このご成婚をきっかけに、家庭へのテレビの普及が進んだと言われています。"
+    ],
+    log: [
+      "祝賀の音楽が聞こえてきました…",
+      "沿道の人々の笑顔が見えてきました。",
+      "パレードの馬車が近づいてきます。",
+      "到着！1959年の東京です。お祝いの日をお楽しみください。"
+    ]
+  },
+  {
+    name: "1964年・東京五輪",
+    stamp: "五輪",
+    price: "片道：聖火の熱気 少し",
+    why: "今日は体を動かして、スカッとしたい日です。",
+    trivia: [
+      "1964年の東京オリンピックは、アジアで初めて開かれたオリンピックでした。",
+      "開会式は10月10日。この日は後に「体育の日」（今のスポーツの日）になりました。",
+      "開会の直前、10月1日には東海道新幹線が開通しました。",
+      "女子バレーボール日本代表は「東洋の魔女」と呼ばれ、金メダルを獲得しました。"
+    ],
+    log: [
+      "聖火リレーの列が見えてきました…",
+      "国立競技場の歓声が近づいてきます。",
+      "開会式のファンファーレが鳴り響きました。",
+      "到着！1964年の国立競技場です。選手入場が始まります。"
+    ]
+  },
+  {
+    name: "1969年・アポロ11号",
+    stamp: "アポロ",
+    price: "片道：宇宙への切符 1枚",
+    why: "今日は、人類の大きな一歩を眺めたい日です。",
+    trivia: [
+      "1969年7月20日（日本時間では21日）、アポロ11号が人類で初めて月に着陸しました。",
+      "月面に降り立ったのはアームストロング船長とオルドリン飛行士の2人です。",
+      "着陸船の名前は「イーグル」。着陸の知らせは「イーグルは着陸した」でした。",
+      "コリンズ飛行士は、月を回る司令船の中で2人の帰りを待っていました。"
+    ],
+    log: [
+      "ロケットの轟音が響いてきました…",
+      "窓の外で、月がどんどん近づいてきます。",
+      "着陸船イーグルが、静かの海へ降りていきます。",
+      "到着！1969年の月面です。人類の第一歩をお見逃しなく。"
+    ]
+  },
+  {
+    name: "1975年・沖縄海洋博",
+    stamp: "海洋博",
+    price: "片道：潮風 ひとすくい",
+    why: "今日は海の未来をのぞいてみたい日です。",
+    trivia: [
+      "沖縄国際海洋博覧会は、1975年に沖縄県の本部町で開かれました。",
+      "テーマは「海―その望ましい未来」。海のこれからを考える博覧会でした。",
+      "目玉パビリオンは、海に浮かぶ未来都市「アクアポリス」でした。",
+      "沖縄が日本に復帰してから3年後の、大きな国際イベントでした。"
+    ],
+    log: [
+      "潮の香りが近づいてきました…",
+      "青い海の上に浮かぶ会場が見えてきました。",
+      "アクアポリスの白い姿が輝いています。",
+      "到着！1975年の沖縄海洋博です。まずは海を眺めましょう。"
+    ]
+  },
+  {
+    name: "1985年・つくば万博",
+    stamp: "科学博",
+    price: "片道：未来への入場券 1枚",
+    why: "今日は未来の技術にワクワクしたい日です。",
+    trivia: [
+      "国際科学技術博覧会（科学万博つくば'85）は、1985年に茨城県つくば市で開かれました。",
+      "テーマは「人間・居住・環境と科学技術」でした。",
+      "公式マスコットは「コスモ星丸」。丸い宇宙人のような姿が人気でした。",
+      "会期中の入場者は約2033万人。科学の未来を体感できる展示が並びました。"
+    ],
+    log: [
+      "未来の乗り物のような音が聞こえます…",
+      "パビリオンの屋根が見えてきました。",
+      "コスモ星丸が手を振っているようです。",
+      "到着！1985年のつくば万博です。未来はもう始まっています。"
+    ]
+  },
+  {
+    name: "1990年・大阪花博",
+    stamp: "花博",
+    price: "片道：花の種 ひと袋",
+    why: "今日は花と緑に囲まれてのんびりしたい日です。",
+    trivia: [
+      "国際花と緑の博覧会は、1990年に大阪市の鶴見緑地で開かれました。",
+      "テーマは「自然と人間との共生」でした。",
+      "公式マスコットは「花ずきんちゃん」です。",
+      "会場の鶴見緑地は、今も大きな公園として親しまれています。"
+    ],
+    log: [
+      "花の香りが漂ってきました…",
+      "色とりどりの花壇が見えてきました。",
+      "花ずきんちゃんの姿が見えます。",
+      "到着！1990年の大阪花博です。花の海をお楽しみください。"
+    ]
   }
 ];
 
@@ -453,7 +588,7 @@ function renderZukan() {
       "</li>";
   }
   el("zukanList").innerHTML = html;
-  el("zukanHead").innerHTML = got + "/9 時代制覇";
+  el("zukanHead").innerHTML = got + "/" + ERAS.length + " 時代制覇";
   el("zukanCeleb").style.display = (got === ERAS.length) ? "block" : "none";
 }
 
@@ -507,6 +642,8 @@ function init() {
   el("osusumeWhy").innerHTML = ERAS[rec].why;
   el("triviaBtn").onclick = nextTrivia;
   el("goBtn").onclick = depart;
+  el("quizStartBtn").onclick = startQuiz;
+  el("quizNextBtn").onclick = nextQuizQ;
   renderZukan();
   initShowa();
 }
@@ -557,6 +694,113 @@ function initShowa() {
     showaIdx = (showaIdx + 1) % SHOWA_LIFE.length;
     renderShowa();
   };
+}
+
+/* ==== (225b) 年代クイズ ==== */
+var QUIZ = [
+  { q: "東京オリンピック（アジアで初めての開催）は何年に開かれた？", y: 1964, c: [1964, 1970, 1958], note: "1964年。開会式は10月10日で、この日は後にスポーツの日になりました。" },
+  { q: "大阪万博（EXPO'70）は何年に開かれた？", y: 1970, c: [1970, 1964, 1985], note: "1970年。テーマは「人類の進歩と調和」で、岡本太郎の太陽の塔が目玉でした。" },
+  { q: "アポロ11号が人類初の月面着陸をしたのは何年？", y: 1969, c: [1969, 1972, 1959], note: "1969年7月20日（日本時間では21日）。アームストロング船長が月面に降り立ちました。" },
+  { q: "東京スカイツリーが開業したのは何年？", y: 2012, c: [2012, 2008, 2016], note: "2012年5月22日に開業しました。高さは634メートルです。" },
+  { q: "平成が始まったのは何年？", y: 1989, c: [1989, 1990, 1988], note: "1989年1月8日から、平成が始まりました。" }
+];
+var quizList = [];
+var quizPos = 0;
+var quizScore = 0;
+var quizBusy = false;
+var quizTry = 0;
+
+function quizShuffle(arr, seedObj) {
+  var i, j, t;
+  for (i = arr.length - 1; i > 0; i--) {
+    seedObj.s = (seedObj.s * 48271) % 2147483647;
+    j = seedObj.s % (i + 1);
+    t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+
+function startQuiz() {
+  var seedObj = { s: dateSeed() + quizTry * 97 + 13 };
+  var order = [];
+  var i;
+  quizTry++;
+  for (i = 0; i < QUIZ.length; i++) { order.push(i); }
+  quizShuffle(order, seedObj);
+  quizList = [];
+  for (i = 0; i < order.length; i++) {
+    var src = QUIZ[order[i]];
+    var ch = src.c.slice(0);
+    quizShuffle(ch, seedObj);
+    quizList.push({ q: src.q, y: src.y, c: ch, note: src.note });
+  }
+  quizPos = 0;
+  quizScore = 0;
+  el("quizStartBtn").style.display = "none";
+  showQuizQ();
+}
+
+function showQuizQ() {
+  var item = quizList[quizPos];
+  var box = el("quizChoices");
+  var i;
+  quizBusy = false;
+  el("quizProg").innerHTML = "第" + (quizPos + 1) + "問 ／ 全" + quizList.length + "問（これまでの正解：" + quizScore + "）";
+  el("quizQ").innerHTML = item.q;
+  el("quizMsg").innerHTML = "";
+  el("quizNextBtn").style.display = "none";
+  box.innerHTML = "";
+  for (i = 0; i < item.c.length; i++) {
+    (function (idx) {
+      var b = document.createElement("button");
+      b.className = "quizChoice";
+      b.innerHTML = item.c[idx] + "年";
+      b.onclick = function () { answerQuiz(idx, b); };
+      box.appendChild(b);
+    })(i);
+  }
+}
+
+function answerQuiz(idx, btn) {
+  if (quizBusy) { return; }
+  quizBusy = true;
+  var item = quizList[quizPos];
+  var btns = el("quizChoices").getElementsByTagName("button");
+  var i;
+  for (i = 0; i < btns.length; i++) {
+    btns[i].disabled = true;
+    if (item.c[i] === item.y) { btns[i].className = "quizChoice right"; }
+  }
+  if (item.c[idx] === item.y) {
+    quizScore++;
+    el("quizMsg").innerHTML = "⭕ 正解！ " + item.note;
+  } else {
+    btn.className = "quizChoice wrong";
+    el("quizMsg").innerHTML = "❌ 残念、正解は" + item.y + "年。 " + item.note;
+  }
+  el("quizProg").innerHTML = "第" + (quizPos + 1) + "問 ／ 全" + quizList.length + "問（これまでの正解：" + quizScore + "）";
+  var nb = el("quizNextBtn");
+  nb.innerHTML = (quizPos + 1 >= quizList.length) ? "結果を見る ▶" : "つぎの問題 ▶";
+  nb.style.display = "block";
+}
+
+function nextQuizQ() {
+  var sb;
+  quizPos++;
+  if (quizPos >= quizList.length) {
+    el("quizProg").innerHTML = "結果発表";
+    el("quizQ").innerHTML = quizList.length + "問中 " + quizScore + " 問正解！";
+    el("quizChoices").innerHTML = "";
+    el("quizMsg").innerHTML = (quizScore === quizList.length)
+      ? "🎉 全問正解！年代マスターです。"
+      : "おつかれさまでした。もう一度挑戦すると、問題の順番が変わります。";
+    el("quizNextBtn").style.display = "none";
+    sb = el("quizStartBtn");
+    sb.innerHTML = "もう一度挑戦する";
+    sb.style.display = "block";
+    return;
+  }
+  showQuizQ();
 }
 
 init();

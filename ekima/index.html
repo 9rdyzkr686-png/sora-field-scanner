@@ -411,6 +411,15 @@
   <div class="msg" id="stnCount"></div>
 </div>
 
+<div class="tt-section">
+  <div class="tt-title">川越から先（東松山方面）</div>
+  <div class="tt-note">川越から先、東松山まで、東武東上線の駅と街の読み物です</div>
+  <div class="stn-name" id="stn2Name">川越市</div>
+  <div class="lost-box" id="stn2Text"></div>
+  <button class="btn" id="btnStn2Next" type="button">次の駅へ ▶</button>
+  <div class="msg" id="stn2Count"></div>
+</div>
+
 <div class="footer">
   <a class="portal-link" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
   <div class="credit">※「だっくす駅」は架空の駅です。実際の鉄道の運行情報ではありません。<br>EKIMA-6</div>
@@ -891,6 +900,42 @@ function nextStation() {
 
 document.getElementById("btnStnNext").addEventListener("click", nextStation);
 renderStation();
+
+/* ==== (224) 東上線 駅名読み物・続き（川越 → 東松山） ==== */
+var STATIONS2 = [
+  { name: "川越市", text: "蔵造りの町並みへ歩いて行ける、東上線の駅です。「小江戸」川越の中心、一番街や時の鐘はここから徒歩圏内。川越駅や本川越駅とは別の駅で、観光客が間違えやすい駅としても知られます。" },
+  { name: "霞ヶ関", text: "川越市内の駅で、東京国際大学のキャンパスが近く、学生の姿が多い文教の街です。東京の官庁街と同じ「霞ヶ関」という名前ですが、こちらはのどかな住宅地が広がります。" },
+  { name: "鶴ヶ島", text: "「鶴が羽を休めた島」という言い伝えから名づけられたと伝わる街です。4年に一度の「脚折雨乞い（すねおりあまごい）」は、巨大な龍が登場する大きなお祭りとして知られます。今は緑の多い住宅地です。" },
+  { name: "若葉", text: "坂戸市の駅で、駅前の大型商業施設「ワカバウォーク」が目印です。もとはのどかな田園地帯でしたが、その名のとおり若々しい新しい住宅地が広がり、若い家族の多い街に育ちました。" },
+  { name: "坂戸", text: "坂戸市の中心駅で、ここから東武越生線が分かれます。色あざやかな中国のお宮「聖天宮」がある街としても知られ、夏のよさこい祭りでは踊り子たちでにぎわいます。" },
+  { name: "北坂戸", text: "坂戸市の北の玄関口です。昭和の頃に大きな団地や住宅地が造られ、東京へ通う人たちのベッドタウンとして育ちました。駅前には商店が並び、暮らしの匂いのする駅です。" },
+  { name: "高坂", text: "東松山市の駅で、「埼玉県こども動物自然公園」へのバスが出ています。大東文化大学のキャンパスも近く、学生の街でもあります。丘陵地に住宅地が広がる、緑の多い地域です。" },
+  { name: "東松山", text: "東松山市の中心駅です。名物の「やきとり」は豚のカシラ肉を使うのが東松山流で、ピリ辛の味噌をつけて食べるとされます。「やきゅう」と読める箭弓稲荷神社もあり、野球選手やファンが訪れる街です。" }
+];
+var stn2Idx = 0;
+
+function renderStation2() {
+  var s = STATIONS2[stn2Idx];
+  document.getElementById("stn2Name").textContent = s.name;
+  document.getElementById("stn2Text").textContent = s.text;
+  document.getElementById("stn2Count").textContent =
+    "駅 " + (stn2Idx + 1) + " / " + STATIONS2.length + "（川越市 → 東松山）";
+}
+
+function nextStation2() {
+  stn2Idx = stn2Idx + 1;
+  if (stn2Idx >= STATIONS2.length) {
+    stn2Idx = 0;
+    renderStation2();
+    document.getElementById("stn2Count").textContent =
+      "終点・東松山に到着。折り返し川越市に戻ります（駅 1 / " + STATIONS2.length + "）";
+    return;
+  }
+  renderStation2();
+}
+
+document.getElementById("btnStn2Next").addEventListener("click", nextStation2);
+renderStation2();
 </script>
 </body>
 </html>
