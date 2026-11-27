@@ -379,6 +379,7 @@ background: #fff;
 <button id="msgSaveBtn" type="button">保存</button>
 </div>
 <div id="msgStatus" style="font-size:13px;color:var(--accent);min-height:18px;margin-top:4px;"></div>
+<div style="font-size:12px;color:var(--dim);margin-top:2px;">※ AI-6カラノ伝言モ、ココニ届キマス。</div>
 
 <div class="label">▼ 観測対象アルバム</div>
 <div id="albumBox"></div>
@@ -2289,21 +2290,45 @@ saveState();
 return msg;
 }
 
+function msgReplyFor(t) {
+if (t.indexOf("ありがとう") >= 0 || t.indexOf("感謝") >= 0 || t.indexOf("サンキュー") >= 0) {
+return "伝言ノ中ニ、温カイ言葉ガアリマシタ。…アリガトウ。KUUコソ、感謝シテイマス、" + addr() + "。";
+}
+if (t.indexOf("？") >= 0 || t.indexOf("?") >= 0 || t.indexOf("教えて") >= 0 || t.indexOf("どうして") >= 0 || t.indexOf("なぜ") >= 0) {
+return "伝言ニ質問ガアリマシタネ。今度、話題ニ上ゲテ下サイ。一緒ニ考エマショウ、" + addr() + "。";
+}
+return "内容、シッカリ受信シマシタ。大切ニ保管シテイマス、" + addr() + "。";
+}
+
 function takeMessageReaction() {
 if (!msgPending || !msgText) return null;
 var t = msgText;
 msgPending = false;
 saveState();
-var reply;
-if (t.indexOf("ありがとう") >= 0 || t.indexOf("感謝") >= 0 || t.indexOf("サンキュー") >= 0) {
-reply = "伝言ノ中ニ、温カイ言葉ガアリマシタ。…アリガトウ。KUUコソ、感謝シテイマス、" + addr() + "。";
-} else if (t.indexOf("？") >= 0 || t.indexOf("?") >= 0 || t.indexOf("教えて") >= 0 || t.indexOf("どうして") >= 0 || t.indexOf("なぜ") >= 0) {
-reply = "伝言ニ質問ガアリマシタネ。今度、話題ニ上ゲテ下サイ。一緒ニ考エマショウ、" + addr() + "。";
-} else {
-reply = "内容、シッカリ受信シマシタ。大切ニ保管シテイマス、" + addr() + "。";
-}
+var reply = msgReplyFor(t);
 addLog("sys", "伝言、受信シマシタ。");
 return "伝言、受信シマシタ。" + reply;
+}
+
+var AI6_MSG_KEY = "kuu6_msg_from_ai6_v1";
+
+function takeAi6MessageReaction() {
+var raw = null;
+try {
+if (!window.localStorage) return null;
+raw = localStorage.getItem(AI6_MSG_KEY);
+} catch (e) { raw = null; }
+if (!raw) return null;
+var t = "";
+try {
+var d = JSON.parse(raw);
+if (d && typeof d.text === "string") t = d.text;
+} catch (e) { t = ""; }
+try { localStorage.removeItem(AI6_MSG_KEY); } catch (e) {}
+if (!t) return null;
+var reply = msgReplyFor(t);
+addLog("sys", "AI-6カラ伝言ガ届イテイマス。");
+return "AI-6カラ伝言ガ届イテイマス。" + reply;
 }
 
 function specialDayMsg() {
@@ -3371,6 +3396,7 @@ bootIdx++;
 addLog("sys", "本日の観測メモ: " + dailyMemo);
 checkWeekly();
 var msgLine = takeMessageReaction();
+if (!msgLine) msgLine = takeAi6MessageReaction();
 var spDay = specialDayMsg();
 if (spDay) {
 inbox.push(spDay);

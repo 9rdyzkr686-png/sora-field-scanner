@@ -184,6 +184,7 @@
   <button type="button" id="copyBtn">会話をコピー</button>
   <button type="button" id="telegramBtn">電文風コピー</button>
   <button type="button" id="favBtn">★お気に入り</button>
+  <button type="button" id="kuuMsgBtn">KUU-01へ伝言</button>
   <button type="button" id="clearBtn">会話を消す</button>
 </div>
 <div id="statusLine"></div>
@@ -959,6 +960,30 @@ document.getElementById("telegramBtn").onclick = function () {
     lines.push((chatMsgs[i].r === "u" ? "【あなた】" : "【AI】") + chatMsgs[i].t);
   }
   copyTextCommon(lines.join("\n"), "電文風にコピーしました。");
+};
+
+/* ---- KUU-01へ伝言 ---- */
+document.getElementById("kuuMsgBtn").onclick = function () {
+  var text = (inputBox.value || "").replace(/^\s+|\s+$/g, "");
+  if (!text) {
+    setStatus("入力欄に伝言を書いてから押してください。");
+    return;
+  }
+  var d = new Date();
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  var dateStr = d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) +
+    " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+  var ok = false;
+  try {
+    localStorage.setItem("kuu6_msg_from_ai6_v1", JSON.stringify({ text: text, date: dateStr }));
+    ok = true;
+  } catch (e) { ok = false; }
+  if (ok) {
+    inputBox.value = "";
+    setStatus("KUU-01へ伝言を置きました。KUU FIELD SCANNERを開くと届きます。");
+  } else {
+    setStatus("伝言を保存できませんでした。");
+  }
 };
 
 /* ---- お気に入りパネル ---- */

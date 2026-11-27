@@ -185,12 +185,154 @@ textarea.bk {
   margin-bottom: 8px;
 }
 .ext-line { font-size: 14px; line-height: 1.7; }
+#seasonStrip {
+  text-align: center;
+  font-size: 15px;
+  color: #ffc857;
+  margin: 2px 0 12px;
+  line-height: 1.5;
+}
+.bellbadge {
+  display: inline-block;
+  background: #ff5470;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 22px;
+  height: 22px;
+  line-height: 22px;
+  border-radius: 11px;
+  margin-left: 8px;
+  padding: 0 5px;
+  text-align: center;
+}
+#splash {
+  position: fixed;
+  left: 0; top: 0; right: 0; bottom: 0;
+  background: #050807;
+  color: #39ff7a;
+  z-index: 999;
+  text-align: center;
+  padding: 120px 20px 20px;
+}
+#splash .logo { font-size: 34px; font-weight: bold; letter-spacing: 3px; }
+#splashFact { font-size: 15px; color: #c9f5d6; margin: 20px 10px 0; line-height: 1.7; min-height: 50px; }
+#splash .tap { font-size: 14px; color: #ffc857; margin-top: 26px; }
+.psel {
+  width: 100%;
+  min-height: 48px;
+  font-size: 16px;
+  margin-bottom: 12px;
+  background: #0c1710;
+  color: #c9f5d6;
+  border: 1px solid #2a4a35;
+  border-radius: 8px;
+  padding: 8px;
+  font-family: inherit;
+}
+.qrItem { display: inline-block; width: 152px; margin: 6px 2px; vertical-align: top; }
+.qrItem img { background: #fff; padding: 5px; border-radius: 6px; }
+.qrcap { font-size: 13px; font-weight: bold; margin-top: 5px; line-height: 1.4; }
+.qrurl { font-size: 10px; color: #7fae8d; word-break: break-all; line-height: 1.4; }
+/* フォント切替 */
+body.font-gothic { font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; }
+body.font-mincho { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; }
+body.font-maru { font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif; }
+body.font-gothic .pbtn, body.font-gothic #refreshBtn, body.font-gothic textarea.bk, body.font-gothic .psel { font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; }
+body.font-mincho .pbtn, body.font-mincho #refreshBtn, body.font-mincho textarea.bk, body.font-mincho .psel { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; }
+body.font-maru .pbtn, body.font-maru #refreshBtn, body.font-maru textarea.bk, body.font-maru .psel { font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif; }
+/* テーマ：レトロ端末 */
+body.theme-retro { background: #000; font-family: "Courier New", monospace; }
+body.theme-retro .pbtn, body.theme-retro #refreshBtn, body.theme-retro textarea.bk, body.theme-retro .psel { font-family: "Courier New", monospace; }
+body.theme-retro a.row, body.theme-retro .panel, body.theme-retro .rallyslot { background: #000; border-color: #1d5c33; }
+body.theme-retro h1 { text-shadow: 0 0 10px rgba(57,255,122,.8); }
+/* テーマ：紙 */
+body.theme-paper { background: #f6efdb; color: #4a3520; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; }
+body.theme-paper .pbtn, body.theme-paper #refreshBtn, body.theme-paper textarea.bk, body.theme-paper .psel { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; }
+body.theme-paper h1 { color: #8a5a1e; }
+body.theme-paper h2 { color: #8a5a1e; border-bottom-color: #c9b489; }
+body.theme-paper .sub, body.theme-paper .note, body.theme-paper #autoStatus, body.theme-paper .qrurl { color: #8a7350; }
+body.theme-paper a.row, body.theme-paper .panel { background: #fdf8ea; border-color: #c9b489; color: #4a3520; }
+body.theme-paper a.row:active { background: #f3e9cd; }
+body.theme-paper .name { color: #7a4d12; }
+body.theme-paper .desc { color: #7a6242; }
+body.theme-paper .pbtn, body.theme-paper #refreshBtn { background: #fdf8ea; color: #7a4d12; border-color: #a97e2f; }
+body.theme-paper .pbtn:active { background: #f3e9cd; }
+body.theme-paper .pbtn.on { background: #a97e2f; color: #fff8e7; }
+body.theme-paper .star { color: #b39b62; }
+body.theme-paper textarea.bk, body.theme-paper .psel { background: #fffdf4; color: #4a3520; border-color: #c9b489; }
+body.theme-paper .rallyslot { background: #fdf8ea; border-color: #c9b489; color: #8a7350; }
+body.theme-paper .rallyslot.got { color: #a97e2f; border-color: #a97e2f; }
+body.theme-paper .trophy.locked { color: #a08b62; }
+body.theme-paper .trophy.earned, body.theme-paper #coinBar, body.theme-paper #seasonStrip { color: #a97e2f; }
+body.theme-paper .footer { color: #a08b62; }
+/* テーマ：夕焼け */
+body.theme-sunset { background: linear-gradient(180deg, #31135e 0%, #8e2f56 45%, #e2703a 100%); background-attachment: fixed; color: #ffeedd; }
+body.theme-sunset h1 { color: #ffd76e; }
+body.theme-sunset h2 { color: #ffd76e; border-bottom-color: rgba(255,255,255,.35); }
+body.theme-sunset .sub, body.theme-sunset .note, body.theme-sunset #autoStatus, body.theme-sunset .qrurl { color: #ffcfb0; }
+body.theme-sunset a.row, body.theme-sunset .panel { background: rgba(20,8,40,.55); border-color: rgba(255,215,110,.5); color: #ffeedd; }
+body.theme-sunset a.row:active { background: rgba(40,16,70,.65); }
+body.theme-sunset .name { color: #ffd76e; }
+body.theme-sunset .desc { color: #ffd9c0; }
+body.theme-sunset .pbtn, body.theme-sunset #refreshBtn { background: rgba(20,8,40,.55); color: #ffd76e; border-color: #ffd76e; }
+body.theme-sunset .pbtn.on { background: #ffd76e; color: #31135e; }
+body.theme-sunset .star { color: rgba(255,238,221,.55); }
+body.theme-sunset textarea.bk, body.theme-sunset .psel { background: rgba(20,8,40,.55); color: #ffeedd; border-color: rgba(255,215,110,.5); }
+body.theme-sunset .rallyslot { background: rgba(20,8,40,.45); border-color: rgba(255,215,110,.4); color: #ffcfb0; }
+body.theme-sunset .rallyslot.got { color: #ffd76e; border-color: #ffd76e; }
+body.theme-sunset .trophy.locked { color: rgba(255,238,221,.5); }
+body.theme-sunset #seasonStrip { color: #ffd76e; }
+body.theme-sunset .footer { color: rgba(255,238,221,.6); }
+/* テーマ：手描き */
+body.theme-hand a.row, body.theme-hand .panel, body.theme-hand .pbtn, body.theme-hand #refreshBtn, body.theme-hand textarea.bk, body.theme-hand .rallyslot, body.theme-hand .psel {
+  border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+  border-width: 2px;
+}
+body.theme-hand a.row:nth-of-type(odd) { transform: rotate(-0.4deg); }
+body.theme-hand a.row:nth-of-type(even) { transform: rotate(0.4deg); }
+/* 夜モード（テーマの後ろに置いて上書きする） */
+body.night { background: #000; color: #d8d8d8; }
+body.night h1 { color: #e8e8e8; text-shadow: none; }
+body.night h2 { color: #cfcfcf; border-bottom-color: #3a3a3a; }
+body.night .sub, body.night .note, body.night #autoStatus, body.night .qrurl { color: #a8a8a8; }
+body.night a.row, body.night .panel { background: #0a0a0a; border-color: #3a3a3a; color: #d8d8d8; }
+body.night a.row:active { background: #1a1a1a; }
+body.night .name { color: #e8e8e8; }
+body.night .desc { color: #bdbdbd; }
+body.night .pbtn, body.night #refreshBtn { background: #0a0a0a; color: #e8e8e8; border-color: #888; }
+body.night .pbtn.on { background: #e8e8e8; color: #000; }
+body.night .star { color: #777; }
+body.night textarea.bk, body.night .psel { background: #000; color: #d8d8d8; border-color: #3a3a3a; }
+body.night .rallyslot { background: #000; border-color: #3a3a3a; color: #a8a8a8; }
+body.night .rallyslot.got { color: #ffc857; border-color: #ffc857; }
+body.night .trophy.locked { color: #777; }
+body.night #coinBar, body.night #seasonStrip { color: #ffc857; }
+body.night .footer { color: #777; }
 </style>
 </head>
 <body>
 
+<div id="splash">
+  <div class="logo">PORTAL-6</div>
+  <div id="splashFact"></div>
+  <div class="tap">タップで入る</div>
+</div>
+
 <h1>PORTAL-6</h1>
 <div class="sub">全サイト一覧 — iPhone 6 専用ポータル</div>
+
+<div id="seasonStrip"></div>
+
+<div style="text-align:center; margin-bottom:10px;">
+<button id="bellBtn" class="pbtn" type="button">🔔 お知らせ<span id="bellBadge" class="bellbadge" style="display:none;"></span></button>
+</div>
+<div id="bellPanel" class="panel" style="display:none;"><div id="bellList" class="stat-line"></div></div>
+
+<div id="campaignBanner" class="panel" style="display:none; border-color:#ff5470;">
+<div class="stat-line">🎄 冬の観測キャンペーン（11/27〜12/25）<br>スタンプラリーとクーコインで冬を楽しもう</div>
+<button id="campaignBtn" class="pbtn" type="button" style="margin-top:8px;">スタンプラリーを見る</button>
+</div>
 
 <div id="coinBar">🪙 クーコイン <span id="coinCount">0</span>枚<span id="coinNote"></span></div>
 <div class="note" style="text-align:center;">ためるだけのポイントです。サイトを開くと、1日1回・サイトごとに+1枚もらえます</div>
@@ -467,6 +609,52 @@ textarea.bk {
 <div class="ext-line">・GitHub API（サイト一覧の自動チェック）：リクエストのみで個人データは送られません</div>
 <div class="ext-line">・P2P地震情報（地震データ取得）：リクエストのみで個人データは送られません</div>
 <div class="note">パスワードや個人情報は送られません。ただしAI欄には個人情報を書かないでください。</div>
+</div>
+
+<h2>■ 更新履歴</h2>
+<div class="panel">
+<button id="historyBtn" class="pbtn" type="button">更新履歴を開く</button>
+<div id="historyBody" style="display:none; margin-top:8px;" class="stat-line">
+2026-11-27 第8波：ポータル統合機能＋情報ボードに機能追加<br>
+2026-11-27 第7波：TECHO-6・OSHI-6など8サイトに機能追加<br>
+2026-11-27 第6波：ORBIT-6・DENWA-6など9サイトに機能追加<br>
+2026-11-27 第5波：KUU・AI-6など8サイトに機能追加<br>
+2026-11-27 第4波：新規6サイト＋HIMA-6・DENSETSU-6に機能追加<br>
+2026-11-27 第3波：観測系の新規8サイト<br>
+2026-11-27 第2波：新規8サイト<br>
+2026-11-27 第1波：新規8サイト
+</div>
+</div>
+
+<h2>■ QRコード集</h2>
+<div class="panel" style="text-align:center;">
+<div class="qrItem"><img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&amp;data=https%3A%2F%2F9rdyzkr686-png.github.io%2Fsora-field-scanner%2Fportal%2F" alt="PORTAL-6のQRコード" width="140" height="140" onerror="this.parentNode.style.display='none';"><div class="qrcap">PORTAL-6</div><div class="qrurl">9rdyzkr686-png.github.io/sora-field-scanner/portal/</div></div>
+<div class="qrItem"><img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&amp;data=https%3A%2F%2F9rdyzkr686-png.github.io%2Fsora-field-scanner%2F" alt="KUU FIELD SCANNERのQRコード" width="140" height="140" onerror="this.parentNode.style.display='none';"><div class="qrcap">KUU FIELD SCANNER</div><div class="qrurl">9rdyzkr686-png.github.io/sora-field-scanner/</div></div>
+<div class="qrItem"><img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&amp;data=https%3A%2F%2F9rdyzkr686-png.github.io%2FiPhone6-board%2F" alt="情報ボードのQRコード" width="140" height="140" onerror="this.parentNode.style.display='none';"><div class="qrcap">情報ボード</div><div class="qrurl">9rdyzkr686-png.github.io/iPhone6-board/</div></div>
+<div class="qrItem"><img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&amp;data=https%3A%2F%2F9rdyzkr686-png.github.io%2Fsora-field-scanner%2Fai%2F" alt="AI-6のQRコード" width="140" height="140" onerror="this.parentNode.style.display='none';"><div class="qrcap">AI-6</div><div class="qrurl">9rdyzkr686-png.github.io/sora-field-scanner/ai/</div></div>
+<div class="note">QR画像は外部サービス（api.qrserver.com）で生成しています</div>
+</div>
+
+<h2>■ ポータル設定</h2>
+<div class="panel">
+<div class="stat-line">テーマ</div>
+<select id="setTheme" class="psel">
+<option value="standard">標準</option>
+<option value="retro">レトロ端末</option>
+<option value="paper">紙</option>
+<option value="sunset">夕焼け</option>
+<option value="hand">手描き</option>
+</select>
+<div class="stat-line">フォント</div>
+<select id="setFont" class="psel">
+<option value="gothic">ゴシック</option>
+<option value="mincho">明朝</option>
+<option value="maru">丸ゴシック風</option>
+</select>
+<div class="btnrow">
+<button id="setNightBtn" class="pbtn" type="button">夜モード：OFF</button><button id="setSplashBtn" class="pbtn on" type="button">起動ロゴ：ON</button>
+</div>
+<div class="note">設定はこの端末に保存されます。レトロ端末・紙テーマでは、それぞれ専用のフォントになります。</div>
 </div>
 
 <button id="refreshBtn" type="button">↻ 更新</button>
@@ -1023,6 +1211,7 @@ function init() {
   el("bkExportBtn").onclick = bkExport;
   el("bkCopyBtn").onclick = bkCopy;
   el("bkImportBtn").onclick = bkImport;
+  initBatch2();
   var st = gatherStats();
   renderMyPage(st);
   renderTrophies(st);
@@ -1030,6 +1219,175 @@ function init() {
   checkNewSites();
 }
 
+/* ===== デザイン・設定（テーマ／フォント／夜モード／起動ロゴ／お知らせ／季節） ===== */
+
+var SET_KEY = "portal6_settings_v1";
+var settings = { theme: "standard", font: "gothic", night: false, splashOff: false };
+var THEME_CLASSES = ["theme-retro", "theme-paper", "theme-sunset", "theme-hand"];
+var FONT_CLASSES = ["font-gothic", "font-mincho", "font-maru"];
+var KEY_NAMES = {
+  "kuu": "KUU FIELD SCANNER", "ai": "AI-6", "geesen": "GEESEN-6",
+  "radio": "RADIO-6", "tv": "TV-6", "shinbun": "SHINBUN-6",
+  "sento": "SENTO-6", "shokudo": "SHOKUDO-6", "orbit": "ORBIT-6",
+  "radar": "RDR-6", "denwa": "DENWA-6", "jikan": "JIKAN-6",
+  "kaiju": "KAIJU-6", "ekima": "EKIMA-6", "jihanki": "JIHANKI-6",
+  "museum": "HAKUBUTSU-6", "photo": "PHOTO-6", "board6": "BOARD-6",
+  "techo": "TECHO-6", "oshi": "OSHI-6", "hima": "HIMA-6"
+};
+var SPLASH_FACTS = [
+  "ダックスフンドは、ドイツ語で「あなぐま犬」という意味です",
+  "ISS（国際宇宙ステーション）は約90分で地球を1周します",
+  "クーコインは、サイトを開くと1日1回・サイトごとに+1枚もらえます",
+  "KUU-01は、話しかけるほどPHASEが上がります",
+  "★を押すと、お気に入りのサイトを上の棚に固定できます",
+  "まよったら「おまかせで開く」がおすすめです",
+  "月の光が地球に届くまで、およそ1.3秒かかります",
+  "記録は「まるごとバックアップ」で守れます",
+  "富士山は、晴れた日ならふじみ野からも見えることがあります",
+  "ダックスの腰を守るには、段差の上り下りに注意です",
+  "スタンプラリーは6つ集めると制覇です",
+  "このポータルは、ネットがなくても一覧が表示されます"
+];
+
+function loadSettings() {
+  var o = readJSON(SET_KEY);
+  if (o && typeof o === "object") {
+    if (o.theme === "standard" || o.theme === "retro" || o.theme === "paper" || o.theme === "sunset" || o.theme === "hand") { settings.theme = o.theme; }
+    if (o.font === "gothic" || o.font === "mincho" || o.font === "maru") { settings.font = o.font; }
+    settings.night = !!o.night;
+    settings.splashOff = !!o.splashOff;
+  }
+}
+
+function saveSettings() {
+  try { window.localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (e) {}
+}
+
+function applyAppearance() {
+  var b = document.body;
+  var i;
+  for (i = 0; i < THEME_CLASSES.length; i++) { b.classList.remove(THEME_CLASSES[i]); }
+  for (i = 0; i < FONT_CLASSES.length; i++) { b.classList.remove(FONT_CLASSES[i]); }
+  if (settings.theme !== "standard") { b.classList.add("theme-" + settings.theme); }
+  b.classList.add("font-" + settings.font);
+  if (settings.night) { b.classList.add("night"); } else { b.classList.remove("night"); }
+  var st = el("setTheme");
+  if (st) { st.value = settings.theme; }
+  var sf = el("setFont");
+  if (sf) { sf.value = settings.font; }
+  var nb = el("setNightBtn");
+  if (nb) {
+    nb.innerHTML = "夜モード：" + (settings.night ? "ON" : "OFF");
+    nb.className = settings.night ? "pbtn on" : "pbtn";
+  }
+  var sb = el("setSplashBtn");
+  if (sb) {
+    sb.innerHTML = "起動ロゴ：" + (settings.splashOff ? "OFF" : "ON");
+    sb.className = settings.splashOff ? "pbtn" : "pbtn on";
+  }
+}
+
+function seasonInfo() {
+  var m = new Date().getMonth() + 1;
+  if (m === 1) { return { emoji: "🎍", text: "あけましておめでとうございます。今年も観測を続けましょう" }; }
+  if (m === 12) { return { emoji: "🎄❄", text: "メリークリスマス！ 冬の観測シーズンです" }; }
+  if (m >= 3 && m <= 5) { return { emoji: "🌸", text: "春です。桜の季節、観測日和です" }; }
+  if (m >= 6 && m <= 8) { return { emoji: "🌊", text: "夏です。暑さ対策をして、海の窓をどうぞ" }; }
+  if (m >= 9 && m <= 11) { return { emoji: "🍁", text: "秋です。紅葉と読書の季節です" }; }
+  return { emoji: "❄", text: "冬です。温かい飲み物と一緒にどうぞ" };
+}
+
+function campaignActive() {
+  var d = new Date();
+  var m = d.getMonth() + 1;
+  var day = d.getDate();
+  return (m === 11 && day >= 20) || (m === 12 && day <= 25);
+}
+
+function renderSeason() {
+  var s = seasonInfo();
+  var strip = el("seasonStrip");
+  strip.innerHTML = "";
+  strip.appendChild(document.createTextNode(s.emoji + " " + s.text));
+}
+
+function renderBell() {
+  var keys = [];
+  var k;
+  for (k in UPDATES) { if (isNewSite(k)) { keys.push(k); } }
+  var camp = campaignActive();
+  var count = keys.length + (camp ? 1 : 0);
+  var badge = el("bellBadge");
+  if (count > 0) {
+    badge.style.display = "inline-block";
+    badge.innerHTML = "";
+    badge.appendChild(document.createTextNode(String(count)));
+  } else {
+    badge.style.display = "none";
+  }
+  var lines = [];
+  var i;
+  for (i = 0; i < keys.length; i++) {
+    lines.push("🆕 " + (KEY_NAMES[keys[i]] || keys[i]) + " が更新されました（NEW）");
+  }
+  if (camp) { lines.push("🎄 冬の観測キャンペーン開催中です（12/25まで）"); }
+  if (!lines.length) { lines.push("新しいお知らせはありません"); }
+  el("bellList").innerHTML = lines.join("<br>");
+  if (camp) { el("campaignBanner").style.display = "block"; }
+}
+
+function setupSplash() {
+  var sp = el("splash");
+  if (!sp) { return; }
+  if (settings.splashOff) { sp.style.display = "none"; return; }
+  var fact = SPLASH_FACTS[Math.floor(Math.random() * SPLASH_FACTS.length)];
+  el("splashFact").appendChild(document.createTextNode(fact));
+  var hide = function () { sp.style.display = "none"; };
+  sp.onclick = hide;
+  setTimeout(hide, 1600);
+}
+
+function initBatch2() {
+  renderSeason();
+  renderBell();
+  el("bellBtn").onclick = function () {
+    var p = el("bellPanel");
+    p.style.display = (p.style.display === "block") ? "none" : "block";
+  };
+  el("campaignBtn").onclick = function () {
+    try { el("rallyPanel").scrollIntoView(); } catch (e) {}
+  };
+  el("historyBtn").onclick = function () {
+    var hb = el("historyBody");
+    var open = hb.style.display !== "none";
+    hb.style.display = open ? "none" : "block";
+    el("historyBtn").innerHTML = open ? "更新履歴を開く" : "更新履歴を閉じる";
+  };
+  el("setTheme").onchange = function () {
+    settings.theme = this.value;
+    saveSettings();
+    applyAppearance();
+  };
+  el("setFont").onchange = function () {
+    settings.font = this.value;
+    saveSettings();
+    applyAppearance();
+  };
+  el("setNightBtn").onclick = function () {
+    settings.night = !settings.night;
+    saveSettings();
+    applyAppearance();
+  };
+  el("setSplashBtn").onclick = function () {
+    settings.splashOff = !settings.splashOff;
+    saveSettings();
+    applyAppearance();
+  };
+}
+
+loadSettings();
+applyAppearance();
+setupSplash();
 init();
 </script>
 </body>
