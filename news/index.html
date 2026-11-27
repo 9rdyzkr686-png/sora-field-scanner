@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>NEWS-6 ニュース専門端末</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: #f4f1ea; color: #1a1a1a; font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; padding: 10px 10px 40px; }
+a { color: #1a1a1a; text-decoration: none; }
+.topbar { margin-bottom: 8px; }
+.portal-link { display: inline-block; min-height: 48px; line-height: 48px; padding: 0 14px; background: #1a1a1a; color: #f4f1ea; font-size: 15px; font-weight: bold; border-radius: 4px; }
+.masthead { border-top: 4px double #1a1a1a; border-bottom: 4px double #1a1a1a; padding: 10px 4px 8px; text-align: center; margin-bottom: 8px; }
+.masthead .kicker { font-size: 12px; letter-spacing: 3px; color: #555; }
+.masthead h1 { font-size: 30px; letter-spacing: 2px; margin: 2px 0; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; }
+.masthead .sub { font-size: 13px; color: #444; }
+.dateline { display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px solid #999; padding: 4px 2px 8px; margin-bottom: 10px; color: #333; }
+.reload-all { display: block; width: 100%; min-height: 52px; font-size: 17px; font-weight: bold; background: #8c1d18; color: #fff; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 14px; }
+.reload-all:active { background: #6d130f; }
+.section { background: #fffdf7; border: 1px solid #b8b2a4; border-top: 3px solid #1a1a1a; padding: 10px 10px 6px; margin-bottom: 14px; }
+.section h2 { font-size: 20px; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 4px; }
+.section h2 .en { font-size: 11px; color: #888; letter-spacing: 2px; margin-left: 6px; font-family: sans-serif; }
+.status { font-size: 13px; color: #666; min-height: 20px; margin-bottom: 4px; }
+.status.err { color: #a00; }
+ul.headlines { list-style: none; }
+ul.headlines li { border-bottom: 1px dotted #bbb; }
+ul.headlines li:last-child { border-bottom: none; }
+ul.headlines a { display: block; padding: 12px 2px; min-height: 48px; }
+.h-date { display: inline-block; font-size: 12px; color: #fff; background: #555; border-radius: 3px; padding: 1px 6px; margin-right: 7px; vertical-align: 2px; }
+.h-title { font-size: 16px; line-height: 1.45; }
+.retry-btn { display: none; width: 100%; min-height: 48px; font-size: 15px; font-weight: bold; background: #fff; color: #8c1d18; border: 2px solid #8c1d18; border-radius: 4px; cursor: pointer; margin: 4px 0 8px; }
+.retry-btn:active { background: #f6e3e1; }
+.empty-note { font-size: 14px; color: #888; padding: 10px 2px; }
+.footer { text-align: center; font-size: 12px; color: #777; margin-top: 18px; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="portal-link" href="../portal/">← 全サイト一覧へ</a>
+</div>
+
+<div class="masthead">
+  <div class="kicker">NEWS TERMINAL No.6</div>
+  <h1>NEWS-6</h1>
+  <div class="sub">ニュース専門端末 ― 六つの面を、一台で。</div>
+</div>
+
+<div class="dateline">
+  <span id="todayLine">―</span>
+  <span>出典：各ニュースサイト</span>
+</div>
+
+<button class="reload-all" id="reloadAllBtn">↻ まとめて更新</button>
+
+<div id="sectionsRoot"></div>
+
+<div class="footer">
+  NEWS-6 ニュース専門端末<br>
+  見出しは各配信元から取得しています。記事はタップで開きます。
+</div>
+
+<script>
+var RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
+var GN = "https://news.google.com/rss/search?q=";
+var GN_TAIL = "&hl=ja&gl=JP&ceid=JP:ja";
+
+var SECTIONS = [
+  { key: "cutie", name: "CUTIE STREET", en: "IDOL NEWS",
+    feed: GN + encodeURIComponent("\"CUTIE STREET\"") + GN_TAIL },
+  { key: "space", name: "宇宙", en: "SPACE",
+    feed: "https://sorae.info/feed" },
+  { key: "legend", name: "都市伝説", en: "URBAN LEGEND",
+    feed: "https://www.bing.com/news/search?q=%E9%83%BD%E5%B8%82%E4%BC%9D%E8%AA%AC&format=rss" },
+  { key: "toku", name: "特撮・怪獣", en: "TOKUSATSU",
+    feed: GN + encodeURIComponent("特撮 OR ゴジラ") + GN_TAIL },
+  { key: "dax", name: "ダックス", en: "DACHSHUND",
+    feed: GN + encodeURIComponent("ダックスフンド") + GN_TAIL },
+  { key: "local", name: "ふじみ野・川越", en: "LOCAL",
+    feed: GN + encodeURIComponent("ふじみ野市 OR 川越市") + GN_TAIL }
+];
+
+function escHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function fmtDate(pub) {
+  var d = new Date(pub);
+  if (isNaN(d.getTime())) return "";
+  return (d.getMonth() + 1) + "/" + d.getDate();
+}
+
+function fmtTime(d) {
+  var h = d.getHours();
+  var m = d.getMinutes();
+  if (m < 10) m = "0" + m;
+  return h + "時" + m + "分";
+}
+
+function buildSections() {
+  var root = document.getElementById("sectionsRoot");
+  var html = "";
+  var i;
+  for (i = 0; i < SECTIONS.length; i++) {
+    var s = SECTIONS[i];
+    html += '<div class="section" id="sec-' + s.key + '">'
+      + '<h2>' + escHtml(s.name) + '<span class="en">' + escHtml(s.en) + '</span></h2>'
+      + '<div class="status" id="status-' + s.key + '">取得中…</div>'
+      + '<ul class="headlines" id="list-' + s.key + '"></ul>'
+      + '<button class="retry-btn" id="retry-' + s.key + '">↻ この面だけ再試行</button>'
+      + '</div>';
+  }
+  root.innerHTML = html;
+  for (i = 0; i < SECTIONS.length; i++) {
+    (function (sec) {
+      document.getElementById("retry-" + sec.key).onclick = function () { fetchSection(sec); };
+    })(SECTIONS[i]);
+  }
+}
+
+function setStatus(sec, text, isErr) {
+  var el = document.getElementById("status-" + sec.key);
+  el.textContent = text;
+  el.className = isErr ? "status err" : "status";
+}
+
+function fetchSection(sec) {
+  var retryBtn = document.getElementById("retry-" + sec.key);
+  retryBtn.style.display = "none";
+  setStatus(sec, "取得中…", false);
+  var url = RSS2JSON + encodeURIComponent(sec.feed);
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", url, true);
+  xhr.timeout = 30000;
+  var done = false;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4 || done) return;
+    done = true;
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (data && data.status === "ok" && data.items) {
+          renderSection(sec, data.items);
+          setStatus(sec, fmtTime(new Date()) + "取得", false);
+          return;
+        }
+      } catch (e) { }
+    }
+    failSection(sec);
+  };
+  xhr.ontimeout = function () {
+    if (done) return;
+    done = true;
+    failSection(sec);
+  };
+  xhr.onerror = function () {
+    if (done) return;
+    done = true;
+    failSection(sec);
+  };
+  try { xhr.send(); } catch (e2) { failSection(sec); }
+}
+
+function failSection(sec) {
+  setStatus(sec, "取得失敗しました", true);
+  document.getElementById("retry-" + sec.key).style.display = "block";
+}
+
+function renderSection(sec, items) {
+  var list = document.getElementById("list-" + sec.key);
+  var seen = {};
+  var html = "";
+  var count = 0;
+  for (var i = 0; i < items.length && count < 4; i++) {
+    var it = items[i];
+    if (!it || !it.title || !it.link) continue;
+    var title = String(it.title);
+    if (seen[title]) continue;
+    seen[title] = true;
+    var dateStr = it.pubDate ? fmtDate(it.pubDate) : "";
+    html += '<li><a href="' + escHtml(it.link) + '" target="_blank" rel="noopener">'
+      + (dateStr ? '<span class="h-date">' + escHtml(dateStr) + '</span>' : '')
+      + '<span class="h-title">' + escHtml(title) + '</span>'
+      + '</a></li>';
+    count++;
+  }
+  if (count === 0) {
+    html = '<li class="empty-note">いま表示できる見出しがありません。</li>';
+  }
+  list.innerHTML = html;
+}
+
+function fetchAll() {
+  for (var i = 0; i < SECTIONS.length; i++) {
+    fetchSection(SECTIONS[i]);
+  }
+}
+
+function init() {
+  var now = new Date();
+  var days = ["日", "月", "火", "水", "木", "金", "土"];
+  document.getElementById("todayLine").textContent =
+    now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日（" + days[now.getDay()] + "）";
+  buildSections();
+  document.getElementById("reloadAllBtn").onclick = fetchAll;
+  fetchAll();
+}
+
+init();
+</script>
+</body>
+</html>

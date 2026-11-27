@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OSHI-6 推し活ステーション</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0 10px 40px; background: #fff0f6; color: #4a2436;
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; font-size: 16px; }
+a { color: #d6336c; }
+.back { display: block; min-height: 48px; line-height: 48px; font-size: 17px; font-weight: bold; text-decoration: none; }
+header { text-align: center; padding: 14px 6px 6px; }
+h1 { margin: 0; font-size: 26px; color: #d6336c; letter-spacing: 1px; }
+.sub { margin: 4px 0 0; font-size: 14px; color: #a0506e; }
+.card { background: #ffffff; border: 2px solid #ffc2d9; border-radius: 14px; padding: 12px; margin: 14px 0; }
+.card h2 { margin: 0 0 8px; font-size: 19px; color: #d6336c; border-bottom: 2px dashed #ffd6e7; padding-bottom: 6px; }
+.note { font-size: 13px; color: #a0506e; margin: 6px 0; }
+.status { font-size: 13px; color: #a0506e; margin: 6px 0; min-height: 18px; }
+.vid { display: block; min-height: 76px; padding: 8px 4px; border-bottom: 1px solid #ffe3ee; text-decoration: none; color: #4a2436; }
+.vid:last-child { border-bottom: none; }
+.vid img { float: left; width: 104px; height: 59px; border-radius: 8px; margin-right: 10px; background: #ffd6e7; }
+.vid .vt { font-size: 15px; font-weight: bold; line-height: 1.35; }
+.vid .vd { font-size: 13px; color: #a0506e; margin-top: 4px; }
+.clr { clear: both; }
+.news { display: block; min-height: 48px; padding: 10px 4px; border-bottom: 1px solid #ffe3ee; text-decoration: none; color: #4a2436; }
+.news:last-child { border-bottom: none; }
+.news .nt { font-size: 15px; font-weight: bold; line-height: 1.35; }
+.news .nd { font-size: 13px; color: #a0506e; margin-top: 3px; }
+.retry { display: none; width: 100%; min-height: 48px; font-size: 16px; font-weight: bold; color: #ffffff;
+  background: #f06595; border: none; border-radius: 10px; margin-top: 8px; }
+.album { text-align: center; padding: 6px 0 2px; }
+.album .ttl { font-size: 17px; font-weight: bold; }
+.album .big { font-size: 40px; font-weight: bold; color: #d6336c; margin: 6px 0; }
+.album .date { font-size: 14px; color: #a0506e; }
+.bday { padding: 9px 4px; border-bottom: 1px solid #ffe3ee; font-size: 16px; min-height: 48px; }
+.bday:last-child { border-bottom: none; }
+.bday .nm { font-weight: bold; }
+.bday .bd { color: #a0506e; font-size: 14px; }
+.bday .cnt { float: right; font-weight: bold; color: #d6336c; }
+.bday.today { background: #fff5f8; }
+label { display: block; font-size: 14px; font-weight: bold; margin: 10px 0 4px; }
+input[type="date"], input[type="text"] { width: 100%; min-height: 48px; font-size: 17px; padding: 8px;
+  border: 2px solid #ffc2d9; border-radius: 10px; background: #fffafd; color: #4a2436; }
+.addbtn { width: 100%; min-height: 52px; font-size: 18px; font-weight: bold; color: #ffffff;
+  background: #d6336c; border: none; border-radius: 10px; margin-top: 14px; }
+.logitem { border-bottom: 1px solid #ffe3ee; padding: 9px 4px; }
+.logitem:last-child { border-bottom: none; }
+.logitem .ld { font-size: 13px; color: #a0506e; }
+.logitem .le { font-size: 16px; font-weight: bold; }
+.logitem .lm { font-size: 14px; margin-top: 2px; }
+.delbtn { min-height: 48px; min-width: 72px; font-size: 15px; color: #d6336c; background: #fff0f6;
+  border: 2px solid #ffc2d9; border-radius: 10px; margin-top: 6px; }
+.foot { text-align: center; font-size: 12px; color: #c08aa2; margin-top: 18px; }
+</style>
+</head>
+<body>
+<a class="back" href="../portal/">← 全サイト一覧へ</a>
+<header>
+  <h1>♡ OSHI-6 ♡</h1>
+  <p class="sub">推し活ステーション 〜 CUTIE STREET 応援ページ 〜</p>
+</header>
+
+<div class="card">
+  <h2>▶ 新着動画（YouTube公式）</h2>
+  <div id="ytList"><p class="note">読み込み中…</p></div>
+  <p class="status" id="ytTime"></p>
+  <button class="retry" id="ytRetry" type="button">もう一度読み込む</button>
+</div>
+
+<div class="card">
+  <h2>★ ニュース</h2>
+  <div id="newsList"><p class="note">読み込み中…</p></div>
+  <p class="status" id="newsTime"></p>
+  <button class="retry" id="newsRetry" type="button">もう一度読み込む</button>
+</div>
+
+<div class="card">
+  <h2>♪ 発売カウントダウン</h2>
+  <div class="album">
+    <div class="ttl">1stアルバム『CUTIE LAND』</div>
+    <div class="big" id="albumCount">…</div>
+    <div class="date">2026年12月2日（水）発売</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>♥ メンバー誕生日</h2>
+  <div id="bdayList"></div>
+  <p class="note">※愛花・遥花の誕生日は公式生誕祭で確認済み。他は公式SNSアカウント名などからの推定です。</p>
+</div>
+
+<div class="card">
+  <h2>✎ 参戦記録</h2>
+  <label for="logDate">日付</label>
+  <input type="date" id="logDate">
+  <label for="logEvent">イベント名</label>
+  <input type="text" id="logEvent" placeholder="例：KAWAII LAB. SESSION">
+  <label for="logMemo">ひとことメモ</label>
+  <input type="text" id="logMemo" placeholder="例：最前列だった！">
+  <button class="addbtn" id="logAdd" type="button">記録を追加</button>
+  <div id="logList" style="margin-top:10px;"></div>
+  <p class="note" id="logEmpty">まだ記録がありません。記録はこの端末の中にだけ保存されます。</p>
+</div>
+
+<p class="foot">OSHI-6 推し活ステーション<br>動画・ニュースは公式YouTube／Googleニュースから取得しています。</p>
+
+<script>
+var YT_FEED = "https://www.youtube.com/feeds/videos.xml?channel_id=UCEz-AFAg3EUKsxraad1puQA";
+var NEWS_FEED = "https://news.google.com/rss/search?q=%22CUTIE%20STREET%22&hl=ja&gl=JP&ceid=JP:ja";
+var RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
+
+function esc(s) {
+  s = String(s == null ? "" : s);
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function fmtDate(s) {
+  if (!s) return "";
+  var d = new Date(s);
+  if (isNaN(d.getTime())) return esc(s);
+  return d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate();
+}
+function nowStamp() {
+  var d = new Date();
+  var hh = d.getHours(); if (hh < 10) hh = "0" + hh;
+  var mm = d.getMinutes(); if (mm < 10) mm = "0" + mm;
+  return "取得時刻：" + (d.getMonth() + 1) + "/" + d.getDate() + " " + hh + ":" + mm;
+}
+function fetchFeed(feedUrl, okFn, ngFn) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", RSS2JSON + encodeURIComponent(feedUrl), true);
+  xhr.timeout = 30000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) return;
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (data && data.status === "ok" && data.items) { okFn(data.items); return; }
+      } catch (e) {}
+    }
+    ngFn();
+  };
+  xhr.ontimeout = function () { ngFn(); };
+  xhr.onerror = function () { ngFn(); };
+  xhr.send(null);
+}
+
+/* ---------- 1. 新着動画 ---------- */
+function loadYT() {
+  var list = document.getElementById("ytList");
+  var time = document.getElementById("ytTime");
+  var retry = document.getElementById("ytRetry");
+  retry.style.display = "none";
+  list.innerHTML = '<p class="note">読み込み中…</p>';
+  time.innerHTML = "";
+  fetchFeed(YT_FEED, function (items) {
+    if (!items.length) {
+      list.innerHTML = '<p class="note">動画が見つかりませんでした。</p>';
+      time.innerHTML = nowStamp();
+      return;
+    }
+    var html = "";
+    var n = Math.min(5, items.length);
+    for (var i = 0; i < n; i++) {
+      var it = items[i];
+      html += '<a class="vid" href="' + esc(it.link) + '" target="_blank" rel="noopener">';
+      if (it.thumbnail) html += '<img src="' + esc(it.thumbnail) + '" alt="">';
+      html += '<div class="vt">' + esc(it.title) + '</div>';
+      html += '<div class="vd">' + fmtDate(it.pubDate) + '</div><div class="clr"></div></a>';
+    }
+    list.innerHTML = html;
+    time.innerHTML = nowStamp();
+  }, function () {
+    list.innerHTML = '<p class="note">動画を取得できませんでした。通信状態を確認して、もう一度お試しください。</p>';
+    retry.style.display = "block";
+  });
+}
+
+/* ---------- 2. ニュース ---------- */
+function loadNews() {
+  var list = document.getElementById("newsList");
+  var time = document.getElementById("newsTime");
+  var retry = document.getElementById("newsRetry");
+  retry.style.display = "none";
+  list.innerHTML = '<p class="note">読み込み中…</p>';
+  time.innerHTML = "";
+  fetchFeed(NEWS_FEED, function (items) {
+    if (!items.length) {
+      list.innerHTML = '<p class="note">ニュースが見つかりませんでした。</p>';
+      time.innerHTML = nowStamp();
+      return;
+    }
+    var html = "";
+    var n = Math.min(5, items.length);
+    for (var i = 0; i < n; i++) {
+      var it = items[i];
+      html += '<a class="news" href="' + esc(it.link) + '" target="_blank" rel="noopener">';
+      html += '<div class="nt">' + esc(it.title) + '</div>';
+      html += '<div class="nd">' + fmtDate(it.pubDate) + '</div></a>';
+    }
+    list.innerHTML = html;
+    time.innerHTML = nowStamp();
+  }, function () {
+    list.innerHTML = '<p class="note">ニュースを取得できませんでした。通信状態を確認して、もう一度お試しください。</p>';
+    retry.style.display = "block";
+  });
+}
+
+/* ---------- 3. 発売カウントダウン ---------- */
+function dayOnly(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function showAlbum() {
+  var el = document.getElementById("albumCount");
+  var today = dayOnly(new Date());
+  var rel = new Date(2026, 11, 2);
+  var diff = Math.round((rel.getTime() - today.getTime()) / 86400000);
+  if (diff > 0) el.innerHTML = "あと " + diff + " 日";
+  else if (diff === 0) el.innerHTML = "本日発売！";
+  else el.innerHTML = "発売中！";
+}
+
+/* ---------- 4. メンバー誕生日 ---------- */
+var MEMBERS = [
+  { name: "古澤里紗", m: 11, d: 8 },
+  { name: "佐野愛花", m: 11, d: 26 },
+  { name: "板倉可奈", m: 11, d: 11 },
+  { name: "増田彩乃", m: 5, d: 26 },
+  { name: "川本笑瑠", m: 4, d: 22 },
+  { name: "梅田みゆ", m: 9, d: 13 },
+  { name: "真鍋凪咲", m: 6, d: 28 },
+  { name: "桜庭遥花", m: 1, d: 29 }
+];
+function daysUntilBirthday(mb, today) {
+  var thisYear = new Date(today.getFullYear(), mb.m - 1, mb.d);
+  var target = thisYear;
+  if (thisYear.getTime() < today.getTime()) {
+    target = new Date(today.getFullYear() + 1, mb.m - 1, mb.d);
+  }
+  return Math.round((target.getTime() - today.getTime()) / 86400000);
+}
+function showBirthdays() {
+  var today = dayOnly(new Date());
+  var arr = [];
+  for (var i = 0; i < MEMBERS.length; i++) {
+    arr.push({ mb: MEMBERS[i], days: daysUntilBirthday(MEMBERS[i], today) });
+  }
+  arr.sort(function (a, b) { return a.days - b.days; });
+  var html = "";
+  for (var j = 0; j < arr.length; j++) {
+    var mb2 = arr[j].mb;
+    var cnt = arr[j].days === 0 ? "今日が誕生日！" : "あと " + arr[j].days + " 日";
+    html += '<div class="bday' + (arr[j].days === 0 ? " today" : "") + '">';
+    html += '<span class="cnt">' + cnt + '</span>';
+    html += '<span class="nm">' + esc(mb2.name) + '</span> ';
+    html += '<span class="bd">' + mb2.m + "月" + mb2.d + "日" + '</span></div>';
+  }
+  document.getElementById("bdayList").innerHTML = html;
+}
+
+/* ---------- 5. 参戦記録 ---------- */
+var LOG_KEY = "oshi6_log_v1";
+var logs = [];
+function loadLogs() {
+  try {
+    var raw = localStorage.getItem(LOG_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && p.length !== undefined) logs = p;
+    }
+  } catch (e) { logs = []; }
+}
+function saveLogs() {
+  try { localStorage.setItem(LOG_KEY, JSON.stringify(logs)); } catch (e) {}
+}
+function renderLogs() {
+  var list = document.getElementById("logList");
+  var empty = document.getElementById("logEmpty");
+  if (!logs.length) {
+    list.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  var html = "";
+  for (var i = 0; i < logs.length; i++) {
+    var L = logs[i];
+    html += '<div class="logitem">';
+    html += '<div class="ld">' + esc(L.d) + '</div>';
+    html += '<div class="le">' + esc(L.e) + '</div>';
+    if (L.m) html += '<div class="lm">' + esc(L.m) + '</div>';
+    html += '<button class="delbtn" type="button" data-idx="' + i + '">削除</button>';
+    html += '</div>';
+  }
+  list.innerHTML = html;
+  var btns = list.getElementsByTagName("button");
+  for (var k = 0; k < btns.length; k++) {
+    btns[k].onclick = function () {
+      var idx = parseInt(this.getAttribute("data-idx"), 10);
+      logs.splice(idx, 1);
+      saveLogs();
+      renderLogs();
+    };
+  }
+}
+function addLog() {
+  var dEl = document.getElementById("logDate");
+  var eEl = document.getElementById("logEvent");
+  var mEl = document.getElementById("logMemo");
+  var ev = eEl.value.replace(/^\s+|\s+$/g, "");
+  if (!ev) { alert("イベント名を入れてください"); return; }
+  var dt = dEl.value;
+  if (!dt) {
+    var t = new Date();
+    var mm = t.getMonth() + 1; if (mm < 10) mm = "0" + mm;
+    var dd = t.getDate(); if (dd < 10) dd = "0" + dd;
+    dt = t.getFullYear() + "-" + mm + "-" + dd;
+  }
+  logs.unshift({ d: dt, e: ev, m: mEl.value.replace(/^\s+|\s+$/g, "") });
+  saveLogs();
+  renderLogs();
+  eEl.value = "";
+  mEl.value = "";
+}
+
+/* ---------- 起動 ---------- */
+document.getElementById("ytRetry").onclick = loadYT;
+document.getElementById("newsRetry").onclick = loadNews;
+document.getElementById("logAdd").onclick = addLog;
+(function () {
+  var t = new Date();
+  var mm = t.getMonth() + 1; if (mm < 10) mm = "0" + mm;
+  var dd = t.getDate(); if (dd < 10) dd = "0" + dd;
+  document.getElementById("logDate").value = t.getFullYear() + "-" + mm + "-" + dd;
+})();
+showAlbum();
+showBirthdays();
+loadLogs();
+renderLogs();
+loadYT();
+loadNews();
+</script>
+</body>
+</html>

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CHECK-6 診断端末</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #000;
+  color: #33ff66;
+  font-family: "Courier New", monospace;
+  padding: 12px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+a { color: #ffcc33; }
+.backlink {
+  display: inline-block;
+  min-height: 48px;
+  line-height: 48px;
+  padding: 0 8px;
+  font-size: 16px;
+  text-decoration: none;
+}
+h1 {
+  font-size: 22px;
+  letter-spacing: 2px;
+  border-bottom: 2px solid #33ff66;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+}
+.sub { color: #99ffbb; font-size: 14px; margin-bottom: 10px; }
+.note {
+  border: 1px solid #ffcc33;
+  color: #ffcc33;
+  padding: 8px 10px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+#startBtn {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  background: #003311;
+  color: #33ff66;
+  border: 2px solid #33ff66;
+  font-family: "Courier New", monospace;
+  font-size: 20px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  margin-bottom: 14px;
+}
+#startBtn:disabled { opacity: 0.4; }
+.row {
+  border: 1px solid #1a6633;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: #020a04;
+}
+.rowhead {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  min-height: 32px;
+}
+.rname { font-size: 17px; font-weight: bold; }
+.rres { font-size: 18px; font-weight: bold; min-width: 90px; text-align: right; }
+.res-ok { color: #33ff66; }
+.res-ng { color: #ff4444; }
+.res-wait { color: #888888; }
+.res-run { color: #ffcc33; }
+.rdet { color: #99ffbb; font-size: 14px; margin-top: 4px; word-break: break-all; }
+.rms { color: #ffcc33; font-size: 14px; }
+#devInfo {
+  color: #99ffbb;
+  font-size: 14px;
+  margin-top: 6px;
+  word-break: break-all;
+  display: none;
+}
+#summary {
+  border: 2px solid #33ff66;
+  padding: 12px;
+  font-size: 20px;
+  text-align: center;
+  letter-spacing: 2px;
+  margin-top: 6px;
+  display: none;
+}
+.foot { color: #557755; font-size: 13px; margin-top: 14px; }
+.blink { color: #ffcc33; }
+</style>
+</head>
+<body>
+<a class="backlink" href="../portal/">&larr; 全サイト一覧へ</a>
+<h1>CHECK-6 診断端末</h1>
+<div class="sub">DIAGNOSTIC TERMINAL // 各回線の接続テスト</div>
+
+<div class="note">※ AI診断は無料枠を1回分使います（1日100回まで）。それ以外の診断は無料枠を使いません。</div>
+
+<button id="startBtn" type="button">■ 診断スタート</button>
+
+<div class="row" id="row1">
+  <div class="rowhead">
+    <span class="rname">1. AI回線 (Pollinations)</span>
+    <span class="rres res-wait" id="res1">未診断</span>
+  </div>
+  <div class="rdet"><span id="det1">-</span> <span class="rms" id="ms1"></span></div>
+</div>
+
+<div class="row" id="row2">
+  <div class="rowhead">
+    <span class="rname">2. ニュース取得 (rss2json)</span>
+    <span class="rres res-wait" id="res2">未診断</span>
+  </div>
+  <div class="rdet"><span id="det2">-</span> <span class="rms" id="ms2"></span></div>
+</div>
+
+<div class="row" id="row3">
+  <div class="rowhead">
+    <span class="rname">3. 天気 (Open-Meteo)</span>
+    <span class="rres res-wait" id="res3">未診断</span>
+  </div>
+  <div class="rdet"><span id="det3">-</span> <span class="rms" id="ms3"></span></div>
+</div>
+
+<div class="row" id="row4">
+  <div class="rowhead">
+    <span class="rname">4. ISS位置 (wheretheiss.at)</span>
+    <span class="rres res-wait" id="res4">未診断</span>
+  </div>
+  <div class="rdet"><span id="det4">-</span> <span class="rms" id="ms4"></span></div>
+</div>
+
+<div class="row" id="row5">
+  <div class="rowhead">
+    <span class="rname">5. 地震情報 (P2P地震)</span>
+    <span class="rres res-wait" id="res5">未診断</span>
+  </div>
+  <div class="rdet"><span id="det5">-</span> <span class="rms" id="ms5"></span></div>
+</div>
+
+<div class="row" id="row6">
+  <div class="rowhead">
+    <span class="rname">6. この端末の情報</span>
+    <span class="rres res-wait" id="res6">未診断</span>
+  </div>
+  <div class="rdet"><span id="det6">-</span> <span class="rms" id="ms6"></span></div>
+  <div id="devInfo"></div>
+</div>
+
+<div id="summary"></div>
+
+<div class="foot">
+  NGのときは「詳細：HTTP ○○」や秒数をクーに伝えてください。原因の特定が速くなります。<br>
+  CHECK-6 v1
+</div>
+
+<script>
+var doneCount = 0;
+var okCount = 0;
+var running = false;
+
+function $(id) { return document.getElementById(id); }
+
+function setRes(n, cls, text) {
+  var el = $("res" + n);
+  el.className = "rres " + cls;
+  el.innerHTML = text;
+}
+function setDet(n, text) { $("det" + n).innerHTML = text; }
+function setMs(n, ms) { $("ms" + n).innerHTML = " / " + ms + "ms"; }
+
+function finishOne(n, ok) {
+  doneCount++;
+  if (ok) { okCount++; }
+  if (doneCount >= 6) {
+    running = false;
+    $("startBtn").disabled = false;
+    $("startBtn").innerHTML = "■ もう一度診断";
+    var s = $("summary");
+    s.style.display = "block";
+    s.innerHTML = "診断結果： " + okCount + "/6 OK";
+  }
+}
+
+function failHttp(n, start, status, extra) {
+  var ms = new Date().getTime() - start;
+  setMs(n, ms);
+  setRes(n, "res-ng", "NG");
+  setDet(n, "詳細：HTTP " + status + (extra ? " " + extra : ""));
+  finishOne(n, false);
+}
+
+function testAI() {
+  var n = 1;
+  var start = new Date().getTime();
+  setRes(n, "res-run", "診断中…");
+  setDet(n, "AI回線へ送信中…");
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 30000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    var ms = new Date().getTime() - start;
+    setMs(1, ms);
+    var body = xhr.responseText || "";
+    if (xhr.status === 402 || body.indexOf("Free limit") >= 0 || body.indexOf("FREE_LIMIT") >= 0) {
+      setRes(1, "res-ng", "NG（上限）");
+      setDet(1, "1日の無料枠（100回）を使い切りました。翌朝9時に回復します。詳細：HTTP " + xhr.status);
+      finishOne(1, false);
+    } else if (xhr.status === 200 && body.replace(/\s/g, "").length > 0) {
+      setRes(1, "res-ok", "OK");
+      setDet(1, "応答あり（" + body.length + "文字）。詳細：HTTP 200");
+      finishOne(1, true);
+    } else if (xhr.status === 200) {
+      setRes(1, "res-ng", "NG");
+      setDet(1, "応答が空でした。詳細：HTTP 200");
+      finishOne(1, false);
+    } else {
+      setRes(1, "res-ng", "NG");
+      setDet(1, "詳細：HTTP " + xhr.status);
+      finishOne(1, false);
+    }
+  };
+  xhr.ontimeout = function () {
+    var ms = new Date().getTime() - start;
+    setMs(1, ms);
+    setRes(1, "res-ng", "NG");
+    setDet(1, "時間切れ（30秒）。回線が混み合っている可能性があります");
+    finishOne(1, false);
+  };
+  xhr.onerror = function () {
+    var ms = new Date().getTime() - start;
+    setMs(1, ms);
+    setRes(1, "res-ng", "NG");
+    setDet(1, "通信エラー（HTTP 0）。ネット接続を確認してください");
+    finishOne(1, false);
+  };
+  var payload = JSON.stringify({ messages: [{ role: "user", content: "テスト" }], model: "openai-fast" });
+  xhr.send(payload);
+}
+
+function testNews() {
+  var n = 2;
+  var start = new Date().getTime();
+  setRes(n, "res-run", "診断中…");
+  setDet(n, "ニュースフィード取得中…");
+  var feed = "https://news.google.com/rss/search?q=%22CUTIE%20STREET%22&hl=ja&gl=JP&ceid=JP:ja";
+  var url = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feed);
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", url, true);
+  xhr.timeout = 20000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    if (xhr.status !== 200) { failHttp(2, start, xhr.status); return; }
+    var ms = new Date().getTime() - start;
+    setMs(2, ms);
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (data.status === "ok" && data.items && data.items.length > 0) {
+        setRes(2, "res-ok", "OK");
+        setDet(2, "見出し " + data.items.length + " 件取得。詳細：HTTP 200");
+        finishOne(2, true);
+      } else {
+        setRes(2, "res-ng", "NG");
+        setDet(2, "フィードが空、または制限中です（" + (data.message || data.status || "?") + "）。詳細：HTTP 200");
+        finishOne(2, false);
+      }
+    } catch (e) {
+      setRes(2, "res-ng", "NG");
+      setDet(2, "応答の解析に失敗しました。詳細：HTTP 200");
+      finishOne(2, false);
+    }
+  };
+  xhr.ontimeout = function () {
+    var ms = new Date().getTime() - start;
+    setMs(2, ms);
+    setRes(2, "res-ng", "NG");
+    setDet(2, "時間切れ（20秒）");
+    finishOne(2, false);
+  };
+  xhr.onerror = function () {
+    var ms = new Date().getTime() - start;
+    setMs(2, ms);
+    setRes(2, "res-ng", "NG");
+    setDet(2, "通信エラー（HTTP 0）");
+    finishOne(2, false);
+  };
+  xhr.send(null);
+}
+
+function testWeather() {
+  var n = 3;
+  var start = new Date().getTime();
+  setRes(n, "res-run", "診断中…");
+  setDet(n, "ふじみ野市の天気を取得中…");
+  var url = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&current_weather=true&timezone=Asia%2FTokyo";
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", url, true);
+  xhr.timeout = 20000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    if (xhr.status !== 200) { failHttp(3, start, xhr.status); return; }
+    var ms = new Date().getTime() - start;
+    setMs(3, ms);
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (data && data.current_weather && typeof data.current_weather.temperature !== "undefined") {
+        setRes(3, "res-ok", "OK");
+        setDet(3, "現在の気温 " + data.current_weather.temperature + "℃。詳細：HTTP 200");
+        finishOne(3, true);
+      } else {
+        setRes(3, "res-ng", "NG");
+        setDet(3, "天気データが含まれていませんでした。詳細：HTTP 200");
+        finishOne(3, false);
+      }
+    } catch (e) {
+      setRes(3, "res-ng", "NG");
+      setDet(3, "応答の解析に失敗しました。詳細：HTTP 200");
+      finishOne(3, false);
+    }
+  };
+  xhr.ontimeout = function () {
+    var ms = new Date().getTime() - start;
+    setMs(3, ms);
+    setRes(3, "res-ng", "NG");
+    setDet(3, "時間切れ（20秒）");
+    finishOne(3, false);
+  };
+  xhr.onerror = function () {
+    var ms = new Date().getTime() - start;
+    setMs(3, ms);
+    setRes(3, "res-ng", "NG");
+    setDet(3, "通信エラー（HTTP 0）");
+    finishOne(3, false);
+  };
+  xhr.send(null);
+}
+
+function testISS() {
+  var n = 4;
+  var start = new Date().getTime();
+  setRes(n, "res-run", "診断中…");
+  setDet(n, "ISSの現在位置を取得中…");
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "https://api.wheretheiss.at/v1/satellites/25544", true);
+  xhr.timeout = 20000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    if (xhr.status !== 200) { failHttp(4, start, xhr.status); return; }
+    var ms = new Date().getTime() - start;
+    setMs(4, ms);
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (data && typeof data.latitude !== "undefined" && typeof data.longitude !== "undefined") {
+        setRes(4, "res-ok", "OK");
+        setDet(4, "緯度 " + (Math.round(data.latitude * 10) / 10) + " / 経度 " + (Math.round(data.longitude * 10) / 10) + "。詳細：HTTP 200");
+        finishOne(4, true);
+      } else {
+        setRes(4, "res-ng", "NG");
+        setDet(4, "位置データが含まれていませんでした。詳細：HTTP 200");
+        finishOne(4, false);
+      }
+    } catch (e) {
+      setRes(4, "res-ng", "NG");
+      setDet(4, "応答の解析に失敗しました。詳細：HTTP 200");
+      finishOne(4, false);
+    }
+  };
+  xhr.ontimeout = function () {
+    var ms = new Date().getTime() - start;
+    setMs(4, ms);
+    setRes(4, "res-ng", "NG");
+    setDet(4, "時間切れ（20秒）");
+    finishOne(4, false);
+  };
+  xhr.onerror = function () {
+    var ms = new Date().getTime() - start;
+    setMs(4, ms);
+    setRes(4, "res-ng", "NG");
+    setDet(4, "通信エラー（HTTP 0）");
+    finishOne(4, false);
+  };
+  xhr.send(null);
+}
+
+function testQuake() {
+  var n = 5;
+  var start = new Date().getTime();
+  setRes(n, "res-run", "診断中…");
+  setDet(n, "最新の地震情報を取得中…");
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "https://api.p2pquake.net/v2/history?codes=551&limit=1", true);
+  xhr.timeout = 20000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    if (xhr.status !== 200) { failHttp(5, start, xhr.status); return; }
+    var ms = new Date().getTime() - start;
+    setMs(5, ms);
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (data && data.length > 0) {
+        var t = "";
+        if (data[0] && data[0].earthquake && data[0].earthquake.time) { t = data[0].earthquake.time; }
+        setRes(5, "res-ok", "OK");
+        setDet(5, "最新情報あり" + (t ? "（" + t + "）" : "") + "。詳細：HTTP 200");
+        finishOne(5, true);
+      } else {
+        setRes(5, "res-ng", "NG");
+        setDet(5, "地震情報が空でした。詳細：HTTP 200");
+        finishOne(5, false);
+      }
+    } catch (e) {
+      setRes(5, "res-ng", "NG");
+      setDet(5, "応答の解析に失敗しました。詳細：HTTP 200");
+      finishOne(5, false);
+    }
+  };
+  xhr.ontimeout = function () {
+    var ms = new Date().getTime() - start;
+    setMs(5, ms);
+    setRes(5, "res-ng", "NG");
+    setDet(5, "時間切れ（20秒）");
+    finishOne(5, false);
+  };
+  xhr.onerror = function () {
+    var ms = new Date().getTime() - start;
+    setMs(5, ms);
+    setRes(5, "res-ng", "NG");
+    setDet(5, "通信エラー（HTTP 0）");
+    finishOne(5, false);
+  };
+  xhr.send(null);
+}
+
+function testDevice() {
+  var n = 6;
+  var start = new Date().getTime();
+  setRes(n, "res-run", "診断中…");
+  setDet(n, "端末情報を確認中…");
+  var sw = window.screen ? window.screen.width : "?";
+  var sh = window.screen ? window.screen.height : "?";
+  var ua = navigator.userAgent || "";
+  var uaShort = ua;
+  var m = ua.match(/iPhone OS [0-9_]+/);
+  var osPart = m ? m[0].replace(/_/g, ".") : "";
+  if (uaShort.length > 80) { uaShort = uaShort.substring(0, 80) + "…"; }
+  var online = navigator.onLine ? "オンライン" : "オフライン";
+  var lsOk = false;
+  var lsMsg = "";
+  try {
+    window.localStorage.setItem("__check6_test__", "1");
+    var v = window.localStorage.getItem("__check6_test__");
+    window.localStorage.removeItem("__check6_test__");
+    if (v === "1") { lsOk = true; lsMsg = "保存OK（localStorage使用可）"; }
+    else { lsMsg = "保存NG（読み書き不一致）"; }
+  } catch (e) {
+    lsMsg = "保存NG（" + (e && e.name ? e.name : "エラー") + "）。プライベートブラウズ等では保存できません";
+  }
+  var html = "";
+  html += "画面： " + sw + " x " + sh + "<br>";
+  html += "OS： " + (osPart ? osPart : "不明") + "<br>";
+  html += "接続： " + online + "<br>";
+  html += "保存： " + lsMsg + "<br>";
+  html += "UA： " + uaShort;
+  var info = $("devInfo");
+  info.innerHTML = html;
+  info.style.display = "block";
+  var ms = new Date().getTime() - start;
+  setMs(6, ms);
+  if (lsOk && navigator.onLine) {
+    setRes(6, "res-ok", "OK");
+    setDet(6, "端末情報の取得と保存テストに成功");
+    finishOne(6, true);
+  } else {
+    setRes(6, "res-ng", "NG");
+    setDet(6, lsOk ? "オフライン状態です" : "保存テストに失敗しました（下記参照）");
+    finishOne(6, false);
+  }
+}
+
+function startAll() {
+  if (running) { return; }
+  running = true;
+  doneCount = 0;
+  okCount = 0;
+  $("summary").style.display = "none";
+  $("devInfo").style.display = "none";
+  var btn = $("startBtn");
+  btn.disabled = true;
+  btn.innerHTML = "診断中…";
+  var i;
+  for (i = 1; i <= 6; i++) {
+    setRes(i, "res-wait", "待機中");
+    setDet(i, "-");
+    $("ms" + i).innerHTML = "";
+  }
+  testAI();
+  testNews();
+  testWeather();
+  testISS();
+  testQuake();
+  testDevice();
+}
+
+$("startBtn").onclick = startAll;
+</script>
+</body>
+</html>

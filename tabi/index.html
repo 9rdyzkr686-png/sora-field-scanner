@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TABI-6 旅のしおり</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0;}
+body {
+background: #f7efdc;
+color: #3a2f23;
+font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif;
+padding: 14px 12px 40px;
+-webkit-text-size-adjust: 100%;
+}
+.back { display: inline-block; font-size: 17px; color: #7a5c2e; text-decoration: none; padding: 12px 4px; min-height: 48px;}
+.top {
+background: #fffaf0;
+border: 2px solid #d9c49a;
+border-radius: 14px;
+padding: 18px 14px 14px;
+text-align: center;
+position: relative;
+overflow: hidden;
+box-shadow: 0 3px 8px rgba(120,90,40,.18);
+}
+.top h1 { font-size: 27px; letter-spacing: 2px; color: #6b4a1f;}
+.top.sub { font-size: 14px; color: #97835e; margin-top: 4px;}
+.stamp {
+position: absolute; border: 3px double #b5524a; color: #b5524a; border-radius: 50%;
+width: 74px; height: 74px; line-height: 1.15; font-size: 13px; font-weight: bold;
+padding-top: 14px; opacity:.55;
+}
+.stamp.s1 { top: 8px; right: 10px; transform: rotate(14deg);}
+.stamp.s2 { bottom: 6px; left: 8px; transform: rotate(-11deg); border-color: #4a7ab5; color: #4a7ab5; width: 62px; height: 62px; font-size: 11px; padding-top: 12px;}
+.voiceRow { text-align: right; margin: 10px 2px 0;}
+.voiceBtn {
+font-size: 15px; padding: 12px 16px; min-height: 48px; border-radius: 24px;
+border: 2px solid #b39b63; background: #fffaf0; color: #6b4a1f; cursor: pointer;
+}
+.sec {
+background: #fffaf0; border: 2px solid #d9c49a; border-radius: 14px;
+padding: 14px; margin-top: 14px;
+background-image: repeating-linear-gradient(#fffaf0, #fffaf0 27px, #f0e4c8 28px);
+}
+.sec h2 { font-size: 18px; color: #6b4a1f; margin-bottom: 10px;}
+.chips { font-size: 0;}
+.chip {
+display: inline-block; font-size: 18px; padding: 13px 18px; min-height: 52px;
+margin: 0 8px 10px 0; border-radius: 26px; border: 2px solid #b39b63;
+background: #fffdf6; color: #5a4630; cursor: pointer;
+}
+.chip.on { background: #b5524a; border-color: #b5524a; color: #fff; font-weight: bold;}
+.chip.blue.on { background: #4a7ab5; border-color: #4a7ab5;}
+.goBtn {
+display: block; width: 100%; font-size: 21px; font-weight: bold; padding: 16px;
+min-height: 60px; margin-top: 16px; border: none; border-radius: 14px;
+background: #b5524a; color: #fff; cursor: pointer; letter-spacing: 2px;
+box-shadow: 0 3px 0 #7e372f;
+}
+.goBtn:disabled { background: #cbb593; }
+.status { font-size: 15px; color: #97835e; min-height: 22px; margin-top: 12px; text-align: center;}
+.card {
+display: none; background: #fffdf6; border: 2px solid #b39b63; border-radius: 6px;
+padding: 18px 16px; margin-top: 16px; position: relative;
+box-shadow: 0 4px 10px rgba(120,90,40,.22);
+background-image: repeating-linear-gradient(#fffdf6, #fffdf6 27px, #eee2c6 28px);
+}
+.card.dateLine { font-size: 14px; color: #97835e;}
+.card h3 { font-size: 23px; color: #6b4a1f; margin: 6px 0 2px;}
+.card.styleLine { font-size: 15px; color: #b5524a; font-weight: bold;}
+.card.wxLine { font-size: 15px; color: #4a7ab5; margin-top: 8px;}
+.card.body { font-size: 17px; line-height: 1.75; white-space: pre-wrap; margin-top: 12px;}
+.card.stamp2 {
+position: absolute; top: 12px; right: 12px; border: 3px double #b5524a; color: #b5524a;
+border-radius: 50%; width: 64px; height: 64px; font-size: 12px; font-weight: bold;
+line-height: 1.15; padding-top: 12px; text-align: center; opacity:.6; transform: rotate(12deg);
+}
+.copyBtn {
+display: block; width: 100%; font-size: 17px; padding: 14px; min-height: 52px; margin-top: 14px;
+border-radius: 10px; border: 2px solid #b39b63; background: #f7efdc; color: #6b4a1f; cursor: pointer;
+}
+.note { font-size: 13px; color: #97835e; margin-top: 14px; line-height: 1.6;}
+</style>
+</head>
+<body>
+<a class="back" href="../portal/">← 全サイト一覧へ</a>
+
+<div class="top">
+<div class="stamp s1">旅の<br>記念</div>
+<div class="stamp s2">TABI-6<br>しおり</div>
+<h1>📔 TABI-6 旅のしおり</h1>
+<div class="sub">行き先と旅のタイプを選ぶと、AIが週末の天気を見て「しおり」を作ります</div>
+</div>
+
+<div class="voiceRow">
+<button class="voiceBtn" id="voiceBtn" onclick="toggleVoice()">🔊 ボイス ON</button>
+</div>
+
+<div class="sec">
+<h2>① 行き先</h2>
+<div class="chips" id="destChips"></div>
+</div>
+
+<div class="sec">
+<h2>② 旅の長さ</h2>
+<div class="chips" id="daysChips"></div>
+<h2 style="margin-top:6px;">③ ペース</h2>
+<div class="chips" id="paceChips"></div>
+</div>
+
+<button class="goBtn" id="goBtn" onclick="makeShiori()">🧳 しおりを作る</button>
+<div class="status" id="status"></div>
+
+<div class="card" id="card">
+<div class="stamp2">しおり<br>完成</div>
+<div class="dateLine" id="cardDate"></div>
+<h3 id="cardTitle"></h3>
+<div class="styleLine" id="cardStyle"></div>
+<div class="wxLine" id="cardWx"></div>
+<div class="body" id="cardBody"></div>
+<button class="copyBtn" id="copyBtn" onclick="copyAll()">📋 全文コピー</button>
+</div>
+
+<div class="note">※ しおりはAIが作る提案です。お店の営業時間や電車の時刻は、行く前に公式情報で確認してください。天気はOpen-Meteoの予報を使っています。</div>
+
+<script>
+var DESTS = ["川越", "鎌倉", "日光", "秩父", "箱根", "横浜", "高尾山", "佐野"];
+var DAYSES = ["日帰り", "1泊2日"];
+var PACES = ["ゆったり", "みっちり"];
+var selDest = "川越";
+var selDays = "日帰り";
+var selPace = "ゆったり";
+var voiceOn = true;
+var busy = false;
+var timerId = null;
+var lastText = "";
+
+function buildChips(boxId, items, current, blue, cbName) {
+var box = document.getElementById(boxId);
+var html = "";
+for (var i = 0; i < items.length; i++) {
+var cls = "chip" + (blue? " blue": "") + (items[i] === current? " on": "");
+html += '<button class="' + cls + '" onclick="' + cbName + '(\'' + items[i] + '\')">' + items[i] + '</button>';
+}
+box.innerHTML = html;
+}
+function refreshChips() {
+buildChips("destChips", DESTS, selDest, false, "pickDest");
+buildChips("daysChips", DAYSES, selDays, true, "pickDays");
+buildChips("paceChips", PACES, selPace, true, "pickPace");
+}
+function pickDest(v) { selDest = v; refreshChips();}
+function pickDays(v) { selDays = v; refreshChips();}
+function pickPace(v) { selPace = v; refreshChips();}
+
+function toggleVoice() {
+voiceOn =!voiceOn;
+document.getElementById("voiceBtn").innerHTML = voiceOn? "🔊 ボイス ON": "🔇 ボイス OFF";
+if (!voiceOn && window.speechSynthesis) { speechSynthesis.cancel();}
+}
+
+function speak(text) {
+if (!voiceOn) { return;}
+if (!window.speechSynthesis) { return;}
+try {
+speechSynthesis.cancel();
+var u = new SpeechSynthesisUtterance(text);
+u.lang = "ja-JP";
+u.pitch = 1.0;
+u.rate = 1.0;
+speechSynthesis.speak(u);
+} catch (e) {}
+}
+
+function setStatus(t) { document.getElementById("status").innerHTML = t;}
+
+function wxText(code) {
+if (code === 0) { return "快晴";}
+if (code === 1) { return "晴れ";}
+if (code === 2) { return "晴れ時々くもり";}
+if (code === 3) { return "くもり";}
+if (code === 45 || code === 48) { return "霧";}
+if (code >= 51 && code <= 55) { return "小雨";}
+if (code >= 61 && code <= 65) { return "雨";}
+if (code === 66 || code === 67) { return "冷たい雨";}
+if (code >= 71 && code <= 77) { return "雪";}
+if (code >= 80 && code <= 82) { return "にわか雨";}
+if (code === 85 || code === 86) { return "にわか雪";}
+if (code >= 95) { return "雷雨";}
+return "くもり";
+}
+
+function fetchWeather(done) {
+var geo = new XMLHttpRequest();
+geo.open("GET", "https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(selDest) + "&count=1&language=ja", true);
+geo.timeout = 15000;
+geo.onload = function() {
+try {
+var g = JSON.parse(geo.responseText);
+if (!g.results ||!g.results.length) { done(null); return;}
+var lat = g.results[0].latitude;
+var lon = g.results[0].longitude;
+var fc = new XMLHttpRequest();
+fc.open("GET", "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo&forecast_days=7", true);
+fc.timeout = 15000;
+fc.onload = function() {
+try {
+var f = JSON.parse(fc.responseText);
+var times = f.daily.time;
+var codes = f.daily.weathercode;
+var maxs = f.daily.temperature_2m_max;
+var mins = f.daily.temperature_2m_min;
+var satIdx = -1;
+for (var i = 0; i < times.length; i++) {
+var p = times[i].split("-");
+var d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+if (d.getDay() === 6) { satIdx = i; break;}
+}
+if (satIdx < 0) { satIdx = 0;}
+function fmt(idx) {
+var p2 = times[idx].split("-");
+var d2 = new Date(parseInt(p2[0], 10), parseInt(p2[1], 10) - 1, parseInt(p2[2], 10));
+var wd = ["日", "月", "火", "水", "木", "金", "土"][d2.getDay()];
+return (parseInt(p2[1], 10)) + "/" + (parseInt(p2[2], 10)) + "（" + wd + "）" + wxText(codes[idx]) + " 最高" + Math.round(maxs[idx]) + "℃/最低" + Math.round(mins[idx]) + "℃";
+}
+var hint = "週末の天気：" + fmt(satIdx);
+if (satIdx + 1 < times.length) { hint += "、" + fmt(satIdx + 1);}
+done(hint);
+} catch (e) { done(null);}
+};
+fc.onerror = function() { done(null);};
+fc.ontimeout = function() { done(null);};
+fc.send();
+} catch (e) { done(null);}
+};
+geo.onerror = function() { done(null);};
+geo.ontimeout = function() { done(null);};
+geo.send();
+}
+
+function makeShiori() {
+if (busy) { return;}
+busy = true;
+var btn = document.getElementById("goBtn");
+btn.disabled = true;
+btn.style.opacity = "0.5";
+setStatus("🌤 " + selDest + "の週末の天気を調べています…");
+fetchWeather(function(hint) {
+var wxForPrompt = hint? hint: "取得できませんでした";
+callAI(hint, wxForPrompt);
+});
+}
+
+function callAI(hint, wxForPrompt) {
+var prompt = "あなたは旅のしおり係です。" + selDest + "への" + selDays + "の旅、ペースは「" + selPace + "」です。" + wxForPrompt + "。この天気もふまえて、旅のしおりを作ってください。ルール：1行目は必ず『要約：』で始まる一文（40字以内）で、旅の魅力を伝えてください。そのあとの見出しで、" + selDest + "の実在する有名な場所を3〜5か所入れた行程を書き、最後におすすめの名物グルメを1つ紹介してください。全体600字以内、マークダウンなし、プレーンテキストで書いてください。";
+var sec = 0;
+setStatus("✍ 作成中… 0秒");
+timerId = setInterval(function() {
+sec++;
+setStatus("✍ 作成中… " + sec + "秒");
+}, 1000);
+var xhr = new XMLHttpRequest();
+xhr.open("POST", "https://text.pollinations.ai/", true);
+xhr.setRequestHeader("Content-Type", "application/json");
+xhr.timeout = 90000;
+xhr.onload = function() {
+clearInterval(timerId);
+var body = xhr.responseText || "";
+if (xhr.status === 200 && body && body.indexOf("Free limit") < 0) {
+showShiori(hint, body.replace(/^\s+|\s+$/g, ""));
+} else if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+finishWith("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
+} else {
+finishWith("AI回線が混み合っています<br><span style='font-size:12px;'>詳細：HTTP " + xhr.status + "</span>");
+}
+};
+xhr.onerror = function() {
+clearInterval(timerId);
+finishWith("AI回線が混み合っています<br><span style='font-size:12px;'>詳細：HTTP 0</span>");
+};
+xhr.ontimeout = function() {
+clearInterval(timerId);
+finishWith("AIの返事が時間切れになりました。もう一度お試しください");
+};
+xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt}], model: "openai-fast"}));
+}
+
+function finishWith(msg) {
+setStatus(msg);
+busy = false;
+var btn = document.getElementById("goBtn");
+btn.disabled = false;
+btn.style.opacity = "1";
+}
+
+function showShiori(hint, body) {
+setStatus("");
+busy = false;
+var btn = document.getElementById("goBtn");
+btn.disabled = false;
+btn.style.opacity = "1";
+var now = new Date();
+var dateStr = now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日 作成";
+document.getElementById("cardDate").innerHTML = dateStr;
+document.getElementById("cardTitle").innerHTML = "🧳 " + selDest + "の旅";
+document.getElementById("cardStyle").innerHTML = selDays + "／" + selPace + "ペース";
+document.getElementById("cardWx").innerHTML = hint? ("🌤 " + hint): "🌤 週末の天気：取得できませんでした";
+document.getElementById("cardBody").innerHTML = "";
+document.getElementById("cardBody").appendChild(document.createTextNode(body));
+document.getElementById("card").style.display = "block";
+lastText = "\n" + dateStr + "\n行き先：" + selDest + "（" + selDays + "／" + selPace + "）\n" + (hint? hint: "週末の天気：取得できませんでした") + "\n\n" + body;
+document.getElementById("card").scrollIntoView();
+var lines = body.split("\n");
+var first = lines[0] || "";
+if (first.indexOf("要約：") === 0) {
+var sum = first.substring(3);
+if (sum.length > 0 && sum.length <= 150) { speak(sum);}
+}
+}
+
+function copyAll() {
+if (!lastText) { return;}
+var ta = document.createElement("textarea");
+ta.value = lastText;
+ta.style.position = "fixed";
+ta.style.opacity = "0";
+document.body.appendChild(ta);
+ta.select();
+try { document.execCommand("copy"); setStatus("📋 しおりをコピーしました");} catch (e) { setStatus("コピーできませんでした");}
+document.body.removeChild(ta);
+}
+
+refreshChips();
+</script>
+</body>
+</html>

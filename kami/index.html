@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KAMI-6 紙芝居</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #2b1a10;
+    color: #3a2415;
+    font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif;
+    padding: 10px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  .topbar { overflow: hidden; margin-bottom: 8px; }
+  .backlink {
+    float: left; color: #ffd9a0; text-decoration: none;
+    font-size: 15px; line-height: 48px;
+  }
+  #voiceBtn {
+    float: right; min-height: 48px; padding: 0 16px;
+    background: #6b4423; color: #ffe9c9; border: 2px solid #a9743f;
+    border-radius: 10px; font-size: 16px;
+  }
+  h1 {
+    text-align: center; color: #ffdf9e; font-size: 26px;
+    letter-spacing: 2px; margin: 4px 0 2px 0;
+    text-shadow: 0 2px 0 #7a4a1e;
+  }
+  .sub { text-align: center; color: #d9a05f; font-size: 13px; margin-bottom: 12px; }
+  .panel {
+    background: #f7e3bd; border: 3px solid #8a5a28; border-radius: 12px;
+    padding: 12px; margin-bottom: 12px;
+    box-shadow: inset 0 0 0 3px #e8c88f;
+  }
+  .panelTitle { font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #6b3d14; }
+  .chip {
+    display: inline-block; min-height: 48px; line-height: 48px;
+    padding: 0 14px; margin: 0 6px 8px 0;
+    background: #fff6df; border: 2px solid #b3854a; border-radius: 24px;
+    font-size: 16px; color: #5a3410;
+  }
+  .chip.sel { background: #e8873a; border-color: #9c4f12; color: #fff; font-weight: bold; }
+  #startBtn {
+    display: block; width: 100%; min-height: 56px;
+    background: #c0392b; color: #fff; border: 3px solid #7e241a;
+    border-radius: 12px; font-size: 20px; font-weight: bold;
+  }
+  #startBtn:disabled { background: #9a8a7a; border-color: #6e6156; }
+  #status { min-height: 22px; text-align: center; color: #ffdf9e; font-size: 15px; margin: 8px 0; }
+  #status .detail { display: block; font-size: 12px; color: #b98d54; }
+  /* 紙芝居の舞台（木枠） */
+  .stage {
+    background: #8a5a28;
+    border: 6px solid #5d3a15;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: inset 0 0 0 3px #a9743f, 0 4px 10px rgba(0,0,0,.5);
+  }
+  .stageInner {
+    background: #fdf6e3; border: 2px solid #5d3a15;
+    min-height: 200px; position: relative; text-align: center;
+  }
+  #sceneImg { display: block; width: 100%; height: auto; }
+  #imgNote {
+    padding: 60px 10px; font-size: 17px; color: #8a5a28;
+  }
+  #sceneText {
+    background: #fffaf0; border: 3px solid #8a5a28; border-radius: 10px;
+    padding: 14px; margin-top: 12px;
+    font-size: 19px; line-height: 1.7; min-height: 96px;
+  }
+  #endMark {
+    display: none; text-align: center; margin-top: 10px;
+    font-size: 26px; font-weight: bold; color: #c0392b; letter-spacing: 6px;
+  }
+  .navrow { overflow: hidden; margin-top: 12px; }
+  #counter {
+    text-align: center; color: #ffdf9e; font-size: 17px; margin-bottom: 8px;
+  }
+  .navbtn {
+    width: 48%; min-height: 56px; font-size: 19px; font-weight: bold;
+    border-radius: 12px; border: 3px solid #5d3a15;
+    background: #e8a33d; color: #3a2415;
+  }
+  #prevBtn { float: left; }
+  #nextBtn { float: right; background: #e8873a; }
+  .navbtn:disabled { background: #9a8a7a; color: #5d5348; border-color: #6e6156; }
+  .foot { text-align: center; color: #a97c46; font-size: 12px; margin-top: 14px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="backlink" href="../portal/">← 全サイト一覧へ</a>
+    <button id="voiceBtn" type="button">ボイス：ON</button>
+  </div>
+  <h1>🎪 KAMI-6 紙芝居</h1>
+  <div class="sub">〜 AIがつくる、世界にひとつの紙芝居 〜</div>
+
+  <div class="panel">
+    <div class="panelTitle">① テーマをえらんでね</div>
+    <div id="chips">
+      <button class="chip sel" type="button" data-t="0">🐶 ダックスの冒険</button>
+      <button class="chip" type="button" data-t="1">🚀 宇宙旅行</button>
+      <button class="chip" type="button" data-t="2">🐠 海の友だち</button>
+      <button class="chip" type="button" data-t="3">👻 おばけやしき</button>
+    </div>
+    <div class="panelTitle">② はじめるボタン</div>
+    <button id="startBtn" type="button">紙芝居をはじめる</button>
+  </div>
+
+  <div id="status"></div>
+
+  <div class="stage">
+    <div class="stageInner">
+      <div id="imgNote">テーマをえらんで「紙芝居をはじめる」を押してね</div>
+      <img id="sceneImg" alt="紙芝居の絵" style="display:none">
+    </div>
+  </div>
+
+  <div id="sceneText">ここにお話が出ます。</div>
+  <div id="endMark">お し ま い</div>
+
+  <div id="counter"></div>
+  <div class="navrow">
+    <button class="navbtn" id="prevBtn" type="button" disabled>← もどる</button>
+    <button class="navbtn" id="nextBtn" type="button" disabled>つぎへ →</button>
+  </div>
+
+  <div class="foot">
+    お話と絵はAI（Pollinations）がその場で作ります。<br>
+    絵が出ないときは、お話だけで進みます。
+  </div>
+</div>
+
+<script>
+var THEMES = [
+  { name: 'ダックスの冒険',
+    topic: '小さなダックスフンドが、森や川を越えて冒険するお話',
+    en: "cute long-haired dachshund dog adventure in a forest, children's picture book illustration, warm colors, storybook art" },
+  { name: '宇宙旅行',
+    topic: '子どもと小さな犬がロケットに乗って宇宙を旅行するお話',
+    en: "child astronaut and a small dog traveling in space, children's picture book illustration, warm colors, storybook art" },
+  { name: '海の友だち',
+    topic: '海の中で魚やカメと友だちになる、やさしいお話',
+    en: "friendly sea animals and a child underwater, children's picture book illustration, warm colors, storybook art" },
+  { name: 'おばけやしき',
+    topic: 'こわくない、かわいいおばけたちが出てくるお屋敷のお話',
+    en: "cute friendly ghosts in a cozy haunted house, children's picture book illustration, warm colors, not scary, storybook art" }
+];
+var VARIATIONS = ['beginning', 'journey', 'surprise', 'happy ending'];
+
+var themeIdx = 0;
+var scenes = [];
+var cur = 0;
+var voiceOn = true;
+var busy = false;
+var timerId = null;
+
+var startBtn = document.getElementById('startBtn');
+var statusEl = document.getElementById('status');
+var imgEl = document.getElementById('sceneImg');
+var imgNote = document.getElementById('imgNote');
+var textEl = document.getElementById('sceneText');
+var counterEl = document.getElementById('counter');
+var prevBtn = document.getElementById('prevBtn');
+var nextBtn = document.getElementById('nextBtn');
+var endMark = document.getElementById('endMark');
+var voiceBtn = document.getElementById('voiceBtn');
+var chipsEl = document.getElementById('chips');
+
+function setStatus(msg, detail) {
+  if (detail) {
+    statusEl.innerHTML = '';
+    var t = document.createTextNode(msg);
+    statusEl.appendChild(t);
+    var s = document.createElement('span');
+    s.className = 'detail';
+    s.appendChild(document.createTextNode(detail));
+    statusEl.appendChild(s);
+  } else {
+    statusEl.textContent = msg;
+  }
+}
+
+function speak(text) {
+  if (!voiceOn) return;
+  if (!window.speechSynthesis) return;
+  try {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP';
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+function stopSpeak() {
+  if (window.speechSynthesis) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+}
+
+voiceBtn.onclick = function () {
+  voiceOn = !voiceOn;
+  voiceBtn.textContent = voiceOn ? 'ボイス：ON' : 'ボイス：OFF';
+  if (!voiceOn) stopSpeak();
+  if (voiceOn && scenes.length > 0) speak(scenes[cur]);
+};
+
+chipsEl.onclick = function (e) {
+  var t = e.target;
+  if (!t || !t.getAttribute) return;
+  var v = t.getAttribute('data-t');
+  if (v === null) return;
+  themeIdx = parseInt(v, 10);
+  var kids = chipsEl.getElementsByTagName('button');
+  for (var i = 0; i < kids.length; i++) {
+    if (parseInt(kids[i].getAttribute('data-t'), 10) === themeIdx) {
+      kids[i].className = 'chip sel';
+    } else {
+      kids[i].className = 'chip';
+    }
+  }
+};
+
+function trimStr(s) {
+  return s.replace(/^\s+|\s+$/g, '');
+}
+
+function parseScenes(text) {
+  var parts = text.split(/\n[ \t]*===[ \t]*\n/);
+  var cleaned = [];
+  var i;
+  for (i = 0; i < parts.length; i++) {
+    var t = trimStr(parts[i]);
+    if (t) cleaned.push(t);
+  }
+  if (cleaned.length === 4) return cleaned;
+  if (cleaned.length > 4) {
+    var merged = [cleaned[0], cleaned[1], cleaned[2], cleaned.slice(3).join(' ')];
+    return merged;
+  }
+  return chunkText(text);
+}
+
+function chunkText(text) {
+  var t = text.replace(/\s+/g, ' ');
+  t = trimStr(t);
+  var chunks = [];
+  var n = t.length;
+  if (n === 0) return ['', '', '', ''];
+  var size = Math.ceil(n / 4);
+  var start = 0;
+  for (var i = 0; i < 4; i++) {
+    if (start >= n) { chunks.push(''); continue; }
+    var end = start + size;
+    if (i === 3 || end >= n) {
+      chunks.push(t.substring(start));
+      start = n;
+    } else {
+      var snap = t.indexOf('。', end - 12);
+      if (snap > start && snap < end + 40) end = snap + 1;
+      chunks.push(t.substring(start, end));
+      start = end;
+    }
+  }
+  return chunks;
+}
+
+function showScene(i) {
+  cur = i;
+  var th = THEMES[themeIdx];
+  textEl.textContent = scenes[i];
+  counterEl.textContent = (i + 1) + ' / 4';
+  endMark.style.display = (i === 3) ? 'block' : 'none';
+  prevBtn.disabled = (i === 0);
+  nextBtn.disabled = (i === 3);
+
+  imgEl.style.display = 'none';
+  imgNote.style.display = 'block';
+  imgNote.textContent = '絵を描いています…';
+  var prompt = th.en + ', scene: ' + VARIATIONS[i];
+  var url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=600&height=450&nologo=true';
+  imgEl.onload = function () {
+    imgNote.style.display = 'none';
+    imgEl.style.display = 'block';
+  };
+  imgEl.onerror = function () {
+    imgEl.style.display = 'none';
+    imgNote.style.display = 'block';
+    imgNote.textContent = '（絵は届きませんでした。お話だけで進みます）';
+  };
+  imgEl.src = url;
+
+  speak(scenes[i]);
+}
+
+prevBtn.onclick = function () {
+  if (cur > 0) showScene(cur - 1);
+};
+nextBtn.onclick = function () {
+  if (cur < 3) showScene(cur + 1);
+};
+
+function startTimer() {
+  var t0 = new Date().getTime();
+  setStatus('考え中… 0秒');
+  timerId = setInterval(function () {
+    var sec = Math.floor((new Date().getTime() - t0) / 1000);
+    setStatus('考え中… ' + sec + '秒');
+  }, 500);
+}
+function stopTimer() {
+  if (timerId !== null) { clearInterval(timerId); timerId = null; }
+}
+
+startBtn.onclick = function () {
+  if (busy) return;
+  busy = true;
+  startBtn.disabled = true;
+  prevBtn.disabled = true;
+  nextBtn.disabled = true;
+  stopSpeak();
+  var th = THEMES[themeIdx];
+  var prompt = 'あなたは紙芝居作家です。テーマ「' + th.topic + '」で、子ども向けの短いお話を4場面で書いてください。'
+    + '条件：場面と場面の間は、=== だけの行で区切ること。各場面は2〜3文で、80文字以内にすること。'
+    + 'やさしい日本語で書くこと。場面番号やタイトルは書かないこと。お話の文章だけを書いてください。';
+
+  startTimer();
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://text.pollinations.ai/', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 90000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) return;
+    stopTimer();
+    busy = false;
+    startBtn.disabled = false;
+    var body = xhr.responseText || '';
+    if (xhr.status === 200 && body && body.indexOf('Free limit') === -1) {
+      scenes = parseScenes(body);
+      setStatus('紙芝居のはじまり、はじまり！');
+      showScene(0);
+    } else if (xhr.status === 402 || body.indexOf('Free limit') !== -1) {
+      setStatus('本日の無料AI回線は上限に達しました。明日の朝9時に回復します');
+    } else {
+      setStatus('AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
+    }
+  };
+  xhr.ontimeout = function () {
+    stopTimer();
+    busy = false;
+    startBtn.disabled = false;
+    setStatus('AI回線の時間切れです。もう一度お試しください');
+  };
+  xhr.onerror = function () {
+    stopTimer();
+    busy = false;
+    startBtn.disabled = false;
+    setStatus('AI回線が混み合っています', '詳細：HTTP 0');
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+};
+</script>
+</body>
+</html>

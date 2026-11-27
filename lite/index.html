@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LITE-6 超軽量ボード</title>
+<style>
+body{font-family:sans-serif;background:#fff;color:#000;margin:0;padding:10px;font-size:17px;line-height:1.5}
+h1{font-size:22px;margin:4px 0 8px}
+h2{font-size:18px;margin:0 0 4px;border-bottom:2px solid #000;padding-bottom:2px}
+.box{border:1px solid #999;padding:10px;margin:0 0 12px}
+.st{font-size:13px;color:#555}
+.big{font-size:26px;font-weight:bold}
+a.btn,button{display:block;width:100%;min-height:48px;line-height:48px;text-align:center;background:#eee;color:#000;border:1px solid #999;font-size:17px;text-decoration:none;margin:0 0 12px;padding:0;box-sizing:border-box}
+ul{margin:4px 0;padding-left:20px}
+li{margin:0 0 8px}
+.d{font-size:13px;color:#555}
+</style>
+</head>
+<body>
+<h1>LITE-6 超軽量ボード</h1>
+<a class="btn" href="../portal/">← 全サイト一覧へ</a>
+<button id="upd" type="button">↻ 更新する</button>
+
+<div class="box">
+<h2>現在時刻</h2>
+<div class="big" id="clock">--:--</div>
+<div class="st" id="date"></div>
+</div>
+
+<div class="box">
+<h2>ふじみ野の天気</h2>
+<div id="wx">（未取得）</div>
+<div class="st" id="wxst">取得中…</div>
+</div>
+
+<div class="box">
+<h2>最新の地震</h2>
+<div id="qk">（未取得）</div>
+<div class="st" id="qkst">取得中…</div>
+</div>
+
+<div class="box">
+<h2>CUTIE STREET 見出し</h2>
+<div id="news">（未取得）</div>
+<div class="st" id="nwst">取得中…</div>
+</div>
+
+<a class="btn" href="https://9rdyzkr686-png.github.io/iPhone6-board/">詳しい情報ボードはこちら</a>
+
+<script>
+function $(i){return document.getElementById(i);}
+function p2(n){return (n<10?"0":"")+n;}
+function nowT(){var d=new Date();return p2(d.getHours())+":"+p2(d.getMinutes());}
+function clock(){var d=new Date();$("clock").innerHTML=p2(d.getHours())+":"+p2(d.getMinutes())+":"+p2(d.getSeconds());$("date").innerHTML=d.getFullYear()+"年"+(d.getMonth()+1)+"月"+d.getDate()+"日";}
+function get(u,ok,ng){var x=new XMLHttpRequest();x.open("GET",u,true);x.timeout=20000;x.onload=function(){if(x.status>=200&&x.status<300){try{ok(JSON.parse(x.responseText));}catch(e){ng();}}else{ng();}};x.onerror=function(){ng();};x.ontimeout=function(){ng();};x.send();}
+var WC={0:"晴れ",1:"晴れ",2:"曇りがち",3:"曇り",45:"霧",48:"霧",51:"小雨",53:"雨",55:"雨",56:"雨",57:"雨",61:"雨",63:"雨",65:"大雨",66:"雨",67:"雨",71:"雪",73:"雪",75:"大雪",77:"雪",80:"にわか雨",81:"にわか雨",82:"激しい雨",85:"雪",86:"雪",95:"雷雨",96:"雷雨",99:"雷雨"};
+function wx(){ $("wxst").innerHTML="取得中…";
+ get("https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo",
+ function(j){var c=j.current,d=j.daily;var w=WC[c.weather_code];if(!w)w="不明";
+  $("wx").innerHTML="<span class='big'>"+c.temperature_2m+"℃</span> "+w+"<br>今日：最高 "+d.temperature_2m_max[0]+"℃ / 最低 "+d.temperature_2m_min[0]+"℃";
+  $("wxst").innerHTML=nowT()+" 取得";},
+ function(){$("wx").innerHTML="天気を取得できませんでした。";$("wxst").innerHTML="取得失敗";});
+}
+var SC={"10":"1","20":"2","30":"3","40":"4","45":"5弱","50":"5強","55":"6弱","60":"6強","70":"7"};
+function qk(){ $("qkst").innerHTML="取得中…";
+ get("https://api.p2pquake.net/v2/history?codes=551&limit=1",
+ function(j){if(!j||!j.length||!j[0].earthquake){$("qk").innerHTML="地震情報はありません。";$("qkst").innerHTML=nowT()+" 取得";return;}
+  var e=j[0].earthquake,h=e.hypocenter||{};var s=SC[""+e.maxScale];if(!s)s="不明";
+  $("qk").innerHTML="震度 <span class='big'>"+s+"</span><br>震源："+(h.name||"不明")+"<br>発生："+e.time;
+  $("qkst").innerHTML=nowT()+" 取得";},
+ function(){$("qk").innerHTML="地震情報を取得できませんでした。";$("qkst").innerHTML="取得失敗";});
+}
+function nw(){ $("nwst").innerHTML="取得中…";
+ var u="https://api.rss2json.com/v1/api.json?rss_url="+encodeURIComponent("https://news.google.com/rss/search?q=\"CUTIE STREET\"&hl=ja&gl=JP&ceid=JP:ja");
+ get(u,
+ function(j){if(!j||!j.items||!j.items.length){$("news").innerHTML="見出しがありません。";$("nwst").innerHTML=nowT()+" 取得";return;}
+  var h="<ul>",i,it;for(i=0;i<j.items.length&&i<3;i++){it=j.items[i];h+="<li><a href='"+it.link+"'>"+it.title+"</a><br><span class='d'>"+(it.pubDate||"")+"</span></li>";}
+  $("news").innerHTML=h+"</ul>";$("nwst").innerHTML=nowT()+" 取得";},
+ function(){$("news").innerHTML="見出しを取得できませんでした。";$("nwst").innerHTML="取得失敗";});
+}
+function all(){wx();qk();nw();}
+$("upd").onclick=function(){all();};
+clock();setInterval(clock,30000);
+all();
+</script>
+</body>
+</html>
