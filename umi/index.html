@@ -64,6 +64,13 @@ h1 { text-align: center; color: #fff; font-size: 26px; text-shadow: 0 2px 6px rg
 .tchours { position: relative; height: 18px; font-size: 12px; color: #567; }
 .tchours span { position: absolute; top: 2px; }
 .tcnote { font-size: 12px; color: #567; text-align: center; margin-top: 2px; }
+.tidetabs { display: flex; gap: 8px; margin-bottom: 6px; }
+.tidetabs button {
+  flex: 1; min-height: 48px; border-radius: 10px; cursor: pointer;
+  font-size: 17px; font-weight: bold; padding: 10px;
+  background: #fff; color: #1a5a8a; border: 2px solid #1a7ab8;
+}
+.tidetabs button.on { background: #1a7ab8; color: #fff; }
 .lettercard {
   background: #fffdf4; border: 1px solid #e4d9b8; border-radius: 10px;
   padding: 18px 16px; margin-top: 12px; display: none;
@@ -94,6 +101,10 @@ h1 { text-align: center; color: #fff; font-size: 26px; text-shadow: 0 2px 6px rg
 
   <div class="card">
     <h2>🌕 潮の満ち引き（東京湾）</h2>
+    <div class="tidetabs">
+      <button id="tideTabToday" class="on" onclick="setTideMode('today')">今日</button>
+      <button id="tideTabTomorrow" onclick="setTideMode('tomorrow')">明日</button>
+    </div>
     <div id="tideBody">
       <div class="note">潮の情報を取得しています…</div>
     </div>
@@ -191,6 +202,11 @@ function waveFail() {
 var tideEvents = null;
 var tideTimer = null;
 var tideHourly = null;
+var tideHourlyTomorrow = null;
+var tideTomorrowOk = false;
+var tideMode = 'today';
+var tideTodayDate = null;
+var tideTomorrowDate = null;
 
 function tideFileUrl(year) {
   return 'https://www.data.jma.go.jp/kaiyou/data/db/tide/suisan/txt/' + year + '/TK.txt';
@@ -208,14 +224,17 @@ function parseTideText(text, dates, out) {
     if (isNaN(yy) || isNaN(mm) || isNaN(dd)) { continue; }
     for (k = 0; k < dates.length; k++) {
       if (yy === dates[k].getFullYear() % 100 && mm === dates[k].getMonth() + 1 && dd === dates[k].getDate()) {
-        if (k === 0) {
+        if (k === 1) { tideTomorrowOk = true; }
+        if (k === 0 || k === 1) {
           var hs = [], okH = true, hv;
           for (j = 0; j < 24; j++) {
             hv = parseInt(ln.substr(j * 3, 3), 10);
             if (isNaN(hv)) { okH = false; break; }
             hs.push(hv);
           }
-          if (okH) { tideHourly = hs; }
+          if (okH) {
+            if (k === 0) { tideHourly = hs; } else { tideHourlyTomorrow = hs; }
+          }
         }
         for (j = 0; j < 8; j++) {
           grp = ln.substr(80 + j * 7, 7);
@@ -256,6 +275,12 @@ function fetchTide() {
   var now = new Date();
   var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   var tomorrow = new Date(today.getTime() + 86400000);
+  tideHourly = null;
+  tideHourlyTomorrow = null;
+  tideTomorrowOk = false;
+  tideTodayDate = today;
+  tideTomorrowDate = tomorrow;
+  setTideMode('today');
   var dates = [today, tomorrow];
   var events = [];
   loadTideYear(today.getFullYear(), function (text1) {
@@ -294,32 +319,41 @@ function fmtRemain(ms) {
   return 'あと' + Math.floor(mins / 60) + '時間' + pad2(mins % 60) + '分';
 }
 
-function tideChartHtml() {
-  if (!tideHourly || tideHourly.length !== 24) { return ''; }
-  var min = tideHourly[0], max = tideHourly[0], minH = 0, maxH = 0, i, v;
+function tideChartHtml(hourly, dayLabel, highlightHour) {
+  if (!hourly || hourly.length !== 24) { return ''; }
+  var min = hourly[0], max = hourly[0], minH = 0, maxH = 0, i, v;
   for (i = 1; i < 24; i++) {
-    v = tideHourly[i];
+    v = hourly[i];
     if (v < min) { min = v; minH = i; }
     if (v > max) { max = v; maxH = i; }
   }
-  var nowH = new Date().getHours();
   var range = max - min;
   var html = '<div class="tidechart">';
   html += '<div class="tcscale">最高 ' + max + 'cm（' + maxH + '時）／ 最低 ' + min + 'cm（' + minH + '時）</div>';
   html += '<div class="tcbars">';
   for (i = 0; i < 24; i++) {
-    var bh = (range > 0) ? (8 + Math.round((tideHourly[i] - min) / range * 64)) : 40;
-    html += '<span class="tccol' + (i === nowH ? ' now' : '') + '"><span class="tcbar" style="height:' + bh + 'px"></span></span>';
+    var bh = (range > 0) ? (8 + Math.round((hourly[i] - min) / range * 64)) : 40;
+    html += '<span class="tccol' + (i === highlightHour ? ' now' : '') + '"><span class="tcbar" style="height:' + bh + 'px"></span></span>';
   }
   html += '</div>';
   html += '<div class="tchours"><span style="left:0;">0時</span><span style="left:25%;">6時</span><span style="left:50%;">12時</span><span style="left:75%;">18時</span></div>';
-  html += '<div class="tcnote">今日の毎時潮位（オレンジは現在の時刻）</div>';
+  html += '<div class="tcnote">' + dayLabel + 'の毎時潮位' + (highlightHour >= 0 ? '（オレンジは現在の時刻）' : '') + '</div>';
   html += '</div>';
   return html;
 }
 
+function setTideMode(m) {
+  tideMode = m;
+  var bt = document.getElementById('tideTabToday');
+  var bm = document.getElementById('tideTabTomorrow');
+  if (bt) { bt.className = (m === 'today') ? 'on' : ''; }
+  if (bm) { bm.className = (m === 'tomorrow') ? 'on' : ''; }
+  renderTide();
+}
+
 function renderTide() {
   if (!tideEvents) { return; }
+  if (tideMode === 'tomorrow') { renderTideTomorrow(); return; }
   var now = new Date();
   var nextHigh = null, nextLow = null, i, ev;
   for (i = 0; i < tideEvents.length; i++) {
@@ -342,7 +376,39 @@ function renderTide() {
     html += '<div class="tideline">次の干潮 ' + fmtClock(nextLow.t) + '（' + fmtRemain(nextLow.t.getTime() - now.getTime()) + '）<span class="tidehgt"> 潮位 ' + nextLow.h + 'cm</span></div>';
   }
   html += '<div class="wavetime">気象庁の推算潮位（東京）／ ' + now.getHours() + '時' + pad2(now.getMinutes()) + '分 現在</div>';
-  html += tideChartHtml();
+  html += tideChartHtml(tideHourly, '今日', now.getHours());
+  body.innerHTML = html;
+}
+
+function renderTideTomorrow() {
+  var body = document.getElementById('tideBody');
+  if (!tideTomorrowOk || !tideTomorrowDate) {
+    body.innerHTML = '<div class="note">明日のデータは年明けに取得します。</div>';
+    return;
+  }
+  var dayStart = tideTomorrowDate.getTime();
+  var dayEnd = dayStart + 86400000;
+  var list = [], i, ev;
+  for (i = 0; i < tideEvents.length; i++) {
+    ev = tideEvents[i];
+    if (ev.t.getTime() >= dayStart && ev.t.getTime() < dayEnd) { list.push(ev); }
+  }
+  if (!list.length && !tideHourlyTomorrow) {
+    body.innerHTML = '<div class="note">明日のデータは年明けに取得します。</div>';
+    return;
+  }
+  var html = '';
+  html += '<div class="wavetime">明日（' + (tideTomorrowDate.getMonth() + 1) + '月' + tideTomorrowDate.getDate() + '日）の潮（予定）</div>';
+  if (list.length) {
+    var first = list[0];
+    html += '<div class="tideline">最初の潮 ' + fmtClock(first.t) + ' ' + (first.kind === 'high' ? '満潮' : '干潮') + '（予定）<span class="tidehgt"> 潮位 ' + first.h + 'cm</span></div>';
+    for (i = 0; i < list.length; i++) {
+      ev = list[i];
+      html += '<div class="tideline" style="font-size:19px;">' + (ev.kind === 'high' ? '満潮' : '干潮') + ' ' + fmtClock(ev.t) + '（予定）<span class="tidehgt"> 潮位 ' + ev.h + 'cm</span></div>';
+    }
+  }
+  html += '<div class="wavetime">気象庁の推算潮位（東京）</div>';
+  html += tideChartHtml(tideHourlyTomorrow, '明日', -1);
   body.innerHTML = html;
 }
 

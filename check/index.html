@@ -128,7 +128,7 @@ h1 {
   min-height: 48px;
 }
 .hname { font-size: 17px; font-weight: bold; }
-#histClear {
+#histClear, #histCopy {
   min-height: 48px;
   padding: 0 16px;
   background: #003311;
@@ -138,6 +138,7 @@ h1 {
   font-size: 16px;
   cursor: pointer;
 }
+#histCopyMsg { color: #ffcc33; font-size: 14px; margin-top: 6px; min-height: 20px; }
 .hitem {
   font-size: 14px;
   color: #99ffbb;
@@ -232,8 +233,9 @@ h1 {
 <div id="histBox">
   <div class="hhead">
     <span class="hname">診断履歴</span>
-    <button id="histClear" type="button">消去</button>
+    <span><button id="histCopy" type="button">履歴をコピー</button> <button id="histClear" type="button">消去</button></span>
   </div>
+  <div id="histCopyMsg"></div>
   <div id="histList"></div>
 </div>
 
@@ -317,6 +319,35 @@ function renderHist() {
 function histClear() {
   try { window.localStorage.removeItem(HIST_KEY); } catch (e) {}
   renderHist();
+}
+
+/* (402) 診断履歴を全文コピー（チャットでクーに貼る用） */
+function histCopyAll() {
+  var a = histLoad();
+  if (!a.length) {
+    $("histCopyMsg").innerHTML = "履歴がまだありません。";
+    return;
+  }
+  var lines = [];
+  lines.push("【CHECK-6 診断履歴】（全" + a.length + "件）");
+  var i;
+  for (i = 0; i < a.length; i++) {
+    var e = a[i];
+    lines.push(e.t + " " + e.name + "：" + (e.ok ? "OK" : "NG") + (e.detail ? "（" + e.detail + "）" : ""));
+  }
+  var text = lines.join("\n");
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "readonly");
+  ta.style.position = "absolute";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  try { ta.setSelectionRange(0, text.length); } catch (e) {}
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  $("histCopyMsg").innerHTML = ok ? "履歴をコピーしました（" + a.length + "件）。チャットに貼ってクーに送れます。" : "コピーできませんでした。";
 }
 
 /* (281) AI回線の最新結果を他サイト（PORTAL-6）と共有する */
@@ -866,6 +897,7 @@ function copyResult() {
 
 $("startBtn").onclick = startAll;
 $("histClear").onclick = histClear;
+$("histCopy").onclick = histCopyAll;
 $("copyBtn").onclick = copyResult;
 renderHist();
 </script>

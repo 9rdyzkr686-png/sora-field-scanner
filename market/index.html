@@ -115,6 +115,8 @@ footer { text-align:center; font-size:12px; color:#a3805a; margin-top:16px; line
   <input class="pfInput" id="pfStore" type="text" placeholder="例：○○スーパー">
   <button class="pfBtn" id="pfAdd" type="button">価格メモに追加</button>
   <div class="pfStatus" id="pfStatus"></div>
+  <h2>🏪 店別のまとめ</h2>
+  <div id="pfShopSummary"></div>
   <h2>🏆 品目ごとの最安値</h2>
   <div id="pfBest"></div>
   <h2>📋 記録の一覧</h2>
@@ -594,9 +596,15 @@ function renderPrices() {
   var list = loadPrices();
   var best = el("pfBest");
   var box = el("pfList");
+  var shopBox = el("pfShopSummary");
   best.innerHTML = "";
   box.innerHTML = "";
+  shopBox.innerHTML = "";
   if (list.length === 0) {
+    var e0 = document.createElement("p");
+    e0.className = "empty";
+    e0.textContent = "まだ記録がありません";
+    shopBox.appendChild(e0);
     var e1 = document.createElement("p");
     e1.className = "empty";
     e1.textContent = "まだ記録がありません";
@@ -606,6 +614,36 @@ function renderPrices() {
     e2.textContent = "まだ記録がありません";
     box.appendChild(e2);
     return;
+  }
+  var sOrder = [];
+  var sMap = {};
+  var si, sit, sName;
+  for (si = 0; si < list.length; si++) {
+    sit = list[si];
+    sName = sit.store ? sit.store : "店名なし";
+    if (!sMap[sName]) { sMap[sName] = { count: 0, best: sit }; sOrder.push(sName); }
+    sMap[sName].count++;
+    if (sit.price < sMap[sName].best.price) { sMap[sName].best = sit; }
+  }
+  var sIdx = [];
+  for (si = 0; si < sOrder.length; si++) { sIdx.push(si); }
+  sIdx.sort(function (a, b) {
+    var dc = sMap[sOrder[b]].count - sMap[sOrder[a]].count;
+    if (dc !== 0) { return dc; }
+    return a - b;
+  });
+  for (si = 0; si < sIdx.length; si++) {
+    var sn = sOrder[sIdx[si]];
+    var sg = sMap[sn];
+    var srow = document.createElement("div");
+    srow.className = "bestLine";
+    srow.appendChild(document.createTextNode(sn + "：" + sg.count + "件（最安メモ：" + sg.best.name + " "));
+    var sy = document.createElement("span");
+    sy.className = "yen";
+    sy.textContent = sg.best.price + "円";
+    srow.appendChild(sy);
+    srow.appendChild(document.createTextNode("）"));
+    shopBox.appendChild(srow);
   }
   var order = [];
   var map = {};

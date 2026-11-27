@@ -41,6 +41,7 @@
   .lchip { flex:1; }
   .lennote { font-size:12px; color:#9adbe8; margin:0 0 6px; line-height:1.5; }
   .qchip { flex:1 1 45%; font-size:14px; border-color:#7a5fd0; color:#e6dcff; box-shadow:0 3px 0 #372a66; }
+  .kchip { flex:1 1 45%; font-size:14px; border-color:#33ff66; color:#d8ffe0; box-shadow:0 3px 0 #14521f; }
   .mychipwrap { flex:1 1 45%; display:flex; gap:4px; min-width:0; }
   .mychipwrap .qchip { flex:1 1 auto; min-width:0; white-space:normal; word-break:break-word; }
   .mychipdel { flex:0 0 48px; min-height:48px; font-size:13px; padding:4px; border-color:#7a5fd0; color:#ffb3ab; box-shadow:0 3px 0 #372a66; }
@@ -202,6 +203,14 @@
 <div class="panel" id="voicePanel" style="display:none">
   <div class="panel-title">VOICE ONLY / 音声だけモード</div>
   <div id="voiceStatus">音声だけモードです。質問を送ると、声で返事します。</div>
+</div>
+
+<div class="subcap">MESSAGE / KUU-01への伝言・定型文（タップで入力欄に入ります）</div>
+<div class="chiprow" id="kuuChipRow">
+  <button type="button" class="kchip" data-msg="おはよう！">おはよう！</button>
+  <button type="button" class="kchip" data-msg="おつかれさま">おつかれさま</button>
+  <button type="button" class="kchip" data-msg="あしたもよろしく">あしたもよろしく</button>
+  <button type="button" class="kchip" data-msg="ニュース見た？">ニュース見た？</button>
 </div>
 
 <div class="inputrow">
@@ -1270,6 +1279,17 @@ document.getElementById("kuuMsgBtn").onclick = function () {
     setStatus("伝言を保存できませんでした。");
   }
 };
+
+/* ---- 伝言の定型文チップ（タップで入力欄に入れるだけ・送信はしない） ---- */
+var kchips = document.getElementsByClassName("kchip");
+var ki;
+for (ki = 0; ki < kchips.length; ki++) {
+  kchips[ki].onclick = function () {
+    inputBox.value = this.getAttribute("data-msg");
+    setStatus("伝言を入力欄に入れました。「KUU-01へ伝言」を押すと届きます。");
+    try { inputBox.focus(); } catch (e) { /* ignore */ }
+  };
+}
 
 /* ---- 伝言の履歴（AI-6側の控え） ---- */
 var SENTLOG_KEY = "ai6_sentlog_v1";

@@ -91,11 +91,12 @@ function ov(){ $("ovst").innerHTML="取得中…";
   $("ov").innerHTML=h;var rt=j.reportDatetime||"";$("ovst").innerHTML=(rt?("発表："+rt.substring(0,10)+" "+rt.substring(11,16)+" ／ "):"")+nowT()+" 取得";},
  function(){$("ov").innerHTML="概況を取得できませんでした。";$("ovst").innerHTML="取得失敗";});
 }
+function fmtNewsTime(s){if(!s)return "";var p=String(s).split(" ");if(p.length<2)return s;var dp=p[0].split("-"),tp=p[1].split(":");if(dp.length<3||tp.length<2)return s;var d=new Date(Date.UTC(+dp[0],+dp[1]-1,+dp[2],+tp[0],+tp[1]));if(isNaN(d.getTime()))return s;var n=new Date();var hm=p2(d.getHours())+":"+p2(d.getMinutes());if(d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate())return hm;return (d.getMonth()+1)+"/"+d.getDate()+" "+hm;}
 function nw(){ $("nwst").innerHTML="取得中…";
  var u="https://api.rss2json.com/v1/api.json?rss_url="+encodeURIComponent("https://news.google.com/rss/search?q=\"CUTIE STREET\"&hl=ja&gl=JP&ceid=JP:ja");
  get(u,
  function(j){if(!j||!j.items||!j.items.length){$("news").innerHTML="見出しがありません。";$("nwst").innerHTML=nowT()+" 取得";return;}
-  var h="<ul>",i,it;for(i=0;i<j.items.length&&i<3;i++){it=j.items[i];h+="<li><a href='"+it.link+"'>"+it.title+"</a><br><span class='d'>"+(it.pubDate||"")+"</span></li>";}
+  var h="<ul>",i,it;for(i=0;i<j.items.length&&i<3;i++){it=j.items[i];h+="<li><a href='"+it.link+"'>"+it.title+"</a><br><span class='d'>"+fmtNewsTime(it.pubDate)+"</span></li>";}
   $("news").innerHTML=h+"</ul>";$("nwst").innerHTML=nowT()+" 取得";},
  function(){$("news").innerHTML="見出しを取得できませんでした。";$("nwst").innerHTML="取得失敗";});
 }

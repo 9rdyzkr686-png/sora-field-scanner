@@ -51,6 +51,7 @@ button:active { background: #2c3a63; }
 .bfSavedHead { color: #d4af37; font-size: 15px; letter-spacing: 1px; margin-top: 10px; }
 .bfSaved { background: #0a1128; border: 1px solid #2c3a63; border-radius: 6px; padding: 9px 11px; margin-top: 8px; font-size: 15px; }
 .bfSavedDate { color: #d4af37; font-size: 13px; margin-bottom: 3px; }
+.bfCatLine { font-size: 15px; line-height: 1.8; background: #0a1128; border: 1px solid #2c3a63; border-radius: 6px; padding: 9px 11px; margin-top: 8px; }
 .bfDelBtn { margin-top: 7px; }
 .footer { text-align: center; color: #9aa7c7; font-size: 13px; margin: 14px 0 6px 0; letter-spacing: 2px; }
 .clearfix:after { content: ""; display: block; clear: both; }
@@ -101,6 +102,7 @@ button:active { background: #2c3a63; }
   <button id="bfSaveBtn" type="button">この朝食を保存</button>
   <div id="bfStatus"></div>
   <div id="bfSavedList"></div>
+  <div id="bfCatStats"></div>
 </div>
 
 <hr class="goldline">
@@ -370,6 +372,7 @@ function saveBreakfast() {
 function bfRenderSaved() {
   var box = $("bfSavedList");
   box.innerHTML = "";
+  $("bfCatStats").innerHTML = "";
   var list = bfLoad();
   if (list.length === 0) { return; }
   var head = document.createElement("div");
@@ -406,6 +409,40 @@ function bfRenderSaved() {
       box.appendChild(d);
     })(i);
   }
+  bfRenderCatStats(list);
+}
+function bfRenderCatStats(list) {
+  var box = $("bfCatStats");
+  box.innerHTML = "";
+  if (!list || list.length === 0) { return; }
+  var counts = [];
+  var j, k;
+  for (j = 0; j < BF_CATS.length; j++) { counts.push({}); }
+  for (var i = 0; i < list.length; i++) {
+    var items = list[i].items || [];
+    for (j = 0; j < items.length && j < BF_CATS.length; j++) {
+      if (!items[j]) { continue; }
+      counts[j][items[j]] = (counts[j][items[j]] || 0) + 1;
+    }
+  }
+  var parts = [];
+  for (j = 0; j < BF_CATS.length; j++) {
+    var bestName = "";
+    var bestCount = 0;
+    for (k in counts[j]) {
+      if (counts[j][k] > bestCount) { bestCount = counts[j][k]; bestName = k; }
+    }
+    if (bestName) { parts.push(BF_CATS[j] + "：" + bestName + " " + bestCount + "回"); }
+  }
+  if (parts.length === 0) { return; }
+  var head = document.createElement("div");
+  head.className = "bfSavedHead";
+  head.appendChild(document.createTextNode("カテゴリ別・よく出た一品"));
+  box.appendChild(head);
+  var line = document.createElement("div");
+  line.className = "bfCatLine";
+  line.appendChild(document.createTextNode(parts.join(" ・ ")));
+  box.appendChild(line);
 }
 
 function init() {

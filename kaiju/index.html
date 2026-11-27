@@ -180,6 +180,25 @@
     border-bottom: 1px solid #4c431e;
   }
   .dex-list li:last-child { border-bottom: 0; }
+  .dex-filter { margin: 0 0 6px; }
+  .dex-chip {
+    display: inline-block;
+    width: auto;
+    min-height: 48px;
+    min-width: 48px;
+    margin: 0 6px 8px 0;
+    padding: 8px 14px;
+    border: 2px solid #665500;
+    border-radius: 4px;
+    background: #1a1a12;
+    color: #f5f0dc;
+    font-size: 17px;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+  }
+  .dex-chip.on { border-color: #ffd400; background: #8f1000; color: #ffffff; }
+  .dex-count { margin: 0 0 8px; color: #ffda45; font-size: 16px; font-weight: bold; }
   .dex-date { color: #ffb3a0; font-weight: bold; }
   .dex-name { color: #fff; font-weight: bold; }
   .dex-level { color: #ffd400; font-weight: bold; }
@@ -383,6 +402,8 @@
 
     <section aria-labelledby="dexHeading">
       <h2 id="dexHeading">■ 怪獣図鑑（過去14日）</h2>
+      <div class="dex-filter" id="dexFilter"></div>
+      <p class="dex-count" id="dexCount"></p>
       <ul class="dex-list" id="dexList"></ul>
     </section>
 
@@ -608,25 +629,71 @@
     }
   };
 
-  /* ■ 怪獣図鑑：過去14日分を本日と同じシード計算で再現 */
-  function renderDex(today) {
-    var list = document.getElementById("dexList");
-    var html = "";
+  /* ■ 怪獣図鑑：過去14日分を本日と同じシード計算で再現
+     ※この図鑑に「発見済み／未発見」の概念はない（全日分が常に表示される生成予報）。
+       そのため絞り込みは警戒レベル別（レベル1〜5）で行う。表示だけの絞り込み。 */
+  var dexFilter = 0; /* 0=すべて, 1〜5=そのレベルだけ */
+  var dexRecords = [];
+
+  function buildDexRecords(today) {
+    dexRecords = [];
     var i;
     var pastDate;
     var record;
-
     for (i = 1; i <= 14; i++) {
       pastDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
       record = makeForecast(pastDate, 0);
-      html += "<li><span class=\"dex-date\">" + formatDate(pastDate) + "</span><br>" +
-        "<span class=\"dex-name\">" + record.name + "</span>　" +
-        "<span class=\"dex-level\">レベル" + record.level + "</span></li>";
+      dexRecords.push({ date: pastDate, name: record.name, level: record.level });
     }
-    list.innerHTML = html;
   }
 
-  renderDex(new Date());
+  function renderDexFilter() {
+    var box = document.getElementById("dexFilter");
+    var labels = ["すべて", "レベル1", "レベル2", "レベル3", "レベル4", "レベル5"];
+    var html = "";
+    var n;
+    var chips;
+    var i;
+    for (n = 0; n <= 5; n++) {
+      html += "<button type=\"button\" class=\"dex-chip" + (dexFilter === n ? " on" : "") +
+        "\" data-f=\"" + n + "\">" + labels[n] + "</button>";
+    }
+    box.innerHTML = html;
+    chips = box.getElementsByTagName("button");
+    for (i = 0; i < chips.length; i++) {
+      chips[i].onclick = function () {
+        dexFilter = parseInt(this.getAttribute("data-f"), 10);
+        renderDexFilter();
+        renderDexList();
+      };
+    }
+  }
+
+  function renderDexList() {
+    var list = document.getElementById("dexList");
+    var html = "";
+    var shown = 0;
+    var i;
+    var r;
+    for (i = 0; i < dexRecords.length; i++) {
+      r = dexRecords[i];
+      if (dexFilter !== 0 && r.level !== dexFilter) { continue; }
+      shown++;
+      html += "<li><span class=\"dex-date\">" + formatDate(r.date) + "</span><br>" +
+        "<span class=\"dex-name\">" + r.name + "</span>　" +
+        "<span class=\"dex-level\">レベル" + r.level + "</span></li>";
+    }
+    if (!shown) {
+      html = "<li>このレベルの怪獣は過去14日に出現していません。</li>";
+    }
+    list.innerHTML = html;
+    document.getElementById("dexCount").textContent =
+      (dexFilter === 0 ? "全レベル" : "レベル" + dexFilter) + "：" + shown + "体（過去14日）";
+  }
+
+  buildDexRecords(new Date());
+  renderDexFilter();
+  renderDexList();
 
   /* ■ 今月の出現まとめ：図鑑と同じシード計算（makeForecast・seedOffset 0）で今月1日〜月末を集計 */
   function renderMonthSummary(today) {

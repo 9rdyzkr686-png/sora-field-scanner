@@ -45,6 +45,7 @@ input[type="date"], input[type="text"] { width:100%; min-height:50px; font-size:
 .card p { font-size:15px; color:#e8d3b5; }
 .warn { color:#ffcf9e; font-weight:bold; }
 #totoStats { font-size:17px; color:#ffd9a8; margin:10px 0 4px 0; text-align:center; }
+#totoDays { font-size:16px; color:#ffd9a8; margin:2px 0 4px 0; text-align:center; }
 .totoStrip { text-align:center; margin:10px 0 4px 0; }
 .totoDay { display:inline-block; width:12.8%; min-width:38px; margin:2px 0.4%; padding:6px 0; background:#241408; border:1px solid #6b4423; border-radius:8px; font-size:14px; line-height:1.35; color:#a98d6d; vertical-align:top; }
 .totoDay .mark { display:block; font-size:19px; color:#6b5540; }
@@ -82,6 +83,7 @@ footer { text-align:center; font-size:13px; color:#a98d6d; margin-top:20px; padd
 <h2>📅 ととのいチェック</h2>
 <button class="btn" id="totoBtn" onclick="quickTotonoi()">今日ととのった</button>
 <div id="totoStats">今月0回 ・ 通算0回 ・ 連続0日</div>
+<div id="totoDays">今月のととのい：0日（通算0日）</div>
 <div class="totoStrip" id="totoStrip"></div>
 <div id="totoWord"></div>
 </div>
@@ -367,6 +369,16 @@ function renderTotonoi() {
     cursor.setDate(cursor.getDate() - 1);
   }
   document.getElementById("totoStats").innerHTML = "今月" + monthCount + "回 ・ 通算" + arr.length + "回 ・ 連続" + streak + "日";
+  var monthDays = 0;
+  var totalDays = 0;
+  var dk;
+  for (dk in set) {
+    if (Object.prototype.hasOwnProperty.call(set, dk)) {
+      totalDays++;
+      if (dk.indexOf(monthPrefix) === 0) { monthDays++; }
+    }
+  }
+  document.getElementById("totoDays").innerHTML = "今月のととのい：" + monthDays + "日（通算" + totalDays + "日）";
   var html = "";
   for (i = 13; i >= 0; i--) {
     d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);

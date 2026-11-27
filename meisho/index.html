@@ -27,6 +27,7 @@ h1 { font-size:23px; color:#33603f; letter-spacing:1px; }
 .mapBtn { display:block; min-height:48px; line-height:48px; text-align:center; background:#eef5e4; border:2px solid #4a7c59; color:#33603f; text-decoration:none; border-radius:10px; font-size:17px; font-weight:bold; margin-top:10px; }
 #stateBar { background:#fffdf4; border:2px solid #b9cfa8; border-radius:12px; padding:10px 12px; margin-bottom:12px; }
 #stateSummary { font-weight:bold; color:#33603f; font-size:16px; margin-bottom:8px; }
+#progressLine { font-weight:bold; color:#a8741a; font-size:16px; margin-bottom:8px; }
 .fchip { min-height:48px; padding:0 14px; margin:0 6px 6px 0; font-size:15px; font-weight:bold; color:#33603f; background:#eef5e4; border:2px solid #4a7c59; border-radius:24px; cursor:pointer; font-family:inherit; }
 .fchip.sel { background:#4a7c59; color:#fff; }
 .stateBtn { display:block; width:100%; min-height:48px; margin-top:10px; font-size:16px; font-weight:bold; border-radius:10px; border:2px solid #b9cfa8; background:#ffffff; color:#6b7a5e; cursor:pointer; font-family:inherit; }
@@ -52,6 +53,7 @@ footer { margin-top:18px; font-size:14px; color:#6b7a5e; text-align:center; line
 
 <div id="stateBar">
 <div id="stateSummary">読み込み中…</div>
+<div id="progressLine"></div>
 <div>
 <button type="button" class="fchip" id="f-all" onclick="setFilter('all')">全部</button>
 <button type="button" class="fchip" id="f-went" onclick="setFilter('went')">行った</button>
@@ -158,6 +160,7 @@ function render() {
   }
   document.getElementById("cards").innerHTML = html;
   document.getElementById("stateSummary").innerHTML = "行った " + went + "件 ・ 行きたい " + want + "件 ・ 全 " + SPOTS.length + "件";
+  document.getElementById("progressLine").innerHTML = "行った " + went + "/" + SPOTS.length + " ・ 行きたい " + want + "件";
   var fids = ["all", "went", "want", "yet"];
   for (i = 0; i < fids.length; i++) {
     document.getElementById("f-" + fids[i]).className = "fchip" + (curFilter === fids[i] ? " sel" : "");

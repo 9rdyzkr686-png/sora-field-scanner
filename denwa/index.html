@@ -102,6 +102,24 @@
     background: #241a12; color: #d9c9a3; cursor: pointer;
   }
   .histdate { font-size: 13px; color: #8a7a5c; }
+  .favbox { margin: 2px 6px 10px; }
+  .favlabel { font-size: 14px; color: #c9a86a; margin: 0 0 2px; }
+  .favrow { margin: 6px 0; overflow: hidden; }
+  button.favcall {
+    display: block; width: 74%; min-height: 52px;
+    text-align: left; font-size: 18px; font-family: inherit;
+    border-radius: 10px; border: 2px solid #c9a86a;
+    background: #1d150e; color: #f3e9d2; cursor: pointer;
+    padding: 8px 12px;
+  }
+  button.favdel {
+    float: right; width: 22%; min-height: 52px;
+    font-size: 18px; font-family: inherit;
+    border-radius: 10px; border: 2px solid #8a2f23;
+    background: #3a1410; color: #f3e9d2; cursor: pointer;
+    padding: 8px 0;
+  }
+  .favempty { font-size: 14px; color: #8a7a5c; }
   .ringlabel { font-size: 14px; color: #c9a86a; margin: 4px 0 0; }
   .anspanel {
     max-width: 360px; margin: 16px auto 0;
@@ -136,6 +154,13 @@
   <div class="display" id="display">---</div>
   <div class="status" id="status">番号を押してください</div>
   <div class="timer" id="timer"></div>
+  <div class="favbox">
+    <p class="favlabel">⭐ お気に入り番号（タップで発信・最大5件）</p>
+    <div id="favList"></div>
+    <div class="btnrow">
+      <button class="act" id="btnFavAdd">今の番号をお気に入りに</button>
+    </div>
+  </div>
   <div class="dial" id="dial">
     <div class="dialcenter"><span>DENWA-6<br>☎</span></div>
   </div>
@@ -442,6 +467,90 @@ function redial(num) {
 
 function escHtml(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/* お気に入り番号 */
+var FAV_KEY = "denwa6_favs_v1";
+var FAV_MAX = 5;
+
+function loadFavs() {
+  try {
+    var raw = localStorage.getItem(FAV_KEY);
+    if (!raw) { return []; }
+    var list = JSON.parse(raw);
+    if (list && typeof list.length === "number") { return list; }
+  } catch (e) {}
+  return [];
+}
+
+function saveFavs(list) {
+  try {
+    localStorage.setItem(FAV_KEY, JSON.stringify(list));
+  } catch (e) {}
+}
+
+function renderFavs() {
+  var box = el("favList");
+  var list = loadFavs();
+  box.innerHTML = "";
+  if (!list.length) {
+    box.innerHTML = "<span class=\"favempty\">まだ登録がありません。番号を押して「今の番号をお気に入りに」で登録できます。</span>";
+    return;
+  }
+  for (var i = 0; i < list.length; i++) {
+    (function (num) {
+      var row = document.createElement("div");
+      row.className = "favrow";
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "favdel";
+      del.innerHTML = "×";
+      del.onclick = function () {
+        var cur = loadFavs();
+        var next = [];
+        for (var j = 0; j < cur.length; j++) {
+          if (cur[j] !== num) { next.push(cur[j]); }
+        }
+        saveFavs(next);
+        renderFavs();
+        setStatus(num + " をお気に入りから削除しました");
+      };
+      var call = document.createElement("button");
+      call.type = "button";
+      call.className = "favcall";
+      call.innerHTML = "☎ " + escHtml(num) + " … " + escHtml(NUMBER_NAMES[num] || "案内");
+      call.onclick = function () { redial(num); };
+      row.appendChild(del);
+      row.appendChild(call);
+      box.appendChild(row);
+    })(list[i]);
+  }
+}
+
+function addFav() {
+  if (state !== "idle") {
+    setStatus("通話中は登録できません");
+    return;
+  }
+  if (digits.length < 3) {
+    setStatus("3けたの番号を押してから登録してください");
+    return;
+  }
+  var list = loadFavs();
+  for (var i = 0; i < list.length; i++) {
+    if (list[i] === digits) {
+      setStatus("その番号は登録ずみです");
+      return;
+    }
+  }
+  if (list.length >= FAV_MAX) {
+    setStatus("お気に入りは" + FAV_MAX + "件までです");
+    return;
+  }
+  list.push(digits);
+  saveFavs(list);
+  renderFavs();
+  setStatus(digits + " をお気に入りに登録しました");
 }
 
 function playRing() {
@@ -801,9 +910,11 @@ el("btnRing1").onclick = function () { selectRing(1); };
 el("btnRing2").onclick = function () { selectRing(2); };
 el("btnRec").onclick = pressRec;
 el("btnPlay").onclick = pressPlay;
+el("btnFavAdd").onclick = addFav;
 updateRingBtns();
 buildDial();
 showDisplay();
+renderFavs();
 renderHistory();
 </script>
 </body>
