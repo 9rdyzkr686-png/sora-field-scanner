@@ -402,6 +402,7 @@
   <div class="rec-status" id="recStatus">録画した番組がここに残ります（最大30件）。行を押すと全文が開きます。</div>
   <div class="rec-filters" id="recFilters"></div>
   <div id="recList"></div>
+  <button class="rec-clear" id="recCopyBtn" type="button" style="display:none;">録画を全文コピー</button>
   <button class="rec-clear" id="recClearBtn" type="button">録画を全部消す</button>
 </div>
 
@@ -1001,11 +1002,13 @@ function renderRecs() {
   if (list.length === 0) {
     el("recStatus").textContent = "まだ録画がありません。番組を表示して「⏺ 録画する」を押してください（最大30件）。";
     el("recClearBtn").style.display = "none";
+    el("recCopyBtn").style.display = "none";
     el("recFilters").innerHTML = "";
     recFilter = 0;
     return;
   }
   el("recClearBtn").style.display = "block";
+  el("recCopyBtn").style.display = "block";
   renderRecFilters(list);
   var shown = 0;
   for (var i = 0; i < list.length; i++) {
@@ -1062,6 +1065,36 @@ function toggleRecBox() {
   }
 }
 
+function copyRecs() {
+  var list = loadRecs();
+  if (list.length === 0) {
+    el("recStatus").textContent = "コピーできる録画がまだありません。";
+    return;
+  }
+  var lines = [];
+  lines.push("【TV-6 録画リスト】全" + list.length + "件");
+  lines.push("");
+  for (var i = 0; i < list.length; i++) {
+    var it = list[i];
+    lines.push("■ " + (it.ch || "") + "　" + (it.date || ""));
+    lines.push(it.title || "");
+    lines.push(it.text || "");
+    lines.push("");
+  }
+  var ta = document.createElement("textarea");
+  ta.value = lines.join("\n");
+  ta.style.position = "fixed";
+  ta.style.left = "-9999px";
+  ta.setAttribute("readonly", "readonly");
+  document.body.appendChild(ta);
+  ta.select();
+  try { ta.setSelectionRange(0, ta.value.length); } catch (e) {}
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(ta);
+  el("recStatus").textContent = ok ? ("録画" + list.length + "件を全文コピーしました。") : "コピーできませんでした。もう一度押してみてください。";
+}
+
 function clearRecs() {
   saveRecs([]);
   renderRecs();
@@ -1109,6 +1142,7 @@ function bind() {
   el("recBtn").onclick = function () { recNow(); };
   el("recListBtn").onclick = function () { toggleRecBox(); };
   el("recClearBtn").onclick = function () { clearRecs(); };
+  el("recCopyBtn").onclick = function () { copyRecs(); };
   for (i = 1; i <= 6; i++) {
     (function (n) {
       el("guideRow" + n).onclick = function () { playGuide(n); };

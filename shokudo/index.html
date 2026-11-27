@@ -74,6 +74,7 @@ letter-spacing: 1px;
 #ippinName { font-size: 24px; font-weight: bold; color: #ffe1ae;}
 #ippinText { font-size: 16px; line-height: 1.6; margin-top: 6px;}
 #ippinMaster { font-size: 17px; line-height: 1.7; margin-top: 10px; color: #ffcf87;}
+#ippinHistory { font-size: 15px; line-height: 1.7; margin-top: 12px; color: #ffcf87;}
 .menuitem {
 border-bottom: 1px solid #4a2d16;
 padding: 10px 0;
@@ -340,6 +341,7 @@ body.noren-kinari .portallink { color: #ecd9a8;}
 <div id="ippinName">―</div>
 <p id="ippinText">考え中…</p>
 <p id="ippinMaster"></p>
+<div id="ippinHistory"></div>
 </div>
 
 <div class="card">
@@ -592,6 +594,37 @@ el("ippinName").innerHTML = "今日の一品：" + dish.name + "（" + dish.pric
 el("ippinText").innerHTML = dish.memo;
 var word = IPPIN_WORDS[(seed * 7 + 5) % IPPIN_WORDS.length];
 el("ippinMaster").innerHTML = "大将：「" + word + "」";
+recordIppin(dish.name);
+}
+
+var IPPIN_KEY = "shokudo6_ippin_v1";
+function ippinTodayStr() {
+var d = new Date();
+var m = d.getMonth() + 1;
+var day = d.getDate();
+return d.getFullYear() + "-" + (m < 10 ? "0" + m : "" + m) + "-" + (day < 10 ? "0" + day : "" + day);
+}
+function recordIppin(name) {
+var a = [];
+try {
+var raw = localStorage.getItem(IPPIN_KEY);
+if (raw) { var p = JSON.parse(raw); if (p && p.length !== undefined) a = p; }
+} catch (e) {}
+var today = ippinTodayStr();
+if (a.length && a[0].date === today) {
+a[0].name = name;
+} else {
+a.unshift({ date: today, name: name });
+}
+while (a.length > 30) a.pop();
+try { localStorage.setItem(IPPIN_KEY, JSON.stringify(a)); } catch (e) {}
+var html = "";
+var n = Math.min(a.length, 7);
+for (var i = 0; i < n; i++) {
+var parts = a[i].date.split("-");
+html += (i === 0 && a[i].date === today ? "今日" : parts[1] + "/" + parts[2]) + "：" + a[i].name + "<br>";
+}
+el("ippinHistory").innerHTML = "【最近の一品】<br>" + html;
 }
 
 el("voiceBtn").onclick = function () {

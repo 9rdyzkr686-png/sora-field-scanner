@@ -58,6 +58,7 @@ font-size: 21px; font-weight: bold; text-align: left; padding: 14px 16px; cursor
 letter-spacing: 1px;
 }
 .machine small { display: block; font-size: 14px; font-weight: normal; color: #bbc; margin-top: 4px; letter-spacing: 0;}
+.recoBadge { display: inline-block; margin-left: 10px; font-size: 15px; font-weight: bold; color: #111; background: #ffe95e; border-radius: 12px; padding: 3px 10px; letter-spacing: 0; vertical-align: middle;}
 .m-pink { color: #ff8fd8; border-color: #ff5ec4; box-shadow: 0 0 12px rgba(255,94,196,0.35);}
 .m-cyan { color: #8ff6ff; border-color: #29d8e8; box-shadow: 0 0 12px rgba(41,216,232,0.35);}
 .m-yellow { color: #fff3a0; border-color: #ffe95e; box-shadow: 0 0 12px rgba(255,233,94,0.35);}
@@ -541,6 +542,29 @@ html += '<div class="rankRow">' + (i + 1) + '位　' + rows[i].name + '　…　
 }
 el('rankList').innerHTML = html;
 renderTitle();
+renderRecoBadge();
+}
+function renderRecoBadge() {
+var c = loadCounts();
+var best = '', bestN = 0, tie = false, k, n;
+for (k in MACHINE_NAMES) {
+n = c[k] || 0;
+if (n > bestN) { bestN = n; best = k; tie = false;}
+else if (n === bestN && n > 0) { tie = true;}
+}
+if (bestN === 0 || tie) { best = '';}
+var btns = document.querySelectorAll('.machine');
+for (var i = 0; i < btns.length; i++) {
+var b = btns[i];
+var old = b.querySelector('.recoBadge');
+if (old) { b.removeChild(old);}
+if (best && b.getAttribute('data-p') === best) {
+var s = document.createElement('span');
+s.className = 'recoBadge';
+s.textContent = '⭐おすすめ';
+b.appendChild(s);
+}
+}
 }
 function titleFor(total) {
 if (total >= 100) return '伝説の店長';

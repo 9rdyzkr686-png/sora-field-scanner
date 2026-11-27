@@ -369,6 +369,10 @@ background: #fff;
 
 <div class="label">▼ ミッション達成記録</div>
 <div id="missionLogBox" style="font-size:13px;margin:2px 0 8px 0;"></div>
+<div class="actrow" style="margin:2px 0 0 0;">
+<button id="missionCopyBtn" type="button">記録ヲコピー</button>
+</div>
+<div id="missionCopyStatus" style="font-size:13px;margin:2px 0 8px 0;"></div>
 
 <div class="label">▼ 話題ヲ選ブ</div>
 <div id="chipsBox"></div>
@@ -3287,6 +3291,29 @@ html += "<br>◆ " + esc(missionLog[i].d) + "：" + esc(missionLog[i].t);
 box.innerHTML = html;
 }
 
+function copyMissionLog() {
+var st = el("missionCopyStatus");
+if (!missionLog.length) {
+if (st) st.innerHTML = "記録ガマダアリマセン。";
+return;
+}
+var lines = ["【KUU-01 ミッション達成記録】達成 " + missionsDone + "件"];
+var start = missionLog.length - 10;
+if (start < 0) start = 0;
+var i;
+for (i = missionLog.length - 1; i >= start; i--) {
+lines.push("◆ " + missionLog[i].d + "：" + missionLog[i].t);
+}
+var ta = document.createElement("textarea");
+ta.value = lines.join("\n");
+document.body.appendChild(ta);
+ta.select();
+var ok = false;
+try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+document.body.removeChild(ta);
+if (st) st.innerHTML = ok ? "記録ヲコピーシマシタ。" : "コピーデキマセンデシタ。";
+}
+
 function doDiary() {
 if (booting) finishBoot();
 goSpeech();
@@ -3383,6 +3410,7 @@ if (e.keyCode === 13) doSend();
 el("exportBtn").onclick = doExport;
 el("copyBtn").onclick = doCopy;
 el("clearBtn").onclick = doClear;
+el("missionCopyBtn").onclick = copyMissionLog;
 el("logSearchBtn").onclick = doLogSearch;
 el("logSearchClearBtn").onclick = doLogSearchClear;
 el("logSearchInput").onkeydown = function (e) {

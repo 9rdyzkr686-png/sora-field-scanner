@@ -121,6 +121,12 @@
   .favbtn.active { background:#3a2a00; border-color:#ffe600; color:#ffe600; }
   body.sora .favbtn { border-color:#33ff66; color:#33ff66; background:#000; box-shadow:none; }
   body.sora .favbtn.active { background:#003300; }
+  .speakbtn {
+    min-height:48px; padding:4px 12px; font-size:14px;
+    vertical-align:top; margin-left:6px;
+    border-color:#7a5fd0; color:#c8fbff; background:#0a0a26; box-shadow:0 3px 0 #372a66;
+  }
+  body.sora .speakbtn { border-color:#33ff66; color:#33ff66; background:#000; box-shadow:none; }
   .favitem { border:1px dashed #7a5fd0; padding:8px; margin-bottom:8px; }
   .favtext { font-size:15px; line-height:1.6; white-space:pre-wrap; word-break:break-word; }
   .favmeta { font-size:12px; color:#a9bde0; margin-top:4px; }
@@ -445,6 +451,22 @@ function speak(text) {
   } catch (e) { /* ignore */ }
 }
 
+/* 回答ごとの読み上げボタン用：ボイスON/OFFに関係なく、押されたらその返事を読む */
+function speakOne(text) {
+  try {
+    if (!window.speechSynthesis) { setStatus("この端末では読み上げできません。"); return; }
+    var t = (text || "").replace(/\n/g, " ");
+    if (!t) return;
+    if (t.length > 400) t = t.substring(0, 400);
+    var u = new SpeechSynthesisUtterance(t);
+    u.lang = (mode === "english") ? "en-US" : "ja-JP";
+    u.pitch = 0.7;
+    u.rate = 1.0;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  } catch (e) { /* ignore */ }
+}
+
 /* ---- お気に入り回答 ---- */
 var favs = []; /* [{t:"...", m:"モード名"}] */
 
@@ -511,6 +533,16 @@ function attachFavBtn(msgEl, text) {
     syncFavBtns();
     renderFavs();
   };
+  msgEl.parentNode.appendChild(b);
+}
+
+function attachSpeakBtn(msgEl, text) {
+  if (!msgEl || !msgEl.parentNode) return;
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "speakbtn";
+  b.innerHTML = "🔊 読み上げ";
+  b.onclick = function () { speakOne(text); };
   msgEl.parentNode.appendChild(b);
 }
 
@@ -699,6 +731,7 @@ function sendMessage(text) {
     startTyping(thinkMsg, reply);
     speak(reply);
     attachFavBtn(thinkMsg, reply);
+    attachSpeakBtn(thinkMsg, reply);
   }
   function attempt() {
     try {
@@ -851,6 +884,7 @@ function sendMulti() {
         trimMsgs();
         saveChat();
         attachFavBtn(thinkMsg, payload);
+        attachSpeakBtn(thinkMsg, payload);
         idx++;
         step();
       } else if (kind === "quota") {
@@ -1492,7 +1526,9 @@ if (chatMsgs.length > 0) {
       addUserRow(chatMsgs[rIdx].t);
       pendingU = chatMsgs[rIdx].t;
     } else {
-      attachFavBtn(addAiRow(chatMsgs[rIdx].t), chatMsgs[rIdx].t);
+      var restoredMsg = addAiRow(chatMsgs[rIdx].t);
+      attachFavBtn(restoredMsg, chatMsgs[rIdx].t);
+      attachSpeakBtn(restoredMsg, chatMsgs[rIdx].t);
       if (pendingU !== null) {
         history.push({ u: pendingU, a: chatMsgs[rIdx].t });
         pendingU = null;

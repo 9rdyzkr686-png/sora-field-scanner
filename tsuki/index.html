@@ -47,6 +47,10 @@ h1 { margin:0; font-size:28px; color:#ffe082; letter-spacing:2px; }
 .ageGrid td .gm { display:block; font-size:14px; }
 .ageGrid td.gtoday { background:#283593; }
 .ageGrid td.gtoday .ga { color:#c5cae9; }
+.calNav { overflow:hidden; margin-bottom:12px; }
+.calNav button { float:left; width:32%; margin-right:2%; min-height:48px; font-size:16px; border-radius:10px; border:1px solid #5c6bc0; background:#1a2350; color:#e8eaf6; padding:10px 4px; cursor:pointer; }
+.calNav button.last { margin-right:0; }
+.calNav button:active { background:#283593; }
 footer { text-align:center; color:#7986cb; font-size:13px; padding:8px 12px 28px; }
 </style>
 </head>
@@ -100,6 +104,11 @@ footer { text-align:center; color:#7986cb; font-size:13px; padding:8px 12px 28px
 
 <div class="card">
 <h2 id="ageCalTitle">月齢カレンダー</h2>
+<div class="calNav">
+<button type="button" id="agePrev" onclick="ageCalMove(-1)">◀ 前月</button>
+<button type="button" id="ageThis" onclick="ageCalToday()">今月</button>
+<button type="button" class="last" id="ageNext" onclick="ageCalMove(1)">次月 ▶</button>
+</div>
 <div id="ageCal"></div>
 <div style="font-size:14px; color:#9fa8da; margin-top:10px;">数字は各日正午の月齢です。🌑は新月、🌕は満月の近い日（正午の月齢が新月0・満月約14.8から±0.6日以内の日）です。</div>
 </div>
@@ -113,6 +122,7 @@ var REF = Date.UTC(2000, 0, 6, 18, 14, 0);
 var voiceOn = true;
 var aiBusy = false;
 var aiTimer = null;
+var ageCalView = null; /* 月齢カレンダーの表示月 {y, m}（セッション内のみ） */
 
 function moonAge(dateObj) {
   var diff = (dateObj.getTime() - REF) / 86400000;
@@ -322,9 +332,11 @@ function askMoon() {
 
 function renderAgeCalendar() {
   var now = new Date();
-  var y = now.getFullYear();
-  var m = now.getMonth();
-  var todayD = now.getDate();
+  if (!ageCalView) { ageCalView = { y: now.getFullYear(), m: now.getMonth() }; }
+  var y = ageCalView.y;
+  var m = ageCalView.m;
+  var isThisMonth = (y === now.getFullYear() && m === now.getMonth());
+  var todayD = isThisMonth ? now.getDate() : -1;
   document.getElementById("ageCalTitle").innerHTML = y + "年" + (m + 1) + "月の月齢カレンダー";
   var daysInMonth = new Date(y, m + 1, 0).getDate();
   var firstDow = new Date(y, m, 1).getDay();
@@ -346,6 +358,22 @@ function renderAgeCalendar() {
   while (cell % 7 !== 0) { html += '<td></td>'; cell++; }
   html += '</tr></table>';
   document.getElementById("ageCal").innerHTML = html;
+}
+
+function ageCalMove(delta) {
+  var now = new Date();
+  if (!ageCalView) { ageCalView = { y: now.getFullYear(), m: now.getMonth() }; }
+  var y = ageCalView.y;
+  var m = ageCalView.m + delta;
+  while (m < 0) { m += 12; y--; }
+  while (m > 11) { m -= 12; y++; }
+  ageCalView = { y: y, m: m };
+  renderAgeCalendar();
+}
+function ageCalToday() {
+  var now = new Date();
+  ageCalView = { y: now.getFullYear(), m: now.getMonth() };
+  renderAgeCalendar();
 }
 
 renderTonight();

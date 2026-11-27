@@ -124,7 +124,9 @@
   <div class="list" id="listBox"></div>
 
   <div class="label">■ 最近聴いた番組（タップで再生）</div>
+  <div class="note" id="histCount"></div>
   <div class="list" id="histBox"></div>
+  <button type="button" class="toggle" id="histClearBtn">🗑 再生履歴を消す</button>
 
   <div class="footer">
     <div>※ 画面を消すと読み上げが止まることがあります。</div>
@@ -683,6 +685,10 @@ function renderHistory() {
   var box = el("histBox");
   if (!box) return;
   var arr = loadHistory();
+  var cnt = el("histCount");
+  if (cnt) cnt.textContent = "履歴 " + arr.length + "件（新しい順・最大30件まで保存）";
+  var cb = el("histClearBtn");
+  if (cb) cb.style.display = arr.length ? "" : "none";
   box.innerHTML = "";
   if (!arr.length) {
     var d0 = document.createElement("div");
@@ -709,6 +715,26 @@ function playFromHistory(ch) {
   recordHistory(ch);
   speakCurrent();
 }
+var histClearArmed = false;
+var histClearTimer = null;
+function clearRadioHistory() {
+  var btn = el("histClearBtn");
+  if (!histClearArmed) {
+    histClearArmed = true;
+    btn.textContent = "本当に消しますか？（もう一度押すと消去）";
+    histClearTimer = setTimeout(function () {
+      histClearArmed = false;
+      btn.textContent = "🗑 再生履歴を消す";
+    }, 3000);
+    return;
+  }
+  if (histClearTimer) { clearTimeout(histClearTimer); histClearTimer = null; }
+  histClearArmed = false;
+  btn.textContent = "🗑 再生履歴を消す";
+  saveHistory([]);
+  renderHistory();
+}
+el("histClearBtn").onclick = clearRadioHistory;
 renderHistory();
 el("refetchBtn").onclick = function () {
   el("fetchNote").textContent = "ニュースを取得中…";

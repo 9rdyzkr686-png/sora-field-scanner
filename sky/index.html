@@ -42,9 +42,10 @@
   #wxMain { font-size: 22px; font-weight: bold; }
   #wxTime, #wxNote { color: #a9c6da; font-size: 14px; }
   #wxNote { margin-top: 4px; }
-  #ssMain { font-size: 26px; font-weight: bold; color: #ffb27a; }
-  #ssTime, #ssNote { color: #a9c6da; font-size: 14px; }
-  #ssNote { margin-top: 4px; }
+  #ssMain, #ssMain2 { font-size: 26px; font-weight: bold; color: #ffb27a; }
+  #ssTime, #ssNote, #ssTime2, #ssNote2 { color: #a9c6da; font-size: 14px; }
+  #ssNote, #ssNote2 { margin-top: 4px; }
+  .ssSub { border-top: 1px solid #2c4a68; margin-top: 14px; padding-top: 12px; }
   .cloud { border-top: 1px solid #2c4a68; padding: 10px 0 2px; }
   .cloud:first-of-type { border-top: none; }
   .cloud .nm { font-size: 18px; font-weight: bold; color: #ffe9a8; }
@@ -96,6 +97,12 @@
   <div id="ssMain">取得中…</div>
   <div id="ssTime"></div>
   <div id="ssNote"></div>
+  <div class="ssSub">
+    <h2>🌇 明日の夕焼け指数</h2>
+    <div id="ssMain2">取得中…</div>
+    <div id="ssTime2"></div>
+    <div id="ssNote2"></div>
+  </div>
 </div>
 
 <div class="card">
@@ -218,26 +225,29 @@ function sunsetFail() {
   el("ssMain").textContent = "夕焼け指数は分かりませんでした";
   el("ssTime").textContent = "";
   el("ssNote").textContent = "";
+  el("ssMain2").textContent = "夕焼け指数は分かりませんでした";
+  el("ssTime2").textContent = "";
+  el("ssNote2").textContent = "";
 }
 
-function renderSunset(data) {
-  if (!data || !data.daily || !data.daily.sunset || !data.daily.sunset.length || !data.hourly) {
-    sunsetFail();
-    return;
+/* 指定した日（daily.sunset[dayIdx]）の夕焼け指数を計算する。取れなければ null */
+function sunsetCompute(data, dayIdx) {
+  if (!data || !data.daily || !data.daily.sunset || !data.daily.sunset[dayIdx] || !data.hourly) {
+    return null;
   }
-  var sunset = data.daily.sunset[0]; /* 例 "2026-11-27T16:29"（Asia/Tokyo） */
+  var sunset = data.daily.sunset[dayIdx]; /* 例 "2026-11-27T16:29"（Asia/Tokyo） */
   var times = data.hourly.time;
   var lowArr = data.hourly.cloud_cover_low;
   var midArr = data.hourly.cloud_cover_mid;
   var totArr = data.hourly.cloud_cover;
-  if (!times || !lowArr || !midArr) { sunsetFail(); return; }
+  if (!times || !lowArr || !midArr) { return null; }
   var prefix = sunset.substring(0, 13); /* "2026-11-27T16" */
   var idx = -1;
   var i, j;
   for (i = 0; i < times.length; i++) {
     if (times[i].substring(0, 13) === prefix) { idx = i; break; }
   }
-  if (idx < 0) { sunsetFail(); return; }
+  if (idx < 0) { return null; }
   /* 日の入りの当時と1時間前を平均する */
   var idxs = [idx];
   if (idx > 0) { idxs.push(idx - 1); }
@@ -251,7 +261,7 @@ function renderSunset(data) {
       n++;
     }
   }
-  if (!n) { sunsetFail(); return; }
+  if (!n) { return null; }
   low = low / n; mid = mid / n; tot = tot / n;
   /* 低い雲は太陽を隠すので減点。中くらいの雲はほどほどが色づきやすい */
   var score = 100;
@@ -266,9 +276,35 @@ function renderSunset(data) {
   if (score >= 65) { label = "期待大"; }
   else if (score >= 35) { label = "まあまあ"; }
   else { label = "低め"; }
-  el("ssMain").textContent = score + "点（" + label + "）";
-  el("ssTime").textContent = "日の入り " + sunset.substring(11, 16) + " ごろ";
-  el("ssNote").textContent = "低い雲 " + Math.round(low) + "%・中くらいの雲 " + Math.round(mid)
+  return { score: score, label: label, sunset: sunset, low: low, mid: mid };
+}
+
+function sunsetDateLabel(sunsetStr) {
+  var y = parseInt(sunsetStr.substring(0, 4), 10);
+  var mo = parseInt(sunsetStr.substring(5, 7), 10);
+  var d = parseInt(sunsetStr.substring(8, 10), 10);
+  var week = ["日", "月", "火", "水", "木", "金", "土"];
+  var dow = new Date(y, mo - 1, d).getDay();
+  return mo + "月" + d + "日（" + week[dow] + "）";
+}
+
+function renderSunset(data) {
+  var today = sunsetCompute(data, 0);
+  if (!today) { sunsetFail(); return; }
+  el("ssMain").textContent = today.score + "点（" + today.label + "）";
+  el("ssTime").textContent = sunsetDateLabel(today.sunset) + "　日の入り " + today.sunset.substring(11, 16) + " ごろ";
+  el("ssNote").textContent = "低い雲 " + Math.round(today.low) + "%・中くらいの雲 " + Math.round(today.mid)
+    + "% から計算した目安です。実際の色づきは当日の空しだいです（Open-Meteo）";
+  var tmr = sunsetCompute(data, 1);
+  if (!tmr) {
+    el("ssMain2").textContent = "夕焼け指数は分かりませんでした";
+    el("ssTime2").textContent = "";
+    el("ssNote2").textContent = "";
+    return;
+  }
+  el("ssMain2").textContent = tmr.score + "点（" + tmr.label + "）";
+  el("ssTime2").textContent = sunsetDateLabel(tmr.sunset) + "　日の入り " + tmr.sunset.substring(11, 16) + " ごろ";
+  el("ssNote2").textContent = "低い雲 " + Math.round(tmr.low) + "%・中くらいの雲 " + Math.round(tmr.mid)
     + "% から計算した目安です。実際の色づきは当日の空しだいです（Open-Meteo）";
 }
 
@@ -278,7 +314,7 @@ function loadWeather() {
   var url = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197"
     + "&current=temperature_2m,weather_code,wind_speed_10m"
     + "&hourly=cloud_cover,cloud_cover_low,cloud_cover_mid"
-    + "&daily=sunset&forecast_days=1&timezone=Asia%2FTokyo";
+    + "&daily=sunset&forecast_days=2&timezone=Asia%2FTokyo";
   var xhr = new XMLHttpRequest();
   xhr.open("GET", url, true);
   xhr.timeout = 20000;

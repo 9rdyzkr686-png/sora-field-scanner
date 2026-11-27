@@ -177,6 +177,18 @@
     margin-top: 8px;
   }
   .env .remain.arrived { color: #b03024; }
+  .badge-unopened {
+    display: inline-block;
+    background: #b03024;
+    color: #fff;
+    font-size: 13px;
+    font-weight: bold;
+    border-radius: 10px;
+    padding: 2px 10px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .sched .badge-unopened { float: right; }
   .env .btns { margin-top: 10px; overflow: hidden; }
   .btn {
     float: left;
@@ -416,6 +428,12 @@ function findLetter(id) {
   }
   return null;
 }
+function isUnopened(l, remain) {
+  if (remain > 0) { return false; }
+  if (typeof l.opened === 'boolean') { return !l.opened; }
+  // opened の記録がない旧データ：過去に届いた分は開封済み扱いにし、今日届いた分だけ未開封とする
+  return remain === 0;
+}
 function updatePreview() {
   document.getElementById('openPreview').innerHTML = '開封できる日： ' + fmtDate(computeOpenDate());
 }
@@ -604,7 +622,7 @@ function renderList() {
     if (l.opened) {
       html += '<div class="remain">開封済みです</div>';
     } else if (remain <= 0) {
-      html += '<div class="remain arrived">届きました！ 開封できます</div>';
+      html += '<div class="remain arrived">届きました！ 開封できます' + (isUnopened(l, remain) ? '<span class="badge-unopened">未開封</span>' : '') + '</div>';
     } else {
       html += '<div class="remain">開封まで あと' + remain + '日</div>';
     }
@@ -675,6 +693,7 @@ function renderSchedule() {
     var title = arrived ? esc(firstLine(l.body)) : '（封筒）';
     html += '<div class="sched">';
     html += '<span class="' + remainCls + '">' + remainLabel + '</span>';
+    if (isUnopened(l, remain)) { html += '<span class="badge-unopened">未開封</span>'; }
     html += '<span class="sdate">' + dateLabel + '</span>';
     html += '<span class="sto">' + esc(l.to) + ' へ</span>';
     html += '<div class="stitle">' + title + '</div>';

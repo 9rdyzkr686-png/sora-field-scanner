@@ -102,6 +102,14 @@
     background: #241a12; color: #d9c9a3; cursor: pointer;
   }
   .histdate { font-size: 13px; color: #8a7a5c; }
+  button.histcopy {
+    display: block; width: 100%; min-height: 52px;
+    margin: 8px 0 4px; padding: 8px 12px;
+    font-size: 16px; font-family: inherit; text-align: center;
+    border-radius: 10px; border: 2px solid #c9a86a;
+    background: #1d150e; color: #f3e9d2; cursor: pointer;
+  }
+  #histCopyMsg { font-size: 14px; color: #c9a86a; min-height: 20px; }
   .favbox { margin: 2px 6px 10px; }
   .favlabel { font-size: 14px; color: #c9a86a; margin: 0 0 2px; }
   .favrow { margin: 6px 0; overflow: hidden; }
@@ -211,6 +219,8 @@
   <b>つうわ履歴</b>（タップで かけ直し）<br>
   <div id="histTop"></div>
   <div id="histList"></div>
+  <button type="button" class="histcopy" id="histCopyBtn">履歴をコピー</button>
+  <div id="histCopyMsg"></div>
 </div>
 
 <footer>
@@ -454,6 +464,36 @@ function renderHistory() {
     })(list[i]);
   }
 }
+
+function copyHistory() {
+  var msg = el("histCopyMsg");
+  var list = loadHistory();
+  if (!list.length) {
+    msg.textContent = "履歴がまだありません。";
+    return;
+  }
+  var lines = [];
+  lines.push("【DENWA-6 つうわ履歴】（全" + list.length + "件）");
+  for (var i = 0; i < list.length; i++) {
+    var e = list[i];
+    var nm = NUMBER_NAMES[e.number] || e.name || "案内";
+    lines.push(e.number + " " + nm + "（" + e.date + "）");
+  }
+  var text = lines.join("\n");
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "readonly");
+  ta.style.position = "absolute";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  try { ta.setSelectionRange(0, text.length); } catch (err) {}
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (err2) { ok = false; }
+  document.body.removeChild(ta);
+  msg.textContent = ok ? ("履歴をコピーしました（" + list.length + "件）。") : "コピーできませんでした。";
+}
+el("histCopyBtn").onclick = copyHistory;
 
 function redial(num) {
   if (state !== "idle") {
