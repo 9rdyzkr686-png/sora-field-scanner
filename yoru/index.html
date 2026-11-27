@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YORU-6 深夜の散歩</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0;}
+body {
+background: #070d1f;
+background: -webkit-linear-gradient(#070d1f, #0d1836 60%, #12224d);
+background: linear-gradient(#070d1f, #0d1836 60%, #12224d);
+color: #dfe8ff;
+font-family: sans-serif;
+padding: 14px 14px 40px;
+min-height: 100vh;
+}
+a.back {
+display: inline-block;
+color: #9db8ff;
+text-decoration: none;
+font-size: 17px;
+padding: 12px 6px;
+min-height: 48px;
+}
+h1 {
+font-size: 26px;
+color: #f2e3b3;
+letter-spacing: 2px;
+margin: 4px 0 2px;
+}
+.sub { color: #8fa5d8; font-size: 14px; margin-bottom: 14px;}
+.toggles { margin-bottom: 16px;}
+.tgl {
+display: inline-block;
+background: #16224a;
+color: #cdd9ff;
+border: 1px solid #35509c;
+border-radius: 24px;
+font-size: 16px;
+padding: 12px 16px;
+margin: 0 6px 8px 0;
+min-height: 48px;
+min-width: 110px;
+}
+.tgl.on { background: #2b447f; color: #ffffff; border-color: #7ea2ff;}
+.secTitle { font-size: 17px; color: #aebfff; margin: 10px 0 8px;}
+.chips { margin-bottom: 14px;}
+.chip {
+display: block;
+width: 100%;
+background: #101c3d;
+color: #dfe8ff;
+border: 1px solid #2c447e;
+border-radius: 12px;
+font-size: 19px;
+padding: 15px;
+margin-bottom: 10px;
+min-height: 56px;
+text-align: left;
+}
+.chip.sel { background: #27407c; border-color: #ffd97a; color: #ffffff;}
+.bigBtn {
+display: block;
+width: 100%;
+background: #314d94;
+color: #ffffff;
+border: 1px solid #6f97ff;
+border-radius: 14px;
+font-size: 21px;
+font-weight: bold;
+padding: 17px;
+min-height: 62px;
+margin: 12px 0;
+}
+.bigBtn:disabled { background: #1a2a52; color: #7d90c2; border-color: #2c447e;}
+.ghostBtn {
+display: block;
+width: 100%;
+background: #101c3d;
+color: #cdd9ff;
+border: 1px solid #35509c;
+border-radius: 14px;
+font-size: 19px;
+padding: 15px;
+min-height: 56px;
+margin: 12px 0;
+}
+#status {
+font-size: 16px;
+color: #ffd97a;
+min-height: 24px;
+margin: 8px 0;
+line-height: 1.5;
+}
+#status.detail { display: block; font-size: 12px; color: #7d90c2; margin-top: 4px;}
+#sceneBox {
+background: rgba(10, 20, 48, 0.85);
+border: 1px solid #2c447e;
+border-radius: 14px;
+padding: 20px 16px;
+margin: 14px 0;
+}
+#sceneNo { font-size: 14px; color: #8fa5d8; letter-spacing: 2px; margin-bottom: 10px;}
+#sceneText { font-size: 21px; line-height: 1.9; color: #eef3ff; min-height: 120px;}
+#stats {
+font-size: 17px;
+color: #aebfff;
+margin: 10px 0;
+line-height: 1.7;
+}
+#stats b { color: #ffd97a; font-size: 20px;}
+#finalBox {
+background: rgba(10, 20, 48, 0.85);
+border: 1px solid #ffd97a;
+border-radius: 14px;
+padding: 22px 16px;
+margin: 14px 0;
+text-align: center;
+}
+#finalBox.finTitle { font-size: 24px; color: #f2e3b3; margin-bottom: 12px;}
+#finalBox.finSteps { font-size: 19px; color: #dfe8ff; line-height: 1.8;}
+.hidden { display: none;}
+.foot { color: #5f74a8; font-size: 12px; margin-top: 24px; text-align: center;}
+</style>
+</head>
+<body>
+<a class="back" href="../portal/">← 全サイト一覧へ</a>
+<h1>🌙 YORU-6 深夜の散歩</h1>
+<div class="sub">夜の道を、文章といっしょにゆっくり歩きます。</div>
+
+<div class="toggles">
+<button class="tgl on" id="btnVoice">ボイス ON</button>
+<button class="tgl" id="btnSound">夜の音 OFF</button>
+<button class="tgl" id="btnAuto">自動 OFF</button>
+</div>
+
+<div id="setupArea">
+<div class="secTitle">コースを選んでください</div>
+<div class="chips">
+<button class="chip sel" data-course="住宅街">🏠 住宅街</button>
+<button class="chip" data-course="川沿い">🌉 川沿い</button>
+<button class="chip" data-course="商店街のあと">🏮 商店街のあと</button>
+<button class="chip" data-course="駅までの道">🚃 駅までの道</button>
+</div>
+<button class="bigBtn" id="btnStart">歩きはじめる</button>
+</div>
+
+<div id="status"></div>
+
+<div id="walkArea" class="hidden">
+<div id="sceneBox">
+<div id="sceneNo">第1場面 / 5</div>
+<div id="sceneText"></div>
+</div>
+<div id="stats">歩数 <b id="statSteps">0</b> 歩　／　距離 <b id="statDist">0</b> m</div>
+<button class="bigBtn" id="btnNext">一歩すすむ</button>
+</div>
+
+<div id="finalBox" class="hidden">
+<div class="finTitle">今日の散歩 おわり</div>
+<div class="finSteps" id="finalText"></div>
+<button class="ghostBtn" id="btnHome">帰る</button>
+</div>
+
+<div class="foot">YORU-6 深夜の散歩 ／ 歩数は空想の記録です</div>
+
+<script>
+var course = '住宅街';
+var scenes = [];
+var idx = 0;
+var steps = 0;
+var walking = false;
+var finished = false;
+var voiceOn = true;
+var soundOn = false;
+var autoOn = false;
+var autoSec = 0;
+var autoTimer = null;
+var waitTimer = null;
+var waitSec = 0;
+var audioCtx = null;
+var noiseGain = null;
+var noiseSrc = null;
+
+function el(id) { return document.getElementById(id);}
+
+function setStatus(html) { el('status').innerHTML = html;}
+
+function chipTap() {
+var chips = document.querySelectorAll('.chip');
+for (var i = 0; i < chips.length; i++) {
+chips[i].className = 'chip';
+}
+this.className = 'chip sel';
+course = this.getAttribute('data-course');
+}
+
+function bindChips() {
+var chips = document.querySelectorAll('.chip');
+for (var i = 0; i < chips.length; i++) {
+chips[i].onclick = chipTap;
+}
+}
+
+function speak(text) {
+if (!voiceOn) { return;}
+if (!window.speechSynthesis) { return;}
+try {
+window.speechSynthesis.cancel();
+var u = new SpeechSynthesisUtterance(text);
+u.lang = 'ja-JP';
+u.rate = 0.95;
+window.speechSynthesis.speak(u);
+} catch (e) {}
+}
+
+function stopSpeak() {
+if (window.speechSynthesis) {
+try { window.speechSynthesis.cancel();} catch (e) {}
+}
+}
+
+function buildPrompt() {
+return 'あなたは深夜の散歩の案内人です。今から「' + course + '」を夜に歩く、静かで穏やかな散歩の文章を書いてください。条件は次の通りです。';
+}
+
+function parseScenes(t) {
+var out = [];
+var parts = t.split('===');
+var i, s;
+for (i = 0; i < parts.length; i++) {
+s = parts[i].replace(/^\s+|\s+$/g, '');
+if (s.length > 3) { out.push(s);}
+}
+if (out.length >= 3) {
+return out.slice(0, 5);
+}
+var sentences = t.split('。');
+var clean = [];
+for (i = 0; i < sentences.length; i++) {
+s = sentences[i].replace(/^\s+|\s+$/g, '');
+if (s.length > 0) { clean.push(s);}
+}
+if (clean.length === 0) { return out;}
+var chunks = [];
+var per = Math.ceil(clean.length / 5);
+for (i = 0; i < clean.length; i += per) {
+var part = clean.slice(i, i + per).join('。');
+chunks.push(part + '。');
+if (chunks.length >= 5) { break;}
+}
+return chunks;
+}
+
+function startWait() {
+waitSec = 0;
+setStatus('準備中… 0秒');
+waitTimer = setInterval(function () {
+waitSec++;
+setStatus('準備中… ' + waitSec + '秒');
+}, 1000);
+}
+
+function stopWait() {
+if (waitTimer) { clearInterval(waitTimer); waitTimer = null;}
+}
+
+function startWalk() {
+if (walking) { return;}
+el('btnStart').disabled = true;
+startWait();
+var xhr = new XMLHttpRequest();
+xhr.open('POST', 'https://text.pollinations.ai/', true);
+xhr.setRequestHeader('Content-Type', 'application/json');
+xhr.timeout = 90000;
+xhr.onload = function () {
+stopWait();
+var body = xhr.responseText || '';
+if (xhr.status === 402 || body.indexOf('Free limit') >= 0) {
+setStatus('本日の無料AI回線は上限に達しました。明日の朝9時に回復します');
+el('btnStart').disabled = false;
+return;
+}
+if (xhr.status!== 200) {
+setStatus('AI回線が混み合っています<span class="detail">詳細：HTTP ' + xhr.status + '</span>');
+el('btnStart').disabled = false;
+return;
+}
+var parsed = parseScenes(body);
+if (parsed.length === 0) {
+setStatus('AI回線が混み合っています<span class="detail">詳細：HTTP ' + xhr.status + '</span>');
+el('btnStart').disabled = false;
+return;
+}
+scenes = parsed;
+beginScenes();
+};
+xhr.ontimeout = function () {
+stopWait();
+setStatus('AI回線の応答が時間切れになりました。もう一度お試しください');
+el('btnStart').disabled = false;
+};
+xhr.onerror = function () {
+stopWait();
+setStatus('AI回線が混み合っています<span class="detail">詳細：HTTP 0</span>');
+el('btnStart').disabled = false;
+};
+var payload = JSON.stringify({ messages: [{ role: 'user', content: buildPrompt()}], model: 'openai-fast'});
+xhr.send(payload);
+}
+
+function distText() {
+var m = Math.round(steps * 0.7);
+if (m >= 1000) {
+return (Math.round(m / 100) / 10) + ' km（' + m + ' m）';
+}
+return m + '';
+}
+
+function showScene() {
+el('sceneNo').textContent = '第' + (idx + 1) + '場面 / ' + scenes.length;
+el('sceneText').textContent = scenes[idx];
+steps += 130 + Math.floor(Math.random() * 81);
+el('statSteps').textContent = steps;
+el('statDist').textContent = distText();
+if (idx >= scenes.length - 1) {
+el('btnNext').textContent = '散歩をおわる';
+} else {
+el('btnNext').textContent = '一歩すすむ';
+}
+autoSec = 0;
+speak(scenes[idx]);
+}
+
+function beginScenes() {
+walking = true;
+finished = false;
+idx = 0;
+steps = 0;
+setStatus('');
+el('setupArea').className = 'hidden';
+el('finalBox').className = 'hidden';
+el('walkArea').className = '';
+showScene();
+startAuto();
+}
+
+function advance() {
+if (!walking || finished) { return;}
+if (idx >= scenes.length - 1) {
+finishWalk();
+return;
+}
+idx++;
+showScene();
+}
+
+function finishWalk() {
+finished = true;
+walking = false;
+stopAuto();
+stopSpeak();
+el('walkArea').className = 'hidden';
+el('finalBox').className = '';
+el('finalText').innerHTML = 'コース：' + course + '<br>合計 <b>' + steps + '</b> 歩 ／ 約 ' + Math.round(steps * 0.7) + ' m 歩きました。<br>おつかれさまでした。あたたかくして休んでください。';
+setStatus('');
+}
+
+function goHome() {
+walking = false;
+finished = false;
+scenes = [];
+idx = 0;
+steps = 0;
+stopAuto();
+stopSpeak();
+el('finalBox').className = 'hidden';
+el('walkArea').className = 'hidden';
+el('setupArea').className = '';
+el('btnStart').disabled = false;
+setStatus('');
+}
+
+function startAuto() {
+stopAuto();
+autoSec = 0;
+autoTimer = setInterval(function () {
+if (!autoOn ||!walking || finished) { return;}
+autoSec++;
+if (autoSec >= 25) {
+autoSec = 0;
+advance();
+}
+}, 1000);
+}
+
+function stopAuto() {
+if (autoTimer) { clearInterval(autoTimer); autoTimer = null;}
+}
+
+function startSound() {
+try {
+if (!audioCtx) {
+var AC = window.AudioContext || window.webkitAudioContext;
+if (!AC) { return;}
+audioCtx = new AC();
+var len = audioCtx.sampleRate * 3;
+var buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+var data = buf.getChannelData(0);
+var last = 0;
+var i, white, brown;
+for (i = 0; i < len; i++) {
+white = Math.random() * 2 - 1;
+brown = (last + 0.02 * white) / 1.02;
+last = brown;
+data[i] = brown * 3.2;
+}
+noiseSrc = audioCtx.createBufferSource();
+noiseSrc.buffer = buf;
+noiseSrc.loop = true;
+var filter = audioCtx.createBiquadFilter();
+filter.type = 'lowpass';
+filter.frequency.value = 420;
+noiseGain = audioCtx.createGain();
+noiseGain.gain.value = 0.05;
+var lfo = audioCtx.createOscillator();
+lfo.frequency.value = 0.06;
+var lfoGain = audioCtx.createGain();
+lfoGain.gain.value = 140;
+lfo.connect(lfoGain);
+lfoGain.connect(filter.frequency);
+noiseSrc.connect(filter);
+filter.connect(noiseGain);
+noiseGain.connect(audioCtx.destination);
+lfo.start();
+}
+if (audioCtx.resume) { audioCtx.resume();}
+if (!noiseSrc.started) {
+noiseSrc.start(0);
+noiseSrc.started = true;
+}
+if (noiseGain) { noiseGain.gain.value = 0.05;}
+} catch (e) {}
+}
+
+function stopSound() {
+if (noiseGain) {
+try { noiseGain.gain.value = 0;} catch (e) {}
+}
+if (audioCtx && audioCtx.suspend) {
+try { audioCtx.suspend();} catch (e) {}
+}
+}
+
+function toggleVoice() {
+voiceOn =!voiceOn;
+el('btnVoice').textContent = voiceOn? 'ボイス ON': 'ボイス OFF';
+el('btnVoice').className = voiceOn? 'tgl on': 'tgl';
+if (!voiceOn) { stopSpeak();}
+}
+
+function toggleSound() {
+soundOn =!soundOn;
+el('btnSound').textContent = soundOn? '夜の音 ON': '夜の音 OFF';
+el('btnSound').className = soundOn? 'tgl on': 'tgl';
+if (soundOn) { startSound();} else { stopSound();}
+}
+
+function toggleAuto() {
+autoOn =!autoOn;
+el('btnAuto').textContent = autoOn? '自動 ON': '自動 OFF';
+el('btnAuto').className = autoOn? 'tgl on': 'tgl';
+autoSec = 0;
+}
+
+el('btnStart').onclick = startWalk;
+el('btnNext').onclick = function () { autoSec = 0; advance();};
+el('btnHome').onclick = goHome;
+el('btnVoice').onclick = toggleVoice;
+el('btnSound').onclick = toggleSound;
+el('btnAuto').onclick = toggleAuto;
+bindChips();
+</script>
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HOTEL-6 深夜ホテル</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a1128; color: #e8e2d0; font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 17px; line-height: 1.6; padding: 10px; }
+a { color: #d4af37; }
+.backlink { display: inline-block; min-height: 48px; line-height: 48px; padding: 0 14px; border: 1px solid #d4af37; border-radius: 6px; text-decoration: none; font-size: 16px; margin-bottom: 10px; background: #101c3f; }
+h1 { text-align: center; font-size: 30px; letter-spacing: 6px; color: #d4af37; margin: 6px 0 2px 0; font-weight: normal; }
+.sub { text-align: center; color: #9aa7c7; font-size: 14px; letter-spacing: 3px; margin-bottom: 12px; }
+.goldline { border: 0; border-top: 1px solid #d4af37; margin: 10px 0; opacity: 0.6; }
+.panel { background: #101c3f; border: 1px solid #2c3a63; border-radius: 8px; padding: 12px; margin-bottom: 14px; }
+.panel h2 { font-size: 20px; color: #d4af37; letter-spacing: 2px; margin-bottom: 8px; font-weight: normal; border-bottom: 1px solid #2c3a63; padding-bottom: 6px; }
+#window { position: relative; height: 190px; border-radius: 8px; overflow: hidden; border: 3px solid #d4af37; background: #050914; background: -webkit-linear-gradient(top, #02040c 0%, #0a1633 55%, #1b2a52 100%); background: linear-gradient(to bottom, #02040c 0%, #0a1633 55%, #1b2a52 100%); margin-bottom: 6px; }
+#moon { position: absolute; top: 22px; right: 30px; width: 46px; height: 46px; border-radius: 50%; background: #f5edd2; box-shadow: 0 0 22px #e8ddae; }
+#skyline { position: absolute; left: 0; right: 0; bottom: 0; height: 44px; background: #03060f; }
+.winlight { position: absolute; width: 5px; height: 7px; background: #ffd97a; opacity: 0.85; }
+.star { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #ffffff; -webkit-animation: tw 2.6s infinite; animation: tw 2.6s infinite; }
+@-webkit-keyframes tw { 0% { opacity: 0.15; } 50% { opacity: 1; } 100% { opacity: 0.15; } }
+@keyframes tw { 0% { opacity: 0.15; } 50% { opacity: 1; } 100% { opacity: 0.15; } }
+#winCaption { text-align: center; color: #9aa7c7; font-size: 14px; }
+button { min-height: 48px; min-width: 48px; font-size: 17px; border-radius: 6px; border: 1px solid #d4af37; background: #1b2a52; color: #e8e2d0; padding: 8px 14px; cursor: pointer; font-family: inherit; }
+button:active { background: #2c3a63; }
+#voiceBtn { float: right; }
+#chatLog { max-height: 340px; overflow-y: auto; margin-bottom: 10px; }
+.msg { margin-bottom: 10px; padding: 9px 11px; border-radius: 8px; }
+.msg .who { font-size: 13px; color: #d4af37; letter-spacing: 1px; margin-bottom: 2px; }
+.msg.concierge { background: #16234a; border: 1px solid #2c3a63; }
+.msg.guest { background: #23305a; border: 1px solid #d4af37; text-align: left; }
+#chatRow { display: block; }
+#chatInput { width: 100%; font-size: 17px; padding: 12px; border-radius: 6px; border: 1px solid #2c3a63; background: #0a1128; color: #e8e2d0; margin-bottom: 8px; font-family: inherit; }
+#sendBtn { width: 100%; background: #d4af37; color: #0a1128; font-weight: bold; border: none; }
+#sendBtn:disabled { opacity: 0.5; }
+#chatStatus { min-height: 22px; color: #ffd97a; font-size: 15px; margin-top: 6px; }
+.detail { font-size: 12px; color: #9aa7c7; }
+#diaryLabel { font-size: 13px; color: #9aa7c7; letter-spacing: 1px; margin-bottom: 6px; }
+#diaryDate { color: #d4af37; font-size: 15px; margin-bottom: 6px; }
+#diaryText { font-size: 17px; background: #0a1128; border: 1px solid #2c3a63; border-radius: 6px; padding: 12px; min-height: 110px; }
+#diaryBtn { width: 100%; margin-top: 10px; }
+.footer { text-align: center; color: #9aa7c7; font-size: 13px; margin: 14px 0 6px 0; letter-spacing: 2px; }
+.clearfix:after { content: ""; display: block; clear: both; }
+</style>
+</head>
+<body>
+
+<a class="backlink" href="../portal/">← 全サイト一覧へ</a>
+<button id="voiceBtn" type="button">ボイス ON</button>
+<div class="clearfix"></div>
+
+<h1>HOTEL-6</h1>
+<div class="sub">深 夜 ホ テ ル</div>
+<hr class="goldline">
+
+<div class="panel">
+  <h2>夜景の窓</h2>
+  <div id="window">
+    <div id="moon"></div>
+    <div id="skyline"></div>
+  </div>
+  <div id="winCaption">今夜も静かな夜です。窓の外では星が瞬いています。</div>
+</div>
+
+<div class="panel">
+  <h2>コンシェルジュ</h2>
+  <div id="chatLog"></div>
+  <div id="chatRow">
+    <input id="chatInput" type="text" placeholder="コンシェルジュに話しかける…">
+    <button id="sendBtn" type="button">送信</button>
+  </div>
+  <div id="chatStatus"></div>
+</div>
+
+<div class="panel">
+  <h2>宿泊客の日誌</h2>
+  <div id="diaryLabel">架空の宿泊客日誌（創作）</div>
+  <div id="diaryDate"></div>
+  <div id="diaryText"></div>
+  <button id="diaryBtn" type="button">別の日の日誌</button>
+</div>
+
+<hr class="goldline">
+<div class="footer">HOTEL-6 深夜ホテル — チェックアウトは、眠くなるまで。</div>
+
+<script>
+var voiceOn = true;
+var history = [];
+var sending = false;
+var timerId = null;
+
+var DIARY = [
+  "チェックインしたのは午前0時を回ってから。ロビーには誰もいなくて、フロントの方が静かに微笑んで鍵をくれた。部屋の窓から見える夜景が、疲れた心をほどいてくれる。",
+  "深夜2時、眠れなくてロビーのソファに座っていたら、夜勤のスタッフさんが温かいハーブティーを出してくれた。何も聞かず、何も言わず。それが一番ありがたかった。",
+  "このホテルの廊下は、足音がふわりと吸い込まれる。夢の中を歩いているみたいだ。今夜はぐっすり眠れそうな気がする。",
+  "雨の夜に泊まった。窓を叩く雨音と、遠くの雷。部屋の明かりを消して、しばらく雨の音だけを聞いていた。こういう夜も悪くない。",
+  "明日の朝、大事な商談がある。緊張して眠れないけれど、ベッドの横に置かれた小さなランプの光が、なぜか心を落ち着かせてくれる。きっとうまくいく。",
+  "一人旅の最後の夜。このホテルの静けさが好きで、来年もまた来ようと心に決めた。日誌にそう書いて、そっとペンを置く。",
+  "深夜のエレベーターで、同じように眠れなさそうな老紳士と一緒になった。『いい夜ですね』とだけ言葉を交わした。それだけで十分だった。",
+  "部屋に入ると、枕元に小さな星形のチョコレートが置いてあった。誰の心遣いだろう。甘いものを一つ食べて、今夜は早めに眠ることにする。",
+  "窓の外で流れ星を見た。願いごとは、秘密。このホテルに泊まるといつも、少しだけ運が良くなる気がする。",
+  "長旅でくたくただったけれど、お風呂上がりにロビーで飲んだ冷たい牛乳が最高だった。旅の疲れは、こういう小さな幸せで溶けていく。",
+  "真夜中に目が覚めて、月明かりの部屋でぼんやりした。時計を見たら3時33分。なんだか縁起のいい数字だと思って、もう一度眠りについた。",
+  "チェックアウトは明日の昼。名残惜しくて、もう一泊したくなる。受付の花が、今夜も静かに咲いている。良いホテルというのは、きっとこういう場所だ。"
+];
+
+function $(id) { return document.getElementById(id); }
+
+function buildWindow() {
+  var win = $("window");
+  var i, s;
+  for (i = 0; i < 30; i++) {
+    s = document.createElement("span");
+    s.className = "star";
+    s.style.left = (Math.random() * 96 + 1) + "%";
+    s.style.top = (Math.random() * 55 + 2) + "%";
+    s.style.webkitAnimationDelay = (Math.random() * 2.6) + "s";
+    s.style.animationDelay = (Math.random() * 2.6) + "s";
+    if (Math.random() < 0.3) { s.style.width = "2px"; s.style.height = "2px"; }
+    win.appendChild(s);
+  }
+  var sky = $("skyline");
+  var lights = [[8, 10], [22, 22], [40, 8], [58, 18], [74, 12], [120, 20], [150, 9], [185, 24], [215, 11], [250, 18], [285, 10], [315, 22]];
+  for (i = 0; i < lights.length; i++) {
+    var l = document.createElement("span");
+    l.className = "winlight";
+    l.style.left = lights[i][0] + "px";
+    l.style.bottom = lights[i][1] + "px";
+    sky.appendChild(l);
+  }
+}
+
+function speak(text) {
+  if (!voiceOn) { return; }
+  if (text.indexOf("\n") !== -1) { return; }
+  if (text.length > 120) { return; }
+  try {
+    if (!window.speechSynthesis) { return; }
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 0.7;
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+function addMsg(who, text, cls) {
+  var log = $("chatLog");
+  var d = document.createElement("div");
+  d.className = "msg " + cls;
+  var w = document.createElement("div");
+  w.className = "who";
+  w.appendChild(document.createTextNode(who));
+  d.appendChild(w);
+  d.appendChild(document.createTextNode(text));
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+function setStatus(t) { $("chatStatus").innerHTML = t; }
+
+function startCounter() {
+  var sec = 0;
+  setStatus("考え中… 0秒");
+  timerId = setInterval(function () {
+    sec++;
+    setStatus("考え中… " + sec + "秒");
+  }, 1000);
+}
+function stopCounter() {
+  if (timerId !== null) { clearInterval(timerId); timerId = null; }
+}
+
+function buildPrompt(userText) {
+  var p = "あなたは深夜の高級ホテルのコンシェルジュです。落ち着いた丁寧な口調で、短く答えてください。返事は必ず120文字以内、1行、プレーンテキストで書いてください。ホテル内の架空のおすすめ（深夜のラウンジ、星空が見える屋上、温かい夜食など）、近くの夜の散歩コースの提案、または穏やかな雑談で答えてください。";
+  var i, start = Math.max(0, history.length - 6);
+  if (history.length > 0) {
+    p += "\nこれまでの会話：";
+    for (i = start; i < history.length; i++) {
+      p += "\n" + (history[i].role === "user" ? "お客様：" : "コンシェルジュ：") + history[i].text;
+    }
+  }
+  p += "\nお客様：" + userText + "\nコンシェルジュ：";
+  return p;
+}
+
+function sendChat() {
+  if (sending) { return; }
+  var input = $("chatInput");
+  var text = input.value.replace(/^\s+|\s+$/g, "");
+  if (!text) { return; }
+  input.value = "";
+  addMsg("お客様", text, "guest");
+  history.push({ role: "user", text: text });
+  sending = true;
+  $("sendBtn").disabled = true;
+  startCounter();
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    stopCounter();
+    sending = false;
+    $("sendBtn").disabled = false;
+    if (xhr.status === 200) {
+      var reply = (xhr.responseText || "").replace(/^\s+|\s+$/g, "");
+      if (reply && reply.indexOf("Free limit") === -1) {
+        reply = reply.replace(/\n+/g, " ");
+        if (reply.length > 300) { reply = reply.substring(0, 300); }
+        setStatus("");
+        addMsg("コンシェルジュ", reply, "concierge");
+        history.push({ role: "assistant", text: reply });
+        speak(reply);
+      } else if (reply && reply.indexOf("Free limit") !== -1) {
+        setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
+      } else {
+        setStatus("AI回線が混み合っています <span class=\"detail\">詳細：HTTP " + xhr.status + "</span>");
+      }
+    } else if (xhr.status === 402) {
+      setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
+    } else {
+      setStatus("AI回線が混み合っています <span class=\"detail\">詳細：HTTP " + xhr.status + "</span>");
+    }
+  };
+  xhr.ontimeout = function () {
+    stopCounter();
+    sending = false;
+    $("sendBtn").disabled = false;
+    setStatus("AI回線の応答が時間切れになりました。少し待ってからもう一度どうぞ");
+  };
+  xhr.onerror = function () {
+    stopCounter();
+    sending = false;
+    $("sendBtn").disabled = false;
+    setStatus("AI回線が混み合っています <span class=\"detail\">詳細：HTTP 0</span>");
+  };
+  var body = JSON.stringify({ messages: [{ role: "user", content: buildPrompt(text) }], model: "openai-fast" });
+  xhr.send(body);
+}
+
+var diaryIdx = 0;
+function showDiary() {
+  var d = new Date();
+  var seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  var idx = (seed + diaryIdx) % DIARY.length;
+  $("diaryDate").innerHTML = "";
+  $("diaryDate").appendChild(document.createTextNode(d.getFullYear() + "年" + (d.getMonth() + 1) + "月" + d.getDate() + "日の夜 — 第" + (idx + 1) + "夜"));
+  $("diaryText").innerHTML = "";
+  $("diaryText").appendChild(document.createTextNode(DIARY[idx]));
+}
+
+function init() {
+  buildWindow();
+  showDiary();
+  addMsg("コンシェルジュ", "いらっしゃいませ。深夜ホテルへようこそ。チェックインは済まされましたか？ 眠れない夜のお供に、どうぞごゆっくりお話しくださいませ。", "concierge");
+  $("sendBtn").onclick = sendChat;
+  $("chatInput").onkeydown = function (e) {
+    if (e.keyCode === 13) { sendChat(); }
+  };
+  $("diaryBtn").onclick = function () {
+    diaryIdx++;
+    showDiary();
+  };
+  $("voiceBtn").onclick = function () {
+    voiceOn = !voiceOn;
+    $("voiceBtn").innerHTML = voiceOn ? "ボイス ON" : "ボイス OFF";
+    if (!voiceOn) {
+      try { if (window.speechSynthesis) { window.speechSynthesis.cancel(); } } catch (e) {}
+    }
+  };
+}
+
+init();
+</script>
+</body>
+</html>

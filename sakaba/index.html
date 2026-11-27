@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SAKABA-6 AI酒場</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { background: #17100b; }
+body {
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+  color: #f3e2c7;
+  background:
+    repeating-linear-gradient(90deg, #1d130b 0px, #1d130b 46px, #170f08 46px, #170f08 48px),
+    #17100b;
+  min-height: 100vh;
+  padding: 10px 10px 30px;
+}
+a { color: #ffb35c; }
+.backlink { display: inline-block; padding: 10px 4px; font-size: 15px; text-decoration: none; }
+.topbar { text-align: right; margin-bottom: 6px; }
+.voiceBtn {
+  background: #3a2413; color: #ffd9a0; border: 2px solid #8a5a2b; border-radius: 10px;
+  font-size: 15px; padding: 10px 14px; min-height: 48px; cursor: pointer;
+}
+.voiceBtn.on { background: #7a2d1a; border-color: #c33; color: #ffe9c9; }
+header { text-align: center; margin: 4px 0 12px; }
+.lantern {
+  display: inline-block; background: #c62f1d; color: #ffe9c9; border-radius: 50%;
+  width: 64px; height: 64px; line-height: 64px; font-size: 30px; font-weight: bold;
+  border: 3px solid #8f1f10; box-shadow: 0 0 22px rgba(230, 90, 40, 0.55);
+  margin-bottom: 8px;
+}
+h1 { font-size: 26px; letter-spacing: 3px; color: #ffd9a0; }
+.sub { font-size: 13px; color: #c9a06a; margin-top: 4px; }
+.noren {
+  background: #5a1f14; border-top: 3px solid #8a5a2b; border-bottom: 3px solid #8a5a2b;
+  border-radius: 6px; padding: 10px 12px; font-size: 14px; line-height: 1.6; margin-bottom: 12px;
+}
+.sectionTitle { font-size: 16px; color: #ffb35c; margin: 14px 0 8px; letter-spacing: 1px; }
+.chips { font-size: 0; }
+.chip {
+  display: inline-block; width: 48%; margin: 0 1% 10px; vertical-align: top;
+  background: #40260f; color: #ffe9c9; border: 2px solid #8a5a2b; border-radius: 12px;
+  font-size: 16px; padding: 14px 6px; min-height: 52px; cursor: pointer; text-align: center;
+}
+.chip:active { background: #5a3416; }
+.chat {
+  background: rgba(20, 12, 6, 0.85); border: 2px solid #6b4423; border-radius: 12px;
+  padding: 12px 10px; min-height: 220px; margin-bottom: 12px;
+}
+.msg { margin-bottom: 14px; }
+.name { font-size: 13px; margin-bottom: 3px; }
+.name.master { color: #ffd9a0; }
+.name.taro { color: #9fd08a; }
+.name.user { color: #8ab6ff; text-align: right; }
+.bubble {
+  display: inline-block; max-width: 88%; border-radius: 12px; padding: 10px 12px;
+  font-size: 16px; line-height: 1.6; word-break: break-all; text-align: left;
+}
+.bubble.master { background: #4a2c12; border: 1px solid #8a5a2b; color: #ffe9c9; }
+.bubble.taro { background: #2e4020; border: 1px solid #5c7a3d; color: #eef7dd; }
+.bubble.user { background: #24365c; border: 1px solid #4a6aa8; color: #e6efff; }
+.msg.user { text-align: right; }
+.sys { text-align: center; font-size: 14px; color: #c9a06a; margin: 10px 0; line-height: 1.6; }
+.detail { display: block; font-size: 12px; color: #8a7350; margin-top: 2px; }
+.inputRow { margin-top: 6px; }
+textarea {
+  width: 100%; font-size: 17px; padding: 12px; border-radius: 10px; border: 2px solid #8a5a2b;
+  background: #241708; color: #ffe9c9; min-height: 56px; resize: vertical;
+}
+.sendBtn {
+  width: 100%; margin-top: 10px; background: #c62f1d; color: #ffe9c9; border: 2px solid #8f1f10;
+  border-radius: 12px; font-size: 18px; font-weight: bold; padding: 14px; min-height: 56px; cursor: pointer;
+}
+.sendBtn:disabled { background: #5a4632; border-color: #3a2c1c; color: #a68d64; }
+.thinking { text-align: center; font-size: 16px; color: #ffb35c; padding: 10px 0; display: none; }
+.foot { text-align: center; font-size: 12px; color: #8a7350; margin-top: 16px; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<a class="backlink" href="../portal/">← 全サイト一覧へ</a>
+<div class="topbar"><button class="voiceBtn" id="voiceBtn" onclick="toggleVoice()">ボイス OFF</button></div>
+
+<header>
+  <div class="lantern">酒</div>
+  <h1>SAKABA-6 AI酒場</h1>
+  <div class="sub">大人のくつろぎ処 ― マスターと常連タロさんがお相手します</div>
+</header>
+
+<div class="noren">いらっしゃいませ。ここは小さなAI酒場です。お酒は雰囲気だけのお店ですが、会話は本物（AI回線）です。愚痴でも世間話でも、どうぞごゆっくり。</div>
+
+<div class="sectionTitle">■ お品書き（話題）</div>
+<div class="chips">
+  <button class="chip" onclick="tapTopic('guchi')">今日の愚痴を聞いて</button>
+  <button class="chip" onclick="tapTopic('ippai')">おすすめの一杯</button>
+  <button class="chip" onclick="tapTopic('seken')">世間話</button>
+  <button class="chip" onclick="tapTopic('dax')">ダックスの話</button>
+</div>
+
+<div class="sectionTitle">■ カウンター</div>
+<div class="chat" id="chat"></div>
+<div class="thinking" id="thinking">考え中… <span id="thinkSec">0</span>秒</div>
+
+<div class="inputRow">
+  <textarea id="freeInput" placeholder="二人に話しかけてみましょう"></textarea>
+  <button class="sendBtn" id="sendBtn" onclick="tapSend()">話しかける</button>
+</div>
+
+<div class="foot">SAKABA-6 ／ 会話はAI回線（無料枠）を使います。個人情報は入力しないでください。</div>
+
+<script>
+var voiceOn = false;
+var busy = false;
+var history = []; /* {user: string, master: string, taro: string} の直近交換 */
+var thinkTimer = null;
+var thinkStart = 0;
+
+var TOPICS = {
+  guchi: "今日の愚痴を聞いてほしいです。仕事や日常のささやかな愚痴に、二人で相づちと慰めをお願いします。",
+  ippai: "今夜のおすすめの一杯を教えてください。酒場の雰囲気の話として、楽しく紹介してください。",
+  seken: "世間話をしましょう。最近の他愛ない話題で、二人で楽しく雑談してください。",
+  dax: "ダックスフンドの話をしましょう。可愛いエピソードやあるあるで盛り上がってください。"
+};
+
+var GREETING = "いらっしゃい。……おや、初めてのお客さんですね。カウンターへどうぞ。今夜は静かですよ、タロさんも来てます。";
+
+function $(id) { return document.getElementById(id); }
+
+function toggleVoice() {
+  voiceOn = !voiceOn;
+  var b = $("voiceBtn");
+  b.innerHTML = voiceOn ? "ボイス ON" : "ボイス OFF";
+  if (voiceOn) { b.className = "voiceBtn on"; } else { b.className = "voiceBtn"; }
+  if (!voiceOn && window.speechSynthesis) { speechSynthesis.cancel(); }
+}
+
+function speak(text) {
+  if (!voiceOn) { return; }
+  if (!text) { return; }
+  if (text.indexOf("\n") >= 0) { return; }
+  if (text.length > 120) { return; }
+  if (!window.speechSynthesis) { return; }
+  try {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 0.6;
+    u.rate = 1.0;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function addMsg(kind, name, text) {
+  var chat = $("chat");
+  var wrap = document.createElement("div");
+  wrap.className = "msg " + kind;
+  var nm = document.createElement("div");
+  nm.className = "name " + kind;
+  nm.innerHTML = esc(name);
+  var bb = document.createElement("div");
+  bb.className = "bubble " + kind;
+  bb.innerHTML = esc(text);
+  wrap.appendChild(nm);
+  wrap.appendChild(bb);
+  chat.appendChild(wrap);
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
+function addSys(text, detail) {
+  var chat = $("chat");
+  var d = document.createElement("div");
+  d.className = "sys";
+  d.innerHTML = esc(text) + (detail ? '<span class="detail">' + esc(detail) + "</span>" : "");
+  chat.appendChild(d);
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
+function setBusy(on) {
+  busy = on;
+  $("sendBtn").disabled = on;
+  $("thinking").style.display = on ? "block" : "none";
+  if (on) {
+    thinkStart = new Date().getTime();
+    $("thinkSec").innerHTML = "0";
+    thinkTimer = setInterval(function () {
+      $("thinkSec").innerHTML = "" + Math.floor((new Date().getTime() - thinkStart) / 1000);
+    }, 500);
+  } else {
+    if (thinkTimer) { clearInterval(thinkTimer); thinkTimer = null; }
+  }
+}
+
+function buildPrompt(userText) {
+  var p = "あなたは小さな酒場の二人組です。必ず次の2行の形式だけで答えてください。余計な文章は一切書かないでください。\n";
+  p += "マスター：…\nタロさん：…\n";
+  p += "マスターは落ち着いた酒場の主人、タロさんは明るい常連客です。各行は80文字以内。お酒は酒場の雰囲気の話題としてのみ扱い、飲酒を強く勧めないでください。日本語で答えてください。\n";
+  var i, h;
+  var start = history.length > 3 ? history.length - 3 : 0;
+  if (history.length > 0) {
+    p += "これまでの会話：\n";
+    for (i = start; i < history.length; i++) {
+      h = history[i];
+      p += "客：" + h.user + "\nマスター：" + h.master + "\nタロさん：" + h.taro + "\n";
+    }
+  }
+  p += "客の言葉：" + userText;
+  return p;
+}
+
+function parsePair(text) {
+  var master = null, taro = null;
+  var lines = text.split("\n");
+  var i, line;
+  for (i = 0; i < lines.length; i++) {
+    line = lines[i];
+    if (line.indexOf("マスター：") === 0 || line.indexOf("マスター:") === 0) {
+      master = line.substring(5);
+    } else if (line.indexOf("タロさん：") === 0 || line.indexOf("タロさん:") === 0) {
+      taro = line.substring(5);
+    } else if (line.indexOf("タロ：") === 0 || line.indexOf("タロ:") === 0) {
+      taro = line.substring(3);
+    }
+  }
+  if (master !== null && taro !== null) {
+    return { master: master.replace(/^\s+|\s+$/g, ""), taro: taro.replace(/^\s+|\s+$/g, "") };
+  }
+  return null;
+}
+
+function askAI(userText, showText) {
+  if (busy) { return; }
+  if (showText) { addMsg("user", "あなた", userText); }
+  setBusy(true);
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    setBusy(false);
+    var status = xhr.status;
+    var body = xhr.responseText || "";
+    if (status === 402 || body.indexOf("Free limit") >= 0) {
+      addSys("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
+      return;
+    }
+    if (status !== 200) {
+      addSys("AI回線が混み合っています", "詳細：HTTP " + status);
+      return;
+    }
+    var pair = parsePair(body);
+    var mText, tText;
+    if (pair) {
+      mText = pair.master; tText = pair.taro;
+    } else {
+      mText = body.replace(/^\s+|\s+$/g, ""); tText = null;
+    }
+    if (!mText) {
+      addSys("AI回線が混み合っています", "詳細：HTTP " + status);
+      return;
+    }
+    addMsg("master", "マスター", mText);
+    if (tText) { addMsg("taro", "タロさん", tText); }
+    history.push({ user: userText, master: mText, taro: tText || "" });
+    if (history.length > 10) { history.shift(); }
+    speak(mText);
+  };
+  xhr.ontimeout = function () {
+    setBusy(false);
+    addSys("AI回線の応答が時間切れになりました。少し置いてもう一度どうぞ");
+  };
+  xhr.onerror = function () {
+    setBusy(false);
+    addSys("AI回線が混み合っています", "詳細：HTTP 0");
+  };
+  var payload = { messages: [{ role: "user", content: buildPrompt(userText) }], model: "openai-fast" };
+  xhr.send(JSON.stringify(payload));
+}
+
+function tapTopic(key) {
+  if (busy) { return; }
+  var label = "";
+  if (key === "guchi") { label = "今日の愚痴を聞いて"; }
+  if (key === "ippai") { label = "おすすめの一杯"; }
+  if (key === "seken") { label = "世間話"; }
+  if (key === "dax") { label = "ダックスの話"; }
+  askAI(TOPICS[key], false);
+  addSys("― " + label + " ―");
+}
+
+function tapSend() {
+  if (busy) { return; }
+  var v = $("freeInput").value.replace(/^\s+|\s+$/g, "");
+  if (!v) { return; }
+  $("freeInput").value = "";
+  askAI(v, true);
+}
+
+window.onload = function () {
+  addMsg("master", "マスター", GREETING);
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HON-6 AI書斎</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 12px;
+  background: #1d3327;
+  color: #f3ecd8;
+  font-family: sans-serif;
+  font-size: 16px;
+}
+a { color: #cfe3b8; }
+.topbar {
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.topbar a {
+  font-size: 16px;
+  text-decoration: none;
+}
+.voiceBtn {
+  float: right;
+  min-height: 48px;
+  padding: 10px 14px;
+  font-size: 16px;
+  background: #2c4a38;
+  color: #f3ecd8;
+  border: 1px solid #6d8a72;
+  border-radius: 8px;
+}
+h1 {
+  text-align: center;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 26px;
+  letter-spacing: 4px;
+  margin: 6px 0 2px 0;
+  color: #efe6c8;
+}
+.sub {
+  text-align: center;
+  font-size: 14px;
+  color: #b9c9a8;
+  margin-bottom: 12px;
+}
+.sectionLabel {
+  font-size: 15px;
+  color: #cfe3b8;
+  margin: 10px 0 6px 0;
+}
+.genreRow {
+  text-align: center;
+}
+.genreChip {
+  display: inline-block;
+  min-height: 48px;
+  min-width: 44%;
+  margin: 4px 2px;
+  padding: 12px 6px;
+  font-size: 17px;
+  background: #2c4a38;
+  color: #f3ecd8;
+  border: 2px solid #6d8a72;
+  border-radius: 8px;
+}
+.genreChip.sel {
+  background: #efe6c8;
+  color: #1d3327;
+  border-color: #efe6c8;
+  font-weight: bold;
+}
+.mainBtn {
+  display: block;
+  width: 100%;
+  min-height: 54px;
+  margin: 10px 0;
+  padding: 12px;
+  font-size: 18px;
+  background: #efe6c8;
+  color: #1d3327;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+}
+.subBtn {
+  display: block;
+  width: 100%;
+  min-height: 50px;
+  margin: 8px 0;
+  padding: 10px;
+  font-size: 16px;
+  background: #2c4a38;
+  color: #f3ecd8;
+  border: 1px solid #6d8a72;
+  border-radius: 8px;
+}
+.mainBtn:disabled, .subBtn:disabled {
+  opacity: 0.45;
+}
+.danger {
+  background: #4a2c2c;
+  border-color: #8a5a5a;
+}
+#statusLine {
+  min-height: 22px;
+  text-align: center;
+  font-size: 15px;
+  color: #e8d9a0;
+  margin: 8px 0;
+}
+#sysLine {
+  text-align: center;
+  font-size: 14px;
+  color: #b9c9a8;
+  margin: 6px 0;
+}
+.book {
+  background: #f7f1de;
+  color: #2a2418;
+  border-radius: 6px;
+  padding: 18px 16px;
+  margin-top: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+  border-left: 6px solid #8a6d3b;
+}
+#bookTitle {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 22px;
+  text-align: center;
+  margin: 0 0 4px 0;
+  color: #3a2c14;
+}
+#bookGenre {
+  text-align: center;
+  font-size: 14px;
+  color: #7a6a45;
+  margin-bottom: 10px;
+}
+.chapter {
+  border-top: 1px solid #d8cba3;
+  padding-top: 12px;
+  margin-top: 12px;
+}
+.chapter:first-of-type {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+}
+.chapterHead {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 18px;
+  color: #5a4310;
+  margin: 0 0 8px 0;
+}
+.chapterText {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 17px;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  margin: 0;
+}
+.readBtn {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 12px;
+  padding: 10px;
+  font-size: 16px;
+  background: #2c4a38;
+  color: #f3ecd8;
+  border: none;
+  border-radius: 8px;
+}
+#finLine {
+  text-align: center;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 18px;
+  color: #5a4310;
+  margin-top: 16px;
+}
+.emptyNote {
+  text-align: center;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 16px;
+  color: #7a6a45;
+  line-height: 1.8;
+}
+.foot {
+  text-align: center;
+  font-size: 13px;
+  color: #8fa583;
+  margin-top: 14px;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="../portal/">← 全サイト一覧へ</a>
+  <button class="voiceBtn" id="btnVoice" onclick="toggleVoice()">ボイス OFF</button>
+</div>
+
+<h1>HON-6 AI書斎</h1>
+<div class="sub">静かな書斎で、AIと少しずつ物語を紡ぐ場所</div>
+
+<div class="sectionLabel">ジャンルを選んでください</div>
+<div class="genreRow" id="genreRow">
+  <button class="genreChip sel" data-genre="冒険" onclick="selectGenre(this)">冒険</button>
+  <button class="genreChip" data-genre="ミステリー" onclick="selectGenre(this)">ミステリー</button>
+  <button class="genreChip" data-genre="ほのぼの日常" onclick="selectGenre(this)">ほのぼの日常</button>
+  <button class="genreChip" data-genre="宇宙" onclick="selectGenre(this)">宇宙</button>
+</div>
+
+<button class="mainBtn" id="btnStart" onclick="startStory()">新しい物語をはじめる</button>
+<button class="subBtn" id="btnNext" onclick="nextChapter()">続きを書く</button>
+
+<div id="statusLine"></div>
+<div id="sysLine"></div>
+
+<div class="book" id="bookArea">
+  <p id="bookTitle"></p>
+  <div id="bookGenre"></div>
+  <div id="chapters"></div>
+  <div id="finLine"></div>
+</div>
+
+<button class="subBtn danger" id="btnClear" onclick="clearBook()">本を閉じる（消去）</button>
+
+<div class="foot">HON-6 AI書斎 ／ 物語はこの端末にしおり保存されます</div>
+
+<script>
+var GENRES = ["冒険", "ミステリー", "ほのぼの日常", "宇宙"];
+var MAX_CH = 20;
+var SAVE_KEY = "hon6_save_v1";
+
+var genre = "冒険";
+var title = "";
+var chapters = [];
+var busy = false;
+var voiceOn = false;
+var timerId = null;
+var startTime = 0;
+var startArmed = false;
+var clearArmed = false;
+
+function el(id) { return document.getElementById(id); }
+
+function setStatus(t) { el("statusLine").innerHTML = t; }
+
+function selectGenre(btn) {
+  genre = btn.getAttribute("data-genre");
+  var chips = el("genreRow").getElementsByTagName("button");
+  for (var i = 0; i < chips.length; i++) {
+    if (chips[i].getAttribute("data-genre") === genre) {
+      chips[i].className = "genreChip sel";
+    } else {
+      chips[i].className = "genreChip";
+    }
+  }
+}
+
+function save() {
+  try {
+    var data = { genre: genre, title: title, chapters: chapters };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+function load() {
+  try {
+    var raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) { return false; }
+    var data = JSON.parse(raw);
+    if (!data || !data.chapters || data.chapters.length === 0) { return false; }
+    genre = data.genre || "冒険";
+    title = data.title || "";
+    chapters = data.chapters;
+    return true;
+  } catch (e) { return false; }
+}
+
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function render() {
+  var chips = el("genreRow").getElementsByTagName("button");
+  for (var i = 0; i < chips.length; i++) {
+    chips[i].className = (chips[i].getAttribute("data-genre") === genre) ? "genreChip sel" : "genreChip";
+  }
+  var wrap = el("chapters");
+  if (chapters.length === 0) {
+    el("bookTitle").innerHTML = "";
+    el("bookGenre").innerHTML = "";
+    wrap.innerHTML = '<p class="emptyNote">まだ物語はありません。<br>ジャンルを選んで「新しい物語をはじめる」を押してください。</p>';
+    el("finLine").innerHTML = "";
+  } else {
+    el("bookTitle").innerHTML = esc(title || "（無題）");
+    el("bookGenre").innerHTML = "ジャンル：" + esc(genre) + " ／ 全" + chapters.length + "章";
+    var html = "";
+    for (var j = 0; j < chapters.length; j++) {
+      html += '<div class="chapter">';
+      html += '<p class="chapterHead">第' + (j + 1) + '章</p>';
+      html += '<p class="chapterText">' + esc(chapters[j]) + '</p>';
+      if (j === chapters.length - 1) {
+        html += '<button class="readBtn" onclick="readLatest()">この章を読む</button>';
+      }
+      html += '</div>';
+    }
+    wrap.innerHTML = html;
+    el("finLine").innerHTML = (chapters.length >= MAX_CH) ? "― 物語は完結しました ―" : "";
+  }
+  el("btnNext").disabled = busy || chapters.length === 0 || chapters.length >= MAX_CH;
+  el("btnStart").disabled = busy;
+  el("btnClear").disabled = busy;
+}
+
+function startTimer() {
+  startTime = new Date().getTime();
+  setStatus("書いています… 0秒");
+  timerId = setInterval(function () {
+    var sec = Math.floor((new Date().getTime() - startTime) / 1000);
+    setStatus("書いています… " + sec + "秒");
+  }, 500);
+}
+
+function stopTimer() {
+  if (timerId !== null) { clearInterval(timerId); timerId = null; }
+}
+
+function aiError(xhr, timedOut) {
+  stopTimer();
+  busy = false;
+  render();
+  if (timedOut) {
+    setStatus("AI回線の時間切れです。少し待ってからもう一度お試しください");
+    return;
+  }
+  var body = "";
+  try { body = xhr.responseText || ""; } catch (e) {}
+  if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+    setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
+  } else {
+    setStatus("AI回線が混み合っています <span style='font-size:12px;'>詳細：HTTP " + xhr.status + "</span>");
+  }
+}
+
+function callAI(prompt, onOk) {
+  busy = true;
+  render();
+  startTimer();
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    if (xhr.status === 200) {
+      var text = "";
+      try { text = xhr.responseText || ""; } catch (e) {}
+      if (text.indexOf("Free limit") >= 0) { aiError(xhr, false); return; }
+      text = text.replace(/^\s+/, "").replace(/\s+$/, "");
+      if (!text) { aiError(xhr, false); return; }
+      stopTimer();
+      busy = false;
+      setStatus("");
+      onOk(text);
+      render();
+    } else {
+      aiError(xhr, false);
+    }
+  };
+  xhr.ontimeout = function () { aiError(xhr, true); };
+  xhr.onerror = function () { aiError(xhr, false); };
+  var body = JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" });
+  xhr.send(body);
+}
+
+function startStory() {
+  if (busy) { return; }
+  if (chapters.length > 0 && !startArmed) {
+    startArmed = true;
+    el("btnStart").innerHTML = "今の物語を消して新しく始めますか？（もう一度タップ）";
+    setTimeout(function () {
+      startArmed = false;
+      el("btnStart").innerHTML = "新しい物語をはじめる";
+    }, 4000);
+    return;
+  }
+  startArmed = false;
+  el("btnStart").innerHTML = "新しい物語をはじめる";
+  el("sysLine").innerHTML = "";
+  var prompt = "あなたは小説家です。ジャンル「" + genre + "」の長編小説の第1章を書いてください。1行目に「題：（タイトル）」と書き、改行してから本文を約400字の日本語の散文で書いてください。マークダウンや装飾記号は使わないでください。";
+  callAI(prompt, function (text) {
+    var lines = text.split("\n");
+    var t = "";
+    var bodyText = text;
+    var first = lines[0].replace(/^\s+/, "");
+    if (first.indexOf("題：") === 0) {
+      t = first.substring(2).replace(/^\s+/, "");
+      lines.shift();
+      bodyText = lines.join("\n").replace(/^\s+/, "");
+    }
+    title = t;
+    chapters = [bodyText];
+    save();
+  });
+}
+
+function nextChapter() {
+  if (busy || chapters.length === 0 || chapters.length >= MAX_CH) { return; }
+  var prev = chapters[chapters.length - 1];
+  var tail = prev.length > 300 ? prev.substring(prev.length - 300) : prev;
+  var nextNum = chapters.length + 1;
+  var prompt = "あなたは小説家です。ジャンル「" + genre + "」の小説『" + (title || "無題") + "』の続きを書いてください。前の章の終わりは次の通りです。「" + tail + "」この続きとして第" + nextNum + "章を約400字の日本語の散文で書いてください。本文だけを書いてください。題名や章の見出しは書かないでください。マークダウンは使わないでください。";
+  callAI(prompt, function (text) {
+    chapters.push(text);
+    save();
+  });
+}
+
+function toggleVoice() {
+  voiceOn = !voiceOn;
+  el("btnVoice").innerHTML = voiceOn ? "ボイス ON" : "ボイス OFF";
+  if (!voiceOn) {
+    try { speechSynthesis.cancel(); } catch (e) {}
+  }
+}
+
+function readLatest() {
+  if (chapters.length === 0) { return; }
+  if (!voiceOn) {
+    setStatus("ボイスがOFFです。右上のボタンでONにしてください");
+    return;
+  }
+  try {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(chapters[chapters.length - 1]);
+    u.lang = "ja-JP";
+    u.pitch = 0.9;
+    u.rate = 1.0;
+    speechSynthesis.speak(u);
+  } catch (e) {
+    setStatus("この端末では読み上げが使えませんでした");
+  }
+}
+
+function clearBook() {
+  if (busy) { return; }
+  if (!clearArmed) {
+    clearArmed = true;
+    el("btnClear").innerHTML = "本当に消しますか？（もう一度タップで消去）";
+    setTimeout(function () {
+      clearArmed = false;
+      el("btnClear").innerHTML = "本を閉じる（消去）";
+    }, 4000);
+    return;
+  }
+  clearArmed = false;
+  el("btnClear").innerHTML = "本を閉じる（消去）";
+  try { speechSynthesis.cancel(); } catch (e) {}
+  title = "";
+  chapters = [];
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+  el("sysLine").innerHTML = "";
+  setStatus("本を閉じました");
+  render();
+}
+
+(function init() {
+  var restored = load();
+  render();
+  if (restored) {
+    el("sysLine").innerHTML = "しおりから再開しました";
+  }
+})();
+</script>
+</body>
+</html>

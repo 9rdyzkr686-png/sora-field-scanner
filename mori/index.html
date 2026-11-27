@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>MORI-6 森のひだまり</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { background:#0d2818; }
+body {
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+  color:#eaf7ec; padding:14px 12px 40px;
+  background:linear-gradient(180deg,#123c22 0%,#0d2818 45%,#081a10 100%);
+  min-height:100vh;
+}
+a.back { display:inline-block; color:#a9e5b8; text-decoration:none; font-size:16px; padding:12px 6px; min-height:48px; line-height:24px; }
+header { text-align:center; margin:4px 0 6px; }
+h1 { font-size:30px; letter-spacing:2px; color:#d9f7de; text-shadow:0 0 14px rgba(120,255,160,.35); }
+.sub { color:#9fd3ab; font-size:14px; margin-top:4px; }
+.leaves { text-align:center; font-size:22px; letter-spacing:10px; color:#57b06c; margin:6px 0 2px; }
+.card {
+  background:rgba(20,64,36,.85); border:1px solid #2e7d46; border-radius:14px;
+  padding:16px 14px; margin:14px 0;
+  box-shadow:0 4px 14px rgba(0,0,0,.35);
+}
+.card h2 { font-size:20px; color:#c9f2d2; margin-bottom:6px; }
+.card p.desc { font-size:14px; color:#a9d8b4; line-height:1.6; margin-bottom:10px; }
+.soundrow { display:block; width:100%; min-height:56px; margin:10px 0; border-radius:12px; border:2px solid #3f9e5f;
+  background:#17482a; color:#eaf7ec; font-size:19px; font-weight:bold; padding:12px; text-align:left; }
+.soundrow .st { float:right; font-size:15px; padding:3px 12px; border-radius:20px; background:#0a1f12; color:#8a9a8e; }
+.soundrow.on { background:#1f6b39; border-color:#7be495; }
+.soundrow.on .st { background:#7be495; color:#0a2e16; }
+#stopAllBtn { display:block; width:100%; min-height:52px; border-radius:12px; border:2px solid #b0563a;
+  background:#5a2a1a; color:#ffd9c9; font-size:17px; font-weight:bold; padding:10px; margin-top:12px; }
+.chips { margin:6px 0 4px; }
+.chip { display:inline-block; min-height:48px; line-height:44px; padding:2px 16px; margin:4px 4px 4px 0;
+  border-radius:24px; border:2px solid #3f9e5f; background:#123c22; color:#d9f7de; font-size:16px; }
+.chip.sel { background:#2e9e57; border-color:#aef0c0; color:#fff; font-weight:bold; }
+#guideBtn { display:block; width:100%; min-height:56px; border-radius:12px; border:none;
+  background:linear-gradient(180deg,#3cb968,#238647); color:#fff; font-size:19px; font-weight:bold; padding:12px; margin-top:10px; }
+#guideBtn:disabled { opacity:.55; }
+#guideText { background:#0a2013; border:1px solid #2e7d46; border-radius:10px; padding:14px;
+  font-size:17px; line-height:1.8; min-height:70px; white-space:pre-wrap; word-wrap:break-word; margin-top:12px; }
+#guideStatus { font-size:13px; color:#8fc79c; margin-top:8px; min-height:18px; }
+.ctlrow { text-align:center; margin-top:10px; }
+#voiceBtn { min-height:48px; padding:10px 22px; border-radius:24px; border:2px solid #3f9e5f;
+  background:#17482a; color:#eaf7ec; font-size:16px; font-weight:bold; }
+footer { text-align:center; color:#6fae7d; font-size:12px; margin-top:22px; line-height:1.7; }
+</style>
+</head>
+<body>
+<a class="back" href="../portal/">← 全サイト一覧へ</a>
+<header>
+  <div class="leaves">🌲 🌿 🌲</div>
+  <h1>MORI-6</h1>
+  <div class="sub">森のひだまり ― 音とガイドで森林浴</div>
+</header>
+
+<div class="card">
+  <h2>🎧 森の音ミキサー</h2>
+  <p class="desc">3つの音はすべて端末の中で合成しています。好きな組み合わせでどうぞ。</p>
+  <button class="soundrow" id="birdBtn">🐦 小鳥のさえずり <span class="st" id="birdSt">OFF</span></button>
+  <button class="soundrow" id="streamBtn">💧 せせらぎ <span class="st" id="streamSt">OFF</span></button>
+  <button class="soundrow" id="windBtn">🍃 木漏れ日の風 <span class="st" id="windSt">OFF</span></button>
+  <button id="stopAllBtn">■ 全部とめる</button>
+</div>
+
+<div class="card">
+  <h2>🌳 自然ガイド</h2>
+  <p class="desc">テーマを選んでボタンを押すと、森のガイドが静かに解説します。</p>
+  <div class="chips" id="chips">
+    <span class="chip sel" data-topic="木の話">木の話</span>
+    <span class="chip" data-topic="鳥の話">鳥の話</span>
+    <span class="chip" data-topic="森の生き物">森の生き物</span>
+    <span class="chip" data-topic="季節の森">季節の森</span>
+  </div>
+  <button id="guideBtn">ガイドに聞く</button>
+  <div id="guideText">ここに解説が表示されます。</div>
+  <div id="guideStatus"></div>
+  <div class="ctlrow">
+    <button id="voiceBtn">ボイス：ON</button>
+  </div>
+</div>
+
+<footer>
+  MORI-6 森のひだまり<br>
+  音はWebAudioで合成しています（録音データ不使用）
+</footer>
+
+<script>
+var voiceOn = true;
+var topic = "木の話";
+
+/* ============ Audio: shared context ============ */
+var AC = null;
+var noiseBuf = null;
+function getAC() {
+  if (!AC) {
+    var Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
+    AC = new Ctor();
+  }
+  if (AC.state === "suspended") { AC.resume(); }
+  return AC;
+}
+function getNoiseBuf(ac) {
+  if (noiseBuf) return noiseBuf;
+  var len = ac.sampleRate * 2;
+  noiseBuf = ac.createBuffer(1, len, ac.sampleRate);
+  var d = noiseBuf.getChannelData(0);
+  var i;
+  for (i = 0; i < len; i++) { d[i] = Math.random() * 2 - 1; }
+  return noiseBuf;
+}
+
+/* ============ Birds ============ */
+var birdOn = false;
+var birdTimer = null;
+var birdGain = null;
+function chirpOnce(ac) {
+  var t = ac.currentTime;
+  var reps = 2 + Math.floor(Math.random() * 3);
+  var i;
+  for (i = 0; i < reps; i++) {
+    var o = ac.createOscillator();
+    var g = ac.createGain();
+    o.type = "sine";
+    var st = t + i * 0.22;
+    var base = 2300 + Math.random() * 300;
+    o.frequency.setValueAtTime(base, st);
+    o.frequency.exponentialRampToValueAtTime(base + 900, st + 0.13);
+    g.gain.setValueAtTime(0.0001, st);
+    g.gain.exponentialRampToValueAtTime(0.16, st + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, st + 0.16);
+    o.connect(g); g.connect(birdGain);
+    o.start(st); o.stop(st + 0.2);
+  }
+}
+function birdSchedule() {
+  if (!birdOn) return;
+  var ac = getAC();
+  if (ac) { chirpOnce(ac); }
+  birdTimer = setTimeout(birdSchedule, 2000 + Math.random() * 4000);
+}
+function setBird(on) {
+  var ac = getAC();
+  if (!ac) return;
+  birdOn = on;
+  if (on) {
+    if (!birdGain) { birdGain = ac.createGain(); birdGain.gain.value = 0.9; birdGain.connect(ac.destination); }
+    birdSchedule();
+  } else {
+    if (birdTimer) { clearTimeout(birdTimer); birdTimer = null; }
+  }
+  document.getElementById("birdSt").textContent = on ? "ON" : "OFF";
+  document.getElementById("birdBtn").className = on ? "soundrow on" : "soundrow";
+}
+
+/* ============ Stream (filtered noise + wobble) ============ */
+var streamNodes = null;
+function setStream(on) {
+  var ac = getAC();
+  if (!ac) return;
+  if (on) {
+    if (streamNodes) return;
+    var src = ac.createBufferSource();
+    src.buffer = getNoiseBuf(ac); src.loop = true;
+    var bp = ac.createBiquadFilter();
+    bp.type = "bandpass"; bp.frequency.value = 800; bp.Q.value = 0.6;
+    var g = ac.createGain(); g.gain.value = 0.14;
+    var lfo = ac.createOscillator(); lfo.type = "sine"; lfo.frequency.value = 0.4;
+    var lfoG = ac.createGain(); lfoG.gain.value = 0.05;
+    lfo.connect(lfoG); lfoG.connect(g.gain);
+    src.connect(bp); bp.connect(g); g.connect(ac.destination);
+    src.start(); lfo.start();
+    streamNodes = { src: src, lfo: lfo, g: g };
+  } else {
+    if (!streamNodes) return;
+    try { streamNodes.src.stop(); } catch (e) {}
+    try { streamNodes.lfo.stop(); } catch (e) {}
+    try { streamNodes.g.disconnect(); } catch (e) {}
+    streamNodes = null;
+  }
+  document.getElementById("streamSt").textContent = on ? "ON" : "OFF";
+  document.getElementById("streamBtn").className = on ? "soundrow on" : "soundrow";
+}
+
+/* ============ Wind (lowpassed noise + slow LFO) ============ */
+var windNodes = null;
+function setWind(on) {
+  var ac = getAC();
+  if (!ac) return;
+  if (on) {
+    if (windNodes) return;
+    var src = ac.createBufferSource();
+    src.buffer = getNoiseBuf(ac); src.loop = true;
+    var lp = ac.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 420; lp.Q.value = 0.4;
+    var g = ac.createGain(); g.gain.value = 0.10;
+    var lfo = ac.createOscillator(); lfo.type = "sine"; lfo.frequency.value = 0.09;
+    var lfoG = ac.createGain(); lfoG.gain.value = 0.055;
+    lfo.connect(lfoG); lfoG.connect(g.gain);
+    src.connect(lp); lp.connect(g); g.connect(ac.destination);
+    src.start(); lfo.start();
+    windNodes = { src: src, lfo: lfo, g: g };
+  } else {
+    if (!windNodes) return;
+    try { windNodes.src.stop(); } catch (e) {}
+    try { windNodes.lfo.stop(); } catch (e) {}
+    try { windNodes.g.disconnect(); } catch (e) {}
+    windNodes = null;
+  }
+  document.getElementById("windSt").textContent = on ? "ON" : "OFF";
+  document.getElementById("windBtn").className = on ? "soundrow on" : "soundrow";
+}
+
+document.getElementById("birdBtn").onclick = function () { setBird(!birdOn); };
+document.getElementById("streamBtn").onclick = function () { setStream(streamNodes === null); };
+document.getElementById("windBtn").onclick = function () { setWind(windNodes === null); };
+document.getElementById("stopAllBtn").onclick = function () {
+  if (birdOn) setBird(false);
+  if (streamNodes) setStream(false);
+  if (windNodes) setWind(false);
+};
+
+/* ============ Topic chips ============ */
+var chipsEl = document.getElementById("chips");
+var chipNodes = chipsEl.getElementsByTagName("span");
+var ci;
+for (ci = 0; ci < chipNodes.length; ci++) {
+  chipNodes[ci].onclick = function () {
+    var j;
+    for (j = 0; j < chipNodes.length; j++) { chipNodes[j].className = "chip"; }
+    this.className = "chip sel";
+    topic = this.getAttribute("data-topic");
+  };
+}
+
+/* ============ Voice ============ */
+function speak(text) {
+  if (!voiceOn) return;
+  if (!window.speechSynthesis) return;
+  try {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP"; u.pitch = 0.85; u.rate = 0.95;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+document.getElementById("voiceBtn").onclick = function () {
+  voiceOn = !voiceOn;
+  this.textContent = voiceOn ? "ボイス：ON" : "ボイス：OFF";
+  if (!voiceOn && window.speechSynthesis) { try { speechSynthesis.cancel(); } catch (e) {} }
+};
+
+/* ============ AI guide ============ */
+var guideBusy = false;
+document.getElementById("guideBtn").onclick = function () {
+  if (guideBusy) return;
+  guideBusy = true;
+  var btn = document.getElementById("guideBtn");
+  var status = document.getElementById("guideStatus");
+  var out = document.getElementById("guideText");
+  btn.disabled = true;
+  var prompt = "あなたは森の自然ガイドです。テーマ「" + topic + "」について、静かで落ち着いた口調で、森を歩く人に語りかけるように220文字以内で解説してください。日本の森の話にしてください。マークダウンや記号は使わず、普通の文章で書いてください。";
+  var sec = 0;
+  status.textContent = "考え中… 0秒";
+  var timer = setInterval(function () { sec++; status.textContent = "考え中… " + sec + "秒"; }, 1000);
+  var done = false;
+  function finish(msg) {
+    if (done) return;
+    done = true;
+    clearInterval(timer);
+    btn.disabled = false;
+    guideBusy = false;
+    status.textContent = "";
+    out.textContent = msg;
+  }
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) return;
+    var body = xhr.responseText || "";
+    if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+      finish("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
+      return;
+    }
+    if (xhr.status === 200) {
+      var txt = body.replace(/^\s+|\s+$/g, "");
+      if (txt) { finish(txt); speak(txt); }
+      else { finish("AI回線が混み合っています（詳細：HTTP 200）"); }
+      return;
+    }
+    finish("AI回線が混み合っています（詳細：HTTP " + xhr.status + "）");
+  };
+  xhr.ontimeout = function () { finish("AI回線の応答が時間切れになりました。もう一度お試しください"); };
+  xhr.onerror = function () { finish("AI回線が混み合っています（詳細：HTTP 0）"); };
+  xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>UMI-6 海の見える窓</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+  background: linear-gradient(180deg, #7ec8e3 0%, #4a90c4 45%, #2c6ea8 100%);
+  color: #123;
+  min-height: 100vh;
+  padding: 12px;
+  -webkit-text-size-adjust: 100%;
+}
+.wrap { max-width: 560px; margin: 0 auto; }
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.backlink {
+  display: inline-block; background: rgba(255,255,255,.85); color: #1a5a8a;
+  text-decoration: none; font-size: 15px; font-weight: bold;
+  padding: 12px 14px; border-radius: 10px; min-height: 48px; line-height: 24px;
+}
+.voicebtn {
+  background: rgba(255,255,255,.85); color: #1a5a8a; border: none;
+  font-size: 15px; font-weight: bold; padding: 12px 14px; border-radius: 10px;
+  min-height: 48px; cursor: pointer;
+}
+h1 { text-align: center; color: #fff; font-size: 26px; text-shadow: 0 2px 6px rgba(0,40,80,.5); margin: 6px 0 2px; }
+.sub { text-align: center; color: #eaf6ff; font-size: 14px; margin-bottom: 14px; }
+.waves { position: relative; height: 46px; overflow: hidden; margin: 0 -12px 14px; }
+.waveband {
+  position: absolute; left: 0; width: 200%; height: 46px;
+  background-repeat: repeat-x; background-size: 50% 100%;
+  background-image: radial-gradient(circle at 25px 6px, transparent 22px, rgba(255,255,255,.55) 23px);
+  animation: drift 9s linear infinite;
+}
+.waveband.b2 { top: 14px; opacity: .5; animation-duration: 14s; animation-direction: reverse; }
+@keyframes drift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.card {
+  background: rgba(255,255,255,.94); border-radius: 14px; padding: 16px;
+  margin-bottom: 14px; box-shadow: 0 3px 10px rgba(0,40,80,.25);
+}
+.card h2 { font-size: 18px; color: #1a5a8a; margin-bottom: 8px; }
+.wavebig { font-size: 30px; font-weight: bold; color: #0d4a75; text-align: center; margin: 8px 0; }
+.wavetime { font-size: 13px; color: #567; text-align: center; }
+.note { font-size: 14px; color: #567; text-align: center; padding: 8px 0; }
+.bigbtn {
+  display: block; width: 100%; min-height: 56px; border: none; border-radius: 12px;
+  font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px;
+  background: #1a7ab8; color: #fff; padding: 14px;
+}
+.bigbtn.sub2 { background: #fff; color: #1a5a8a; border: 2px solid #1a7ab8; }
+.bigbtn:disabled { opacity: .55; }
+.status { font-size: 14px; color: #456; text-align: center; min-height: 20px; margin-top: 8px; }
+.lettercard {
+  background: #fffdf4; border: 1px solid #e4d9b8; border-radius: 10px;
+  padding: 18px 16px; margin-top: 12px; display: none;
+  box-shadow: inset 0 0 24px rgba(210,190,130,.25);
+}
+.lettercard .from { font-size: 13px; color: #998a5f; margin-bottom: 8px; }
+.lettertext { font-size: 17px; line-height: 1.8; color: #33404d; white-space: pre-wrap; word-break: break-word; }
+.foot { text-align: center; color: #dcefff; font-size: 12px; padding: 8px 0 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="backlink" href="../portal/">← 全サイト一覧へ</a>
+    <button class="voicebtn" id="voiceBtn" onclick="toggleVoice()">ボイス ON</button>
+  </div>
+  <h1>🌊 UMI-6 海の見える窓</h1>
+  <div class="sub">東京湾の波と、海からの便り</div>
+  <div class="waves"><div class="waveband"></div><div class="waveband b2"></div></div>
+
+  <div class="card">
+    <h2>🌊 波の情報</h2>
+    <div id="waveBody">
+      <div class="note">波の情報を取得しています…</div>
+    </div>
+    <button class="bigbtn sub2" id="waveRetry" onclick="fetchWave()" style="display:none;">もう一度取得する</button>
+  </div>
+
+  <div class="card">
+    <h2>🔊 波音</h2>
+    <div class="note">イヤホンでも小さな音でどうぞ。波の音はこの端末の中で作っています。</div>
+    <button class="bigbtn" id="surfBtn" onclick="toggleSurf()">波音を聞く</button>
+  </div>
+
+  <div class="card">
+    <h2>✉️ 海の便り</h2>
+    <div class="note">海か灯台守が、あなたへ手紙を書きます。</div>
+    <button class="bigbtn" id="letterBtn" onclick="fetchLetter()">便りを受け取る</button>
+    <div class="status" id="aiStatus"></div>
+    <div class="lettercard" id="letterCard">
+      <div class="from">― 海より</div>
+      <div class="lettertext" id="letterText"></div>
+    </div>
+  </div>
+
+  <div class="foot">UMI-6 ／ 波データ：Open-Meteo Marine（東京湾）</div>
+</div>
+<script>
+var voiceOn = true;
+
+function toggleVoice() {
+  voiceOn = !voiceOn;
+  document.getElementById('voiceBtn').innerHTML = voiceOn ? 'ボイス ON' : 'ボイス OFF';
+  if (!voiceOn && window.speechSynthesis) { speechSynthesis.cancel(); }
+}
+
+function speak(text) {
+  if (!voiceOn) { return; }
+  if (!window.speechSynthesis) { return; }
+  try {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP';
+    u.pitch = 0.8;
+    u.rate = 0.95;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+/* ---------- 1. 波の情報 ---------- */
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+function fetchWave() {
+  var body = document.getElementById('waveBody');
+  var retry = document.getElementById('waveRetry');
+  retry.style.display = 'none';
+  body.innerHTML = '<div class="note">波の情報を取得しています…</div>';
+  var url = 'https://marine-api.open-meteo.com/v1/marine?latitude=35.6&longitude=139.8&current=wave_height,wave_period&timezone=Asia%2FTokyo';
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url, true);
+  xhr.timeout = 20000;
+  xhr.onload = function () {
+    if (xhr.status !== 200) { waveFail(); return; }
+    var d;
+    try { d = JSON.parse(xhr.responseText); } catch (e) { waveFail(); return; }
+    if (!d || !d.current || typeof d.current.wave_height !== 'number') { waveFail(); return; }
+    var h = d.current.wave_height;
+    var p = (typeof d.current.wave_period === 'number') ? d.current.wave_period : null;
+    var label = '東京湾の波';
+    if (d.current.time) {
+      var t = String(d.current.time);
+      var idx = t.indexOf('T');
+      if (idx >= 0 && t.length >= idx + 6) {
+        var hm = t.substring(idx + 1, idx + 6).split(':');
+        label = '東京湾の波（取得時刻 ' + Number(hm[0]) + '時' + pad2(Number(hm[1])) + '分）';
+      }
+    }
+    var html = '<div class="wavebig">波の高さ ' + h.toFixed(1) + ' m';
+    if (p !== null) { html += ' ／ 周期 ' + p.toFixed(0) + ' 秒'; }
+    html += '</div><div class="wavetime">' + label + '</div>';
+    body.innerHTML = html;
+  };
+  xhr.onerror = function () { waveFail(); };
+  xhr.ontimeout = function () { waveFail(); };
+  xhr.send();
+}
+
+function waveFail() {
+  document.getElementById('waveBody').innerHTML = '<div class="note">波の情報が取れませんでした。電波の良いところでお試しください。</div>';
+  document.getElementById('waveRetry').style.display = 'block';
+}
+
+/* ---------- 2. 波音 ---------- */
+var audioCtx = null, surfNodes = null, surfOn = false;
+
+function buildSurf() {
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) { return false; }
+  audioCtx = new AC();
+  var len = 3 * audioCtx.sampleRate;
+  var buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  var data = buf.getChannelData(0);
+  var i;
+  for (i = 0; i < len; i++) { data[i] = Math.random() * 2 - 1; }
+  var src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+  var filter = audioCtx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 480;
+  filter.Q.value = 0.6;
+  var gain = audioCtx.createGain();
+  gain.gain.value = 0.16;
+  var lfo = audioCtx.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = 0.08;
+  var lfoGain = audioCtx.createGain();
+  lfoGain.gain.value = 0.11;
+  lfo.connect(lfoGain);
+  lfoGain.connect(gain.gain);
+  var fLfo = audioCtx.createOscillator();
+  fLfo.type = 'sine';
+  fLfo.frequency.value = 0.05;
+  var fGain = audioCtx.createGain();
+  fGain.gain.value = 160;
+  fLfo.connect(fGain);
+  fGain.connect(filter.frequency);
+  src.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioCtx.destination);
+  src.start();
+  lfo.start();
+  fLfo.start();
+  surfNodes = { src: src, lfo: lfo, fLfo: fLfo, gain: gain };
+  return true;
+}
+
+function toggleSurf() {
+  var btn = document.getElementById('surfBtn');
+  if (!surfOn) {
+    if (!surfNodes) {
+      if (!buildSurf()) { btn.innerHTML = 'この端末では音が出せません'; return; }
+    }
+    if (audioCtx.resume) { audioCtx.resume(); }
+    surfOn = true;
+    btn.innerHTML = '波音を止める';
+  } else {
+    if (audioCtx && audioCtx.suspend) { audioCtx.suspend(); }
+    surfOn = false;
+    btn.innerHTML = '波音を聞く';
+  }
+}
+
+/* ---------- 3. 海の便り ---------- */
+var letterBusy = false, letterTimer = null, letterSec = 0;
+
+function setStatus(t) { document.getElementById('aiStatus').innerHTML = t; }
+
+function stopLetterTimer() {
+  if (letterTimer) { clearInterval(letterTimer); letterTimer = null; }
+}
+
+function fetchLetter() {
+  if (letterBusy) { return; }
+  letterBusy = true;
+  var btn = document.getElementById('letterBtn');
+  btn.disabled = true;
+  letterSec = 0;
+  setStatus('便りを待っています… 0秒');
+  letterTimer = setInterval(function () {
+    letterSec++;
+    setStatus('便りを待っています… ' + letterSec + '秒');
+  }, 1000);
+
+  var prompt = 'あなたは海そのもの、または海を見守る灯台守です。読者へ宛てた短い手紙を書いてください。穏やかで静かな文体で、200文字以内の日本語、プレーンテキストのみ（マークダウン記法や見出しは使わない）。今日の海の様子や、読者をねぎらう言葉を込めてください。';
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://text.pollinations.ai/', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 90000;
+  xhr.onload = function () {
+    stopLetterTimer();
+    letterBusy = false;
+    btn.disabled = false;
+    var text = '';
+    try { text = xhr.responseText || ''; } catch (e) { text = ''; }
+    if (xhr.status === 402 || text.indexOf('Free limit') >= 0) {
+      setStatus('本日の無料AI回線は上限に達しました。明日の朝9時に回復します');
+      return;
+    }
+    if (xhr.status !== 200) {
+      setStatus('AI回線が混み合っています <span style="font-size:11px;">詳細：HTTP ' + xhr.status + '</span>');
+      return;
+    }
+    text = text.replace(/^\s+|\s+$/g, '');
+    if (!text) {
+      setStatus('AI回線が混み合っています <span style="font-size:11px;">詳細：HTTP ' + xhr.status + '</span>');
+      return;
+    }
+    if (text.length > 220) { text = text.substring(0, 220); }
+    setStatus('');
+    document.getElementById('letterText').innerHTML = escapeHtml(text);
+    document.getElementById('letterCard').style.display = 'block';
+    if (voiceOn && text.length <= 200) { speak(text); }
+  };
+  xhr.onerror = function () {
+    stopLetterTimer();
+    letterBusy = false;
+    btn.disabled = false;
+    setStatus('AI回線が混み合っています <span style="font-size:11px;">詳細：HTTP 0</span>');
+  };
+  xhr.ontimeout = function () {
+    stopLetterTimer();
+    letterBusy = false;
+    btn.disabled = false;
+    setStatus('便りが届く前に時間切れになりました。もう一度お試しください');
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+fetchWave();
+</script>
+</body>
+</html>

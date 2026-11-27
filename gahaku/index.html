@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAHAKU-6 AI画伯</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a1512;
+    background-image: radial-gradient(ellipse at 50% 0%, #2e2620 0%, #1a1512 70%);
+    color: #e8dcc3;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+    padding: 16px 12px 40px;
+    -webkit-text-size-adjust: 100%;
+  }
+  a.back {
+    display: inline-block;
+    color: #c9a959;
+    text-decoration: none;
+    font-size: 15px;
+    padding: 10px 4px;
+    min-height: 48px;
+    line-height: 28px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 26px;
+    letter-spacing: 4px;
+    color: #e6c877;
+    margin: 6px 0 2px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #a08c5f;
+    letter-spacing: 2px;
+    margin-bottom: 18px;
+  }
+  /* 額縁 */
+  .frame-wrap {
+    max-width: 560px;
+    margin: 0 auto 8px;
+    background: linear-gradient(145deg, #d4af37, #8a6d1f, #c9a959, #6e5518);
+    padding: 14px;
+    border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,240,200,0.6);
+  }
+  .frame-inner {
+    background: #f5efe0;
+    padding: 10px;
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.35);
+  }
+  .canvas-area {
+    background: #241d16;
+    min-height: 240px;
+    text-align: center;
+    position: relative;
+  }
+  .canvas-area img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .empty-msg {
+    padding: 90px 16px;
+    color: #8d7c58;
+    font-size: 15px;
+    line-height: 1.8;
+  }
+  /* 題名カード */
+  .title-card {
+    max-width: 420px;
+    margin: 14px auto 4px;
+    background: #efe8d5;
+    color: #3a2f1c;
+    text-align: center;
+    padding: 12px 10px;
+    border: 1px solid #b8a678;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  }
+  .title-card .work-title {
+    font-size: 18px;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+  .title-card .work-note {
+    font-size: 12px;
+    color: #7a6a45;
+    margin-top: 4px;
+  }
+  .save-note {
+    text-align: center;
+    font-size: 13px;
+    color: #a08c5f;
+    margin: 10px 0 20px;
+  }
+  .status {
+    text-align: center;
+    font-size: 15px;
+    color: #e6c877;
+    min-height: 24px;
+    margin: 8px 0 4px;
+  }
+  /* 選択UI */
+  .section {
+    max-width: 560px;
+    margin: 0 auto 14px;
+  }
+  .section-label {
+    font-size: 14px;
+    color: #c9a959;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #4a3d24;
+    padding-bottom: 4px;
+  }
+  .chips { font-size: 0; }
+  .chip {
+    display: inline-block;
+    font-family: inherit;
+    font-size: 16px;
+    color: #e8dcc3;
+    background: #2e2620;
+    border: 2px solid #6e5c33;
+    border-radius: 24px;
+    padding: 0 16px;
+    min-height: 48px;
+    line-height: 44px;
+    margin: 0 8px 10px 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .chip.selected {
+    background: #c9a959;
+    color: #241a05;
+    border-color: #e6c877;
+    font-weight: bold;
+  }
+  .draw-btn {
+    display: block;
+    width: 100%;
+    max-width: 560px;
+    margin: 18px auto 0;
+    font-family: inherit;
+    font-size: 20px;
+    letter-spacing: 4px;
+    font-weight: bold;
+    color: #241a05;
+    background: linear-gradient(180deg, #e6c877, #c9a959);
+    border: 2px solid #8a6d1f;
+    border-radius: 8px;
+    min-height: 56px;
+    padding: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .draw-btn:disabled {
+    opacity: 0.5;
+  }
+  .footer {
+    text-align: center;
+    font-size: 12px;
+    color: #6e5c33;
+    margin-top: 28px;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<a class="back" href="../portal/">← 全サイト一覧へ</a>
+
+<h1>GAHAKU-6</h1>
+<div class="subtitle">― AI画伯の画廊 ―</div>
+
+<div class="frame-wrap">
+  <div class="frame-inner">
+    <div class="canvas-area" id="canvasArea">
+      <div class="empty-msg" id="emptyMsg">題材・雰囲気・画風を選んで<br>「描く」を押してください</div>
+      <img id="artImg" alt="AI画伯の作品" style="display:none;">
+    </div>
+  </div>
+</div>
+
+<div class="title-card" id="titleCard" style="display:none;">
+  <div class="work-title" id="workTitle"></div>
+  <div class="work-note">AI画伯 作</div>
+</div>
+
+<div class="save-note">絵を長押しすると保存できます</div>
+
+<div class="status" id="status"></div>
+
+<div class="section">
+  <div class="section-label">題材</div>
+  <div class="chips" id="subjectChips">
+    <button type="button" class="chip" data-group="subject" data-ja="ダックスフンド" data-en="a long-haired dachshund dog">ダックスフンド</button>
+    <button type="button" class="chip" data-group="subject" data-ja="宇宙" data-en="outer space with stars and a planet">宇宙</button>
+    <button type="button" class="chip" data-group="subject" data-ja="海辺の町" data-en="a quiet seaside town">海辺の町</button>
+    <button type="button" class="chip" data-group="subject" data-ja="森の小屋" data-en="a small wooden cabin in a deep forest">森の小屋</button>
+    <button type="button" class="chip" data-group="subject" data-ja="怪獣" data-en="a giant kaiju monster standing in a city">怪獣</button>
+    <button type="button" class="chip" data-group="subject" data-ja="昭和の商店街" data-en="a retro Japanese shopping street in the Showa era">昭和の商店街</button>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label">雰囲気</div>
+  <div class="chips" id="moodChips">
+    <button type="button" class="chip" data-group="mood" data-ja="昼" data-en=", bright daylight">昼</button>
+    <button type="button" class="chip" data-group="mood" data-ja="夕方" data-en=", sunset light">夕方</button>
+    <button type="button" class="chip" data-group="mood" data-ja="夜" data-en=", night, moonlight">夜</button>
+    <button type="button" class="chip" data-group="mood" data-ja="雪" data-en=", snow">雪</button>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label">画風</div>
+  <div class="chips" id="styleChips">
+    <button type="button" class="chip" data-group="style" data-ja="水彩画" data-en="watercolor painting">水彩画</button>
+    <button type="button" class="chip" data-group="style" data-ja="油絵" data-en="oil painting">油絵</button>
+    <button type="button" class="chip" data-group="style" data-ja="ドット絵" data-en="pixel art">ドット絵</button>
+    <button type="button" class="chip" data-group="style" data-ja="浮世絵" data-en="ukiyo-e woodblock print">浮世絵</button>
+  </div>
+</div>
+
+<button type="button" class="draw-btn" id="drawBtn">描く</button>
+
+<div class="footer">GAHAKU-6 ― 絵はAIがその場で描きます</div>
+
+<script>
+var selected = {
+  subject: null,
+  mood: null,
+  style: null
+};
+
+function setupChips(containerId) {
+  var box = document.getElementById(containerId);
+  var chips = box.getElementsByClassName("chip");
+  var i;
+  for (i = 0; i < chips.length; i++) {
+    chips[i].onclick = (function (chip) {
+      return function () {
+        var group = chip.getAttribute("data-group");
+        var siblings = chip.parentNode.getElementsByClassName("chip");
+        var j;
+        for (j = 0; j < siblings.length; j++) {
+          siblings[j].className = "chip";
+        }
+        chip.className = "chip selected";
+        selected[group] = chip;
+      };
+    })(chips[i]);
+  }
+  if (chips.length > 0) {
+    chips[0].className = "chip selected";
+    selected[chips[0].getAttribute("data-group")] = chips[0];
+  }
+}
+
+setupChips("subjectChips");
+setupChips("moodChips");
+setupChips("styleChips");
+
+var drawBtn = document.getElementById("drawBtn");
+var artImg = document.getElementById("artImg");
+var emptyMsg = document.getElementById("emptyMsg");
+var statusEl = document.getElementById("status");
+var titleCard = document.getElementById("titleCard");
+var workTitle = document.getElementById("workTitle");
+
+artImg.onload = function () {
+  statusEl.innerHTML = "";
+  drawBtn.disabled = false;
+};
+artImg.onerror = function () {
+  statusEl.innerHTML = "絵が届きませんでした。もう一度お試しください";
+  drawBtn.disabled = false;
+};
+
+drawBtn.onclick = function () {
+  if (!selected.subject || !selected.mood || !selected.style) {
+    statusEl.innerHTML = "題材・雰囲気・画風を選んでください";
+    return;
+  }
+  var subjectEn = selected.subject.getAttribute("data-en");
+  var moodEn = selected.mood.getAttribute("data-en");
+  var styleEn = selected.style.getAttribute("data-en");
+  var prompt = subjectEn + moodEn + ", " + styleEn + ", detailed, no text";
+  var seed = Math.floor(Math.random() * 99999) + 1;
+  var url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt) +
+    "?width=640&height=480&nologo=true&seed=" + seed;
+
+  var titleJa = selected.subject.getAttribute("data-ja") + " × " +
+    selected.mood.getAttribute("data-ja") + " × " +
+    selected.style.getAttribute("data-ja");
+  workTitle.innerHTML = "「" + titleJa + "」";
+  titleCard.style.display = "block";
+
+  emptyMsg.style.display = "none";
+  artImg.style.display = "block";
+  statusEl.innerHTML = "描いています…（数十秒かかることがあります）";
+  drawBtn.disabled = true;
+  artImg.src = url;
+};
+</script>
+</body>
+</html>

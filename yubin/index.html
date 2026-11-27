@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YUBIN-6 未来郵便局</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f6ecd7;
+    color: #3a2e22;
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+    padding: 12px 12px 40px;
+    -webkit-text-size-adjust: 100%;
+  }
+  a.back {
+    display: inline-block;
+    color: #b03024;
+    font-size: 16px;
+    text-decoration: none;
+    padding: 10px 4px;
+    min-height: 48px;
+    line-height: 28px;
+  }
+  .office {
+    background: #fffaf0;
+    border: 3px solid #b03024;
+    border-radius: 10px;
+    padding: 16px 14px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .office:before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 10px;
+    background: repeating-linear-gradient(45deg, #b03024 0 14px, #fffaf0 14px 28px, #2e5f8a 28px 42px, #fffaf0 42px 56px);
+  }
+  .mark {
+    text-align: center;
+    color: #b03024;
+    font-size: 30px;
+    font-weight: bold;
+    letter-spacing: 6px;
+    margin-top: 8px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 26px;
+    letter-spacing: 3px;
+    color: #3a2e22;
+    margin: 2px 0 2px;
+  }
+  .sub {
+    text-align: center;
+    font-size: 14px;
+    color: #8a7358;
+    margin-bottom: 14px;
+  }
+  h2 {
+    font-size: 19px;
+    color: #b03024;
+    border-bottom: 2px dashed #d9b98c;
+    padding-bottom: 6px;
+    margin: 20px 0 10px;
+  }
+  h2:first-of-type { margin-top: 4px; }
+  label.lbl {
+    display: block;
+    font-size: 15px;
+    font-weight: bold;
+    margin: 14px 0 6px;
+    color: #5a4632;
+  }
+  textarea {
+    width: 100%;
+    min-height: 130px;
+    font-size: 17px;
+    line-height: 1.6;
+    padding: 10px;
+    border: 2px solid #c9a86a;
+    border-radius: 6px;
+    background: #fffef9;
+    color: #3a2e22;
+    resize: vertical;
+  }
+  .chips { overflow: hidden; }
+  .chip {
+    float: left;
+    min-height: 48px;
+    line-height: 48px;
+    padding: 0 16px;
+    margin: 0 8px 8px 0;
+    font-size: 16px;
+    background: #fffef9;
+    border: 2px solid #c9a86a;
+    border-radius: 24px;
+    color: #5a4632;
+    cursor: pointer;
+    text-align: center;
+  }
+  .chip.on {
+    background: #b03024;
+    border-color: #b03024;
+    color: #fff;
+    font-weight: bold;
+  }
+  #openPreview {
+    font-size: 15px;
+    color: #2e5f8a;
+    min-height: 22px;
+    margin: 2px 0 4px;
+  }
+  #sealBtn {
+    display: block;
+    width: 100%;
+    min-height: 54px;
+    font-size: 19px;
+    font-weight: bold;
+    background: #b03024;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    margin-top: 12px;
+    cursor: pointer;
+    letter-spacing: 2px;
+  }
+  #sealBtn:active { background: #8c241b; }
+  #statusMsg {
+    font-size: 15px;
+    color: #2e5f8a;
+    min-height: 22px;
+    margin-top: 8px;
+    text-align: center;
+  }
+  .empty {
+    font-size: 15px;
+    color: #8a7358;
+    padding: 10px 2px;
+  }
+  .env {
+    background: #fffef9;
+    border: 2px solid #c9a86a;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .env .stampMini {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 44px; height: 52px;
+    border: 2px dashed #b03024;
+    border-radius: 3px;
+    color: #b03024;
+    font-size: 20px;
+    text-align: center;
+    line-height: 48px;
+    background: #fdf3e3;
+  }
+  .env .to {
+    font-size: 18px;
+    font-weight: bold;
+    padding-right: 56px;
+  }
+  .env .meta {
+    font-size: 14px;
+    color: #8a7358;
+    margin-top: 4px;
+    padding-right: 56px;
+  }
+  .env .remain {
+    font-size: 17px;
+    color: #2e5f8a;
+    font-weight: bold;
+    margin-top: 8px;
+  }
+  .env .remain.arrived { color: #b03024; }
+  .env .btns { margin-top: 10px; overflow: hidden; }
+  .btn {
+    float: left;
+    min-height: 48px;
+    line-height: 48px;
+    padding: 0 18px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 2px solid #c9a86a;
+    background: #fffaf0;
+    color: #5a4632;
+    margin: 0 8px 6px 0;
+    cursor: pointer;
+    text-align: center;
+  }
+  .btn.open {
+    background: #b03024;
+    border-color: #b03024;
+    color: #fff;
+    font-weight: bold;
+  }
+  .btn.danger { border-color: #b03024; color: #b03024; }
+  .btn.confirm { background: #b03024; color: #fff; font-weight: bold; }
+  #openCard {
+    display: none;
+    background: #fffef9;
+    border: 2px solid #b03024;
+    border-radius: 8px;
+    padding: 16px 14px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  #openCard .stampBig {
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 62px; height: 74px;
+    border: 3px dashed #b03024;
+    border-radius: 4px;
+    background: #fdf3e3;
+    color: #b03024;
+    text-align: center;
+    padding-top: 8px;
+  }
+  #openCard .stampBig .markS { font-size: 26px; font-weight: bold; }
+  #openCard .stampBig .yen { font-size: 12px; }
+  #openCard.show .stampBig {
+    -webkit-animation: stampPop 0.45s ease-out;
+    animation: stampPop 0.45s ease-out;
+  }
+  @-webkit-keyframes stampPop {
+    0% { -webkit-transform: scale(2.2) rotate(-24deg); opacity: 0; }
+    60% { opacity: 1; }
+    100% { -webkit-transform: scale(1) rotate(-8deg); opacity: 1; }
+  }
+  @keyframes stampPop {
+    0% { transform: scale(2.2) rotate(-24deg); opacity: 0; }
+    60% { opacity: 1; }
+    100% { transform: scale(1) rotate(-8deg); opacity: 1; }
+  }
+  #openCard .postmark {
+    display: inline-block;
+    border: 2px solid #2e5f8a;
+    color: #2e5f8a;
+    border-radius: 50%;
+    width: 74px; height: 74px;
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.3;
+    padding-top: 16px;
+    -webkit-transform: rotate(-10deg);
+    transform: rotate(-10deg);
+    opacity: 0.75;
+    margin-bottom: 8px;
+  }
+  #openTo { font-size: 19px; font-weight: bold; padding-right: 76px; }
+  #openMeta { font-size: 14px; color: #8a7358; margin: 4px 0 12px; padding-right: 76px; }
+  #openBody {
+    font-size: 17px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    border-top: 1px dashed #d9b98c;
+    padding-top: 12px;
+  }
+  #closeCardBtn { margin-top: 14px; float: none; display: inline-block; }
+  .notes {
+    margin-top: 22px;
+    background: #fdf3e3;
+    border: 1px solid #d9b98c;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #5a4632;
+  }
+  .notes .nh { font-weight: bold; color: #b03024; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<a class="back" href="../portal/">← 全サイト一覧へ</a>
+
+<div class="office">
+  <div class="mark">〒</div>
+  <h1>YUBIN-6 未来郵便局</h1>
+  <div class="sub">未来のあて先へ、手紙を預ける小さな郵便局</div>
+
+  <h2>✉ 手紙を書く</h2>
+
+  <label class="lbl" for="bodyInput">手紙の本文</label>
+  <textarea id="bodyInput" placeholder="未来への手紙を書いてください"></textarea>
+
+  <label class="lbl">あて先</label>
+  <div class="chips" id="toChips">
+    <div class="chip chip-to on" data-to="未来の自分">未来の自分</div>
+    <div class="chip chip-to" data-to="家族へ">家族へ</div>
+    <div class="chip chip-to" data-to="KUU-01へ">KUU-01へ</div>
+  </div>
+
+  <label class="lbl">届ける時期</label>
+  <div class="chips" id="whenChips">
+    <div class="chip chip-when on" data-days="7" data-months="0">1週間後</div>
+    <div class="chip chip-when" data-days="0" data-months="1">1ヶ月後</div>
+    <div class="chip chip-when" data-days="0" data-months="6">半年後</div>
+    <div class="chip chip-when" data-days="0" data-months="12">1年後</div>
+  </div>
+  <div id="openPreview"></div>
+
+  <button id="sealBtn" type="button">封をして預ける</button>
+  <div id="statusMsg"></div>
+
+  <h2>📮 預けた手紙</h2>
+
+  <div id="openCard">
+    <div class="stampBig"><div class="markS">〒</div><div class="yen">未来便</div></div>
+    <div class="postmark">未来郵便局<br><span id="postmarkDate"></span><br>開封済</div>
+    <div id="openTo"></div>
+    <div id="openMeta"></div>
+    <div id="openBody"></div>
+    <div class="btn" id="closeCardBtn">閉じる</div>
+  </div>
+
+  <div id="listWrap"></div>
+
+  <div class="notes">
+    <div class="nh">ご利用の前に</div>
+    ・手紙はこの端末の中だけに保管されます。サーバーへ送信されることはありません。<br>
+    ・開封できる日かどうかは、この端末の時計の日付で判定します。端末の日付を変えると判定も変わります。<br>
+    ・ブラウザのデータを消すと、手紙も一緒に消えます。大事な手紙は別の場所にも書き写しておいてください。
+  </div>
+</div>
+
+<script>
+var KEY = 'yubin6_letters_v1';
+var letters = [];
+var selTo = '未来の自分';
+var selDays = 7;
+var selMonths = 0;
+var confirmId = '';
+var confirmTimer = null;
+
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+function fmtDate(d) { return d.getFullYear() + '/' + pad2(d.getMonth() + 1) + '/' + pad2(d.getDate()); }
+function dayStart(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function parseDay(s) {
+  var p = String(s).split('/');
+  return new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+}
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function loadLetters() {
+  letters = [];
+  try {
+    var s = localStorage.getItem(KEY);
+    if (s) {
+      var arr = JSON.parse(s);
+      if (arr && arr.length) { letters = arr; }
+    }
+  } catch (e) { letters = []; }
+}
+function saveLetters() {
+  try { localStorage.setItem(KEY, JSON.stringify(letters)); } catch (e) {}
+}
+function computeOpenDate() {
+  var d = new Date();
+  if (selDays > 0) { d.setDate(d.getDate() + selDays); }
+  if (selMonths > 0) { d.setMonth(d.getMonth() + selMonths); }
+  return dayStart(d);
+}
+function daysUntil(openStr) {
+  var diff = parseDay(openStr).getTime() - dayStart(new Date()).getTime();
+  return Math.round(diff / 86400000);
+}
+function findLetter(id) {
+  for (var i = 0; i < letters.length; i++) {
+    if (letters[i].id === id) { return letters[i]; }
+  }
+  return null;
+}
+function updatePreview() {
+  document.getElementById('openPreview').innerHTML = '開封できる日： ' + fmtDate(computeOpenDate());
+}
+function setStatus(msg) {
+  document.getElementById('statusMsg').innerHTML = esc(msg);
+}
+function selectChip(groupId, chipEl, cb) {
+  var wrap = document.getElementById(groupId);
+  var chips = wrap.getElementsByTagName('div');
+  for (var i = 0; i < chips.length; i++) {
+    chips[i].className = chips[i].className.replace(' on', '');
+  }
+  chipEl.className += ' on';
+  cb(chipEl);
+}
+function bindChips() {
+  var toWrap = document.getElementById('toChips');
+  var toChips = toWrap.getElementsByTagName('div');
+  var i, el;
+  for (i = 0; i < toChips.length; i++) {
+    el = toChips[i];
+    el.onclick = (function (chip) {
+      return function () {
+        selectChip('toChips', chip, function (c) { selTo = c.getAttribute('data-to'); });
+      };
+    })(el);
+  }
+  var whenWrap = document.getElementById('whenChips');
+  var whenChips = whenWrap.getElementsByTagName('div');
+  for (i = 0; i < whenChips.length; i++) {
+    el = whenChips[i];
+    el.onclick = (function (chip) {
+      return function () {
+        selectChip('whenChips', chip, function (c) {
+          selDays = parseInt(c.getAttribute('data-days'), 10);
+          selMonths = parseInt(c.getAttribute('data-months'), 10);
+        });
+        updatePreview();
+      };
+    })(el);
+  }
+}
+function sealLetter() {
+  var body = document.getElementById('bodyInput').value.replace(/^\s+|\s+$/g, '');
+  if (!body) {
+    setStatus('手紙の本文を書いてから封をしてください。');
+    return;
+  }
+  var now = new Date();
+  var letter = {
+    id: 'L' + now.getTime(),
+    to: selTo,
+    body: body,
+    created: fmtDate(now),
+    openDate: fmtDate(computeOpenDate()),
+    opened: false
+  };
+  letters.unshift(letter);
+  saveLetters();
+  document.getElementById('bodyInput').value = '';
+  setStatus('封をして預かりました。開封できる日は ' + letter.openDate + ' です。');
+  renderList();
+}
+function openLetter(id) {
+  var l = findLetter(id);
+  if (!l) { return; }
+  if (!l.opened) {
+    l.opened = true;
+    saveLetters();
+  }
+  var card = document.getElementById('openCard');
+  document.getElementById('openTo').innerHTML = esc(l.to) + ' へ';
+  document.getElementById('openMeta').innerHTML = '書いた日： ' + esc(l.created) + ' ／ 開封日： ' + esc(l.openDate);
+  document.getElementById('openBody').innerHTML = esc(l.body);
+  document.getElementById('postmarkDate').innerHTML = esc(l.openDate);
+  card.style.display = 'block';
+  card.className = '';
+  void card.offsetWidth;
+  card.className = 'show';
+  renderList();
+  card.scrollIntoView();
+}
+function closeCard() {
+  document.getElementById('openCard').style.display = 'none';
+}
+function deleteLetter(id) {
+  var next = [];
+  for (var i = 0; i < letters.length; i++) {
+    if (letters[i].id !== id) { next.push(letters[i]); }
+  }
+  letters = next;
+  saveLetters();
+  closeCard();
+  renderList();
+}
+function onDeleteTap(id, btn) {
+  if (confirmId === id) {
+    if (confirmTimer) { clearTimeout(confirmTimer); confirmTimer = null; }
+    confirmId = '';
+    deleteLetter(id);
+    return;
+  }
+  confirmId = id;
+  renderList();
+  if (confirmTimer) { clearTimeout(confirmTimer); }
+  confirmTimer = setTimeout(function () {
+    confirmId = '';
+    confirmTimer = null;
+    renderList();
+  }, 3000);
+}
+function renderList() {
+  var wrap = document.getElementById('listWrap');
+  if (!letters.length) {
+    wrap.innerHTML = '<div class="empty">まだ預けた手紙はありません。</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < letters.length; i++) {
+    var l = letters[i];
+    var remain = daysUntil(l.openDate);
+    html += '<div class="env">';
+    html += '<div class="stampMini">〒</div>';
+    html += '<div class="to">' + esc(l.to) + ' へ</div>';
+    html += '<div class="meta">書いた日： ' + esc(l.created) + ' ／ 開封日： ' + esc(l.openDate) + '</div>';
+    if (l.opened) {
+      html += '<div class="remain">開封済みです</div>';
+    } else if (remain <= 0) {
+      html += '<div class="remain arrived">届きました！ 開封できます</div>';
+    } else {
+      html += '<div class="remain">開封まで あと' + remain + '日</div>';
+    }
+    html += '<div class="btns">';
+    if (l.opened) {
+      html += '<div class="btn open" data-act="read" data-id="' + l.id + '">読む</div>';
+    } else if (remain <= 0) {
+      html += '<div class="btn open" data-act="open" data-id="' + l.id + '">開封する</div>';
+    }
+    if (confirmId === l.id) {
+      html += '<div class="btn danger confirm" data-act="del" data-id="' + l.id + '">本当に消しますか？</div>';
+    } else {
+      html += '<div class="btn danger" data-act="del" data-id="' + l.id + '">消す</div>';
+    }
+    html += '</div></div>';
+  }
+  wrap.innerHTML = html;
+  var btns = wrap.getElementsByTagName('div');
+  for (var j = 0; j < btns.length; j++) {
+    var b = btns[j];
+    if (b.getAttribute('data-act')) {
+      b.onclick = (function (el) {
+        return function () {
+          var act = el.getAttribute('data-act');
+          var id = el.getAttribute('data-id');
+          if (act === 'open' || act === 'read') { openLetter(id); }
+          if (act === 'del') { onDeleteTap(id, el); }
+        };
+      })(b);
+    }
+  }
+}
+function init() {
+  loadLetters();
+  bindChips();
+  updatePreview();
+  renderList();
+  document.getElementById('sealBtn').onclick = sealLetter;
+  document.getElementById('closeCardBtn').onclick = closeCard;
+}
+init();
+</script>
+</body>
+</html>
