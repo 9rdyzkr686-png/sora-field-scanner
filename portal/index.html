@@ -328,6 +328,18 @@ body.night .footer { color: #777; }
   vertical-align: middle;
   line-height: 1.6;
 }
+/* ===== (245) 最終訪問日の表示 ===== */
+.lastvisit {
+  display: block;
+  font-size: 11px;
+  color: #7fae8d;
+  margin-top: 2px;
+  line-height: 1.5;
+}
+body.theme-paper .lastvisit { color: #7a6242; }
+body.theme-sunset .lastvisit { color: #ffd9c0; }
+body.night .lastvisit { color: #9a9a9a; }
+body.mono .lastvisit { color: #999; }
 .chips {
   overflow-x: auto;
   white-space: nowrap;
@@ -973,6 +985,12 @@ function setupRow(a, home, idx) {
     cl.appendChild(document.createTextNode(a._cat));
     nameEl.appendChild(cl);
   }
+  var vl = document.createElement("span");
+  vl.className = "lastvisit";
+  vl.style.display = "none";
+  a.appendChild(vl);
+  a._visitEl = vl;
+  updateVisitLabel(a);
   if (a.addEventListener) {
     a.addEventListener("click", function () { onVisit(a); }, false);
   }
@@ -1080,6 +1098,28 @@ function saveVisits() {
   try { window.localStorage.setItem(VISIT_KEY, JSON.stringify(visits)); } catch (e) {}
 }
 
+/* ===== (245) 最終訪問日の表示 ===== */
+function visitLabelText(ts) {
+  if (!ts || typeof ts !== "number") { return ""; }
+  var now = new Date();
+  var d = new Date(ts);
+  var startNow = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  var startD = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  var days = Math.round((startNow - startD) / 86400000);
+  if (days <= 0) { return "今日開いた"; }
+  if (days === 1) { return "昨日開いた"; }
+  if (days < 30) { return days + "日前に開いた"; }
+  return (d.getMonth() + 1) + "月" + d.getDate() + "日に開いた";
+}
+
+function updateVisitLabel(a) {
+  if (!a || !a._visitEl) { return; }
+  var t = visitLabelText(visits[a._key] || 0);
+  a._visitEl.innerHTML = "";
+  if (t) { a._visitEl.appendChild(document.createTextNode(t)); }
+  a._visitEl.style.display = t ? "block" : "none";
+}
+
 function loadCoins() {
   try {
     var raw = window.localStorage.getItem(COIN_KEY);
@@ -1106,6 +1146,7 @@ function onVisit(a) {
   var key = a._key || siteKeyOf(a);
   visits[key] = new Date().getTime();
   saveVisits();
+  updateVisitLabel(a);
   var t = todayStr();
   if (coinData.lastEarn[key] !== t) {
     coinData.balance += 1;

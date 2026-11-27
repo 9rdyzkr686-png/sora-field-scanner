@@ -82,6 +82,30 @@ background: #faf6ec; color: #1a1a1a; border: 1px solid #1a1a1a; cursor: pointer;
 font-family: sans-serif;
 }
 .edition-bar button.sel { background: #1a1a1a; color: #faf6ec; font-weight: bold;}
+.font-bar { margin-top: 12px; text-align: center; font-family: sans-serif;}
+.font-bar .font-bar-label { font-size: 13px; margin-bottom: 4px;}
+.font-bar button {
+min-height: 48px; width: 31%; font-size: 16px; padding: 0 6px;
+background: #faf6ec; color: #1a1a1a; border: 1px solid #1a1a1a; cursor: pointer;
+font-family: sans-serif;
+}
+.font-bar button.sel { background: #1a1a1a; color: #faf6ec; font-weight: bold;}
+body.fs-large .top-headline { font-size: 32px;}
+body.fs-large .article-body { font-size: 20px;}
+body.fs-large .column-body { font-size: 19px;}
+body.fs-large .column-by { font-size: 15px;}
+body.fs-large .hitokoto-body { font-size: 24px;}
+body.fs-large .gogai-headline { font-size: 32px;}
+body.fs-large .gogai-body { font-size: 20px;}
+body.fs-large .post-box-body { font-size: 20px;}
+body.fs-xlarge .top-headline { font-size: 38px;}
+body.fs-xlarge .article-body { font-size: 24px;}
+body.fs-xlarge .column-body { font-size: 23px;}
+body.fs-xlarge .column-by { font-size: 17px;}
+body.fs-xlarge .hitokoto-body { font-size: 29px;}
+body.fs-xlarge .gogai-headline { font-size: 38px;}
+body.fs-xlarge .gogai-body { font-size: 24px;}
+body.fs-xlarge .post-box-body { font-size: 24px;}
 .gogai-btn {
 display: block; width: 100%; min-height: 56px; margin-top: 10px;
 font-size: 20px; font-weight: bold; letter-spacing: 0.2em;
@@ -139,6 +163,13 @@ background: #1a1a1a; color: #faf6ec; border: none; cursor: pointer;
 <div class="date-line" id="dateLine">----年--月--日</div>
 </div>
 <div class="fiction-note">この新聞の記事はAIが書いた創作です。本当のニュースではありません</div>
+
+<div class="font-bar">
+<div class="font-bar-label">文字の大きさ</div>
+<button type="button" id="fontNormalBtn">ふつう</button>
+<button type="button" id="fontLargeBtn">大</button>
+<button type="button" id="fontXlargeBtn">特大</button>
+</div>
 
 <div class="weather-box">
 <div class="w-title">天気欄（本物のデータ）</div>
@@ -223,6 +254,8 @@ var anyPaperShown = false;
 var savedPost = "";
 var ARCHIVE_KEY = "shinbun6_archive_v1";
 var POST_KEY = "shinbun6_post_v1";
+var FONT_KEY = "shinbun6_font_v1";
+var fontSize = "normal";
 var busy = false;
 var printTimer = null;
 var printSec = 0;
@@ -251,6 +284,27 @@ function applyEdition() {
 el("editionName").textContent = (edition === "evening")? "夕刊": "朝刊";
 el("edMorningBtn").className = (edition === "morning")? "sel": "";
 el("edEveningBtn").className = (edition === "evening")? "sel": "";
+}
+
+function loadFont() {
+try {
+var v = localStorage.getItem(FONT_KEY);
+if (v === "large" || v === "xlarge" || v === "normal") fontSize = v;
+} catch (e) {}
+applyFont();
+}
+
+function applyFont() {
+document.body.className = (fontSize === "large")? "fs-large": ((fontSize === "xlarge")? "fs-xlarge": "");
+el("fontNormalBtn").className = (fontSize === "normal")? "sel": "";
+el("fontLargeBtn").className = (fontSize === "large")? "sel": "";
+el("fontXlargeBtn").className = (fontSize === "xlarge")? "sel": "";
+}
+
+function setFont(f) {
+fontSize = f;
+try { localStorage.setItem(FONT_KEY, f);} catch (e) {}
+applyFont();
 }
 
 function setEdition(ed) {
@@ -761,8 +815,12 @@ el("backBtn").addEventListener("click", backToNormal, false);
 el("edMorningBtn").addEventListener("click", function () { setEdition("morning");}, false);
 el("edEveningBtn").addEventListener("click", function () { setEdition("evening");}, false);
 el("postSaveBtn").addEventListener("click", savePost, false);
+el("fontNormalBtn").addEventListener("click", function () { setFont("normal");}, false);
+el("fontLargeBtn").addEventListener("click", function () { setFont("large");}, false);
+el("fontXlargeBtn").addEventListener("click", function () { setFont("xlarge");}, false);
 initDate();
 initEdition();
+loadFont();
 loadPost();
 renderArchive();
 </script>

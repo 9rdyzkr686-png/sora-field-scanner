@@ -322,6 +322,48 @@
     color: #99700a;
     padding-bottom: 2px;
   }
+  .stamp-progress {
+    background: #000;
+    border: 1px solid #241a00;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+  }
+  .stamp-progress-text {
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffd34d;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+  .stamp-bar-wrap {
+    height: 14px;
+    background: #241a00;
+    border-radius: 7px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+  .stamp-bar {
+    height: 100%;
+    width: 0%;
+    background: #ffb000;
+    border-radius: 7px;
+  }
+  .stamp-bar.full { background: #ffd700; }
+  .stamp-tier {
+    font-size: 14px;
+    color: #cc8f00;
+    text-align: center;
+    letter-spacing: 1px;
+    margin-top: 6px;
+    min-height: 20px;
+  }
+  .stamp-tier.gold {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 17px;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+  }
   .stn-name {
     font-size: 28px;
     font-weight: bold;
@@ -396,6 +438,11 @@
 <div class="tt-section">
   <div class="tt-title">駅スタンプ帳</div>
   <div class="tt-note">来駅の記念にスタンプを押せます（この端末の中だけの記録です）</div>
+  <div class="stamp-progress">
+    <div class="stamp-progress-text" id="stampProgressText">今月 0 / 0 日 スタンプ（達成率 0%）</div>
+    <div class="stamp-bar-wrap"><div class="stamp-bar" id="stampBar"></div></div>
+    <div class="stamp-tier" id="stampTier"></div>
+  </div>
   <div class="cal-head" id="stampInfo">通算 0 日</div>
   <div id="stampGrid"></div>
   <button class="btn" id="btnStamp" type="button" style="margin-top:10px;">駅スタンプを押す</button>
@@ -821,6 +868,28 @@ function renderStamps() {
     year + "年" + (month + 1) + "月 ／ 通算 " + stamps.length + " 日";
   var firstDow = new Date(year, month, 1).getDay();
   var daysInMonth = new Date(year, month + 1, 0).getDate();
+  /* (250) スタンプ達成率：今月スタンプを押した日数 / 今月の日数 で計算 */
+  var stampedThisMonth = 0;
+  var si;
+  for (si = 0; si < stamps.length; si++) {
+    if (stamps[si].indexOf(monthPrefix) === 0) { stampedThisMonth++; }
+  }
+  var pct = daysInMonth > 0 ? Math.round(stampedThisMonth * 100 / daysInMonth) : 0;
+  document.getElementById("stampProgressText").textContent =
+    "今月 " + stampedThisMonth + " / " + daysInMonth + " 日 スタンプ（達成率 " + pct + "%）";
+  var barEl = document.getElementById("stampBar");
+  barEl.style.width = pct + "%";
+  barEl.className = "stamp-bar" + (pct >= 100 ? " full" : "");
+  var tierText = "";
+  var tierGold = false;
+  if (pct >= 100) { tierText = "全日制覇！今月のスタンプ・コンプリートです！"; tierGold = true; }
+  else if (pct >= 50) { tierText = "あと半分！折り返し地点です"; }
+  else if (pct >= 25) { tierText = "順調です。その調子で押していきましょう"; }
+  else if (pct > 0) { tierText = "まずは第一歩。毎日押して集めましょう"; }
+  else { tierText = "今月のスタンプはこれからです"; }
+  var tierEl = document.getElementById("stampTier");
+  tierEl.textContent = tierText;
+  tierEl.className = "stamp-tier" + (tierGold ? " gold" : "");
   var wd = ["日", "月", "火", "水", "木", "金", "土"];
   var html = "";
   var i, d;

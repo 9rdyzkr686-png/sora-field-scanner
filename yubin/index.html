@@ -262,6 +262,38 @@
     padding-top: 12px;
   }
   #closeCardBtn { margin-top: 14px; float: none; display: inline-block; }
+  .sched {
+    background: #fffef9;
+    border: 2px solid #c9a86a;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .sched .sremain {
+    float: right;
+    font-size: 15px;
+    font-weight: bold;
+    color: #2e5f8a;
+    margin-left: 8px;
+  }
+  .sched .sremain.arrived { color: #b03024; }
+  .sched .sdate {
+    font-size: 17px;
+    font-weight: bold;
+    color: #b03024;
+  }
+  .sched .sto {
+    font-size: 16px;
+    font-weight: bold;
+    margin-left: 8px;
+  }
+  .sched .stitle {
+    font-size: 14px;
+    color: #8a7358;
+    margin-top: 3px;
+    word-break: break-all;
+  }
   .notes {
     margin-top: 22px;
     background: #fdf3e3;
@@ -319,6 +351,9 @@
   </div>
 
   <div id="listWrap"></div>
+
+  <h2>🗓 届く予定</h2>
+  <div id="scheduleWrap"></div>
 
   <div class="notes">
     <div class="nh">ご利用の前に</div>
@@ -491,6 +526,7 @@ function renderList() {
   var wrap = document.getElementById('listWrap');
   if (!letters.length) {
     wrap.innerHTML = '<div class="empty">まだ預けた手紙はありません。</div>';
+    renderSchedule();
     return;
   }
   var html = '';
@@ -536,6 +572,51 @@ function renderList() {
       })(b);
     }
   }
+  renderSchedule();
+}
+function firstLine(s) {
+  var line = String(s).split('\n')[0].replace(/^\s+|\s+$/g, '');
+  if (line.length > 24) { line = line.substring(0, 24) + '…'; }
+  return line;
+}
+function renderSchedule() {
+  var wrap = document.getElementById('scheduleWrap');
+  if (!wrap) { return; }
+  if (!letters.length) {
+    wrap.innerHTML = '<div class="empty">まだ届く予定の手紙はありません。</div>';
+    return;
+  }
+  var sorted = letters.slice(0);
+  sorted.sort(function (a, b) {
+    return parseDay(a.openDate).getTime() - parseDay(b.openDate).getTime();
+  });
+  var thisYear = new Date().getFullYear();
+  var html = '';
+  for (var i = 0; i < sorted.length; i++) {
+    var l = sorted[i];
+    var d = parseDay(l.openDate);
+    var dateLabel = (d.getFullYear() !== thisYear ? d.getFullYear() + '年' : '') + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+    var remain = daysUntil(l.openDate);
+    var arrived = l.opened || remain <= 0;
+    var remainLabel;
+    var remainCls = 'sremain';
+    if (l.opened) {
+      remainLabel = '開封済み';
+    } else if (remain <= 0) {
+      remainLabel = '届いています';
+      remainCls += ' arrived';
+    } else {
+      remainLabel = 'あと' + remain + '日';
+    }
+    var title = arrived ? esc(firstLine(l.body)) : '（封筒）';
+    html += '<div class="sched">';
+    html += '<span class="' + remainCls + '">' + remainLabel + '</span>';
+    html += '<span class="sdate">' + dateLabel + '</span>';
+    html += '<span class="sto">' + esc(l.to) + ' へ</span>';
+    html += '<div class="stitle">' + title + '</div>';
+    html += '</div>';
+  }
+  wrap.innerHTML = html;
 }
 function init() {
   loadLetters();

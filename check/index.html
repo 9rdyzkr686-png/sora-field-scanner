@@ -96,6 +96,45 @@ h1 {
 }
 .foot { color: #557755; font-size: 13px; margin-top: 14px; }
 .blink { color: #ffcc33; }
+#histBox {
+  border: 1px solid #1a6633;
+  padding: 10px;
+  margin-top: 12px;
+  background: #020a04;
+}
+.hhead {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-pack: justify;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  min-height: 48px;
+}
+.hname { font-size: 17px; font-weight: bold; }
+#histClear {
+  min-height: 48px;
+  padding: 0 16px;
+  background: #003311;
+  color: #33ff66;
+  border: 1px solid #33ff66;
+  font-family: "Courier New", monospace;
+  font-size: 16px;
+  cursor: pointer;
+}
+.hitem {
+  font-size: 14px;
+  color: #99ffbb;
+  padding: 7px 0;
+  border-bottom: 1px solid #0d3319;
+  word-break: break-all;
+}
+.hitem:last-child { border-bottom: none; }
+.hok { color: #33ff66; font-weight: bold; }
+.hng { color: #ff4444; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -158,6 +197,14 @@ h1 {
 
 <div id="summary"></div>
 
+<div id="histBox">
+  <div class="hhead">
+    <span class="hname">診断履歴</span>
+    <button id="histClear" type="button">消去</button>
+  </div>
+  <div id="histList"></div>
+</div>
+
 <div class="foot">
   NGのときは「詳細：HTTP ○○」や秒数をクーに伝えてください。原因の特定が速くなります。<br>
   CHECK-6 v1
@@ -178,7 +225,70 @@ function setRes(n, cls, text) {
 function setDet(n, text) { $("det" + n).innerHTML = text; }
 function setMs(n, ms) { $("ms" + n).innerHTML = " / " + ms + "ms"; }
 
+var HIST_KEY = "check6_history_v1";
+var TEST_NAMES = { 1: "AI回線", 2: "ニュース取得", 3: "天気", 4: "ISS位置", 5: "地震情報", 6: "端末情報" };
+
+function escHist(s) {
+  s = String(s == null ? "" : s);
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function histNow() {
+  var d = new Date();
+  function p(x) { return (x < 10 ? "0" : "") + x; }
+  return d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate() + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+function histLoad() {
+  try {
+    var v = window.localStorage.getItem(HIST_KEY);
+    if (!v) { return []; }
+    var a = JSON.parse(v);
+    if (a && typeof a.length === "number") { return a; }
+    return [];
+  } catch (e) { return []; }
+}
+function histDetail(n) {
+  var det = $("det" + n).innerHTML || "";
+  var ms = ($("ms" + n).innerHTML || "").replace(/\s/g, "").replace("/", "");
+  var m = det.match(/HTTP\s*[0-9]+/);
+  var parts = [];
+  if (m) { parts.push(m[0].replace(/\s+/g, " ")); }
+  if (ms) { parts.push(ms); }
+  if (!parts.length) { parts.push(det); }
+  return parts.join(" / ");
+}
+function histAdd(n, ok) {
+  try {
+    var a = histLoad();
+    a.unshift({ t: histNow(), name: TEST_NAMES[n] || ("項目" + n), ok: !!ok, detail: histDetail(n) });
+    if (a.length > 20) { a.length = 20; }
+    window.localStorage.setItem(HIST_KEY, JSON.stringify(a));
+  } catch (e) {}
+  renderHist();
+}
+function renderHist() {
+  var box = $("histList");
+  if (!box) { return; }
+  var a = histLoad();
+  if (!a.length) {
+    box.innerHTML = '<div class="hitem">まだ履歴がありません。診断するとここに残ります。</div>';
+    return;
+  }
+  var html = "", i;
+  for (i = 0; i < a.length; i++) {
+    var e = a[i];
+    html += '<div class="hitem">' + escHist(e.t) + " " + escHist(e.name) + " "
+      + (e.ok ? '<span class="hok">OK</span>' : '<span class="hng">NG</span>')
+      + (e.detail ? "（" + escHist(e.detail) + "）" : "") + "</div>";
+  }
+  box.innerHTML = html;
+}
+function histClear() {
+  try { window.localStorage.removeItem(HIST_KEY); } catch (e) {}
+  renderHist();
+}
+
 function finishOne(n, ok) {
+  histAdd(n, ok);
   doneCount++;
   if (ok) { okCount++; }
   if (doneCount >= 6) {
@@ -542,6 +652,8 @@ function startAll() {
 }
 
 $("startBtn").onclick = startAll;
+$("histClear").onclick = histClear;
+renderHist();
 </script>
 </body>
 </html>

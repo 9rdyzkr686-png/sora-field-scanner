@@ -393,6 +393,15 @@
   <button id="srSampleBtn" type="button">お手本を見る</button>
   <div class="stat" id="srStatus"></div>
   <div class="greet-out" id="srText" style="display:none"></div>
+  <button id="srFavBtn" type="button">★保存</button>
+  <div class="stat" id="srFavStatus"></div>
+</div>
+
+<div class="card">
+  <h2>■ 保存した川柳</h2>
+  <div id="srFavList"></div>
+  <button id="srFavCopyBtn" type="button">全文コピー</button>
+  <div class="stat" id="srFavCopyStatus"></div>
 </div>
 
 <div class="card">
@@ -1745,10 +1754,116 @@ function srSample() {
   el('srText').textContent = s.t + '\n' + s.c;
   el('srStatus').innerHTML = 'お手本 ' + (n + 1) + '／' + SR_SAMPLES.length + '（内蔵の川柳です）';
 }
+/* ---------- 川柳お気に入り保存 ---------- */
+var SR_FAV_KEY = 'hima6_senryu_favs_v1';
+var SR_FAV_MAX = 50;
+function srFavLoad() {
+  try {
+    var s = window.localStorage.getItem(SR_FAV_KEY);
+    if (!s) { return []; }
+    var v = JSON.parse(s);
+    if (v && typeof v.length === 'number') { return v; }
+  } catch (e) {}
+  return [];
+}
+function srFavStore(list) {
+  try { window.localStorage.setItem(SR_FAV_KEY, JSON.stringify(list)); } catch (e) {}
+}
+function srFavToday() {
+  var d = new Date();
+  return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+}
+function srFavAdd() {
+  var node = el('srText');
+  var t = (node.textContent || '').replace(/^\s+|\s+$/g, '');
+  if (node.style.display === 'none' || !t) {
+    el('srFavStatus').textContent = 'まず川柳を表示してから保存してください。';
+    return;
+  }
+  var list = srFavLoad();
+  var i;
+  for (i = 0; i < list.length; i++) {
+    if (list[i].text === t) {
+      el('srFavStatus').textContent = 'この川柳はすでに保存されています。';
+      return;
+    }
+  }
+  list.push({ text: t, date: srFavToday() });
+  while (list.length > SR_FAV_MAX) { list.shift(); }
+  srFavStore(list);
+  el('srFavStatus').textContent = '保存しました（' + list.length + '件／最大' + SR_FAV_MAX + '件）';
+  srFavRender();
+}
+function srFavRender() {
+  var box = el('srFavList');
+  box.innerHTML = '';
+  var list = srFavLoad();
+  if (!list.length) {
+    var d = document.createElement('div');
+    d.className = 'stat';
+    d.textContent = 'まだ保存した川柳はありません。';
+    box.appendChild(d);
+    return;
+  }
+  var i;
+  for (i = 0; i < list.length; i++) {
+    (function (idx) {
+      var row = document.createElement('div');
+      row.style.marginBottom = '12px';
+      var tx = document.createElement('div');
+      tx.className = 'greet-out';
+      tx.style.display = 'block';
+      tx.style.marginTop = '0';
+      tx.textContent = list[idx].text;
+      row.appendChild(tx);
+      var meta = document.createElement('div');
+      meta.className = 'stat';
+      meta.textContent = list[idx].date || '';
+      row.appendChild(meta);
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.textContent = '削除';
+      del.onclick = function () {
+        var l = srFavLoad();
+        l.splice(idx, 1);
+        srFavStore(l);
+        el('srFavStatus').textContent = '削除しました（残り' + l.length + '件）';
+        srFavRender();
+      };
+      row.appendChild(del);
+      box.appendChild(row);
+    })(i);
+  }
+}
+function srFavCopy() {
+  var list = srFavLoad();
+  if (!list.length) {
+    el('srFavCopyStatus').textContent = '保存した川柳がありません。';
+    return;
+  }
+  var out = '';
+  var i;
+  for (i = 0; i < list.length; i++) {
+    out += list[i].text + '\n（' + (list[i].date || '') + '）\n\n';
+  }
+  var ta = document.createElement('textarea');
+  ta.value = out;
+  ta.style.position = 'absolute';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  el('srFavCopyStatus').textContent = ok ? '全文をコピーしました。' : 'コピーできませんでした。文章を長押ししてコピーしてください。';
+}
 function initWave165() {
   initZukan();
   el('srAiBtn').onclick = srMake;
   el('srSampleBtn').onclick = srSample;
+  el('srFavBtn').onclick = srFavAdd;
+  el('srFavCopyBtn').onclick = srFavCopy;
+  srFavRender();
 }
 initWave165();
 </script>

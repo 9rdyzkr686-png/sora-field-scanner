@@ -38,6 +38,8 @@
   button:active { background:#173a5e; }
   button:disabled { opacity:.45; cursor:default; }
   .mchip { flex:1 1 30%; }
+  .lchip { flex:1; }
+  .lennote { font-size:12px; color:#9adbe8; margin:0 0 6px; line-height:1.5; }
   .qchip { flex:1 1 45%; font-size:14px; border-color:#7a5fd0; color:#e6dcff; box-shadow:0 3px 0 #372a66; }
 
   #logBox { min-height:220px; }
@@ -145,6 +147,12 @@
     <button type="button" class="mchip" data-mode="teacher">先生</button>
     <button type="button" class="mchip" data-mode="translate">翻訳</button>
   </div>
+  <div class="chiprow" id="lenRow">
+    <button type="button" class="lchip" data-len="short">短く</button>
+    <button type="button" class="lchip active" data-len="normal">ふつう</button>
+    <button type="button" class="lchip" data-len="long">詳しく</button>
+  </div>
+  <p class="lennote">回答の長さ：詳しくにすると音声読み上げは止まります</p>
   <div class="chiprow">
     <button type="button" id="voiceBtn">ボイス：OFF</button>
     <button type="button" id="voiceOnlyBtn">音声だけ：OFF</button>
@@ -272,6 +280,26 @@ function loadSave() {
     if (!d || !d.msgs || typeof d.msgs.length !== "number" || d.msgs.length === 0) return null;
     return d;
   } catch (e) { return null; }
+}
+
+/* ---- (246) 回答の長さトグル ---- */
+var LEN_KEY = "ai6_len_v1";
+var replyLen = "normal"; /* short | normal | long */
+var LEN_TEXT = {
+  short: "返事は80文字以内で短く答えてください。",
+  long: "返事は少し詳しく、具体例も入れて答えてください（300文字程度まで可）。"
+};
+function loadLen() {
+  try {
+    var v = localStorage.getItem(LEN_KEY);
+    if (v === "short" || v === "normal" || v === "long") replyLen = v;
+  } catch (e) { /* 読めなくても「ふつう」で続ける */ }
+}
+function saveLen() {
+  try { localStorage.setItem(LEN_KEY, replyLen); } catch (e) { /* 保存できなくても続ける */ }
+}
+function lenInstruction() {
+  return LEN_TEXT[replyLen] || "";
 }
 
 var logBox = document.getElementById("logBox");
@@ -538,6 +566,8 @@ function buildPrompt(userText) {
   if (mode === "english") rules = ENG_RULES;
   else if (mode === "translate") rules = TRANS_RULES;
   var p = inst + rules + limit;
+  var lenInst = lenInstruction();
+  if (lenInst) p += lenInst;
   var i, h;
   var from = Math.max(0, history.length - 3);
   if (from < history.length) {
@@ -669,7 +699,10 @@ function sendMessage(text) {
 var MULTI_PERSONAS = ["normal", "doctor", "fortune"];
 
 function buildMultiPrompt(pkey, userText) {
-  return MODES[pkey].inst + COMMON_RULES + "150文字以内で答えてください。" + " 質問：" + userText;
+  var p = MODES[pkey].inst + COMMON_RULES + "150文字以内で答えてください。";
+  var lenInst = lenInstruction();
+  if (lenInst) p += lenInst;
+  return p + " 質問：" + userText;
 }
 
 function multiAttempt(prompt, thinkMsg, cb) {
@@ -946,6 +979,28 @@ sendBtn.onclick = function () { sendMessage(inputBox.value); };
 inputBox.onkeydown = function (e) {
   if (e.keyCode === 13) { sendMessage(inputBox.value); }
 };
+
+/* length chips (246) */
+loadLen();
+var lenRow = document.getElementById("lenRow");
+var lchips = lenRow.getElementsByTagName("button");
+function paintLenChips() {
+  var q;
+  for (q = 0; q < lchips.length; q++) {
+    lchips[q].className = "lchip" + (lchips[q].getAttribute("data-len") === replyLen ? " active" : "");
+  }
+}
+var lj;
+for (lj = 0; lj < lchips.length; lj++) {
+  lchips[lj].onclick = function () {
+    var v = this.getAttribute("data-len");
+    if (v === replyLen) return;
+    replyLen = v;
+    saveLen();
+    paintLenChips();
+  };
+}
+paintLenChips();
 
 /* mode chips */
 var modeRow = document.getElementById("modeRow");

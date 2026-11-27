@@ -40,6 +40,12 @@ label { display:block; font-size:15px; color:#e8a0bf; margin:6px 0;}
 .cardbtn small { display:block; font-size:13px; margin-top:6px;}
 .cardbtn:disabled { opacity:0.45;}
 .omikuji-rank { font-size:34px; text-align:center; color:#ffd93d; text-shadow:0 0 10px #ff8c3a;}
+.hist { background:#241631; border:2px solid #6b4a8f; border-radius:14px; padding:16px 14px; margin-top:18px;}
+.hist h2 { font-size:20px; color:#ffd98a; text-align:center; margin-bottom:10px;}
+.hist .hrow { border-bottom:1px solid #4a3468; padding:8px 2px; font-size:16px;}
+.hist .hdate { color:#e8a0bf; font-size:14px;}
+.hist .hempty { text-align:center; color:#9a86b8; font-size:15px; padding:8px 0;}
+.histclear { display:block; width:100%; min-height:48px; font-size:16px; background:#3a2350; color:#ffd98a; border:2px solid #ffd98a; border-radius:12px; padding:10px; margin-top:12px;}
 footer { text-align:center; color:#9a86b8; font-size:13px; margin-top:26px;}
 </style>
 </head>
@@ -94,6 +100,12 @@ footer { text-align:center; color:#9a86b8; font-size:13px; margin-top:26px;}
 <div class="result" id="tarotResult">選んだカードをAIが読み解きます（タロット風のAI占いです）。</div>
 <div class="detail" id="tarotDetail"></div>
 <button class="backbtn" onclick="closeShops()">もどる</button>
+</div>
+
+<div class="hist" id="historyPanel">
+<h2>📜 占いの履歴</h2>
+<div id="historyList"></div>
+<button class="histclear" id="historyClearBtn" onclick="clearHistory()">履歴を消す</button>
 </div>
 
 <footer>FORTUNE-6 占い横丁<br>占いは娯楽です。結果は気軽に楽しんでください。</footer>
@@ -304,6 +316,7 @@ function omikuji() {
 var idx = dateSeed() % OMIKUJI.length;
 var o = OMIKUJI[idx];
 document.getElementById('omiResult').innerHTML = '<div class="omikuji-rank">' + o.rank + '</div>' + escapeHtml(o.comment);
+logFortune(o.rank, o.comment);
 speak('おみくじは' + o.rank + 'です。' + o.comment);
 }
 
@@ -332,6 +345,88 @@ for (var j = 0; j < 3; j++) { document.getElementById('card' + j).disabled = fal
 function escapeHtml(s) {
 return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
+
+/* ---- 占いの履歴 ---- */
+var FORTUNE_LOG_KEY = 'fortune6_log_v1';
+
+function fortuneTodayStr() {
+var n = new Date();
+var m = '' + (n.getMonth() + 1);
+var d = '' + n.getDate();
+if (m.length < 2) { m = '0' + m;}
+if (d.length < 2) { d = '0' + d;}
+return n.getFullYear() + '/' + m + '/' + d;
+}
+
+function loadFortuneLog() {
+try {
+var s = localStorage.getItem(FORTUNE_LOG_KEY);
+if (s) {
+var a = JSON.parse(s);
+if (a && typeof a.length === 'number') { return a;}
+}
+} catch (e) {}
+return [];
+}
+
+function saveFortuneLog(a) {
+try { localStorage.setItem(FORTUNE_LOG_KEY, JSON.stringify(a));} catch (e) {}
+}
+
+function logFortune(rank, comment) {
+var log = loadFortuneLog();
+var today = fortuneTodayStr();
+var i;
+for (i = 0; i < log.length; i++) {
+if (log[i].date === today) { renderHistory(); return;}
+}
+log.unshift({ date: today, summary: rank + '｜' + comment});
+while (log.length > 60) { log.pop();}
+saveFortuneLog(log);
+renderHistory();
+}
+
+function renderHistory() {
+var el = document.getElementById('historyList');
+var btn = document.getElementById('historyClearBtn');
+if (!el) { return;}
+var log = loadFortuneLog();
+if (!log.length) {
+el.innerHTML = '<div class="hempty">まだ履歴がありません。おみくじを引くと、ここに残ります。</div>';
+if (btn) { btn.style.display = 'none';}
+return;
+}
+if (btn) { btn.style.display = 'block';}
+var html = '';
+var n = Math.min(log.length, 14);
+for (var i = 0; i < n; i++) {
+html += '<div class="hrow"><span class="hdate">' + escapeHtml(log[i].date) + '</span><br>' + escapeHtml(log[i].summary) + '</div>';
+}
+el.innerHTML = html;
+}
+
+var histClearArmed = false;
+var histClearTimer = null;
+
+function clearHistory() {
+var btn = document.getElementById('historyClearBtn');
+if (!histClearArmed) {
+histClearArmed = true;
+btn.innerHTML = '本当に消しますか？（もう一度押すと消去）';
+histClearTimer = setTimeout(function () {
+histClearArmed = false;
+btn.innerHTML = '履歴を消す';
+}, 3000);
+return;
+}
+if (histClearTimer) { clearTimeout(histClearTimer); histClearTimer = null;}
+histClearArmed = false;
+btn.innerHTML = '履歴を消す';
+saveFortuneLog([]);
+renderHistory();
+}
+
+renderHistory();
 </script>
 </body>
 </html>

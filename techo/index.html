@@ -197,6 +197,8 @@ select{width:100%;font-size:17px;padding:10px;border:1px solid #c9b98f;border-ra
     <div style="height:8px;"></div>
     <button class="sub" style="width:100%;" onclick="bkImport()">貼った内容を読み込む（今のデータを上書き）</button>
     <div id="bkMsg" style="font-size:13px;color:#8a7a5c;margin-top:6px;"></div>
+    <div id="bkLastInfo" style="font-size:15px;margin-top:8px;"></div>
+    <div id="bkRemind" style="display:none;font-size:15px;color:#a33b2e;font-weight:bold;margin-top:4px;">大切な記録のために、そろそろバックアップをおすすめします</div>
   </div>
   <div class="card">
     <h3>分量換算（料理）</h3>
@@ -708,6 +710,35 @@ function gomiToggle(k, wd){
 /* ---------- バックアップ ---------- */
 var BACKUP_KEYS = ["techo_memos","techo_shop","techo_health","techo_recipes","techo_gomi", "techo6_thanks_v1", "techo6_nenga_v1", "techo6_lent_v1", "techo6_borrow_v1", "techo6_bousai_v1"];
 function bkSetMsg(t){ el("bkMsg").innerHTML = esc(t); }
+var BK_LAST_KEY = "techo6_last_backup_v1";
+function bkRecordBackup(){
+  try { localStorage.setItem(BK_LAST_KEY, todayStr()); } catch(e){}
+  bkRenderLast();
+}
+function bkRenderLast(){
+  var info = el("bkLastInfo"), rem = el("bkRemind");
+  if (!info) return;
+  var v = null;
+  try { v = localStorage.getItem(BK_LAST_KEY); } catch(e){ v = null; }
+  if (!v){
+    info.innerHTML = "前回のバックアップ：まだバックアップしていません";
+    if (rem) rem.style.display = "block";
+    return;
+  }
+  var p = String(v).split("-");
+  if (p.length < 3){
+    info.innerHTML = "前回のバックアップ：まだバックアップしていません";
+    if (rem) rem.style.display = "block";
+    return;
+  }
+  var last = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  var now = new Date();
+  var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var days = Math.round((today.getTime() - last.getTime()) / 86400000);
+  if (isNaN(days) || days < 0) days = 0;
+  info.innerHTML = "前回のバックアップ：" + Number(p[1]) + "月" + Number(p[2]) + "日（" + (days === 0 ? "今日" : days + "日前") + "）";
+  if (rem) rem.style.display = (days >= 30) ? "block" : "none";
+}
 function bkExport(){
   if (!storeOK){ bkSetMsg("この端末では保存が使えないため、書き出しできません。"); return; }
   var data = {}, i;
@@ -722,6 +753,7 @@ function bkExport(){
   catch(e){ bkSetMsg("書き出しに失敗しました。"); return; }
   el("bkText").value = b64;
   bkSetMsg("書き出しました。「コピー」を押して、安全な場所に貼って保存してください。");
+  bkRecordBackup();
 }
 function bkCopy(){
   var ta = el("bkText");
@@ -732,6 +764,7 @@ function bkCopy(){
   var ok = false;
   try { ok = document.execCommand("copy"); } catch(e){ ok = false; }
   bkSetMsg(ok ? "コピーしました。" : "コピーできませんでした。文字列が選ばれているので、長押ししてコピーしてください。");
+  bkRecordBackup();
 }
 function bkImport(){
   var s = el("bkText").value.replace(/\s+/g, "");
@@ -869,6 +902,7 @@ renderShop();
 renderHealth();
 renderRecipes();
 renderGomi();
+bkRenderLast();
 </script>
 <script>
 /* ===== TECHO-6 part B: 追加メモ機能（自己完結ブロック） ===== */

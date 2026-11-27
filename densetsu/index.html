@@ -325,7 +325,8 @@
   <div class="paperhead" id="paperHead">伝 説 新 聞 ― 号 外 ―</div>
   <p class="filterlabel">分類で絞り込む</p>
   <div class="chips" id="filterBox"></div>
-  <div class="chips" id="favBox"><button class="chip" id="favFilterBtn" type="button">★お気に入りだけ</button></div>
+  <p class="filterlabel">読んだ状態で絞り込む</p>
+  <div class="chips" id="readBox"></div>
   <p class="filterlabel">地域で絞り込む（舞台・発祥とされる地域）</p>
   <div class="chips" id="regionBox"></div>
   <p class="filterlabel">年代で絞り込む（噂が広まった時代）</p>
@@ -690,6 +691,7 @@ var REGIONS = ["すべて", "北海道", "東北", "関東", "中部", "関西",
 var ERAS = ["すべて", "昭和", "平成", "令和"];
 var currentRegion = "すべて";
 var currentEra = "すべて";
+var readFilter = "すべて";
 
 function el(id) { return document.getElementById(id); }
 
@@ -742,13 +744,51 @@ function buildChipRow(box, list, current, set) {
   }
 }
 
+var READ_FILTERS = ["すべて", "未読", "読了", "★お気に入り"];
+
+function readFilterCount(v) {
+  var i;
+  var c = 0;
+  if (v === "すべて") { return LEGENDS.length; }
+  for (i = 0; i < LEGENDS.length; i++) {
+    if (v === "未読" && marksData.read.indexOf(i) < 0) { c++; }
+    if (v === "読了" && marksData.read.indexOf(i) >= 0) { c++; }
+    if (v === "★お気に入り" && marksData.fav.indexOf(i) >= 0) { c++; }
+  }
+  return c;
+}
+
+function buildReadChips() {
+  var box = el("readBox");
+  if (!box) { return; }
+  box.innerHTML = "";
+  var i;
+  for (i = 0; i < READ_FILTERS.length; i++) {
+    (function (v) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (v === readFilter ? " on" : "");
+      b.textContent = v + "（" + readFilterCount(v) + "）";
+      b.onclick = function () {
+        readFilter = v;
+        favOnly = (v === "★お気に入り");
+        buildChips();
+        renderArchive();
+      };
+      box.appendChild(b);
+    })(READ_FILTERS[i]);
+  }
+}
+
 function buildChips() {
   buildChipRow(el("filterBox"), CATS, currentCat, function (v) { currentCat = v; });
   buildChipRow(el("regionBox"), REGIONS, currentRegion, function (v) { currentRegion = v; });
   buildChipRow(el("eraBox"), ERAS, currentEra, function (v) { currentEra = v; });
+  buildReadChips();
 }
 
 function renderArchive() {
+  buildReadChips();
   var box = el("archiveBox");
   box.innerHTML = "";
   var i;
@@ -759,6 +799,8 @@ function renderArchive() {
       if (currentRegion !== "すべて" && L.region !== currentRegion) { return; }
       if (currentEra !== "すべて" && L.era !== currentEra) { return; }
       if (favOnly && marksData.fav.indexOf(idx) < 0) { return; }
+      if (readFilter === "未読" && marksData.read.indexOf(idx) >= 0) { return; }
+      if (readFilter === "読了" && marksData.read.indexOf(idx) < 0) { return; }
       count++;
       var card = document.createElement("div");
       card.className = "card";
@@ -914,8 +956,7 @@ function openCard(idx) {
   currentRegion = "すべて";
   currentEra = "すべて";
   favOnly = false;
-  var ffb = el("favFilterBtn");
-  if (ffb) { ffb.className = "chip"; }
+  readFilter = "すべて";
   buildChips();
   renderArchive();
   var card = el("card" + idx);
@@ -2063,11 +2104,6 @@ function init() {
   };
   el("retryYtD").onclick = function () {
     loadFeed(FEED_YT_D, "ytDList", "ytDStatus", "retryYtD", 3, "TOLAND VLOG");
-  };
-  el("favFilterBtn").onclick = function () {
-    favOnly = !favOnly;
-    el("favFilterBtn").className = "chip" + (favOnly ? " on" : "");
-    renderArchive();
   };
   el("aiStoryBtn").onclick = callAiStory;
   el("stopBarBtn").onclick = function () { stopSpeak(); };

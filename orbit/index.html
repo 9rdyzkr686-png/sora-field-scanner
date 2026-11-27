@@ -58,6 +58,8 @@ canvas { display: block; width: 100%; background: #000a10; border: 1px solid #0e
 .event-item, .news-item { padding: 5px 0; border-bottom: 1px dashed #0e5a4a; font-size: 16px; }
 .event-item:last-child, .news-item:last-child { border-bottom: none; }
 .event-days { color: #ffb000; font-size: 14px; }
+.meteor-next { background: #03251d; }
+.meteor-period { color: #33ff66; font-size: 14px; font-weight: bold; }
 .news-date { color: #7fb8a8; font-size: 13px; }
 .news-item a { color: #4dffd2; text-decoration: none; }
 .planet-item { padding: 5px 0; border-bottom: 1px dashed #0e5a4a; font-size: 16px; }
@@ -301,6 +303,12 @@ button:active { background: #33ff66; color: #000; }
   <div class="txt-item"><span class="hd">時間帯：</span>深夜〜明け方が基本。夜半前は数が少なく、明け方に近づくほど増える（地球の進む側の空になるため）。</div>
   <div class="txt-item"><span class="hd">持ち物：</span>レジャーシートかリクライニングチェア、防寒具、赤色ライト（暗順応を壊さない）、温かい飲み物。双眼鏡は不要、肉眼がいちばん。</div>
   <div class="txt-item"><span class="hd">コツ：</span>月明かりのある夜は不利。15分ほど暗闇に目を慣らし、スマホは見ない。街明かりから離れるほど好条件。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">METEOR CALENDAR <span class="jp">流星群カレンダー</span></div>
+  <div id="meteorList"></div>
+  <div class="note">※ ピーク日は年によって前後します。日付は目安です。</div>
 </div>
 
 <div class="panel">
@@ -713,6 +721,56 @@ function renderEvents() {
   }
   if (html === "") { html = '<div class="event-item">表示できるイベントがありません。</div>'; }
   el("eventsList").innerHTML = html;
+}
+
+/* ---------- METEOR CALENDAR ---------- */
+/* 主な年間流星群（ピーク日の目安は毎年ほぼ一定） */
+var METEOR_SHOWERS = [
+  { m: 1, d: 4, name: "しぶんぎ座流星群", big: 1, note: "三大流星群のひとつ。年明けの明け方、北の空が中心。" },
+  { m: 4, d: 22, name: "こと座流星群", big: 0, note: "春の流星群。ベガのある こと座付近から流れる。" },
+  { m: 5, d: 6, name: "みずがめ座η流星群", big: 0, note: "ハレー彗星が母天体。明け方の東の空低く。" },
+  { m: 8, d: 13, name: "ペルセウス座流星群", big: 1, note: "三大流星群のひとつ。夏の夜、数が多く見やすい。" },
+  { m: 10, d: 21, name: "オリオン座流星群", big: 0, note: "ハレー彗星が母天体。深夜〜明け方にかけて。" },
+  { m: 11, d: 17, name: "しし座流星群", big: 0, note: "約33年周期の大出現で有名。通常の年は控えめ。" },
+  { m: 12, d: 14, name: "ふたご座流星群", big: 1, note: "三大流星群のひとつ。冬の夜、一晩中見える。" }
+];
+
+function renderMeteor() {
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var items = [];
+  var i, dt, diff;
+  for (i = 0; i < METEOR_SHOWERS.length; i++) {
+    dt = new Date(today.getFullYear(), METEOR_SHOWERS[i].m - 1, METEOR_SHOWERS[i].d);
+    diff = Math.round((dt.getTime() - today.getTime()) / 86400000);
+    if (diff < -3) {
+      dt = new Date(today.getFullYear() + 1, METEOR_SHOWERS[i].m - 1, METEOR_SHOWERS[i].d);
+      diff = Math.round((dt.getTime() - today.getTime()) / 86400000);
+    }
+    items.push({ s: METEOR_SHOWERS[i], y: dt.getFullYear(), diff: diff });
+  }
+  items.sort(function (a, b) { return a.diff - b.diff; });
+  var nextIdx = -1;
+  for (i = 0; i < items.length; i++) {
+    if (items[i].diff >= 0) { nextIdx = i; break; }
+  }
+  var html = "";
+  for (i = 0; i < items.length; i++) {
+    var s = items[i].s;
+    var badges = "";
+    if (items[i].diff >= -3 && items[i].diff <= 3) {
+      badges += ' <span class="meteor-period">期間中</span>';
+    }
+    if (i === nextIdx) {
+      badges += ' <span class="event-days">' + (items[i].diff === 0 ? "本日ピーク" : "次回 あと" + items[i].diff + "日") + "</span>";
+    }
+    html += '<div class="event-item' + (i === nextIdx ? " meteor-next" : "") + '">' +
+      s.name + (s.big ? ' <span class="event-days">★三大流星群</span>' : "") +
+      ' <span class="event-days">' + items[i].y + "-" + pad2(s.m) + "-" + pad2(s.d) + "ごろ</span>" + badges +
+      '<div class="planet-cmt">' + s.note + "</div></div>";
+  }
+  if (html === "") { html = '<div class="event-item">表示できる流星群がありません。</div>'; }
+  el("meteorList").innerHTML = html;
 }
 
 /* ---------- SPACE NEWS ---------- */
@@ -1580,6 +1638,7 @@ moonCalc();
 drawMoonMap();
 renderPlanets();
 renderEvents();
+renderMeteor();
 renderSeasons();
 renderMilkyWay();
 renderSun();

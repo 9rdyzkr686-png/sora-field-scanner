@@ -41,6 +41,12 @@ li{margin:0 0 8px}
 </div>
 
 <div class="box">
+<h2>気象庁の概況</h2>
+<div id="ov">（未取得）</div>
+<div class="st" id="ovst">取得中…</div>
+</div>
+
+<div class="box">
 <h2>CUTIE STREET 見出し</h2>
 <div id="news">（未取得）</div>
 <div class="st" id="nwst">取得中…</div>
@@ -71,6 +77,12 @@ function qk(){ $("qkst").innerHTML="取得中…";
   $("qkst").innerHTML=nowT()+" 取得";},
  function(){$("qk").innerHTML="地震情報を取得できませんでした。";$("qkst").innerHTML="取得失敗";});
 }
+function ov(){ $("ovst").innerHTML="取得中…";
+ get("https://www.jma.go.jp/bosai/forecast/data/overview_forecast/110000.json",
+ function(j){var t=j.text||"";if(t.length>120)t=t.substring(0,120)+"…";var h="";if(j.headlineText)h+="<b>"+j.headlineText+"</b><br>";h+=t;if(!h)h="概況がありません。";
+  $("ov").innerHTML=h;var rt=j.reportDatetime||"";$("ovst").innerHTML=(rt?("発表："+rt.substring(0,10)+" "+rt.substring(11,16)+" ／ "):"")+nowT()+" 取得";},
+ function(){$("ov").innerHTML="概況を取得できませんでした。";$("ovst").innerHTML="取得失敗";});
+}
 function nw(){ $("nwst").innerHTML="取得中…";
  var u="https://api.rss2json.com/v1/api.json?rss_url="+encodeURIComponent("https://news.google.com/rss/search?q=\"CUTIE STREET\"&hl=ja&gl=JP&ceid=JP:ja");
  get(u,
@@ -79,7 +91,7 @@ function nw(){ $("nwst").innerHTML="取得中…";
   $("news").innerHTML=h+"</ul>";$("nwst").innerHTML=nowT()+" 取得";},
  function(){$("news").innerHTML="見出しを取得できませんでした。";$("nwst").innerHTML="取得失敗";});
 }
-function all(){wx();qk();nw();}
+function all(){wx();qk();ov();nw();}
 $("upd").onclick=function(){all();};
 clock();setInterval(clock,30000);
 all();
