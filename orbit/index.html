@@ -459,13 +459,22 @@ button:active { background: #33ff66; color: #000; }
 </div>
 
 <div class="panel">
+  <div class="panel-title">LAUNCH <span class="jp">ロケット打ち上げ予定</span></div>
+  <div id="launchList"></div>
+  <div class="msg" id="launchMsg">打ち上げ予定を取得中…</div>
+  <button id="launchRetryBtn" style="display:none;">再試行 RETRY</button>
+  <div class="msg" id="launchTime"></div>
+  <div class="note">※ データ：Launch Library 2（The Space Devs）の公開情報。日時はすべて日本時間です。打ち上げ予定は変更・延期されることがあります。無料枠のため、短時間に何度も開くと制限で取得できないことがあります（取得は開いた時に1回だけ行います）。</div>
+</div>
+
+<div class="panel">
   <div class="panel-title">SPACE TRIVIA <span class="jp">宇宙の雑学</span></div>
   <div id="triviaText"></div>
   <button id="triviaBtn">次の雑学 NEXT</button>
 </div>
 
 <div class="footer">
-  DATA SOURCES: wheretheiss.at / Open-Meteo / sorae.info / NOAA SWPC / Google News<br>
+  DATA SOURCES: wheretheiss.at / Open-Meteo / sorae.info / NOAA SWPC / Google News / Launch Library 2<br>
   ORBIT-6 v1.3 — 観測地：埼玉県ふじみ野市 (35.8795, 139.5197)<br>
   <a class="portal-back" href="../portal/">← PORTAL-6（全サイト一覧）へ戻る</a>
 </div>
@@ -1714,6 +1723,71 @@ function fetchRocketNews() {
   });
 }
 
+/* ---------- LAUNCH SCHEDULE ---------- */
+function launchRemain(ms) {
+  var m = Math.floor(ms / 60000);
+  var d = Math.floor(m / 1440);
+  var h = Math.floor((m % 1440) / 60);
+  var mm = m % 60;
+  if (d > 0) { return "あと" + d + "日" + h + "時間"; }
+  if (h > 0) { return "あと" + h + "時間" + mm + "分"; }
+  return "あと" + mm + "分";
+}
+
+function launchFail() {
+  el("launchList").innerHTML = "";
+  el("launchMsg").innerHTML = "打ち上げ予定を取得できませんでした。時間をおいて再度お試しください。";
+  el("launchRetryBtn").style.display = "";
+  el("launchTime").innerHTML = "";
+}
+
+function fetchLaunches() {
+  el("launchMsg").innerHTML = "打ち上げ予定を取得中…";
+  el("launchRetryBtn").style.display = "none";
+  var url = "https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=10&format=json";
+  getJSON(url, function (d) {
+    if (!d.results || d.results.length === 0) { launchFail(); return; }
+    var now = Date.now();
+    var html = "";
+    var shown = 0;
+    var i, r, t, dt, sub, loc, pad;
+    for (i = 0; i < d.results.length && shown < 5; i++) {
+      r = d.results[i];
+      if (!r.net) { continue; }
+      t = new Date(r.net).getTime();
+      if (isNaN(t) || t < now - 3600000) { continue; }
+      dt = new Date(t);
+      pad = r.pad || {};
+      loc = (pad.location && pad.location.name) ? pad.location.name : "";
+      sub = loc;
+      if (pad.name) { sub = sub ? sub + " / " + pad.name : pad.name; }
+      if (r.launch_service_provider && r.launch_service_provider.name) {
+        sub = sub ? sub + "（" + r.launch_service_provider.name + "）" : r.launch_service_provider.name;
+      }
+      html += '<div class="event-item">' +
+        '<span class="news-date">' + (dt.getMonth() + 1) + "月" + dt.getDate() + "日（" + "日月火水木金土".charAt(dt.getDay()) + "）" + pad2(dt.getHours()) + ":" + pad2(dt.getMinutes()) + "</span> " +
+        r.name +
+        ' <span class="event-days">' + launchRemain(t - now) + "</span>" +
+        (sub ? '<div class="planet-cmt">' + sub + "</div>" : "") +
+        "</div>";
+      shown++;
+    }
+    if (shown === 0) {
+      el("launchList").innerHTML = "";
+      el("launchMsg").innerHTML = "直近の打ち上げ予定が見つかりませんでした。";
+      el("launchRetryBtn").style.display = "";
+      el("launchTime").innerHTML = "";
+      return;
+    }
+    el("launchList").innerHTML = html;
+    el("launchMsg").innerHTML = "";
+    var n = new Date();
+    el("launchTime").innerHTML = "取得：" + (n.getMonth() + 1) + "月" + n.getDate() + "日 " + pad2(n.getHours()) + ":" + pad2(n.getMinutes()) + "（日本時間）";
+  }, function () { launchFail(); });
+}
+
+el("launchRetryBtn").addEventListener("click", function () { fetchLaunches(); });
+
 /* ---------- INIT ---------- */
 function refreshAll() {
   fetchISS();
@@ -1752,6 +1826,7 @@ quoteIdx = Math.floor(Date.now() / 86400000) % QUOTES.length;
 renderQuote();
 drawMap();
 refreshAll();
+fetchLaunches();
 setInterval(fetchISS, 10000);
 setInterval(function () { issBlink = !issBlink; drawMap(); }, 600);
 </script>

@@ -184,6 +184,7 @@
 
 <div class="book">
   <b>つうわ履歴</b>（タップで かけ直し）<br>
+  <div id="histTop"></div>
   <div id="histList"></div>
 </div>
 
@@ -385,11 +386,36 @@ function recordHistory() {
 
 function renderHistory() {
   var box = el("histList");
+  var top = el("histTop");
   var list = loadHistory();
   box.innerHTML = "";
+  if (top) { top.innerHTML = ""; }
   if (!list.length) {
     box.innerHTML = "まだ履歴がありません";
     return;
+  }
+  if (top) {
+    var counts = {}, firstIdx = {}, names = {}, order = [], i, num;
+    for (i = 0; i < list.length; i++) {
+      num = list[i].number;
+      if (counts[num] === undefined) {
+        counts[num] = 0;
+        firstIdx[num] = i;
+        names[num] = list[i].name;
+        order.push(num);
+      }
+      counts[num] = counts[num] + 1;
+    }
+    order.sort(function (a, b) {
+      if (counts[b] !== counts[a]) { return counts[b] - counts[a]; }
+      return firstIdx[a] - firstIdx[b];
+    });
+    var parts = [];
+    for (i = 0; i < order.length && i < 3; i++) {
+      num = order[i];
+      parts.push((i + 1) + "位 " + escHtml(names[num]) + "（" + escHtml(num) + "）（" + counts[num] + "回）");
+    }
+    top.innerHTML = "よくかける番号：" + parts.join(" ／ ");
   }
   for (var i = 0; i < list.length; i++) {
     (function (entry) {

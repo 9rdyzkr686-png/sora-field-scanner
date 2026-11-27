@@ -40,7 +40,7 @@ body.fs-l{font-size:20px}body.fs-l h1{font-size:26px}body.fs-l h2{font-size:21px
 </div>
 
 <div class="box">
-<h2>最新の地震</h2>
+<h2>最新の地震（3件）</h2>
 <div id="qk">（未取得）</div>
 <div class="st" id="qkst">取得中…</div>
 </div>
@@ -75,10 +75,13 @@ function wx(){ $("wxst").innerHTML="取得中…";
 }
 var SC={"10":"1","20":"2","30":"3","40":"4","45":"5弱","50":"5強","55":"6弱","60":"6強","70":"7"};
 function qk(){ $("qkst").innerHTML="取得中…";
- get("https://api.p2pquake.net/v2/history?codes=551&limit=1",
- function(j){if(!j||!j.length||!j[0].earthquake){$("qk").innerHTML="地震情報はありません。";$("qkst").innerHTML=nowT()+" 取得";return;}
-  var e=j[0].earthquake,h=e.hypocenter||{};var s=SC[""+e.maxScale];if(!s)s="不明";
-  $("qk").innerHTML="震度 <span class='big'>"+s+"</span><br>震源："+(h.name||"不明")+"<br>発生："+e.time;
+ get("https://api.p2pquake.net/v2/history?codes=551&limit=3",
+ function(j){var out="",i,e,h,s,n=0;
+  if(j){for(i=0;i<j.length&&n<3;i++){if(!j[i].earthquake)continue;e=j[i].earthquake;h=e.hypocenter||{};s=SC[""+e.maxScale];if(!s)s="不明";
+   if(n===0){out="震度 <span class='big'>"+s+"</span><br>震源："+(h.name||"不明")+"<br>発生："+e.time;}
+   else{out+="<br><span class='d'>震度 "+s+" / 震源："+(h.name||"不明")+" / "+e.time+"</span>";}
+   n++;}}
+  $("qk").innerHTML=n?out:"地震情報はありません。";
   $("qkst").innerHTML=nowT()+" 取得";},
  function(){$("qk").innerHTML="地震情報を取得できませんでした。";$("qkst").innerHTML="取得失敗";});
 }

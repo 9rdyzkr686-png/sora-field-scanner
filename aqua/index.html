@@ -49,6 +49,14 @@ h2 { font-size:19px; color:#bfeaff; margin:16px 0 8px; border-left:6px solid #2e
 .colDot { display:inline-block; width:22px; height:15px; border-radius:50%; margin-right:8px; vertical-align:middle; }
 .colMeta { float:right; font-size:14px; color:#9fd8ff; text-align:right; }
 .colEmpty { font-size:15px; color:#9fd8ff; line-height:1.7; }
+#memoText { width:100%; min-height:76px; background:#06283f; border:2px solid #2e7cb6; border-radius:12px; color:#dff3ff; font-size:17px; line-height:1.6; padding:12px; font-family:inherit; }
+#memoBtn { background:#2e7cb6; color:#fff; }
+#memoBtn:active { background:#1d5a86; }
+#memoStatus { font-size:15px; color:#ffd9a0; min-height:20px; margin:4px 0; text-align:center; }
+.memoItem { background:#0a3a5c; border:2px solid #2e7cb6; border-radius:10px; padding:10px 12px; margin:0 0 8px; font-size:16px; line-height:1.6; overflow:hidden; white-space:pre-wrap; word-break:break-word; }
+.memoDate { font-size:14px; color:#9fd8ff; margin-bottom:4px; }
+.memoDel { float:right; min-height:48px; min-width:64px; font-size:15px; background:#0a3a5c; color:#ffb3b3; border:2px solid #b6524d; border-radius:10px; padding:8px 10px; margin-left:8px; cursor:pointer; }
+.memoEmpty { font-size:15px; color:#9fd8ff; line-height:1.7; }
 .foot { text-align:center; font-size:12px; color:#5f96b5; margin:16px 0 6px; }
 </style>
 </head>
@@ -90,6 +98,12 @@ h2 { font-size:19px; color:#bfeaff; margin:16px 0 8px; border-left:6px solid #2e
 <button class="btn" id="askBtn" type="button">飼育員さんに聞く</button>
 <div id="keeperStatus"></div>
 <div id="keeperText">話題を選んでボタンを押すと、飼育員さんが水族館の小さな秘密を教えてくれます。</div>
+
+<h2>📝 観察メモ</h2>
+<textarea id="memoText" placeholder="今日の水槽の様子を書いておけます"></textarea>
+<button class="btn" id="memoBtn" type="button">メモを保存</button>
+<div id="memoStatus"></div>
+<div id="memoList"></div>
 
 <h2>📖 生き物コレクション</h2>
 <div class="colProgress" id="collectionProgress"></div>
@@ -441,6 +455,75 @@ el("meetBtn").onclick = function() {
   speak(todayCreature.name + "に会えました");
 };
 renderCollection();
+
+/* ---------- 観察メモ ---------- */
+function loadMemos() {
+  try {
+    var raw = localStorage.getItem("aqua6_memo_v1");
+    if (raw) {
+      var arr = JSON.parse(raw);
+      if (arr && typeof arr.length === "number") return arr;
+    }
+  } catch (e) {}
+  return [];
+}
+function saveMemos(arr) {
+  try { localStorage.setItem("aqua6_memo_v1", JSON.stringify(arr)); } catch (e) {}
+}
+function renderMemos() {
+  var arr = loadMemos();
+  var box = el("memoList");
+  box.innerHTML = "";
+  if (arr.length === 0) {
+    var empty = document.createElement("div");
+    empty.className = "memoEmpty";
+    empty.innerHTML = "まだメモがありません。魚たちの様子を書き残せます。";
+    box.appendChild(empty);
+    return;
+  }
+  var show = Math.min(arr.length, 10);
+  var i;
+  for (i = 0; i < show; i++) {
+    (function (idx) {
+      var item = document.createElement("div");
+      item.className = "memoItem";
+      var del = document.createElement("button");
+      del.className = "memoDel";
+      del.type = "button";
+      del.innerHTML = "消す";
+      del.onclick = function () {
+        var a = loadMemos();
+        a.splice(idx, 1);
+        saveMemos(a);
+        renderMemos();
+      };
+      var date = document.createElement("div");
+      date.className = "memoDate";
+      date.innerHTML = esc(arr[idx].date);
+      var body = document.createElement("div");
+      body.innerHTML = esc(arr[idx].text);
+      item.appendChild(del);
+      item.appendChild(date);
+      item.appendChild(body);
+      box.appendChild(item);
+    })(i);
+  }
+}
+el("memoBtn").onclick = function () {
+  var text = el("memoText").value.replace(/^\s+|\s+$/g, "");
+  if (!text) {
+    el("memoStatus").innerHTML = "メモが空です。何か書いてから保存してください。";
+    return;
+  }
+  var arr = loadMemos();
+  arr.unshift({ date: todayStr(), text: text });
+  while (arr.length > 30) arr.pop();
+  saveMemos(arr);
+  el("memoText").value = "";
+  el("memoStatus").innerHTML = "メモを保存しました。";
+  renderMemos();
+};
+renderMemos();
 </script>
 </body>
 </html>

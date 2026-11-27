@@ -66,8 +66,9 @@ background: #e08a2e; color: #fff;
 background: #fff; border: 1px solid #d8c9a3; border-left: 8px solid #b39b57;
 border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;
 }
-.entry.done { opacity: 0.5;}
-.entry.done.etitle,.entry.done.ebody { text-decoration: line-through;}
+.entry.done { opacity: 0.55;}
+.entry.done .etitle, .entry.done .ebody { text-decoration: line-through;}
+.donemark { display: inline-block; font-size: 13px; font-weight: bold; color: #fff; background: #3f8f4f; border-radius: 10px; padding: 1px 9px; margin-right: 6px;}
 .emeta { font-size: 13px; color: #888; margin-bottom: 2px;}
 .etag {
 display: inline-block; font-size: 13px; font-weight: bold; color: #fff;
@@ -79,7 +80,7 @@ background: #b39b57; border-radius: 10px; padding: 1px 9px; margin-right: 6px;
 .etitle { font-size: 18px; font-weight: bold; margin: 2px 0;}
 .ebody { white-space: pre-wrap; word-wrap: break-word; margin: 2px 0 8px 0;}
 .ebtns button {
-font-size: 15px; padding: 8px 14px; margin-right: 8px;
+font-size: 15px; padding: 10px 14px; margin-right: 8px; min-height: 48px;
 border-radius: 8px; border: 2px solid #b39b57; background: #fff; color: #6b4f1d;
 }
 .ebtns button.del { border-color: #c0524a; color: #c0524a;}
@@ -159,7 +160,7 @@ font-family: inherit; display: none;
 <div class="card">
 <h2>📋 貼ったもの</h2>
 <div class="counter" id="counter">未済み 0件</div>
-<div class="sitesum" id="siteSummary">要望0件（★優先0件）</div>
+<div class="sitesum" id="siteSummary">要望0件（★優先0件）（対応済み0件）</div>
 <div id="listBox"></div>
 
 <button type="button" class="bigbtn copybtn" id="copyBtn">全文コピー（未済みの分）</button>
@@ -236,15 +237,17 @@ for (i = 0; i < entries.length; i++) { if (!entries[i].done) undone++;}
 el("counter").innerHTML = "未済み " + undone + "件（全" + entries.length + "件）";
 
 var priCount = 0;
+var doneCount = 0;
 var siteCounts = {};
 var siteOrder = [];
 for (i = 0; i < entries.length; i++) {
+if (entries[i].done) { doneCount++; continue; }
 var sName = siteOf(entries[i]);
 if (entries[i].pri) priCount++;
 if (siteCounts[sName]) { siteCounts[sName]++; }
 else { siteCounts[sName] = 1; siteOrder.push(sName); }
 }
-var sumHtml = "要望" + entries.length + "件（★優先" + priCount + "件）";
+var sumHtml = "要望" + undone + "件（★優先" + priCount + "件）（対応済み" + doneCount + "件）";
 if (siteOrder.length > 0) {
 var sumParts = [];
 for (i = 0; i < siteOrder.length; i++) {
@@ -259,18 +262,20 @@ box.innerHTML = '<div class="empty">まだ何も貼られていません。<br>�
 return;
 }
 var disp = [];
-for (i = 0; i < entries.length; i++) { if (entries[i].pri) disp.push(entries[i]);}
-for (i = 0; i < entries.length; i++) { if (!entries[i].pri) disp.push(entries[i]);}
+for (i = 0; i < entries.length; i++) { if (!entries[i].done && entries[i].pri) disp.push(entries[i]);}
+for (i = 0; i < entries.length; i++) { if (!entries[i].done && !entries[i].pri) disp.push(entries[i]);}
+for (i = 0; i < entries.length; i++) { if (entries[i].done && entries[i].pri) disp.push(entries[i]);}
+for (i = 0; i < entries.length; i++) { if (entries[i].done && !entries[i].pri) disp.push(entries[i]);}
 var html = "";
 for (i = 0; i < disp.length; i++) {
 var e = disp[i];
 html += '<div class="entry' + (e.done? " done": "") + (e.pri? " pri": "") + '">';
-html += '<div class="emeta">' + (e.pri? '<span class="pmark">★優先</span>': '') + '<span class="esite">【' + esc(siteOf(e)) + '】</span><span class="etag ' + catClass(e.cat) + '">' + esc(e.cat) + '</span>' + fmtDate(e.ts) + '</div>';
+html += '<div class="emeta">' + (e.pri? '<span class="pmark">★優先</span>': '') + (e.done? '<span class="donemark">✓対応済み</span>': '') + '<span class="esite">【' + esc(siteOf(e)) + '】</span><span class="etag ' + catClass(e.cat) + '">' + esc(e.cat) + '</span>' + fmtDate(e.ts) + '</div>';
 if (e.title) html += '<div class="etitle">' + esc(e.title) + '</div>';
 html += '<div class="ebody">' + esc(e.body) + '</div>';
 html += '<div class="ebtns">';
 html += '<button type="button"' + (e.pri? ' class="pri-on"': '') + ' data-act="pri" data-id="' + e.id + '">' + (e.pri? "★優先": "☆優先にする") + '</button>';
-html += '<button type="button" data-act="done" data-id="' + e.id + '">' + (e.done? "未済みに戻す": "済みにする") + '</button>';
+html += '<button type="button" data-act="done" data-id="' + e.id + '">' + (e.done? "戻す": "対応済みにする") + '</button>';
 html += '<button type="button" class="del" data-act="del" data-id="' + e.id + '">消す</button>';
 html += '</div></div>';
 }
@@ -365,7 +370,7 @@ btns[i].className = "catbtn" + (btns[i] === t? " sel": "");
 }
 }, false);
 
-/* 一覧のボタン（済み・消す） */
+/* 一覧のボタン（優先・対応済み・消す） */
 el("listBox").addEventListener("click", function (ev) {
 var t = ev.target;
 if (!t || t.tagName!== "BUTTON") return;

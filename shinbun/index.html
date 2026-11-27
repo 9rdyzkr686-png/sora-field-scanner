@@ -30,6 +30,7 @@ box-shadow: 0 2px 8px rgba(0,0,0,0.18);
 .masthead { text-align: center; border-bottom: 4px double #1a1a1a; padding-bottom: 8px;}
 .masthead.paper-name { font-size: 44px; font-weight: bold; letter-spacing: 0.25em; line-height: 1.2;}
 .masthead.date-line { font-size: 14px; margin-top: 4px; border-top: 1px solid #1a1a1a; padding-top: 4px;}
+.masthead .founding-line { font-size: 12px; color: #555; margin-top: 3px; font-family: sans-serif;}
 .fiction-note {
 margin-top: 8px; font-size: 13px; text-align: center;
 border: 1px solid #1a1a1a; padding: 6px 8px; background: #efe9dc;
@@ -163,6 +164,7 @@ background: #1a1a1a; color: #faf6ec; border: none; cursor: pointer;
 <div class="paper-name">クー新聞</div>
 <div class="edition-name" id="editionName">朝刊</div>
 <div class="date-line" id="dateLine">----年--月--日</div>
+<div class="founding-line">創刊 2026年11月27日</div>
 </div>
 <div class="fiction-note">この新聞の記事はAIが書いた創作です。本当のニュースではありません</div>
 
@@ -270,7 +272,7 @@ function pad2(n) { return (n < 10? "0": "") + n;}
 
 function initDate() {
 var now = new Date();
-var base = new Date(2025, 0, 1);
+var base = new Date(2026, 10, 27);
 var today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 issueNo = Math.floor((today0.getTime() - base.getTime()) / 86400000) + 1;
 dateText = now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日（" + WEEKDAYS[now.getDay()] + "）";

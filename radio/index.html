@@ -123,6 +123,9 @@
   <div class="label">■ 番組表（タップでそこから再生）</div>
   <div class="list" id="listBox"></div>
 
+  <div class="label">■ 最近聴いた番組（タップで再生）</div>
+  <div class="list" id="histBox"></div>
+
   <div class="footer">
     <div>※ 画面を消すと読み上げが止まることがあります。</div>
     <div>※ 音が出ない時は本体のマナーモード（消音スイッチ）を確認してください。</div>
@@ -619,7 +622,7 @@ el("v-high").onclick = function () { setPitch(1.1, "v-high"); };
 el("playBtn").onclick = function () {
   if (speaking && !paused) { speechSynthesis.pause(); paused = true; updateDisplay(); }
   else if (paused) { speechSynthesis.resume(); paused = false; updateDisplay(); }
-  else { speakCurrent(); }
+  else { recordHistory(curCh); speakCurrent(); }
 };
 el("nextBtn").onclick = function () { if (idx < playlist.length - 1) jumpTo(idx + 1); else if (loopOn) jumpTo(0); };
 el("prevBtn").onclick = function () { if (idx > 0) jumpTo(idx - 1); };
@@ -649,6 +652,64 @@ el("shuffleBtn").onclick = function () {
 };
 loadShuffle();
 paintShuffleBtn();
+
+/* ---------- 再生履歴 ---------- */
+var HIST_KEY = "radio6_history_v1";
+function loadHistory() {
+  try {
+    var raw = localStorage.getItem(HIST_KEY);
+    if (!raw) return [];
+    var arr = JSON.parse(raw);
+    if (arr && arr.length) return arr;
+  } catch (e) {}
+  return [];
+}
+function saveHistory(arr) {
+  try { localStorage.setItem(HIST_KEY, JSON.stringify(arr)); } catch (e) {}
+}
+function histTimeStr(d) {
+  function p2(n) { return (n < 10 ? "0" : "") + n; }
+  return d.getFullYear() + "/" + p2(d.getMonth() + 1) + "/" + p2(d.getDate()) + " " + p2(d.getHours()) + ":" + p2(d.getMinutes());
+}
+function recordHistory(ch) {
+  if (!CH_LABEL[ch]) return;
+  var arr = loadHistory();
+  arr.unshift({ ch: ch, name: CH_LABEL[ch], t: histTimeStr(new Date()) });
+  while (arr.length > 30) arr.pop();
+  saveHistory(arr);
+  renderHistory();
+}
+function renderHistory() {
+  var box = el("histBox");
+  if (!box) return;
+  var arr = loadHistory();
+  box.innerHTML = "";
+  if (!arr.length) {
+    var d0 = document.createElement("div");
+    d0.className = "litem";
+    d0.textContent = "まだ再生履歴がありません。チャンネルを選んで「▶ 再生」を押すと、ここに残ります。";
+    box.appendChild(d0);
+    return;
+  }
+  var n = arr.length < 10 ? arr.length : 10;
+  for (var i = 0; i < n; i++) {
+    (function (entry) {
+      var d = document.createElement("div");
+      d.className = "litem";
+      d.textContent = "📻 " + entry.name + "（" + entry.t + "）";
+      d.onclick = function () { playFromHistory(entry.ch); };
+      box.appendChild(d);
+    })(arr[i]);
+  }
+}
+function playFromHistory(ch) {
+  if (!CH_LABEL[ch]) return;
+  el("ch-" + ch).click();
+  idx = 0;
+  recordHistory(ch);
+  speakCurrent();
+}
+renderHistory();
 el("refetchBtn").onclick = function () {
   el("fetchNote").textContent = "ニュースを取得中…";
   var remain = 2, anyFail = false;
@@ -721,6 +782,7 @@ function genAiTalk(topic) {
       status.textContent = "台本ができました（" + lines.length + "行）。読み上げます。";
       updateDisplay();
       speakCurrent();
+      recordHistory("ai");
     };
     x.ontimeout = function () {
       if (handled || attempt !== liveAttempt) return;

@@ -160,6 +160,27 @@
   .draw-btn:disabled {
     opacity: 0.5;
   }
+  .gacha-btn {
+    display: block;
+    width: 100%;
+    max-width: 560px;
+    margin: 12px auto 0;
+    font-family: inherit;
+    font-size: 18px;
+    letter-spacing: 2px;
+    font-weight: bold;
+    color: #e8dcc3;
+    background: #2e2620;
+    border: 2px solid #6e5c33;
+    border-radius: 8px;
+    min-height: 56px;
+    padding: 14px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .gacha-btn:disabled {
+    opacity: 0.5;
+  }
   .footer {
     text-align: center;
     font-size: 12px;
@@ -276,6 +297,8 @@
 
 <button type="button" class="draw-btn" id="drawBtn">描く</button>
 
+<button type="button" class="gacha-btn" id="gachaBtn">🎲 お題ガチャで描く</button>
+
 <div class="section" style="margin-top:26px;">
   <div class="section-label">画廊（保存した作品）</div>
   <div class="gallery" id="gallery"></div>
@@ -367,6 +390,27 @@ drawBtn.onclick = function () {
   drawBtn.disabled = true;
   pendingWork = { url: url, title: titleJa, date: todayStr() };
   artImg.src = url;
+};
+
+/* お題ガチャ：各グループからランダムに1つ選んで、そのまま描く */
+function pickRandomChip(containerId) {
+  var box = document.getElementById(containerId);
+  var chips = box.getElementsByClassName("chip");
+  if (chips.length === 0) { return; }
+  var idx = Math.floor(Math.random() * chips.length);
+  chips[idx].click();
+}
+
+var gachaBtn = document.getElementById("gachaBtn");
+gachaBtn.onclick = function () {
+  if (drawBtn.disabled) {
+    statusEl.innerHTML = "いま描いているところです";
+    return;
+  }
+  pickRandomChip("subjectChips");
+  pickRandomChip("moodChips");
+  pickRandomChip("styleChips");
+  drawBtn.click();
 };
 
 var GALLERY_KEY = "gahaku6_gallery_v1";

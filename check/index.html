@@ -94,6 +94,19 @@ h1 {
   margin-top: 6px;
   display: none;
 }
+#copyBtn {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  background: #003311;
+  color: #33ff66;
+  border: 1px solid #33ff66;
+  font-family: "Courier New", monospace;
+  font-size: 17px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+#copyMsg { color: #ffcc33; font-size: 14px; margin-top: 6px; min-height: 20px; }
 .foot { color: #557755; font-size: 13px; margin-top: 14px; }
 .blink { color: #ffcc33; }
 #histBox {
@@ -212,6 +225,9 @@ h1 {
 </div>
 
 <div id="summary"></div>
+
+<button id="copyBtn" type="button">結果をコピー</button>
+<div id="copyMsg"></div>
 
 <div id="histBox">
   <div class="hhead">
@@ -784,8 +800,73 @@ function startAll() {
   testSoraeNews();
 }
 
+/* (352) 診断結果をテキストでコピー（チャットでクーに貼る用） */
+function rowState(n) {
+  var el = $("res" + n);
+  var cls = el.className || "";
+  if (cls.indexOf("res-ok") >= 0) { return "OK"; }
+  if (cls.indexOf("res-ng") >= 0) { return "NG"; }
+  return el.innerHTML || "未診断";
+}
+function detText(n) {
+  var t = $("det" + n).textContent || "";
+  var ms = ($("ms" + n).textContent || "").replace(/\s/g, "").replace(/^\//, "");
+  var parts = [];
+  if (t && t !== "-") { parts.push(t); }
+  if (ms) { parts.push(ms); }
+  return parts.join(" / ");
+}
+function aiLineStatus() {
+  try {
+    var v = window.localStorage.getItem(LAST_KEY);
+    if (v) {
+      var r = JSON.parse(v);
+      if (r && typeof r.ts === "number") {
+        var d = new Date(r.ts);
+        function p(x) { return (x < 10 ? "0" : "") + x; }
+        var when = (d.getMonth() + 1) + "/" + d.getDate() + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+        return (r.ok ? "良好" : "不調") + (r.detail ? "（" + r.detail + "）" : "") + " " + when + "時点";
+      }
+    }
+  } catch (e) {}
+  var st = rowState(1);
+  if (st === "OK" || st === "NG") { return (st === "OK" ? "良好" : "不調") + "（今回の診断）"; }
+  return "未確認（AI回線の診断がまだです）";
+}
+function buildReport() {
+  var lines = [];
+  lines.push("【CHECK-6 診断結果】");
+  lines.push("日時：" + histNow());
+  var sum = "結果：" + okCount + "/8 OK";
+  if (doneCount < 8) { sum += "（診断済み " + doneCount + "/8）"; }
+  lines.push(sum);
+  var n;
+  for (n = 1; n <= 8; n++) {
+    var det = detText(n);
+    lines.push(n + ". " + (TEST_NAMES[n] || ("項目" + n)) + "：" + rowState(n) + (det ? "（" + det + "）" : ""));
+  }
+  lines.push("AI回線の調子：" + aiLineStatus());
+  return lines.join("\n");
+}
+function copyResult() {
+  var text = buildReport();
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "readonly");
+  ta.style.position = "absolute";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  try { ta.setSelectionRange(0, text.length); } catch (e) {}
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  $("copyMsg").innerHTML = ok ? "結果をコピーしました。チャットに貼ってクーに送れます。" : "コピーできませんでした。";
+}
+
 $("startBtn").onclick = startAll;
 $("histClear").onclick = histClear;
+$("copyBtn").onclick = copyResult;
 renderHist();
 </script>
 </body>

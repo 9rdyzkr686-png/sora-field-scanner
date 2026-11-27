@@ -149,6 +149,12 @@
     font-size: 17px;
   }
   .links a:active { background: #2a1a4d; }
+  .readprogress { color: #57ff8a; font-size: 16px; margin: 0 0 6px 0; }
+  .readbar { height: 10px; background: #171029; border: 1px solid #5b2a86; margin-bottom: 12px; }
+  .readbar-fill { height: 100%; width: 0%; background: #57ff8a; }
+  .paper .readprogress { color: #26221a; }
+  .paper .readbar { background: #d8cfb4; border-color: #8a7f63; }
+  .paper .readbar-fill { background: #7a1030; }
   .filterlabel { color: #c9a0ff; font-size: 14px; margin: 10px 0 4px 0; }
   .searchrow { margin-bottom: 8px; }
   .searchinput {
@@ -334,6 +340,8 @@
 
 <section id="archiveSection">
   <h2>■ 定番アーカイブ</h2>
+  <p class="readprogress" id="readProgress">読了 0/28話（0%）</p>
+  <div class="readbar"><div class="readbar-fill" id="readBarFill"></div></div>
   <button id="randomBtn" type="button" style="width:100%;margin-bottom:12px;">ランダムで1話ひらく</button>
   <button id="paperBtn" type="button" style="width:100%;margin-bottom:12px;">新聞モードで読む</button>
   <div class="paperhead" id="paperHead">伝 説 新 聞 ― 号 外 ―</div>
@@ -832,6 +840,15 @@ function clearLegendSearch() {
 
 function renderArchive() {
   buildReadChips();
+  var rpTotal = LEGENDS.length;
+  var rpRead = 0;
+  var rpI;
+  for (rpI = 0; rpI < marksData.read.length; rpI++) {
+    if (marksData.read[rpI] >= 0 && marksData.read[rpI] < rpTotal) rpRead++;
+  }
+  var rpPct = rpTotal > 0 ? Math.round(rpRead * 100 / rpTotal) : 0;
+  el("readProgress").textContent = "読了 " + rpRead + "/" + rpTotal + "話（" + rpPct + "%）";
+  el("readBarFill").style.width = rpPct + "%";
   var box = el("archiveBox");
   box.innerHTML = "";
   var i;

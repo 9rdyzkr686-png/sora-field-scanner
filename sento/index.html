@@ -121,6 +121,10 @@
     background: #8a3324; color: #fff8ea; border: none; border-radius: 10px; cursor: pointer;
   }
   .status { font-size: 14px; color: #8a5a24; min-height: 20px; margin-top: 6px; }
+  /* ありがとうカウンター */
+  .thanksrow { display: flex; align-items: stretch; margin-top: 10px; }
+  .thanksrow .subbtn { flex: 1; width: auto; margin-top: 0; }
+  .thankscount { display: flex; align-items: center; font-size: 15px; font-weight: bold; color: #8a3324; margin-left: 10px; white-space: nowrap; }
   .detail { font-size: 12px; color: #a08a68; }
   /* 今日の湯（木枠カード） */
   .yucard {
@@ -251,6 +255,11 @@
     </div>
     <button type="button" class="subbtn" id="drinkBtn">🥛 お風呂上がりのドリンク談義を聞く</button>
     <div class="status" id="chatStatus"></div>
+    <div class="thanksrow">
+      <button type="button" class="subbtn" id="thanksBtn">🙏 番台さんに「ありがとう」を言う</button>
+      <span class="thankscount" id="thanksCount">ありがとう 0回</span>
+    </div>
+    <div class="status" id="thanksReply"></div>
   </div>
 
   <!-- 今日の湯 -->
@@ -1038,6 +1047,40 @@ el("bathNext").onclick = function () {
   bathViewMonth = d.getMonth();
   renderBathCal();
 })();
+
+/* ---------- ありがとうカウンター ---------- */
+var THANKS_KEY = "sento6_thanks_v1";
+var THANKS_LINES = [
+  "あらあら、どういたしまして。あんたの笑顔が一番の薬だよ。",
+  "ありがとうはこっちの台詞だよ。いつも来てくれて嬉しいよ。",
+  "ふふ、照れるねえ。いい湯だったなら、それで十分だよ。",
+  "礼には及ばないよ。風邪ひかないように、よく温まって帰るんだよ。",
+  "そんなに言ってくれると、明日も熱めのお湯を沸かしちゃうよ。",
+  "ありがとうね。あんたが来る日は、番台も明るくなるんだよ。"
+];
+var thanksTotal = 0;
+function loadThanks() {
+  try {
+    var v = parseInt(localStorage.getItem(THANKS_KEY), 10);
+    if (!isNaN(v) && v >= 0) thanksTotal = v;
+  } catch (e) {}
+}
+function saveThanks() {
+  try { localStorage.setItem(THANKS_KEY, String(thanksTotal)); } catch (e) {}
+}
+function renderThanks() {
+  el("thanksCount").textContent = "ありがとう " + thanksTotal + "回";
+}
+el("thanksBtn").onclick = function () {
+  thanksTotal++;
+  saveThanks();
+  renderThanks();
+  var line = THANKS_LINES[(thanksTotal - 1) % THANKS_LINES.length];
+  el("thanksReply").textContent = "番台さん：「" + line + "」";
+  speak(line);
+};
+loadThanks();
+renderThanks();
 </script>
 </body>
 </html>

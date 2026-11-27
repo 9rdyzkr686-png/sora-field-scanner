@@ -161,7 +161,9 @@
   <div id="riddleText">読み込み中…</div>
   <div class="ans" id="riddleAns"></div>
   <button id="riddleShow" type="button">答えを見る</button>
+  <button id="riddleSolved" type="button">わかった！</button>
   <button id="riddleNext" type="button">次の問題</button>
+  <div id="riddleStats"></div>
 
   <h3>◆ ダジャレ</h3>
   <div id="jokeText">読み込み中…</div>
@@ -627,8 +629,53 @@ function initReading() {
   el('riddleNext').onclick = function () { riddleIdx = riddleIdx + 1; showReading(); };
   el('riddleShow').onclick = function () {
     var a = el('riddleAns');
-    a.style.display = (a.style.display === 'block') ? 'none' : 'block';
+    var show = (a.style.display !== 'block');
+    a.style.display = show ? 'block' : 'none';
+    if (show) { recordRiddle('seen'); }
   };
+  el('riddleSolved').onclick = function () { recordRiddle('solved'); };
+  renderRiddleStats();
+}
+
+/* ---------- なぞなぞ成績 ---------- */
+var RIDDLE_KEY = 'hima6_riddle_v1';
+function riddleDateKey() {
+  var n = new Date();
+  function p(x) { return (x < 10 ? '0' : '') + x; }
+  return n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate());
+}
+function loadRiddleStats() {
+  try {
+    var raw = localStorage.getItem(RIDDLE_KEY);
+    if (raw) {
+      var d = JSON.parse(raw);
+      if (d && d.dates) { return d; }
+    }
+  } catch (e) {}
+  return { dates: {} };
+}
+function recordRiddle(kind) {
+  var d = loadRiddleStats();
+  var k = riddleDateKey();
+  if (!d.dates[k]) { d.dates[k] = { solved: 0, seen: 0 }; }
+  d.dates[k][kind] = (d.dates[k][kind] || 0) + 1;
+  try { localStorage.setItem(RIDDLE_KEY, JSON.stringify(d)); } catch (e) {}
+  renderRiddleStats();
+}
+function renderRiddleStats() {
+  var node = el('riddleStats');
+  if (!node) { return; }
+  var d = loadRiddleStats();
+  var ts = 0, tv = 0, key;
+  for (key in d.dates) {
+    if (Object.prototype.hasOwnProperty.call(d.dates, key)) {
+      ts += d.dates[key].solved || 0;
+      tv += d.dates[key].seen || 0;
+    }
+  }
+  var t = d.dates[riddleDateKey()] || { solved: 0, seen: 0 };
+  node.innerHTML = '成績：通算 わかった' + ts + '問 ・ 答えを見た' + tv +
+    '問（今日：わかった' + (t.solved || 0) + '問 ・ 見た' + (t.seen || 0) + '問）';
 }
 
 /* ---------- ニュース ---------- */

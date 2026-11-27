@@ -39,6 +39,14 @@ h1 { margin:0; font-size:28px; color:#ffe082; letter-spacing:2px; }
 .dayRow .mark { float:right; color:#ffe082; font-weight:bold; }
 .today { background:#283593; border-radius:8px; }
 .today .d { color:#ffffff; font-weight:bold; }
+.ageGrid { width:100%; border-collapse:collapse; }
+.ageGrid th { font-size:13px; color:#9fa8da; padding:4px 0; font-weight:normal; }
+.ageGrid td { width:14.28%; text-align:center; padding:6px 1px; border:1px solid #232a58; font-size:15px; vertical-align:top; }
+.ageGrid td .gd { display:block; font-size:16px; font-weight:bold; }
+.ageGrid td .ga { display:block; font-size:11px; color:#9fa8da; }
+.ageGrid td .gm { display:block; font-size:14px; }
+.ageGrid td.gtoday { background:#283593; }
+.ageGrid td.gtoday .ga { color:#c5cae9; }
 footer { text-align:center; color:#7986cb; font-size:13px; padding:8px 12px 28px; }
 </style>
 </head>
@@ -88,6 +96,12 @@ footer { text-align:center; color:#7986cb; font-size:13px; padding:8px 12px 28px
 <h2 id="calTitle">1ヶ月の月カレンダー</h2>
 <div id="calList"></div>
 <div style="font-size:14px; color:#9fa8da; margin-top:10px;">◎ ＝ 満月・新月の日（月齢は各日の正午で計算）</div>
+</div>
+
+<div class="card">
+<h2 id="ageCalTitle">月齢カレンダー</h2>
+<div id="ageCal"></div>
+<div style="font-size:14px; color:#9fa8da; margin-top:10px;">数字は各日正午の月齢です。🌑は新月、🌕は満月の近い日（正午の月齢が新月0・満月約14.8から±0.6日以内の日）です。</div>
 </div>
 
 </div>
@@ -306,8 +320,37 @@ function askMoon() {
   sendReq();
 }
 
+function renderAgeCalendar() {
+  var now = new Date();
+  var y = now.getFullYear();
+  var m = now.getMonth();
+  var todayD = now.getDate();
+  document.getElementById("ageCalTitle").innerHTML = y + "年" + (m + 1) + "月の月齢カレンダー";
+  var daysInMonth = new Date(y, m + 1, 0).getDate();
+  var firstDow = new Date(y, m, 1).getDay();
+  var half = SYNODIC / 2;
+  var html = '<table class="ageGrid"><tr><th>日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th></tr><tr>';
+  var i, cell = 0, age, mark, cls;
+  for (i = 0; i < firstDow; i++) { html += '<td></td>'; cell++; }
+  for (i = 1; i <= daysInMonth; i++) {
+    age = moonAge(new Date(y, m, i, 12, 0, 0));
+    mark = '';
+    if (age <= 0.6 || age >= SYNODIC - 0.6) mark = '🌑';
+    else if (Math.abs(age - half) <= 0.6) mark = '🌕';
+    cls = (i === todayD) ? ' class="gtoday"' : '';
+    html += '<td' + cls + '><span class="gd">' + i + '</span><span class="ga">' + age.toFixed(1) + '</span>' +
+      (mark ? '<span class="gm">' + mark + '</span>' : '') + '</td>';
+    cell++;
+    if (cell % 7 === 0 && i < daysInMonth) html += '</tr><tr>';
+  }
+  while (cell % 7 !== 0) { html += '<td></td>'; cell++; }
+  html += '</tr></table>';
+  document.getElementById("ageCal").innerHTML = html;
+}
+
 renderTonight();
 renderCalendar();
+renderAgeCalendar();
 </script>
 </body>
 </html>

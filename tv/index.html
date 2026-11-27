@@ -152,6 +152,21 @@
     color: #fff;
     box-shadow: 0 0 12px rgba(255,140,60,0.8);
   }
+  .reco-chip {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffe9a8;
+    background: #3a2c1c;
+    border: 2px solid #c9a86a;
+    border-radius: 24px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
   .sub-row { margin-top: 12px; font-size: 0; }
   .ctl-btn {
     display: inline-block;
@@ -319,6 +334,7 @@
 
   <div class="panel">
     <div class="cap">CHANNEL</div>
+    <button class="reco-chip" id="recoChip" type="button">🕐 いまの時間帯のおすすめ</button>
     <div class="ch-row">
       <button class="ch-btn" id="chBtn1" type="button">1</button>
       <button class="ch-btn" id="chBtn2" type="button">2</button>
@@ -978,6 +994,17 @@ function clearRecs() {
   el("recStatus").textContent = "録画を全部消しました。";
 }
 
+/* ===== 時間帯のおすすめ ===== */
+function recoChannelByHour(h) {
+  if (h >= 5 && h < 8) { return 4; }
+  if (h >= 8 && h < 11) { return 1; }
+  if (h >= 11 && h < 14) { return 2; }
+  if (h >= 14 && h < 17) { return 3; }
+  if (h >= 17 && h < 21) { return 1; }
+  if (h >= 21) { return 7; }
+  return 5;
+}
+
 /* ===== ボタン ===== */
 function bind() {
   var i;
@@ -986,6 +1013,9 @@ function bind() {
       el("chBtn" + n).onclick = function () { selectChannel(n); };
     })(i);
   }
+  var recoN = recoChannelByHour(new Date().getHours());
+  el("recoChip").textContent = "🕐 いまの時間帯のおすすめ：" + CH_NAMES[recoN] + "（タップで切替）";
+  el("recoChip").onclick = function () { selectChannel(recoN); };
   el("voiceBtn").onclick = function () {
     voiceOn = !voiceOn;
     el("voiceBtn").textContent = voiceOn ? "ボイス：ON" : "ボイス：OFF";

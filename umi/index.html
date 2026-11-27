@@ -55,6 +55,15 @@ h1 { text-align: center; color: #fff; font-size: 26px; text-shadow: 0 2px 6px rg
 .status { font-size: 14px; color: #456; text-align: center; min-height: 20px; margin-top: 8px; }
 .tideline { font-size: 23px; font-weight: bold; color: #0d4a75; text-align: center; margin: 8px 0; }
 .tidehgt { font-size: 14px; font-weight: normal; color: #567; }
+.tidechart { margin-top: 12px; }
+.tcscale { font-size: 14px; color: #456; text-align: center; margin-bottom: 6px; }
+.tcbars { height: 76px; border-bottom: 2px solid #9db8c8; white-space: nowrap; }
+.tccol { display: inline-block; width: 4.166%; height: 76px; position: relative; vertical-align: bottom; }
+.tcbar { position: absolute; bottom: 0; left: 18%; width: 64%; background: #2c7fb8; border-radius: 2px 2px 0 0; }
+.tccol.now .tcbar { background: #e8912d; }
+.tchours { position: relative; height: 18px; font-size: 12px; color: #567; }
+.tchours span { position: absolute; top: 2px; }
+.tcnote { font-size: 12px; color: #567; text-align: center; margin-top: 2px; }
 .lettercard {
   background: #fffdf4; border: 1px solid #e4d9b8; border-radius: 10px;
   padding: 18px 16px; margin-top: 12px; display: none;
@@ -181,6 +190,7 @@ function waveFail() {
    満潮4組×7桁（時2・分2・潮位3、なしは9999999）／ 干潮4組×7桁 */
 var tideEvents = null;
 var tideTimer = null;
+var tideHourly = null;
 
 function tideFileUrl(year) {
   return 'https://www.data.jma.go.jp/kaiyou/data/db/tide/suisan/txt/' + year + '/TK.txt';
@@ -198,6 +208,15 @@ function parseTideText(text, dates, out) {
     if (isNaN(yy) || isNaN(mm) || isNaN(dd)) { continue; }
     for (k = 0; k < dates.length; k++) {
       if (yy === dates[k].getFullYear() % 100 && mm === dates[k].getMonth() + 1 && dd === dates[k].getDate()) {
+        if (k === 0) {
+          var hs = [], okH = true, hv;
+          for (j = 0; j < 24; j++) {
+            hv = parseInt(ln.substr(j * 3, 3), 10);
+            if (isNaN(hv)) { okH = false; break; }
+            hs.push(hv);
+          }
+          if (okH) { tideHourly = hs; }
+        }
         for (j = 0; j < 8; j++) {
           grp = ln.substr(80 + j * 7, 7);
           if (grp === '9999999') { continue; }
@@ -275,6 +294,30 @@ function fmtRemain(ms) {
   return 'あと' + Math.floor(mins / 60) + '時間' + pad2(mins % 60) + '分';
 }
 
+function tideChartHtml() {
+  if (!tideHourly || tideHourly.length !== 24) { return ''; }
+  var min = tideHourly[0], max = tideHourly[0], minH = 0, maxH = 0, i, v;
+  for (i = 1; i < 24; i++) {
+    v = tideHourly[i];
+    if (v < min) { min = v; minH = i; }
+    if (v > max) { max = v; maxH = i; }
+  }
+  var nowH = new Date().getHours();
+  var range = max - min;
+  var html = '<div class="tidechart">';
+  html += '<div class="tcscale">最高 ' + max + 'cm（' + maxH + '時）／ 最低 ' + min + 'cm（' + minH + '時）</div>';
+  html += '<div class="tcbars">';
+  for (i = 0; i < 24; i++) {
+    var bh = (range > 0) ? (8 + Math.round((tideHourly[i] - min) / range * 64)) : 40;
+    html += '<span class="tccol' + (i === nowH ? ' now' : '') + '"><span class="tcbar" style="height:' + bh + 'px"></span></span>';
+  }
+  html += '</div>';
+  html += '<div class="tchours"><span style="left:0;">0時</span><span style="left:25%;">6時</span><span style="left:50%;">12時</span><span style="left:75%;">18時</span></div>';
+  html += '<div class="tcnote">今日の毎時潮位（オレンジは現在の時刻）</div>';
+  html += '</div>';
+  return html;
+}
+
 function renderTide() {
   if (!tideEvents) { return; }
   var now = new Date();
@@ -299,6 +342,7 @@ function renderTide() {
     html += '<div class="tideline">次の干潮 ' + fmtClock(nextLow.t) + '（' + fmtRemain(nextLow.t.getTime() - now.getTime()) + '）<span class="tidehgt"> 潮位 ' + nextLow.h + 'cm</span></div>';
   }
   html += '<div class="wavetime">気象庁の推算潮位（東京）／ ' + now.getHours() + '時' + pad2(now.getMinutes()) + '分 現在</div>';
+  html += tideChartHtml();
   body.innerHTML = html;
 }
 
