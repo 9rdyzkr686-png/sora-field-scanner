@@ -156,6 +156,10 @@ h1 {
   color: #5a4310;
   margin: 0 0 8px 0;
 }
+.chCount {
+  font-size: 14px;
+  color: #7a6a45;
+}
 .chapterText {
   font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
   font-size: 17px;
@@ -341,7 +345,9 @@ function render() {
     el("searchCount").innerHTML = "";
   } else {
     el("bookTitle").innerHTML = esc(title || "（無題）");
-    el("bookGenre").innerHTML = "ジャンル：" + esc(genre) + " ／ 全" + chapters.length + "章";
+    var totalChars = 0;
+    for (var c = 0; c < chapters.length; c++) { totalChars += chapters[c].length; }
+    el("bookGenre").innerHTML = "ジャンル：" + esc(genre) + " ／ 全" + chapters.length + "章 ・ 合計" + totalChars + "文字";
     var q = searchQuery;
     var titleHit = (q !== "" && (title || "").indexOf(q) >= 0);
     var hits = 0;
@@ -350,7 +356,7 @@ function render() {
       if (q !== "" && !titleHit && chapters[j].indexOf(q) < 0) { continue; }
       hits++;
       html += '<div class="chapter">';
-      html += '<p class="chapterHead">第' + (j + 1) + '章</p>';
+      html += '<p class="chapterHead">第' + (j + 1) + '章 <span class="chCount">（' + chapters[j].length + '文字）</span></p>';
       html += '<p class="chapterText">' + esc(chapters[j]) + '</p>';
       if (j === chapters.length - 1) {
         html += '<button class="readBtn" onclick="readLatest()">この章を読む</button>';

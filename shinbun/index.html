@@ -44,6 +44,7 @@ margin-top: 12px; border: 1px solid #1a1a1a; padding: 8px 10px;
 .weather-box.w-src { font-size: 11px; color: #555; font-family: sans-serif;}
 .w-week-title { font-size: 12px; font-weight: bold; letter-spacing: 0.2em; border-top: 1px dotted #999; margin-top: 6px; padding-top: 4px;}
 .w-week-row { font-size: 14px; line-height: 1.6; border-bottom: 1px dotted #ccc; padding: 2px 0;}
+.w-tomorrow { font-size: 15px; line-height: 1.6; margin-top: 4px; border-top: 1px dotted #999; padding-top: 4px;}
 .issue-btn {
 display: block; width: 100%; min-height: 56px; margin-top: 14px;
 font-size: 20px; font-weight: bold; letter-spacing: 0.1em;
@@ -178,6 +179,7 @@ background: #1a1a1a; color: #faf6ec; border: none; cursor: pointer;
 <div class="weather-box">
 <div class="w-title">天気欄（本物のデータ）</div>
 <div class="w-body" id="weatherBody">発行すると、ふじみ野市の今日の天気がここに出ます</div>
+<div class="w-tomorrow" id="weatherTomorrow"></div>
 <div id="weatherWeek"></div>
 <div class="w-src">出典：Open-Meteo（埼玉県ふじみ野市）</div>
 </div>
@@ -244,7 +246,7 @@ background: #1a1a1a; color: #faf6ec; border: none; cursor: pointer;
 var RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
 var CUTIE_FEED = "https://news.google.com/rss/search?q=%22CUTIE%20STREET%22&hl=ja&gl=JP&ceid=JP:ja";
 var SPACE_FEED = "https://sorae.info/feed";
-var WEATHER_URL = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=7&timezone=Asia%2FTokyo";
+var WEATHER_URL = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&forecast_days=7&timezone=Asia%2FTokyo";
 var AI_URL = "https://text.pollinations.ai/";
 
 var WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
@@ -393,6 +395,31 @@ box.textContent = "週間予報は取得できませんでした";
 }
 }
 
+/* 明日の天気（同じOpen-Meteo応答の daily[1] から描く。失敗しても今日の天気は壊さない） */
+function renderTomorrow(d) {
+var box = el("weatherTomorrow");
+if (!box) return;
+box.textContent = "";
+try {
+var times = d.daily.time;
+var codes = d.daily.weather_code;
+var maxs = d.daily.temperature_2m_max;
+var mins = d.daily.temperature_2m_min;
+if (!times || times.length < 2) return;
+var parts = String(times[1]).split("-");
+var dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+var wdNames = "日月火水木金土";
+var text = "明日の天気（" + parseInt(parts[1], 10) + "月" + parseInt(parts[2], 10) + "日・" + wdNames.charAt(dt.getDay()) + "）　" + weatherEmoji(codes[1]) + " " + weatherName(codes[1]) + "　最高 " + Math.round(maxs[1]) + "℃ ／ 最低 " + Math.round(mins[1]) + "℃";
+var pops = d.daily.precipitation_probability_max;
+if (pops && pops[1] !== null && typeof pops[1] !== "undefined") {
+text += "　降水確率 " + Math.round(pops[1]) + "%";
+}
+box.textContent = text;
+} catch (e) {
+box.textContent = "";
+}
+}
+
 function fetchWeather() {
 var xhr = new XMLHttpRequest();
 xhr.open("GET", WEATHER_URL, true);
@@ -408,6 +435,7 @@ var name = weatherName(d.daily.weather_code[0]);
 weatherText = "ふじみ野市　" + name + "　最高 " + max + "℃ ／ 最低 " + min + "℃";
 el("weatherBody").textContent = weatherText;
 renderWeek(d);
+renderTomorrow(d);
 } catch (e) {
 el("weatherBody").textContent = "天気データの読み取りに失敗しました";
 }

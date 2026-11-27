@@ -35,7 +35,7 @@ button.danger{background:#a33b2e;color:#fff;border:none;border-radius:8px;paddin
 .shopitem:last-child{border-bottom:none;}
 .shopitem .nm{flex:1;font-size:17px;padding-left:10px;word-break:break-all;}
 .shopitem .nm.done{text-decoration:line-through;color:#a08c62;}
-.chk{width:30px;height:30px;border:2px solid #c96f2e;border-radius:8px;background:#fff;color:#c96f2e;font-size:20px;line-height:26px;text-align:center;flex:none;padding:0;font-family:inherit;}
+.chk{width:44px;height:44px;border:2px solid #c96f2e;border-radius:8px;background:#fff;color:#c96f2e;font-size:22px;line-height:40px;text-align:center;flex:none;padding:0;font-family:inherit;}
 .delx{background:transparent;border:none;color:#a33b2e;font-size:20px;padding:4px 8px;flex:none;font-family:inherit;}
 .wd{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
 .wd button{width:40px;height:40px;border-radius:50%;border:1px solid #c9b98f;background:#fff;font-size:15px;color:#6b5836;padding:0;font-family:inherit;}
@@ -116,10 +116,13 @@ select{width:100%;font-size:17px;padding:10px;border:1px solid #c9b98f;border-ra
     <div style="height:8px;"></div>
     <input type="text" id="shopStoreInput" placeholder="店名（任意）例：スーパー、ドラッグストア">
   </div>
+  <div id="shopProg" style="font-size:15px;font-weight:bold;color:#8a5a1e;padding:2px 4px 8px;">買った 0/0</div>
   <div class="card" id="shopList"></div>
   <button class="sub" id="shopGroupBtn" style="width:100%;" onclick="toggleShopGroup()">店別に並べ替え</button>
   <div style="height:8px;"></div>
   <button class="sub" style="width:100%;" onclick="clearDoneShop()">買ったもの（チェック済み）を消す</button>
+  <div style="height:8px;"></div>
+  <button class="sub" style="width:100%;" onclick="resetDoneShop()">全部もどす（チェックを外す）</button>
 </section>
 
 <section id="secHealth">
@@ -429,11 +432,26 @@ function shopQtyOf(s){
   if (q > 99) return 99;
   return q;
 }
+function shopTextOf(s){
+  return (typeof s === "string") ? s : (s.t || "");
+}
+function shopDoneOf(s){
+  return (typeof s !== "string" && !!s.done);
+}
+function shopAsObj(i){
+  if (typeof shop[i] === "string") shop[i] = { t: shop[i], done: false, qty: 1 };
+  return shop[i];
+}
+function shopProgUpdate(){
+  var d = 0, i;
+  for (i = 0; i < shop.length; i++) if (shopDoneOf(shop[i])) d++;
+  el("shopProg").innerHTML = "買った " + d + "/" + shop.length;
+}
 function shopItemHtml(i){
-  var s = shop[i], st = shopStoreOf(s), q = shopQtyOf(s);
+  var s = shop[i], st = shopStoreOf(s), q = shopQtyOf(s), dn = shopDoneOf(s);
   return '<div class="shopitem">'
-    + '<button class="chk" onclick="toggleShop(' + i + ')">' + (s.done ? "✓" : "") + '</button>'
-    + '<div class="nm' + (s.done ? " done" : "") + '">' + esc(s.t)
+    + '<button class="chk" onclick="toggleShop(' + i + ')">' + (dn ? "✓" : "") + '</button>'
+    + '<div class="nm' + (dn ? " done" : "") + '">' + esc(shopTextOf(s))
     + (st !== "" ? '<div style="font-size:13px;color:#8a7a5c;">' + esc(st) + '</div>' : '')
     + '</div>'
     + '<span class="qtygrp"><button class="qtybtn" onclick="shopQty(' + i + ',-1)">−</button>'
@@ -442,14 +460,16 @@ function shopItemHtml(i){
     + '<button class="delx" onclick="deleteShop(' + i + ')">×</button></div>';
 }
 function shopQty(i, d){
-  var q = shopQtyOf(shop[i]) + d;
+  var s = shopAsObj(i);
+  var q = shopQtyOf(s) + d;
   if (q < 1) q = 1;
   if (q > 99) q = 99;
-  shop[i].qty = q;
+  s.qty = q;
   saveData("techo_shop", shop);
   renderShop();
 }
 function renderShop(){
+  shopProgUpdate();
   var html = "", i;
   if (shop.length === 0){
     el("shopList").innerHTML = '<div class="empty">リストは空です。買うものを追加してください。</div>';
@@ -496,7 +516,16 @@ function addShop(){
   renderShop();
 }
 function toggleShop(i){
-  shop[i].done = !shop[i].done;
+  var s = shopAsObj(i);
+  s.done = !s.done;
+  saveData("techo_shop", shop);
+  renderShop();
+}
+function resetDoneShop(){
+  var i;
+  for (i = 0; i < shop.length; i++){
+    if (typeof shop[i] !== "string") shop[i].done = false;
+  }
   saveData("techo_shop", shop);
   renderShop();
 }

@@ -179,6 +179,14 @@
     border: 2px solid #8a3324; border-radius: 10px; cursor: pointer;
   }
   .bathnav .ym { font-size: 19px; font-weight: bold; color: #8a3324; }
+  .bathnav2 { text-align: center; margin-bottom: 6px; }
+  .bathnav2 .navbtn {
+    min-height: 48px; min-width: 120px; padding: 8px;
+    font-size: 16px; font-weight: bold;
+    background: #fff8ea; color: #8a3324;
+    border: 2px solid #8a3324; border-radius: 10px; cursor: pointer;
+  }
+  .bathnav2 .navbtn:disabled { opacity: 0.4; cursor: default; }
   .bathsum { margin-top: 10px; font-size: 17px; font-weight: bold; }
   .bathgoal { margin-top: 10px; font-size: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .bathgoal select { font-size: 16px; min-height: 48px; padding: 6px 10px; border-radius: 6px; }
@@ -300,7 +308,7 @@
     <button type="button" class="bigbtn" id="bathTodayBtn" style="margin-top:10px;">♨ 今日入った</button>
     <div class="bathsum" id="bathSum"></div>
     <div class="bathgoal">
-      <label for="bathGoalSel">🎯 月の目標</label>
+      <label for="bathGoalSel">🎯 今月の目標</label>
       <select id="bathGoalSel">
         <option value="0">未設定</option>
         <option value="5">5回</option>
@@ -314,6 +322,9 @@
       <button type="button" class="navbtn" id="bathPrev">◀ 前月</button>
       <span class="ym" id="bathYm"></span>
       <button type="button" class="navbtn" id="bathNext">翌月 ▶</button>
+    </div>
+    <div class="bathnav2">
+      <button type="button" class="navbtn" id="bathThisMonth">今月に戻る</button>
     </div>
     <div id="bathGrid"></div>
   </div>
@@ -954,16 +965,20 @@ function renderBathCal() {
 
   /* 件数（表示中の月／通算） */
   var prefix = y + "-" + ((m + 1) < 10 ? "0" + (m + 1) : (m + 1)) + "-";
+  var curPrefix = now.getFullYear() + "-" + ((now.getMonth() + 1) < 10 ? "0" + (now.getMonth() + 1) : (now.getMonth() + 1)) + "-";
   var monthCount = 0;
+  var curMonthCount = 0;
   var total = 0;
   for (var k in data) {
     if (data[k]) {
       total++;
       if (k.indexOf(prefix) === 0) monthCount++;
+      if (k.indexOf(curPrefix) === 0) curMonthCount++;
     }
   }
+  var isCurMonth = (y === now.getFullYear() && m === now.getMonth());
   var sumLabel;
-  if (y === now.getFullYear() && m === now.getMonth()) {
+  if (isCurMonth) {
     sumLabel = "今月 " + monthCount + "回";
   } else {
     sumLabel = y + "年" + (m + 1) + "月は " + monthCount + "回";
@@ -971,14 +986,26 @@ function renderBathCal() {
   var goalVal = loadBathGoal();
   var goalSel = el("bathGoalSel");
   if (goalSel && goalSel.value !== goalVal) goalSel.value = goalVal;
+  /* 目標の進捗は、表示中の月ではなく実際の今月の記録で数える */
+  var goalText = "";
   if (goalVal !== "0") {
-    var goalCount = (goalVal === "daily") ? new Date(y, m + 1, 0).getDate() : parseInt(goalVal, 10);
-    var rate = Math.floor(monthCount * 100 / goalCount);
+    var goalCount = (goalVal === "daily") ? new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() : parseInt(goalVal, 10);
+    var rate = Math.floor(curMonthCount * 100 / goalCount);
     if (rate > 100) rate = 100;
-    sumLabel += " ／ 目標 " + goalCount + "回（達成率" + rate + "%）";
-    if (monthCount >= goalCount) sumLabel += " 🎉目標達成！";
+    if (isCurMonth) {
+      goalText = " ／ 目標 " + goalCount + "回（達成率" + rate + "%）";
+    } else {
+      goalText = " ／ 🎯今月の目標 " + curMonthCount + "回／" + goalCount + "回（達成率" + rate + "%）";
+    }
+    if (curMonthCount >= goalCount) goalText += " 🎉目標達成！";
   }
-  el("bathSum").innerHTML = sumLabel + " ／ 通算 " + total + "回";
+  if (isCurMonth) {
+    el("bathSum").innerHTML = sumLabel + goalText + " ／ 通算 " + total + "回";
+  } else {
+    el("bathSum").innerHTML = sumLabel + " ／ 通算 " + total + "回" + goalText;
+  }
+  var tmBtn = el("bathThisMonth");
+  if (tmBtn) tmBtn.disabled = isCurMonth;
 
   /* 今日ボタン */
   el("bathTodayBtn").innerHTML = data[todayKey]
@@ -1038,6 +1065,12 @@ el("bathPrev").onclick = function () {
 el("bathNext").onclick = function () {
   bathViewMonth++;
   if (bathViewMonth > 11) { bathViewMonth = 0; bathViewYear++; }
+  renderBathCal();
+};
+el("bathThisMonth").onclick = function () {
+  var d = new Date();
+  bathViewYear = d.getFullYear();
+  bathViewMonth = d.getMonth();
   renderBathCal();
 };
 

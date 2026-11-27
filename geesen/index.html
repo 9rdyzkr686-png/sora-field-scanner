@@ -148,7 +148,8 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 }
 .stampSlot.on { border: 2px solid #ffe95e; background: #3a2c00; color: #ffe95e; font-size: 19px; text-shadow: 0 0 8px #ffb700;}
 .stampMsg { color: #aab; font-size: 14px; margin: 4px 0 0 0;}
-.visitCalHead { font-size: 16px; font-weight: bold; color: #ffe95e; margin: 14px 0 6px 0;}
+.visitCalHead { font-size: 16px; font-weight: bold; color: #ffe95e; margin: 14px 0 2px 0;}
+.visitStreak { font-size: 15px; color: #ffb7e3; margin: 0 0 6px 0;}
 .visitCal { width: 100%; border-collapse: collapse;}
 .visitCal th { font-size: 13px; color: #aab; padding: 4px 0; text-align: center;}
 .visitCal th.sun { color: #ff9f9f;}
@@ -196,6 +197,7 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 <div class="stampSlots" id="stampSlots"></div>
 <p class="stampMsg" id="stampMsg"></p>
 <div class="visitCalHead" id="visitCalHead"></div>
+<div class="visitStreak" id="visitStreak"></div>
 <table class="visitCal" id="visitCal"></table>
 </div>
 <button type="button" class="machine m-pink" data-p="p1">1. うらないマシン<small>今日の運勢をAIが占います</small></button>
@@ -590,6 +592,36 @@ el('stampSlots').innerHTML = html;
 el('stampMsg').textContent = added? '本日のスタンプを押しました！': '今日のスタンプは押してあります';
 renderVisitCal();
 }
+function stampDayNum(s) {
+var p = s.split('-');
+return Math.floor(Date.UTC(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10)) / 86400000);
+}
+function computeStreaks(stamps) {
+var set = {};
+var nums = [];
+var i, n;
+for (i = 0; i < stamps.length; i++) {
+n = stampDayNum(stamps[i]);
+if (!set[n]) { set[n] = true; nums.push(n);}
+}
+nums.sort(function (a, b) { return a - b;});
+var best = 0, run = 0, prev = null;
+for (i = 0; i < nums.length; i++) {
+if (prev !== null && nums[i] === prev + 1) { run++;} else { run = 1;}
+if (run > best) best = run;
+prev = nums[i];
+}
+var now = new Date();
+var todayNum = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86400000);
+var cur = 0;
+var start = null;
+if (set[todayNum]) { start = todayNum;} else if (set[todayNum - 1]) { start = todayNum - 1;}
+if (start !== null) {
+var d = start;
+while (set[d]) { cur++; d--;}
+}
+return { cur: cur, best: best};
+}
 function renderVisitCal() {
 var stamps = loadStamps();
 var now = new Date();
@@ -603,6 +635,8 @@ set[stamps[i]] = true;
 if (stamps[i].indexOf(prefix) === 0) monthCount++;
 }
 el('visitCalHead').textContent = '📅 ' + y + '年' + (mo + 1) + '月　今月の来店：' + monthCount + '日';
+var streaks = computeStreaks(stamps);
+el('visitStreak').textContent = '🔥 連続来店 ' + streaks.cur + '日 ・ 最長 ' + streaks.best + '日';
 var firstDay = new Date(y, mo, 1).getDay();
 var daysInMonth = new Date(y, mo + 1, 0).getDate();
 var wds = ['日', '月', '火', '水', '木', '金', '土'];

@@ -367,6 +367,9 @@ background: #fff;
 <div id="dreamNote" style="font-size:13px;margin-top:6px;"></div>
 </div>
 
+<div class="label">▼ ミッション達成記録</div>
+<div id="missionLogBox" style="font-size:13px;margin:2px 0 8px 0;"></div>
+
 <div class="label">▼ 話題ヲ選ブ</div>
 <div id="chipsBox"></div>
 
@@ -955,6 +958,8 @@ var mutterDone = false;
 var startTime = new Date().getTime();
 var usedTopics = {};
 var missionsDone = 0;
+var missionText = "";
+var missionLog = [];
 var ciphersDone = 0;
 var questionsDone = 0;
 var sync = 0;
@@ -1025,6 +1030,7 @@ sync: sync,
 syncFired: syncFired,
 fragments: fragments,
 missionsDone: missionsDone,
+missionLog: missionLog,
 ciphersDone: ciphersDone,
 questionsDone: questionsDone,
 userMemorial: userMemorial,
@@ -1162,6 +1168,14 @@ if (sync < 0) sync = 0;
 syncFired = !!d.syncFired || sync >= 100;
 if (d.fragments && typeof d.fragments === "object") fragments = d.fragments;
 if (typeof d.missionsDone === "number") missionsDone = d.missionsDone;
+if (d.missionLog && typeof d.missionLog.length === "number") {
+missionLog = [];
+for (var mi = 0; mi < d.missionLog.length; mi++) {
+var me = d.missionLog[mi];
+if (me && typeof me.t === "string") missionLog.push({ t: me.t, d: (typeof me.d === "string" ? me.d : "") });
+}
+while (missionLog.length > 30) missionLog.shift();
+}
 if (typeof d.ciphersDone === "number") ciphersDone = d.ciphersDone;
 if (typeof d.questionsDone === "number") questionsDone = d.questionsDone;
 if (typeof d.userMemorial === "string") userMemorial = d.userMemorial;
@@ -1204,6 +1218,8 @@ sync = 0;
 syncFired = false;
 fragments = {};
 missionsDone = 0;
+missionLog = [];
+missionText = "";
 ciphersDone = 0;
 questionsDone = 0;
 userMemorial = "";
@@ -1237,6 +1253,7 @@ el("dreamBtn").style.display = "none";
 el("wakeBtn").style.display = "none";
 el("dreamPanel").style.display = "none";
 renderMsgBox();
+renderMissionLog();
 try { document.body.removeAttribute("data-theme");} catch (e) {}
 el("themeBtn").innerHTML = "色：グリーン";
 el("soundBtn").innerHTML = "音：ON";
@@ -1812,6 +1829,7 @@ mtext = MISSIONS[daySeed % MISSIONS.length] + "（本日ノ日替ワリ指令）
 } else {
 mtext = pick(MISSION_OBJECTS) + pick(MISSION_ACTIONS) + "（自動生成指令）";
 }
+missionText = mtext;
 missionIdx++;
 missionActive = true;
 el("missionBtn").style.display = "";
@@ -1825,6 +1843,10 @@ el("missionBtn").style.display = "none";
 var old = phaseNum();
 addLog("you", "あなた: ミッション完了！");
 missionsDone++;
+missionLog.push({ t: missionText || "観測ミッション", d: dateKey(new Date()) });
+while (missionLog.length > 30) missionLog.shift();
+missionText = "";
+renderMissionLog();
 addSync(5);
 grantFrag("tassei");
 speak(fill(pick(MISSION_DONE)), "happy");
@@ -3232,6 +3254,23 @@ else if (msgText) s.innerHTML = "前回ノ伝言ハ受信済ミデス。新シ�
 else s.innerHTML = "伝言ハアリマセン。";
 }
 
+function renderMissionLog() {
+var box = el("missionLogBox");
+if (!box) return;
+var html = "達成 " + missionsDone + "件";
+if (!missionLog.length) {
+box.innerHTML = esc(html + "（記録：マダアリマセン。ミッションヲ完了スルト、ココニ残リマス）");
+return;
+}
+var start = missionLog.length - 10;
+if (start < 0) start = 0;
+var i;
+for (i = missionLog.length - 1; i >= start; i--) {
+html += "<br>◆ " + esc(missionLog[i].d) + "：" + esc(missionLog[i].t);
+}
+box.innerHTML = html;
+}
+
 function doDiary() {
 if (booting) finishBoot();
 goSpeech();
@@ -3627,6 +3666,7 @@ initSettings();
 loadState();
 loadJournal();
 renderMsgBox();
+renderMissionLog();
 renderStatus();
 renderChips();
 bootTimer = setInterval(bootStep, 150);

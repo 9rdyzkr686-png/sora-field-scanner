@@ -110,6 +110,8 @@
   .hist-row { font-size:15px; line-height:1.55; padding:6px 0; border-bottom:1px solid rgba(44,74,124,.5); word-break:break-word; }
   .hist-row:last-child { border-bottom:none; }
   .hist-date { color:#8fa8d8; font-size:13px; }
+  #histMonthly { font-size:15px; line-height:1.7; color:#ffe9a8; margin-bottom:6px; }
+  .hist-month-title { font-size:14px; color:#8fa8d8; letter-spacing:1px; margin-top:4px; }
   #histClearBtn {
     display:block; width:100%; min-height:48px; margin-top:10px; padding:8px 12px;
     font-size:15px; font-weight:bold; color:#dfe8ff; cursor:pointer;
@@ -194,6 +196,7 @@
   <div class="exchange">
     <div class="ex-title">🧾 購入履歴</div>
     <div id="histSummary">まだ何も出ていません。</div>
+    <div id="histMonthly"></div>
     <div id="histList"></div>
     <button id="histClearBtn" type="button">履歴を消す</button>
   </div>
@@ -515,6 +518,37 @@ function recordHistory(name) {
   storeHistory(a);
   renderHistory();
 }
+/* (368) 月別集計：履歴の日付（YYYY/MM/DD HH:MM）から月ごとに再計算する純表示処理 */
+function renderMonthlySummary(a) {
+  var box = el('histMonthly');
+  if (!box) { return; }
+  box.innerHTML = '';
+  var months = {}, order = [], i, key, e;
+  for (i = 0; i < a.length; i++) {
+    if (!a[i].date || a[i].date.length < 7) { continue; }
+    key = a[i].date.substring(0, 7);
+    if (!months[key]) { months[key] = { count: 0, counts: {}, bestName: '', bestCount: 0 }; order.push(key); }
+    e = months[key];
+    e.count++;
+    e.counts[a[i].name] = (e.counts[a[i].name] || 0) + 1;
+    if (e.counts[a[i].name] > e.bestCount) { e.bestCount = e.counts[a[i].name]; e.bestName = a[i].name; }
+  }
+  if (order.length === 0) { return; }
+  order.sort();
+  order.reverse();
+  var title = document.createElement('div');
+  title.className = 'hist-month-title';
+  title.appendChild(document.createTextNode('📅 月別まとめ（直近3か月）'));
+  box.appendChild(title);
+  var showM = Math.min(3, order.length);
+  for (i = 0; i < showM; i++) {
+    key = order[i];
+    e = months[key];
+    var row = document.createElement('div');
+    row.appendChild(document.createTextNode(parseInt(key.substring(5, 7), 10) + '月：' + e.count + '回（いちばん人気：' + e.bestName + '）'));
+    box.appendChild(row);
+  }
+}
 function renderHistory() {
   var sum = el('histSummary'), list = el('histList');
   if (!sum || !list) { return; }
@@ -523,6 +557,7 @@ function renderHistory() {
   sum.innerHTML = '';
   if (a.length === 0) {
     sum.appendChild(document.createTextNode('まだ何も出ていません。'));
+    renderMonthlySummary(a);
     updateUsualBtn();
     return;
   }
@@ -537,6 +572,7 @@ function renderHistory() {
   sum.appendChild(document.createTextNode('通算' + a.length + '本・今月' + monthCount + '本'));
   sum.appendChild(document.createElement('br'));
   sum.appendChild(document.createTextNode('一番人気：' + bestName + '（' + bestCount + '回）'));
+  renderMonthlySummary(a);
   var show = Math.min(20, a.length);
   for (i = 0; i < show; i++) {
     var row = document.createElement('div');

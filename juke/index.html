@@ -254,6 +254,12 @@ a { color: #ffd54f; }
   color: #ffe082;
   font-size: 14px;
 }
+.recent-date { font-size: 13px; color: #b39ddb; }
+.fav-del.on {
+  background: #ffb300;
+  color: #3e2723;
+  font-weight: bold;
+}
 .fav-btn {
   display: block;
   width: 100%;
@@ -330,6 +336,12 @@ a { color: #ffd54f; }
     <h2>これまでにかかった曲（最新5件）</h2>
     <div class="history-empty" id="historyEmpty">まだ曲がかかっていません。</div>
     <ul id="historyList"></ul>
+  </div>
+
+  <div class="history-box">
+    <h2>最近かけた曲（保存・最新10件）</h2>
+    <div class="history-empty" id="recentEmpty">まだ曲がかかっていません。♪かけるで曲をかけると、ここに残ります。</div>
+    <div id="recentList"></div>
   </div>
 </div>
 
@@ -535,6 +547,7 @@ function renderFavs() {
   favList.innerHTML = html;
   favEmpty.style.display = favs.length ? "none" : "block";
   updateFavBtn();
+  renderPlayHistory();
 }
 
 favBtn.onclick = function () {
@@ -652,6 +665,7 @@ function playSong() {
       currentSong = { title: parsed.title, artist: parsed.artist, genre: selectedGenre };
       updateFavBtn();
       addHistory(parsed.title, selectedGenre);
+      addPlayHistory(currentSong);
       speak(parsed.talk);
     };
 
@@ -697,6 +711,102 @@ function playSong() {
 }
 
 playBtn.onclick = playSong;
+
+/* ===== 再生履歴（localStorage保存） ===== */
+var playHist = [];
+var recentList = document.getElementById("recentList");
+var recentEmpty = document.getElementById("recentEmpty");
+
+function pad2j(n) {
+  return (n < 10 ? "0" : "") + n;
+}
+
+function playNowLabel() {
+  var d = new Date();
+  return d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate() +
+    " " + pad2j(d.getHours()) + ":" + pad2j(d.getMinutes());
+}
+
+function loadPlayHistory() {
+  try {
+    var s = localStorage.getItem("juke6_history_v1");
+    if (s) {
+      var a = JSON.parse(s);
+      if (a && typeof a.length === "number") {
+        playHist = a;
+      }
+    }
+  } catch (e) {}
+}
+
+function savePlayHistory() {
+  try {
+    localStorage.setItem("juke6_history_v1", JSON.stringify(playHist));
+  } catch (e) {}
+}
+
+function addPlayHistory(song) {
+  playHist.unshift({
+    title: song.title,
+    artist: song.artist,
+    genre: song.genre,
+    date: playNowLabel()
+  });
+  while (playHist.length > 30) {
+    playHist.pop();
+  }
+  savePlayHistory();
+  renderPlayHistory();
+}
+
+function renderPlayHistory() {
+  if (!recentList) {
+    return;
+  }
+  var html = "";
+  var n = Math.min(10, playHist.length);
+  var i;
+  var s;
+  var isFav;
+  for (i = 0; i < n; i++) {
+    s = playHist[i];
+    isFav = findFav(s.title, s.artist) >= 0;
+    html += "<div class=\"fav-row\">" +
+      "<button class=\"fav-del" + (isFav ? " on" : "") + "\" type=\"button\" data-recent-fav=\"" + i + "\">" +
+      (isFav ? "★" : "☆") + "</button>" +
+      "<div class=\"fav-info\">♪ " + escapeHtml(s.title) + "<br>" +
+      escapeHtml(s.artist) + "（" + escapeHtml(s.genre) + "）<br>" +
+      "<span class=\"recent-date\">" + escapeHtml(s.date || "") + "</span></div></div>";
+  }
+  recentList.innerHTML = html;
+  recentEmpty.style.display = playHist.length ? "none" : "block";
+}
+
+recentList.onclick = function (e) {
+  var t = e.target || e.srcElement;
+  while (t && t !== recentList && t.tagName !== "BUTTON") {
+    t = t.parentNode;
+  }
+  if (t && t.tagName === "BUTTON") {
+    var idx = t.getAttribute("data-recent-fav");
+    if (idx !== null && idx !== "") {
+      var s = playHist[parseInt(idx, 10)];
+      if (s) {
+        var fi = findFav(s.title, s.artist);
+        if (fi >= 0) {
+          favs.splice(fi, 1);
+        } else {
+          favs.push({ title: s.title, artist: s.artist, genre: s.genre });
+        }
+        saveFavs();
+        renderFavs();
+        renderPlayHistory();
+      }
+    }
+  }
+};
+
+loadPlayHistory();
 
 loadFavs();
 renderFavs();

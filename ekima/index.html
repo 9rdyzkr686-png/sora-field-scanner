@@ -293,6 +293,44 @@
     margin-top: 3px;
     line-height: 1.6;
   }
+  #bentoWantBar {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    margin-bottom: 8px;
+    padding: 8px 10px;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: #ffd34d;
+    background: #241a00;
+    border: 1px solid #ffb000;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #bentoWantBar.on {
+    background: #ffb000;
+    color: #1a1200;
+  }
+  .bento-want-btn {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: #ffd34d;
+    background: #000;
+    border: 1px solid #ffb000;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .bento-want-btn.on {
+    background: #ffb000;
+    color: #1a1200;
+  }
   .lost-box {
     background: #000;
     border: 1px solid #241a00;
@@ -442,6 +480,7 @@
 <div class="tt-section">
   <div class="tt-title">駅弁カタログ</div>
   <div class="tt-note">※架空のカタログです。実際に買える駅弁ではありません</div>
+  <button id="bentoWantBar" type="button">食べたい駅弁 0件</button>
   <div id="bentoList"></div>
 </div>
 
@@ -796,20 +835,82 @@ function dateSeedNum() {
   return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
 }
 
+/* ==== (369) 駅弁の食べたいマーク ==== */
+var WANT_BEN_KEY = "ekima6_want_ben_v1";
+var wantBenFilter = false;
+function wantBenLoad() {
+  try {
+    var v = localStorage.getItem(WANT_BEN_KEY);
+    if (!v) return [];
+    var a = JSON.parse(v);
+    return (a && typeof a.length === "number") ? a : [];
+  } catch (e) { return []; }
+}
+function wantBenSave(a) {
+  try { localStorage.setItem(WANT_BEN_KEY, JSON.stringify(a)); } catch (e) {}
+}
+function wantBenHas(name) {
+  var a = wantBenLoad();
+  for (var i = 0; i < a.length; i++) if (a[i] === name) return true;
+  return false;
+}
+function toggleWantBen(idx) {
+  var name = BENTOS[idx].name;
+  var a = wantBenLoad();
+  var found = -1;
+  for (var i = 0; i < a.length; i++) if (a[i] === name) found = i;
+  if (found >= 0) { a.splice(found, 1); } else { a.push(name); }
+  wantBenSave(a);
+  renderBentos();
+}
+function renderWantBar() {
+  var bar = document.getElementById("bentoWantBar");
+  if (!bar) return;
+  var n = wantBenLoad().length;
+  if (wantBenFilter) {
+    bar.textContent = "食べたい駅弁 " + n + "件（食べたいだけ表示中／タップで すべて表示）";
+    bar.className = "on";
+  } else {
+    bar.textContent = "食べたい駅弁 " + n + "件" + (n > 0 ? "（タップで食べたいだけ表示）" : "");
+    bar.className = "";
+  }
+}
+document.getElementById("bentoWantBar").addEventListener("click", function () {
+  if (!wantBenFilter && wantBenLoad().length === 0) return;
+  wantBenFilter = !wantBenFilter;
+  renderBentos();
+});
+
 function renderBentos() {
   var recIdx = dateSeedNum() % BENTOS.length;
   var html = "";
-  var i;
+  var i, j, shown = 0;
   for (i = 0; i < BENTOS.length; i++) {
     var b = BENTOS[i];
+    var wanted = wantBenHas(b.name);
+    if (wantBenFilter && !wanted) continue;
+    shown++;
     html += '<div class="bento-card' + (i === recIdx ? " rec" : "") + '">'
       + '<span class="bento-name">' + b.name + '</span>'
       + '<span class="bento-price">' + b.price + '円</span>'
       + (i === recIdx ? '<span class="rec-badge">本日のおすすめ</span>' : '')
       + '<div class="bento-hitokoto">' + b.note + '</div>'
+      + '<button type="button" class="bento-want-btn' + (wanted ? " on" : "") + '" id="wantBenBtn' + i + '">' + (wanted ? "★ 食べたい（登録ずみ）" : "☆ 食べたい") + '</button>'
       + '</div>';
   }
+  if (shown === 0) {
+    html = '<div class="bento-hitokoto">食べたい駅弁はまだありません。上のバーをタップして すべて表示 に戻し、気になる駅弁の「食べたい」を押してください。</div>';
+  }
   document.getElementById("bentoList").innerHTML = html;
+  for (j = 0; j < BENTOS.length; j++) {
+    var btn = document.getElementById("wantBenBtn" + j);
+    if (btn) {
+      (function (idx) {
+        btn.addEventListener("click", function () { toggleWantBen(idx); });
+      })(j);
+    }
+  }
+  renderWantBar();
 }
 
 renderBentos();

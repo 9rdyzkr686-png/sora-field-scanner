@@ -148,6 +148,7 @@
 
 <div class="card">
   <h2>■ 読み物コーナー</h2>
+  <div id="seenProgress"></div>
 
   <h3>◆ ダックス小ネタ</h3>
   <div id="daxText">読み込み中…</div>
@@ -613,6 +614,7 @@ function showReading() {
   el('riddleAns').style.display = 'none';
   el('jokeText').innerHTML = esc(JOKES[jokeIdx % JOKES.length]);
   el('cutieText').innerHTML = esc(CUTIE_FACTS[cutieIdx % CUTIE_FACTS.length]);
+  noteSeenReadings();
 }
 function initReading() {
   var s = daySeed();
@@ -676,6 +678,51 @@ function renderRiddleStats() {
   var t = d.dates[riddleDateKey()] || { solved: 0, seen: 0 };
   node.innerHTML = '成績：通算 わかった' + ts + '問 ・ 答えを見た' + tv +
     '問（今日：わかった' + (t.solved || 0) + '問 ・ 見た' + (t.seen || 0) + '問）';
+}
+
+/* ---------- 読み物制覇率 ---------- */
+var SEEN_KEY = 'hima6_seen_v1';
+function loadSeen() {
+  try {
+    var raw = localStorage.getItem(SEEN_KEY);
+    if (raw) {
+      var d = JSON.parse(raw);
+      if (d) {
+        return {
+          dax: (d.dax && typeof d.dax.length === 'number') ? d.dax : [],
+          space: (d.space && typeof d.space.length === 'number') ? d.space : [],
+          riddle: (d.riddle && typeof d.riddle.length === 'number') ? d.riddle : []
+        };
+      }
+    }
+  } catch (e) {}
+  return { dax: [], space: [], riddle: [] };
+}
+function seenHas(arr, idx) {
+  for (var i = 0; i < arr.length; i++) { if (arr[i] === idx) { return true; } }
+  return false;
+}
+function noteSeenReadings() {
+  var d = loadSeen();
+  var changed = false;
+  var di = daxIdx % DAX.length;
+  var si = spaceIdx % SPACE_TRIVIA.length;
+  var ri = riddleIdx % RIDDLES.length;
+  if (!seenHas(d.dax, di)) { d.dax.push(di); changed = true; }
+  if (!seenHas(d.space, si)) { d.space.push(si); changed = true; }
+  if (!seenHas(d.riddle, ri)) { d.riddle.push(ri); changed = true; }
+  if (changed) {
+    try { localStorage.setItem(SEEN_KEY, JSON.stringify(d)); } catch (e) {}
+  }
+  renderSeenProgress(d);
+}
+function renderSeenProgress(d) {
+  var node = el('seenProgress');
+  if (!node) { return; }
+  if (!d) { d = loadSeen(); }
+  node.innerHTML = '制覇率：ダックス雑学 ' + d.dax.length + '/' + DAX.length +
+    ' ・ 宇宙雑学 ' + d.space.length + '/' + SPACE_TRIVIA.length +
+    ' ・ なぞなぞ ' + d.riddle.length + '/' + RIDDLES.length;
 }
 
 /* ---------- ニュース ---------- */

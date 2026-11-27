@@ -312,6 +312,34 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
+  .rec-filters {
+    margin: 4px 0 8px 0;
+  }
+  .rec-chip {
+    display: inline-block;
+    min-height: 48px;
+    margin: 0 6px 6px 0;
+    padding: 10px 16px;
+    font-size: 15px;
+    color: #9fb6c9;
+    background: #1d2436;
+    border: 2px solid #39445e;
+    border-radius: 24px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .rec-chip.active {
+    color: #141824;
+    background: #ffd76a;
+    border-color: #ffd76a;
+    font-weight: bold;
+  }
+  .rec-empty {
+    font-size: 15px;
+    color: #9fb6c9;
+    line-height: 1.6;
+    padding: 12px 4px;
+  }
 </style>
 </head>
 <body>
@@ -372,6 +400,7 @@
 <div class="recbox" id="recBox" style="display:none;">
   <div class="rec-title">■ 録画リスト</div>
   <div class="rec-status" id="recStatus">録画した番組がここに残ります（最大30件）。行を押すと全文が開きます。</div>
+  <div class="rec-filters" id="recFilters"></div>
   <div id="recList"></div>
   <button class="rec-clear" id="recClearBtn" type="button">録画を全部消す</button>
 </div>
@@ -883,6 +912,39 @@ function playGuide(n) {
 /* ===== 録画リスト ===== */
 var REC_KEY = "tv6_saved_v1";
 var REC_MAX = 30;
+var recFilter = 0;
+
+function recChNum(item) {
+  var s = (item && item.ch) ? String(item.ch) : "";
+  var m = /^CH(\d+)/.exec(s);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+function renderRecFilters(list) {
+  var box = el("recFilters");
+  box.innerHTML = "";
+  var present = {};
+  var nums = [];
+  var i, n;
+  for (i = 0; i < list.length; i++) {
+    n = recChNum(list[i]);
+    if (n > 0 && !present[n]) { present[n] = true; nums.push(n); }
+  }
+  nums.sort(function (a, b) { return a - b; });
+  if (recFilter !== 0 && !present[recFilter]) { recFilter = 0; }
+  var defs = [{ n: 0, label: "すべて" }];
+  for (i = 0; i < nums.length; i++) { defs.push({ n: nums[i], label: "CH" + nums[i] }); }
+  for (i = 0; i < defs.length; i++) {
+    (function (def) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "rec-chip" + (recFilter === def.n ? " active" : "");
+      b.textContent = def.label;
+      b.onclick = function () { recFilter = def.n; renderRecs(); };
+      box.appendChild(b);
+    })(defs[i]);
+  }
+}
 
 function loadRecs() {
   try {
@@ -939,10 +1001,16 @@ function renderRecs() {
   if (list.length === 0) {
     el("recStatus").textContent = "まだ録画がありません。番組を表示して「⏺ 録画する」を押してください（最大30件）。";
     el("recClearBtn").style.display = "none";
+    el("recFilters").innerHTML = "";
+    recFilter = 0;
     return;
   }
   el("recClearBtn").style.display = "block";
+  renderRecFilters(list);
+  var shown = 0;
   for (var i = 0; i < list.length; i++) {
+    if (recFilter !== 0 && recChNum(list[i]) !== recFilter) { continue; }
+    shown++;
     (function (idx, item) {
       var wrap = document.createElement("div");
       wrap.className = "rec-item";
@@ -975,6 +1043,12 @@ function renderRecs() {
       wrap.appendChild(body);
       box.appendChild(wrap);
     })(i, list[i]);
+  }
+  if (shown === 0) {
+    var emp = document.createElement("div");
+    emp.className = "rec-empty";
+    emp.textContent = "このチャンネルの録画はまだありません。";
+    box.appendChild(emp);
   }
 }
 

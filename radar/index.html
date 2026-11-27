@@ -207,6 +207,7 @@
 <div class="panel" style="margin-top:10px;">
   <div class="panel-title">OBSERVATION LOG / 観測ログ</div>
   <div class="legend" id="obsLogTotal">通算観測数：0件</div>
+  <div class="legend" id="obsLogTop"></div>
   <div id="obsLogList"></div>
   <div class="btnrow" style="margin-top:8px;">
     <button type="button" class="small" id="obsLogCopy">ログをコピー</button>
@@ -936,9 +937,33 @@ function logObs(idx) {
   saveObs();
   renderObs();
 }
+function renderObsTop() {
+  var topEl = document.getElementById("obsLogTop");
+  if (!topEl) return;
+  if (obsLog.length === 0) { topEl.innerHTML = ""; return; }
+  var counts = [], j, k, nm, found;
+  for (j = 0; j < obsLog.length; j++) {
+    nm = obsLog[j].name;
+    found = -1;
+    for (k = 0; k < counts.length; k++) {
+      if (counts[k].name === nm) { found = k; break; }
+    }
+    if (found >= 0) { counts[found].count++; }
+    else { counts.push({ name: nm, count: 1, ord: counts.length }); }
+  }
+  counts.sort(function (a, b) {
+    if (b.count !== a.count) return b.count - a.count;
+    return a.ord - b.ord;
+  });
+  var txt = "いちばん観測：" + counts[0].name + "（" + counts[0].count + "回）";
+  if (counts.length > 1) txt += "　2位：" + counts[1].name + "（" + counts[1].count + "回）";
+  if (counts.length > 2) txt += "　3位：" + counts[2].name + "（" + counts[2].count + "回）";
+  topEl.innerHTML = txt;
+}
 function renderObs() {
   var totalEl = document.getElementById("obsLogTotal");
   if (totalEl) totalEl.innerHTML = "通算観測数：" + obsLog.length + "件（この端末に保存）";
+  renderObsTop();
   var box = document.getElementById("obsLogList");
   if (!box) return;
   box.innerHTML = "";

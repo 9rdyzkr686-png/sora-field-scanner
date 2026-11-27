@@ -285,22 +285,32 @@
 <section>
   <h2>■ YouTube新着動画</h2>
   <p class="intro">タップするとYouTubeが開きます（Safariで再生）</p>
+  <p class="filterlabel">チャンネルで絞り込む</p>
+  <div class="chips" id="ytFilterBox"></div>
+  <div id="ytGroupA">
   <h3>◆ Naokiman Show</h3>
   <p class="status" id="ytAStatus">読み込み中…</p>
   <ul class="news" id="ytAList"></ul>
   <button class="retrybtn" id="retryYtA" type="button">再試行する</button>
+  </div>
+  <div id="ytGroupB">
   <h3>◆ コヤッキースタジオ</h3>
   <p class="status" id="ytBStatus">読み込み中…</p>
   <ul class="news" id="ytBList"></ul>
   <button class="retrybtn" id="retryYtB" type="button">再試行する</button>
+  </div>
+  <div id="ytGroupC">
   <h3>◆ Mr.都市伝説 関暁夫</h3>
   <p class="status" id="ytCStatus">読み込み中…</p>
   <ul class="news" id="ytCList"></ul>
   <button class="retrybtn" id="retryYtC" type="button">再試行する</button>
+  </div>
+  <div id="ytGroupD">
   <h3>◆ TOLAND VLOG</h3>
   <p class="status" id="ytDStatus">読み込み中…</p>
   <ul class="news" id="ytDList"></ul>
   <button class="retrybtn" id="retryYtD" type="button">再試行する</button>
+  </div>
 </section>
 
 <section>
@@ -1126,6 +1136,41 @@ function loadFeed(feedUrl, listId, statusId, retryId, max, label) {
     statusEl.className = "status err";
     statusEl.textContent = "見出しを取得できませんでした。";
     retryEl.style.display = "inline-block";
+  }
+}
+
+/* ===== YouTube チャンネル別フィルタ（表示のみ・追加取得なし） ===== */
+var YT_CHANNELS = ["すべて", "Naokiman Show", "コヤッキースタジオ", "Mr.都市伝説 関暁夫", "TOLAND VLOG"];
+var YT_GROUPS = ["ytGroupA", "ytGroupB", "ytGroupC", "ytGroupD"];
+var ytFilter = "すべて";
+
+function applyYtFilter() {
+  var i;
+  for (i = 0; i < YT_GROUPS.length; i++) {
+    var g = el(YT_GROUPS[i]);
+    if (!g) { continue; }
+    g.style.display = (ytFilter === "すべて" || ytFilter === YT_CHANNELS[i + 1]) ? "" : "none";
+  }
+}
+
+function buildYtChips() {
+  var box = el("ytFilterBox");
+  if (!box) { return; }
+  box.innerHTML = "";
+  var i;
+  for (i = 0; i < YT_CHANNELS.length; i++) {
+    (function (v) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (v === ytFilter ? " on" : "");
+      b.textContent = v;
+      b.onclick = function () {
+        ytFilter = v;
+        buildYtChips();
+        applyYtFilter();
+      };
+      box.appendChild(b);
+    })(YT_CHANNELS[i]);
   }
 }
 
@@ -2198,6 +2243,8 @@ function init() {
   el("retryWonder").onclick = function () {
     loadFeed(FEED_WONDER, "wonderList", "wonderStatus", "retryWonder", 3, "世界の不思議ニュース");
   };
+  buildYtChips();
+  applyYtFilter();
   loadAllFeeds();
 }
 

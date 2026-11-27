@@ -130,6 +130,7 @@
   </select>
   <input class="evaInput" type="text" id="evaFree" placeholder="活動内容を入力してください" maxlength="60">
   <button type="button" id="evaBtn">🚀 船外活動を記録</button>
+  <button type="button" id="evaCopyBtn">📋 ログをコピー</button>
   <div id="evaStatus"></div>
   <div class="evaCount" id="evaCount"></div>
   <div id="evaList"></div>
@@ -434,6 +435,39 @@ el("evaBtn").onclick = function() {
   el("evaFree").value = "";
   el("evaStatus").innerHTML = "記録しました：EVA-" + pad3(maxN + 1) + "「" + esc(act) + "」";
   evaRender();
+};
+
+function evaDateLabel(t) {
+  var parts = String(t).split(" ");
+  var d = parts[0].split("/");
+  if (d.length === 3) return d[1] + "月" + d[2] + "日";
+  return String(t);
+}
+
+el("evaCopyBtn").onclick = function() {
+  if (evaEntries.length === 0) {
+    el("evaStatus").innerHTML = "まだ記録がありません。";
+    return;
+  }
+  var lines = [];
+  var i, en;
+  for (i = evaEntries.length - 1; i >= 0; i--) {
+    en = evaEntries[i];
+    lines.push("EVA-" + pad3(en.n) + " " + evaDateLabel(en.t) + " " + en.a);
+  }
+  var ta = document.createElement("textarea");
+  ta.value = lines.join("\n");
+  ta.style.position = "absolute";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  try { ta.setSelectionRange(0, ta.value.length); } catch (e) {}
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(ta);
+  el("evaStatus").innerHTML = ok ?
+    "ログをコピーしました（" + lines.length + "件）。" :
+    "コピーできませんでした。";
 };
 
 el("evaList").onclick = function(e) {
