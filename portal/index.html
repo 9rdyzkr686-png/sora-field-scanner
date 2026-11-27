@@ -108,6 +108,83 @@ a.row:active { background: #14301d; }
   margin-top: 22px;
   line-height: 1.6;
 }
+.panel {
+  background: #0c1710;
+  border: 1px solid #2a4a35;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.stat-line { font-size: 15px; line-height: 1.8; }
+.newbadge {
+  display: inline-block;
+  background: #ff5470;
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 1px 7px;
+  border-radius: 8px;
+  margin-left: 8px;
+  vertical-align: middle;
+  letter-spacing: 1px;
+}
+#coinBar {
+  text-align: center;
+  font-size: 18px;
+  color: #ffc857;
+  margin: 4px 0 2px;
+}
+#coinNote { font-size: 13px; color: #39ff7a; margin-left: 6px; }
+.btnrow { margin: 10px 0; }
+.pbtn {
+  min-height: 48px;
+  padding: 10px 14px;
+  margin: 0 6px 8px 0;
+  background: #0c1710;
+  color: #39ff7a;
+  border: 1px solid #39ff7a;
+  border-radius: 8px;
+  font-family: "Courier New", monospace;
+  font-size: 16px;
+  cursor: pointer;
+}
+.pbtn:active { background: #14301d; }
+.pbtn.on { background: #39ff7a; color: #050807; font-weight: bold; }
+#randomBtn { display: block; width: 100%; margin: 10px 0 4px; font-weight: bold; }
+.trophy { font-size: 15px; line-height: 1.6; padding: 5px 0; }
+.trophy.earned { color: #ffc857; }
+.trophy.locked { color: #5d8268; }
+.rallyslot {
+  display: inline-block;
+  width: 47%;
+  min-height: 52px;
+  vertical-align: top;
+  background: #050807;
+  border: 1px solid #2a4a35;
+  border-radius: 8px;
+  padding: 8px 6px;
+  margin: 0 1% 8px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #5d8268;
+}
+.rallyslot .st { display: block; font-size: 24px; line-height: 1.2; }
+.rallyslot.got { color: #ffc857; border-color: #ffc857; }
+.rally-done { text-align: center; font-size: 17px; color: #ffc857; margin-top: 4px; }
+textarea.bk {
+  width: 100%;
+  min-height: 96px;
+  background: #050807;
+  color: #c9f5d6;
+  border: 1px solid #2a4a35;
+  border-radius: 8px;
+  font-size: 16px;
+  padding: 10px;
+  font-family: "Courier New", monospace;
+  margin-bottom: 8px;
+}
+.ext-line { font-size: 14px; line-height: 1.7; }
 </style>
 </head>
 <body>
@@ -115,12 +192,29 @@ a.row:active { background: #14301d; }
 <h1>PORTAL-6</h1>
 <div class="sub">全サイト一覧 — iPhone 6 専用ポータル</div>
 
+<div id="coinBar">🪙 クーコイン <span id="coinCount">0</span>枚<span id="coinNote"></span></div>
+<div class="note" style="text-align:center;">ためるだけのポイントです。サイトを開くと、1日1回・サイトごとに+1枚もらえます</div>
+
+<button id="randomBtn" class="pbtn" type="button">🎲 おまかせで開く</button>
+
+<h2>■ わたしの記録</h2>
+<div class="panel"><div id="myPageBody" class="stat-line"></div></div>
+
+<h2>■ トロフィー棚</h2>
+<div class="panel" id="trophyPanel"></div>
+
+<h2>■ スタンプラリー</h2>
+<div class="panel" id="rallyPanel"></div>
+
 <div id="favSection" style="display:none;">
 <h2>■ お気に入り</h2>
 <div id="favList"></div>
 </div>
 
 <h2>■ サイト一覧</h2>
+<div class="btnrow">
+<button id="sortDefaultBtn" class="pbtn on" type="button">通常の順番</button><button id="sortRecentBtn" class="pbtn" type="button">最近開いた順</button>
+</div>
 <div id="mainList">
 <a class="row" href="https://9rdyzkr686-png.github.io/iPhone6-board/">
   <span class="name">情報ボード</span>
@@ -353,6 +447,28 @@ a.row:active { background: #14301d; }
 <div id="autoList"></div>
 <div class="note">新しいサイトが増えると、ここに自動で出ます</div>
 
+<h2>■ まるごとバックアップ</h2>
+<div class="panel">
+<div class="stat-line">全サイトの記録を、ひとつのコードにまとめて保存できます。機種変更や万が一のときの「引き継ぎコード」にもなります。</div>
+<textarea id="bkText" class="bk" placeholder="ここにコードが出ます／読み込むコードをここに貼ってください"></textarea>
+<div class="btnrow">
+<button id="bkExportBtn" class="pbtn" type="button">書き出し</button><button id="bkCopyBtn" class="pbtn" type="button">コピー</button><button id="bkImportBtn" class="pbtn" type="button">読み込み</button>
+</div>
+<div id="bkStatus" class="note"></div>
+<div class="note">⚠ 大事なデータです。人に見せないでください</div>
+</div>
+
+<h2>■ 外部送信先一覧</h2>
+<div class="panel">
+<div class="ext-line">・Pollinations（AIの文章生成）：AIへの質問文が送られます</div>
+<div class="ext-line">・image.pollinations（AIの絵）：絵の説明文（英語）が送られます</div>
+<div class="ext-line">・Open-Meteo（天気・海洋）：場所の緯度経度が送られます</div>
+<div class="ext-line">・rss2json（ニュース取得）：ニュースの検索語が送られます</div>
+<div class="ext-line">・GitHub API（サイト一覧の自動チェック）：リクエストのみで個人データは送られません</div>
+<div class="ext-line">・P2P地震情報（地震データ取得）：リクエストのみで個人データは送られません</div>
+<div class="note">パスワードや個人情報は送られません。ただしAI欄には個人情報を書かないでください。</div>
+</div>
+
 <button id="refreshBtn" type="button">↻ 更新</button>
 
 <div class="footer">PORTAL-6 は小野さん専用の入口です<br>一覧はネットがなくても表示されます<br>★でお気に入りに固定できます（この端末に保存）</div>
@@ -406,6 +522,23 @@ function setStar(a, isFav) {
 function setupRow(a, home, idx) {
   a._home = home;
   a._idx = idx;
+  a._key = siteKeyOf(a);
+  if (isNewSite(a._key)) {
+    var nameEl = null;
+    var ci;
+    for (ci = 0; ci < a.childNodes.length; ci++) {
+      if (a.childNodes[ci].className === "name") { nameEl = a.childNodes[ci]; break; }
+    }
+    if (nameEl) {
+      var bd = document.createElement("span");
+      bd.className = "newbadge";
+      bd.appendChild(document.createTextNode("NEW"));
+      nameEl.appendChild(bd);
+    }
+  }
+  if (a.addEventListener) {
+    a.addEventListener("click", function () { onVisit(a); }, false);
+  }
   var s = document.createElement("span");
   s.className = "star";
   s.appendChild(document.createTextNode("☆"));
@@ -439,6 +572,324 @@ function arrangeFavorites() {
   }
   for (i = 0; i < favRows.length; i++) { el("favList").appendChild(favRows[i]); }
   el("favSection").style.display = favRows.length ? "block" : "none";
+  applySort();
+}
+
+/* ===== 統合機能（訪問記録・コイン・並び替え・記録集計・バックアップ） ===== */
+
+var UPDATES = {
+  "kuu": "2026-11-27", "ai": "2026-11-27", "geesen": "2026-11-27",
+  "radio": "2026-11-27", "tv": "2026-11-27", "shinbun": "2026-11-27",
+  "sento": "2026-11-27", "shokudo": "2026-11-27", "orbit": "2026-11-27",
+  "radar": "2026-11-27", "denwa": "2026-11-27", "jikan": "2026-11-27",
+  "kaiju": "2026-11-27", "ekima": "2026-11-27", "jihanki": "2026-11-27",
+  "museum": "2026-11-27", "photo": "2026-11-27", "board6": "2026-11-27",
+  "techo": "2026-11-27", "oshi": "2026-11-27", "hima": "2026-11-27"
+};
+var PHASE_NAMES = ["めざめ", "ともしび", "なかよし", "しんらい", "きずな"];
+
+var VISIT_KEY = "portal6_visits_v1";
+var COIN_KEY = "kuu_coin_v1";
+var SORT_KEY = "portal6_sort_v1";
+var visits = {};
+var coinData = { balance: 0, lastEarn: {} };
+var sortMode = "default";
+var curatedRows = [];
+
+function siteKeyOf(a) {
+  var href = a.href || "";
+  var marker = "/sora-field-scanner/";
+  var p = href.indexOf(marker);
+  if (p >= 0) {
+    var rest = href.substring(p + marker.length);
+    if (!rest) { return "kuu"; }
+    var seg = rest.split("/")[0];
+    return seg ? seg : "kuu";
+  }
+  if (href.indexOf("iPhone6-board") >= 0) { return "board"; }
+  return "site";
+}
+
+function isNewSite(key) {
+  var d = UPDATES[key];
+  if (!d) { return false; }
+  var parts = d.split("-");
+  var upd = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  var now = new Date();
+  var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var diff = Math.floor((today.getTime() - upd.getTime()) / 86400000);
+  return diff >= 0 && diff <= 7;
+}
+
+function todayStr() {
+  var d = new Date();
+  var m = d.getMonth() + 1;
+  var day = d.getDate();
+  return d.getFullYear() + "-" + (m < 10 ? "0" + m : m) + "-" + (day < 10 ? "0" + day : day);
+}
+
+function loadVisits() {
+  try {
+    var raw = window.localStorage.getItem(VISIT_KEY);
+    if (raw) {
+      var o = JSON.parse(raw);
+      if (o && typeof o === "object") { visits = o; }
+    }
+  } catch (e) {}
+}
+
+function saveVisits() {
+  try { window.localStorage.setItem(VISIT_KEY, JSON.stringify(visits)); } catch (e) {}
+}
+
+function loadCoins() {
+  try {
+    var raw = window.localStorage.getItem(COIN_KEY);
+    if (raw) {
+      var o = JSON.parse(raw);
+      if (o && typeof o === "object") {
+        if (typeof o.balance === "number") { coinData.balance = o.balance; }
+        if (o.lastEarn && typeof o.lastEarn === "object") { coinData.lastEarn = o.lastEarn; }
+      }
+    }
+  } catch (e) {}
+}
+
+function saveCoins() {
+  try { window.localStorage.setItem(COIN_KEY, JSON.stringify(coinData)); } catch (e) {}
+}
+
+function renderCoin() {
+  el("coinCount").innerHTML = String(coinData.balance);
+}
+
+function onVisit(a) {
+  var key = a._key || siteKeyOf(a);
+  visits[key] = new Date().getTime();
+  saveVisits();
+  var t = todayStr();
+  if (coinData.lastEarn[key] !== t) {
+    coinData.balance += 1;
+    coinData.lastEarn[key] = t;
+    saveCoins();
+    renderCoin();
+    el("coinNote").innerHTML = "+1 コイン！";
+    try { window.sessionStorage.setItem("portal6_coinmsg", "1"); } catch (e) {}
+  }
+}
+
+function loadSort() {
+  try {
+    var v = window.localStorage.getItem(SORT_KEY);
+    if (v === "recent") { sortMode = "recent"; }
+  } catch (e) {}
+}
+
+function saveSort() {
+  try { window.localStorage.setItem(SORT_KEY, sortMode); } catch (e) {}
+}
+
+function sortContainer(container) {
+  var rows = [];
+  var i;
+  for (i = 0; i < allRows.length; i++) {
+    if (allRows[i]._home === container && allRows[i].parentNode === container) {
+      rows.push(allRows[i]);
+    }
+  }
+  rows.sort(function (x, y) {
+    if (sortMode === "recent") {
+      var vx = visits[x._key] || 0;
+      var vy = visits[y._key] || 0;
+      if (vx !== vy) { return vy - vx; }
+    }
+    return x._idx - y._idx;
+  });
+  for (i = 0; i < rows.length; i++) { container.appendChild(rows[i]); }
+}
+
+function applySort() {
+  sortContainer(el("mainList"));
+  sortContainer(el("autoList"));
+  el("sortDefaultBtn").className = sortMode === "default" ? "pbtn on" : "pbtn";
+  el("sortRecentBtn").className = sortMode === "recent" ? "pbtn on" : "pbtn";
+}
+
+function readJSON(key) {
+  try {
+    var raw = window.localStorage.getItem(key);
+    if (!raw) { return null; }
+    return JSON.parse(raw);
+  } catch (e) { return null; }
+}
+
+function readArrLen(key) {
+  var o = readJSON(key);
+  if (o && typeof o.length === "number") { return o.length; }
+  return 0;
+}
+
+function gatherStats() {
+  var st = { kuuCount: 0, kuuPhase: 0, sento: 0, ekima: 0, geesen: 0, jikanKinds: 0, board: 0, oshiAll: false };
+  var sv = readJSON("soraSaveV1");
+  if (sv && typeof sv.count === "number" && sv.count > 0) {
+    st.kuuCount = Math.floor(sv.count);
+    var c = st.kuuCount;
+    st.kuuPhase = c >= 50 ? 5 : (c >= 35 ? 4 : (c >= 22 ? 3 : (c >= 10 ? 2 : 1)));
+  }
+  st.sento = readArrLen("sento6_stamps_v1");
+  st.ekima = readArrLen("ekima6_stamps_v1");
+  st.geesen = readArrLen("geesen6_stamps_v1");
+  var zk = readJSON("jikan6_zukan_v1");
+  if (zk && typeof zk === "object" && typeof zk.length !== "number") {
+    var n = 0;
+    for (var k in zk) { if (zk[k] > 0) { n++; } }
+    st.jikanKinds = n;
+  }
+  st.board = readArrLen("board6_entries_v1");
+  var oc = readJSON("oshi6_check_v1");
+  if (oc && typeof oc.length === "number" && oc.length >= 10) {
+    var all = true;
+    for (var i = 0; i < 10; i++) { if (!oc[i]) { all = false; } }
+    st.oshiAll = all;
+  }
+  return st;
+}
+
+function renderMyPage(st) {
+  var lines = [];
+  if (st.kuuCount > 0) {
+    lines.push("🐶 KUU-01：会話 " + st.kuuCount + "回 / PHASE 0" + st.kuuPhase + "「" + PHASE_NAMES[st.kuuPhase - 1] + "」");
+  }
+  if (st.sento > 0) { lines.push("♨ 入浴スタンプ：" + st.sento + "回"); }
+  if (st.ekima > 0) { lines.push("🚉 駅スタンプ：" + st.ekima + "日"); }
+  if (st.geesen > 0) { lines.push("🎮 来店スタンプ：" + st.geesen + "日"); }
+  if (st.jikanKinds > 0) { lines.push("🎫 切符図鑑：" + st.jikanKinds + " / 9 種"); }
+  if (st.board > 0) { lines.push("📋 要望ボード：" + st.board + "件"); }
+  if (!lines.length) { lines.push("まだ記録がありません"); }
+  el("myPageBody").innerHTML = lines.join("<br>");
+}
+
+function renderTrophies(st) {
+  var list = [
+    { icon: "🏆", label: "KUU-01 PHASE5「きずな」到達", earned: st.kuuPhase >= 5, cond: "KUU-01のPHASEを5にする" },
+    { icon: "🏆", label: "KUU-01 PHASE3到達", earned: st.kuuPhase >= 3, cond: "KUU-01のPHASEを3にする" },
+    { icon: "♨", label: "入浴スタンプ10回", earned: st.sento >= 10, cond: "SENTO-6でスタンプを10回押す" },
+    { icon: "🚉", label: "駅スタンプ7日", earned: st.ekima >= 7, cond: "EKIMA-6でスタンプを7日押す" },
+    { icon: "🎫", label: "切符図鑑コンプリート（9/9）", earned: st.jikanKinds >= 9, cond: "JIKAN-6で切符を9種集める" },
+    { icon: "🎮", label: "来店スタンプ10日", earned: st.geesen >= 10, cond: "GEESEN-6に10日来店する" }
+  ];
+  var html = "";
+  var i;
+  for (i = 0; i < list.length; i++) {
+    var t = list[i];
+    if (t.earned) {
+      html += "<div class=\"trophy earned\">" + t.icon + " " + t.label + " ✓ 獲得！</div>";
+    } else {
+      html += "<div class=\"trophy locked\">" + t.icon + " " + t.label + "（条件：" + t.cond + "）</div>";
+    }
+  }
+  el("trophyPanel").innerHTML = html;
+}
+
+function renderRally(st) {
+  var slots = [
+    { label: "GEESEN-6 来店", ok: st.geesen >= 1 },
+    { label: "SENTO-6 入浴", ok: st.sento >= 1 },
+    { label: "EKIMA-6 駅スタンプ", ok: st.ekima >= 1 },
+    { label: "JIKAN-6 切符3種", ok: st.jikanKinds >= 3 },
+    { label: "KUU-01 会話10回", ok: st.kuuCount >= 10 },
+    { label: "OSHI-6 持ち物全チェック", ok: st.oshiAll }
+  ];
+  var html = "";
+  var got = 0;
+  var i;
+  for (i = 0; i < slots.length; i++) {
+    if (slots[i].ok) { got++; }
+    html += "<span class=\"rallyslot" + (slots[i].ok ? " got" : "") + "\"><span class=\"st\">" + (slots[i].ok ? "★" : "☆") + "</span>" + slots[i].label + "</span>";
+  }
+  html += "<div class=\"stat-line\" style=\"text-align:center;\">" + got + " / 6 スタンプ</div>";
+  if (got >= 6) { html += "<div class=\"rally-done\">🎉 ラリー制覇！おめでとうございます</div>"; }
+  el("rallyPanel").innerHTML = html;
+}
+
+var BK_PREFIXES = [
+  "sora", "ai6_", "geesen6_", "sento6_", "ekima6_", "jikan6_",
+  "board6_", "techo", "hon6_", "yubin6_", "sauna6_", "jishin6_",
+  "oshi6_", "hima6_", "densetsu6_", "shinbun6_", "portal6_",
+  "rdr6_", "kuu6_", "kuu_coin"
+];
+
+function bkKeyMatches(k) {
+  var i;
+  for (i = 0; i < BK_PREFIXES.length; i++) {
+    if (k.indexOf(BK_PREFIXES[i]) === 0) { return true; }
+  }
+  return false;
+}
+
+function bkStatus(msg) { el("bkStatus").innerHTML = msg; }
+
+function bkExport() {
+  try {
+    var data = {};
+    var n = 0;
+    var i, k;
+    for (i = 0; i < window.localStorage.length; i++) {
+      k = window.localStorage.key(i);
+      if (k && bkKeyMatches(k)) {
+        data[k] = window.localStorage.getItem(k);
+        n++;
+      }
+    }
+    if (!n) { bkStatus("保存された記録がまだありませんでした"); return; }
+    var json = JSON.stringify({ app: "PORTAL-6", ver: 1, data: data });
+    el("bkText").value = btoa(unescape(encodeURIComponent(json)));
+    bkStatus(n + "件のデータを書き出しました。コピーして大切に保管してください");
+  } catch (e) {
+    bkStatus("書き出しに失敗しました");
+  }
+}
+
+function bkCopy() {
+  var ta = el("bkText");
+  if (!ta.value) { bkStatus("まず「書き出し」を押してください"); return; }
+  ta.focus();
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  bkStatus(ok ? "コピーしました" : "コピーできませんでした。長押しでコピーしてください");
+}
+
+function bkImport() {
+  var s = el("bkText").value.replace(/\s+/g, "");
+  if (!s) { bkStatus("読み込むコードを貼ってください"); return; }
+  var obj;
+  try {
+    obj = JSON.parse(decodeURIComponent(escape(atob(s))));
+  } catch (e) {
+    bkStatus("読み込めませんでした（コードが正しくないようです）");
+    return;
+  }
+  if (!obj || !obj.data || typeof obj.data !== "object") {
+    bkStatus("読み込めませんでした（バックアップの形式ではないようです）");
+    return;
+  }
+  if (!window.confirm("バックアップを読み込みます。今の記録は上書きされます。よろしいですか？")) { return; }
+  var n = 0;
+  try {
+    for (var k in obj.data) {
+      if (bkKeyMatches(k) && typeof obj.data[k] === "string") {
+        window.localStorage.setItem(k, obj.data[k]);
+        n++;
+      }
+    }
+  } catch (e) {
+    bkStatus("読み込みに失敗しました");
+    return;
+  }
+  bkStatus(n + "件のデータを読み込みました。再読み込みします…");
+  setTimeout(function () { location.reload(); }, 700);
 }
 
 function xhrGet(url, timeoutMs, onOk, onFail) {
@@ -536,12 +987,46 @@ function checkNewSites() {
 function init() {
   el("refreshBtn").onclick = function () { location.reload(); };
   loadFavs();
+  loadVisits();
+  loadCoins();
+  loadSort();
+  renderCoin();
+  try {
+    if (window.sessionStorage.getItem("portal6_coinmsg")) {
+      el("coinNote").innerHTML = "さっき +1 コイン ゲット！";
+      window.sessionStorage.removeItem("portal6_coinmsg");
+    }
+  } catch (e) {}
   var mainRows = el("mainList").getElementsByTagName("a");
   var i;
   for (i = 0; i < mainRows.length; i++) {
     setupRow(mainRows[i], el("mainList"), i);
   }
+  curatedRows = allRows.slice();
   arrangeFavorites();
+  el("sortDefaultBtn").onclick = function () {
+    sortMode = "default";
+    saveSort();
+    applySort();
+  };
+  el("sortRecentBtn").onclick = function () {
+    sortMode = "recent";
+    saveSort();
+    applySort();
+  };
+  el("randomBtn").onclick = function () {
+    if (!curatedRows.length) { return; }
+    var a = curatedRows[Math.floor(Math.random() * curatedRows.length)];
+    onVisit(a);
+    location.href = a.href;
+  };
+  el("bkExportBtn").onclick = bkExport;
+  el("bkCopyBtn").onclick = bkCopy;
+  el("bkImportBtn").onclick = bkImport;
+  var st = gatherStats();
+  renderMyPage(st);
+  renderTrophies(st);
+  renderRally(st);
   checkNewSites();
 }
 

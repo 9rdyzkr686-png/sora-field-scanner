@@ -178,6 +178,15 @@
   <ul class="zukanList" id="zukanList"></ul>
 </div>
 
+<h2>昭和の今日</h2>
+<div class="triviaBox">
+  <div class="tlabel">読み物 ― 昭和の暮らし</div>
+  <div class="ttext" id="showaYear" style="font-weight:bold; margin-bottom:6px;"></div>
+  <div class="ttext" id="showaText"></div>
+  <div class="ttext" id="showaPrice" style="margin-top:8px; font-size:15px; color:#5a5342;"></div>
+</div>
+<button class="bigBtn nextBtn" id="showaBtn">つぎの読み物 ▶</button>
+
 <footer>
   <a class="portalBtn" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
   <div class="credit">JIKAN-6 時間旅行券売機 ／ 時間旅行は自己責任でお願いします</div>
@@ -499,6 +508,55 @@ function init() {
   el("triviaBtn").onclick = nextTrivia;
   el("goBtn").onclick = depart;
   renderZukan();
+  initShowa();
+}
+
+/* ==== (174) 昭和の今日（読み物） ==== */
+var SHOWA_LIFE = [
+  "【駄菓子屋】10円玉を握りしめて駄菓子屋へ。ガラスケースの中のお菓子を指さして買うのが、子どもたちの放課後の楽しみでした。",
+  "【赤電話】街角の赤い公衆電話。10円玉を入れて、用件を手早く伝えるのが上手なかけ方でした。話し中の相手を待つ行列も、よく見かけました。",
+  "【白黒テレビ】テレビのあるお宅に近所の人が集まって、相撲や歌番組を一緒に見た時代です。画面の前が、小さな映画館のようでした。",
+  "【給食】アルミの食器にコッペパンと脱脂粉乳（スキムミルク）。揚げパンが出る日は、クラス中が朝からそわそわしていました。",
+  "【プロレス中継】金曜の夜はプロレス中継。力道山の空手チョップに、日本中のお茶の間が熱狂しました。",
+  "【チャンネル争い】テレビのチャンネルは、ガチャガチャ回すダイヤル式。誰が回すかで、兄弟げんかになるのも日常でした。",
+  "【三種の神器】テレビ・洗濯機・冷蔵庫は「三種の神器」と呼ばれ、豊かな暮らしの象徴でした。一台買うたびに、家族でお祝いしたものです。",
+  "【夕方の商店街】夕方になると商店街は買い物客でいっぱい。コロッケの匂いと、威勢のいい呼び込みの声が響いていました。",
+  "【銭湯】大きな湯船と、壁に描かれた富士山の絵。番台の人に「いらっしゃい」と迎えられ、帰りはコーヒー牛乳が定番でした。",
+  "【紙芝居】公園に紙芝居のおじさんが自転車でやって来ると、子どもたちがわっと集まりました。水あめを買いながら見るのが決まりでした。",
+  "【ラジオ体操】夏休みの朝はラジオ体操。スタンプカードを首から下げて、眠い目をこすりながら近所の公園へ通いました。",
+  "【黒電話】家に一台の黒電話は、家族みんなのものでした。長電話をすると「電話代がかかるよ」と、後ろから声がかかりました。",
+  "【氷屋さん】電気冷蔵庫が広まる前は、氷屋さんが大きな氷の塊を配達してくれました。氷を入れて冷やす、木の冷蔵庫が台所にありました。",
+  "【運動会】運動会のお昼ごはんは、家族総出のお弁当が楽しみでした。騎馬戦とリレーでは、町内じゅうが大声援を送りました。",
+  "【映画館】映画館は娯楽の王様でした。二本立て・三本立てが当たり前で、朝から晩まで一日中いられる場所だったのです。"
+];
+var SHOWA_PRICES = [
+  "ラーメン一杯 約100円（昭和40年代）",
+  "喫茶店のコーヒー一杯 約100円（昭和40年代）",
+  "銭湯の入浴料 約30円（昭和40年ごろ）",
+  "はがき 約5〜7円（昭和40年代）",
+  "都バスの初乗り 約15〜20円（昭和40年代）",
+  "週刊誌一冊 約50〜70円（昭和40年代）",
+  "国産たばこ一箱 約80円（昭和40年代後半）"
+];
+var showaIdx = 0;
+
+function renderShowa() {
+  el("showaText").innerHTML = SHOWA_LIFE[showaIdx];
+  el("showaPrice").innerHTML = "昭和の物価の目安：" +
+    SHOWA_PRICES[dateSeed() % SHOWA_PRICES.length] + " ※いずれも目安です";
+}
+
+function initShowa() {
+  var now = new Date();
+  var sy = now.getFullYear() - 1925;
+  el("showaYear").innerHTML = "今日は" + (now.getMonth() + 1) + "月" + now.getDate() +
+    "日。もし昭和が続いていたら、昭和" + sy + "年です。";
+  showaIdx = dateSeed() % SHOWA_LIFE.length;
+  renderShowa();
+  el("showaBtn").onclick = function () {
+    showaIdx = (showaIdx + 1) % SHOWA_LIFE.length;
+    renderShowa();
+  };
 }
 
 init();

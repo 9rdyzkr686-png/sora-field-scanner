@@ -322,6 +322,15 @@
     color: #99700a;
     padding-bottom: 2px;
   }
+  .stn-name {
+    font-size: 28px;
+    font-weight: bold;
+    color: #ffd34d;
+    letter-spacing: 4px;
+    text-align: center;
+    text-shadow: 0 0 8px rgba(255, 176, 0, 0.6);
+    margin-bottom: 8px;
+  }
 </style>
 </head>
 <body>
@@ -391,6 +400,15 @@
   <div id="stampGrid"></div>
   <button class="btn" id="btnStamp" type="button" style="margin-top:10px;">駅スタンプを押す</button>
   <div class="msg" id="stampMsg"></div>
+</div>
+
+<div class="tt-section">
+  <div class="tt-title">東上線 駅名読み物</div>
+  <div class="tt-note">池袋から川越まで、東武東上線の駅と街の読み物です</div>
+  <div class="stn-name" id="stnName">池袋</div>
+  <div class="lost-box" id="stnText"></div>
+  <button class="btn" id="btnStnNext" type="button">次の駅へ ▶</button>
+  <div class="msg" id="stnCount"></div>
 </div>
 
 <div class="footer">
@@ -837,6 +855,42 @@ function pressStamp() {
 
 document.getElementById("btnStamp").addEventListener("click", pressStamp);
 renderStamps();
+
+/* ==== (172) 東上線 駅名読み物 ==== */
+var STATIONS = [
+  { name: "池袋", text: "東上線の始発駅で、山手線なども乗り入れる大きなターミナル駅です。東口と西口で街の表情が違い、デパートや劇場、大きな公園までそろう、東京を代表する繁華街のひとつです。" },
+  { name: "成増", text: "「なります」と読む、板橋区の駅です。もとは畑の広がる地域で、駅名は江戸時代から続く地名を引き継いだものとされます。今は商店街のある、落ち着いた住宅地です。" },
+  { name: "和光市", text: "埼玉県の玄関口のひとつです。市名の「和光」は、穏やかで美しい言葉として選ばれました。理化学研究所がある街としても知られ、駅前は再開発で新しく生まれ変わっています。" },
+  { name: "朝霞", text: "名前の由来には諸説あり、朝の光や霞（かすみ）にちなむという話が伝わります。自衛隊の駐屯地や広い公園があり、休日は家族連れでにぎわう街です。" },
+  { name: "志木", text: "新河岸川の河岸（かし）として、舟運で栄えた歴史を持つ街の駅です。駅はお隣の新座市側にもまたがっています。柳瀬川の桜並木は、地元の春の自慢です。" },
+  { name: "ふじみ野", text: "東上線では比較的新しい、平成生まれの駅です。市名の「ふじみ野」は、富士山が見える野原のイメージから名づけられたと言われます。大きな商業施設が近く、若い家族の多い街です。" },
+  { name: "上福岡", text: "もとは上福岡市という別の市の中心駅でしたが、合併でふじみ野市の一部になりました。新河岸川の舟運で栄えた「福岡河岸」の歴史が残る地域です。" },
+  { name: "川越", text: "「小江戸」として知られる観光の街です。黒い蔵造りの町並みと「時の鐘」がシンボルで、菓子屋横丁の駄菓子も名物。東上線の旅の終点にふさわしい、風情のある駅です。" }
+];
+var stnIdx = 0;
+
+function renderStation() {
+  var s = STATIONS[stnIdx];
+  document.getElementById("stnName").textContent = s.name;
+  document.getElementById("stnText").textContent = s.text;
+  document.getElementById("stnCount").textContent =
+    "駅 " + (stnIdx + 1) + " / " + STATIONS.length + "（池袋 → 川越）";
+}
+
+function nextStation() {
+  stnIdx = stnIdx + 1;
+  if (stnIdx >= STATIONS.length) {
+    stnIdx = 0;
+    renderStation();
+    document.getElementById("stnCount").textContent =
+      "終点・川越に到着。折り返し池袋に戻ります（駅 1 / " + STATIONS.length + "）";
+    return;
+  }
+  renderStation();
+}
+
+document.getElementById("btnStnNext").addEventListener("click", nextStation);
+renderStation();
 </script>
 </body>
 </html>

@@ -211,6 +211,12 @@
   .result { color: #ffe3e8; font-size: 17px; white-space: pre-line; }
   .mapwrap { text-align: center; }
   canvas#mapCanvas { background: #0a0812; border: 1px solid #3a2a5e; max-width: 100%; }
+  .regionbtns { margin: 10px 0 2px 0; text-align: center; }
+  .regionbtns button { margin: 0 6px 8px 0; padding: 12px 14px; min-height: 48px; font-size: 15px; }
+  .teasercard { border: 1px solid #33255a; background: #0d0a18; padding: 10px 12px; margin-bottom: 10px; }
+  .teasercard .t-name { font-size: 17px; color: #e8dcff; margin: 0 0 4px 0; }
+  .teasercard .t-line { margin: 0 0 8px 0; color: #b9f4cd; line-height: 1.6; }
+  .teasercard button { width: 100%; min-height: 48px; }
   .routestep { display: block; width: 100%; margin-bottom: 8px; text-align: left; }
   .calrow { border-bottom: 1px dotted #33255a; padding: 8px 2px; }
   .calrow:last-child { border-bottom: none; }
@@ -340,9 +346,11 @@
 
 <section>
   <h2>■ 舞台マップ</h2>
-  <p class="intro">伝説の舞台・発祥とされる地域の簡易マップです。赤い丸をタップすると、その地域の伝説に絞り込んでアーカイブを開きます。数字は収蔵数です。</p>
+  <p class="intro">伝説の舞台・発祥とされる地域の簡易マップです。赤い丸をタップすると、その地域の伝説に絞り込んでアーカイブを開きます。数字は収蔵数です。下の地方ボタンを押しても同じことができ、その土地の「小話」（地方の伝承・ミニ伝説）も表示されます。</p>
   <div class="mapwrap"><canvas id="mapCanvas" width="340" height="400"></canvas></div>
   <p class="status" id="mapNote">「全国」が舞台の伝説は、日本のどこででも起こりうる話として収蔵されています。</p>
+  <div class="regionbtns" id="regionBtns"></div>
+  <div id="mapTeaser"><p class="status">地方のピンかボタンを押すと、その土地の小話が出ます。</p></div>
 </section>
 
 <section>
@@ -1750,6 +1758,93 @@ function regionCount(region) {
   return n;
 }
 
+/* 地方の小話（伝承・ミニ伝説）。ref はアーカイブの伝説番号（-1 は対応話なし）。
+   有名な一般的な伝承・噂のみで、実在の事件や人物とは関係ありません。 */
+var REGION_TEASERS = {
+  "北海道": [
+    { t: "雪の線路に響く音", d: "雪の夜、無人の線路から「テケテケ」と這うような音が聞こえる――北の大地で語られる、あの怪異の噂。", ref: 2 },
+    { t: "雪原のヒッチハイカー", d: "吹雪の夜道で車に乗せたはずの客が、次の瞬間、後部座席から消えていたという目撃談。", ref: -1 }
+  ],
+  "東北": [
+    { t: "座敷わらしの宿", d: "古い宿の一室に子どもの霊が棲んでいるという伝承。見た者には福が訪れると言われる、東北のほほえましい語り。", ref: -1 },
+    { t: "山道の口笛", d: "夜の山道で口笛を吹くと「何か」が近づいてくる。聞こえても、決して返事をしてはいけないという言い伝え。", ref: -1 }
+  ],
+  "関東": [
+    { t: "首なしライダー", d: "深夜の幹線道路を、首のないバイク乗りが猛スピードで走り抜けるという、関東で語られる定番の噂。", ref: -1 },
+    { t: "ゴミ捨て場の人面犬", d: "夜のゴミ置き場をあさる犬の顔が、どう見ても人間のおじさんだった――関東の路地で目撃談が相次いだという話。", ref: 3 }
+  ],
+  "中部": [
+    { t: "マスクの女の問いかけ", d: "夕暮れの路地で「私、きれい？」と聞かれたら――中部の町が発祥とも言われる、昭和を震え上がらせた伝説。", ref: 0 },
+    { t: "時刻表にない駅", d: "いつもの電車が、存在しないはずの駅に停まった。中部の私鉄沿線が舞台とされる、ネット怪談の古典。", ref: 5 }
+  ],
+  "関西": [
+    { t: "笑うマネキン", d: "閉店後の店のマネキンが、朝になると少しだけ笑顔になっているという、関西の商店街で語られる噂。", ref: -1 },
+    { t: "川面に立つ女", d: "雨の夜、川沿いの道の真ん中に白い服の女が立っている。近づこうとすると、霧のように消えるという語り。", ref: -1 }
+  ],
+  "中国・四国": [
+    { t: "お遍路さんの白い影", d: "遍路道で道に迷った人の前に、白装束の影が現れて道を示したという、四国に語り継がれる不思議な話。", ref: -1 },
+    { t: "山奥の太鼓の音", d: "誰もいないはずの山奥から、祭りの太鼓のような音が聞こえてくる。音のする方へ行ってはいけないという語り。", ref: -1 }
+  ],
+  "九州・沖縄": [
+    { t: "キジムナー", d: "ガジュマルの古木に棲むという、沖縄の小さな精霊の伝承。魚の目玉が大好物で、仲良くなると福をもたらすとか。", ref: -1 },
+    { t: "海に呼ばれる声", d: "静かな夜の浜辺で、沖の方から自分の名前を呼ぶ声が聞こえる。決して答えてはいけないという言い伝え。", ref: -1 }
+  ],
+  "海外": [
+    { t: "鏡の中の女", d: "真夜中の浴室で、鏡に向かって名前を唱えると血まみれの女が現れる。欧米で古くから伝わる呼び出しの儀式。", ref: 18 },
+    { t: "写真の片隅の長身の男", d: "子どもの集団写真の隅に写り込む、のっぺらぼうで長身のスーツの男。ネットの創作から世界に広まった伝説。", ref: 19 }
+  ]
+};
+
+function showRegionTeasers(region) {
+  var box = el("mapTeaser");
+  if (!box) { return; }
+  box.innerHTML = "";
+  var list = REGION_TEASERS[region] || [];
+  var head = document.createElement("p");
+  head.className = "filterlabel";
+  head.textContent = "■ " + region + "の小話（地方の伝承・ミニ伝説）";
+  box.appendChild(head);
+  var i;
+  for (i = 0; i < list.length; i++) {
+    (function (tz) {
+      var card = document.createElement("div");
+      card.className = "teasercard";
+      var nm = document.createElement("p");
+      nm.className = "t-name";
+      nm.textContent = tz.t;
+      card.appendChild(nm);
+      var ln = document.createElement("p");
+      ln.className = "t-line";
+      ln.textContent = tz.d;
+      card.appendChild(ln);
+      if (tz.ref >= 0 && LEGENDS[tz.ref]) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = "アーカイブで『" + LEGENDS[tz.ref].name + "』を開く";
+        btn.onclick = function () { openCard(tz.ref); };
+        card.appendChild(btn);
+      }
+      box.appendChild(card);
+    })(list[i]);
+  }
+  var note = document.createElement("p");
+  note.className = "status";
+  note.textContent = "※小話は各地で語られる伝承・噂を、娯楽として紹介するものです。";
+  box.appendChild(note);
+}
+
+function applyRegionFilter(region) {
+  currentRegion = region;
+  currentCat = "すべて";
+  currentEra = "すべて";
+  buildChips();
+  renderArchive();
+  showRegionTeasers(region);
+  el("mapNote").textContent = "「" + region + "」の伝説 " + regionCount(region) + " 件に絞り込みました。下に地方の小話も出しています。";
+  var t = el("mapTeaser");
+  if (t && t.scrollIntoView) { t.scrollIntoView(); }
+}
+
 function initMap() {
   var canvas = el("mapCanvas");
   if (!canvas || !canvas.getContext) { return; }
@@ -1796,16 +1891,22 @@ function initMap() {
       if (d < bestD) { bestD = d; best = MAP_POINTS[j]; }
     }
     if (best) {
-      currentRegion = best.region;
-      currentCat = "すべて";
-      currentEra = "すべて";
-      buildChips();
-      renderArchive();
-      el("mapNote").textContent = "「" + best.region + "」の伝説 " + regionCount(best.region) + " 件に絞り込みました（アーカイブを確認してください）。";
-      var sec = el("archiveSection");
-      if (sec && sec.scrollIntoView) { sec.scrollIntoView(); }
+      applyRegionFilter(best.region);
     }
   };
+  var rb = el("regionBtns");
+  if (rb) {
+    rb.innerHTML = "";
+    for (i = 0; i < MAP_POINTS.length; i++) {
+      (function (pt) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.textContent = pt.region + "（" + regionCount(pt.region) + "）";
+        b.onclick = function () { applyRegionFilter(pt.region); };
+        rb.appendChild(b);
+      })(MAP_POINTS[i]);
+    }
+  }
 }
 
 function init() {

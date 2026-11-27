@@ -197,6 +197,64 @@ margin-bottom: 12px;
 #wariResult { font-size: 27px; font-weight: bold; color: #ffb45e; margin-top: 14px; line-height: 1.5;}
 #wariNote { font-size: 17px; color: #ffe1ae; margin-top: 4px; min-height: 24px;}
 .credit { text-align: center; font-size: 12px; color: #9a7748; line-height: 1.6;}
+.noren { margin: 2px 0 16px;}
+.noren-rod {
+height: 9px;
+background: #54371c;
+background: linear-gradient(180deg, #7a5228, #3c2512);
+border-radius: 5px;
+box-shadow: 0 2px 4px rgba(0,0,0,.5);
+}
+.noren-panels { display: table; width: 100%; border-spacing: 5px 0; border-collapse: separate;}
+.noren-panel {
+display: table-cell;
+width: 25%;
+height: 96px;
+text-align: center;
+vertical-align: middle;
+font-size: 36px;
+font-weight: bold;
+letter-spacing: 2px;
+border-radius: 0 0 8px 8px;
+box-shadow: inset 0 -14px 18px rgba(0,0,0,.28), inset 0 10px 12px rgba(255,255,255,.10), 0 4px 8px rgba(0,0,0,.45);
+animation: norenSway 5.5s ease-in-out infinite alternate;
+-webkit-animation: norenSway 5.5s ease-in-out infinite alternate;
+}
+.noren-panel.d1 { animation-delay: -1.2s; -webkit-animation-delay: -1.2s;}
+.noren-panel.d2 { animation-delay: -2.6s; -webkit-animation-delay: -2.6s;}
+.noren-panel.d3 { animation-delay: -3.9s; -webkit-animation-delay: -3.9s;}
+@keyframes norenSway {
+from { transform: rotate(-0.7deg);}
+to { transform: rotate(0.7deg);}
+}
+@-webkit-keyframes norenSway {
+from { -webkit-transform: rotate(-0.7deg);}
+to { -webkit-transform: rotate(0.7deg);}
+}
+body.noren-ai .noren-panel { background: #22386b; background: linear-gradient(180deg, #2c4a8a, #1a2c55); color: #f5ecd7;}
+body.noren-enji .noren-panel { background: #7a1f2b; background: linear-gradient(180deg, #93303e, #5e1621); color: #f8ecd9;}
+body.noren-kinari .noren-panel { background: #e8dcc0; background: linear-gradient(180deg, #f2e8d2, #d9c9a4); color: #4a3220;}
+body.noren-ai h1 { color: #9db8e8; text-shadow: 0 0 10px rgba(120,160,240,.5);}
+body.noren-ai .lantern { color: #9db8e8; text-shadow: 0 0 14px rgba(120,160,240,.7);}
+body.noren-ai .sub { color: #8fa3c8;}
+body.noren-ai .card h2 { color: #9db8e8;}
+body.noren-ai #totalLine { color: #9db8e8;}
+body.noren-ai .portallink { color: #9db8e8;}
+body.noren-enji h1 { color: #ffab91; text-shadow: 0 0 10px rgba(255,130,100,.5);}
+body.noren-enji .lantern { color: #ffab91; text-shadow: 0 0 14px rgba(255,130,100,.7);}
+body.noren-enji .sub { color: #d99a86;}
+body.noren-enji .card h2 { color: #ffab91;}
+body.noren-enji #totalLine { color: #ffab91;}
+body.noren-enji .portallink { color: #ffab91;}
+body.noren-kinari h1 { color: #ecd9a8; text-shadow: 0 0 10px rgba(240,215,150,.45);}
+body.noren-kinari .lantern { color: #ecd9a8; text-shadow: 0 0 14px rgba(240,215,150,.65);}
+body.noren-kinari .sub { color: #c9b183;}
+body.noren-kinari .card h2 { color: #ecd9a8;}
+body.noren-kinari #totalLine { color: #ecd9a8;}
+body.noren-kinari .portallink { color: #ecd9a8;}
+.norenbtn { margin-bottom: 10px;}
+.norenbtn:last-child { margin-bottom: 0;}
+.norenbtn.noren-active { background: #8a4b16; border-color: #ffb45e; color: #fff3dd;}
 </style>
 </head>
 <body>
@@ -204,6 +262,16 @@ margin-bottom: 12px;
 <div class="lantern">🏮</div>
 <h1>SHOKUDO-6 深夜食堂</h1>
 <p class="sub">夜更けの小さな食堂。今夜も静かに営業中。</p>
+
+<div class="noren">
+<div class="noren-rod"></div>
+<div class="noren-panels">
+<div class="noren-panel">深</div>
+<div class="noren-panel d1">夜</div>
+<div class="noren-panel d2">食</div>
+<div class="noren-panel d3">堂</div>
+</div>
+</div>
 
 <div class="card">
 <h2>★ 本日のおすすめ</h2>
@@ -272,6 +340,14 @@ margin-bottom: 12px;
 <button type="button" class="orderbtn" id="wariCalcBtn">計算する</button>
 <div id="wariResult"></div>
 <p id="wariNote"></p>
+</div>
+
+<div class="card">
+<h2>■ 暖簾のデザイン</h2>
+<p style="font-size:15px;color:#d9b47e;line-height:1.6;margin-bottom:12px;">店先の暖簾の色を変えられます。選んだデザインは、この端末に保存されます。</p>
+<button type="button" class="togglebtn norenbtn" id="norenBtnAi">藍色の暖簾</button>
+<button type="button" class="togglebtn norenbtn" id="norenBtnEnji">えんじの暖簾</button>
+<button type="button" class="togglebtn norenbtn" id="norenBtnKinari">生成りの暖簾</button>
 </div>
 
 <div class="card">
@@ -714,9 +790,46 @@ el("wariResult").innerHTML = "一人あたり " + per + "円";
 el("wariNote").innerHTML = note;
 };
 
+var NOREN_KEY = "shokudo6_noren_v1";
+var NOREN_THEMES = ["ai", "enji", "kinari"];
+var norenTheme = "ai";
+
+function applyNoren() {
+document.body.className = "noren-" + norenTheme;
+el("norenBtnAi").className = "togglebtn norenbtn" + (norenTheme === "ai"? " noren-active": "");
+el("norenBtnEnji").className = "togglebtn norenbtn" + (norenTheme === "enji"? " noren-active": "");
+el("norenBtnKinari").className = "togglebtn norenbtn" + (norenTheme === "kinari"? " noren-active": "");
+}
+
+function setNoren(theme) {
+var ok = false;
+for (var i = 0; i < NOREN_THEMES.length; i++) {
+if (NOREN_THEMES[i] === theme) { ok = true;}
+}
+if (!ok) { return;}
+norenTheme = theme;
+try { localStorage.setItem(NOREN_KEY, theme);} catch (e) { /* 保存できなくても表示は切り替える */}
+applyNoren();
+}
+
+function loadNoren() {
+try {
+var saved = localStorage.getItem(NOREN_KEY);
+for (var i = 0; i < NOREN_THEMES.length; i++) {
+if (NOREN_THEMES[i] === saved) { norenTheme = saved;}
+}
+} catch (e) { /* 読めなければ藍色のまま */}
+applyNoren();
+}
+
+el("norenBtnAi").onclick = function () { setNoren("ai");};
+el("norenBtnEnji").onclick = function () { setNoren("enji");};
+el("norenBtnKinari").onclick = function () { setNoren("kinari");};
+
 buildMenu();
 pickOsusume();
 initDiary();
+loadNoren();
 </script>
 </body>
 </html>

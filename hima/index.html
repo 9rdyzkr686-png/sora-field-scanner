@@ -98,6 +98,8 @@
   .mark-item { border: 1px dashed #1d7a3f; border-radius: 6px; padding: 8px; margin: 0 0 8px 0; white-space: pre-wrap; }
   .mark-kind { color: #00e5ff; font-size: 14px; }
   .greet-out { white-space: pre-wrap; border: 1px dashed #ffb000; border-radius: 8px; padding: 10px; margin-top: 8px; }
+  button.zk-item.sel { background: #0d4d24; border-color: #ffb000; color: #ffb000; }
+  .zk-name { color: #ffb000; font-size: 20px; margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -371,6 +373,26 @@
   <div class="stat" id="grStatus"></div>
   <div class="greet-out" id="grText" style="display:none"></div>
   <button id="grCopy" type="button" style="display:none">全文コピー</button>
+</div>
+
+<div class="card">
+  <h2>■ ダックス名鑑</h2>
+  <div>ダックスフンドは、体の大きさ（胸囲）でカニンヘン／ミニチュア／スタンダードに、毛のタイプでロング／スムース／ワイヤーに分かれます。名前をタップすると説明が出ます。一般的な犬種情報です。</div>
+  <div id="zkList"></div>
+  <div class="greet-out" id="zkDetail" style="display:none">
+    <div class="zk-name" id="zkName"></div>
+    <div id="zkBody"></div>
+  </div>
+  <div class="stat">※どのタイプも胴が長いので、段差の上り下りなど、腰への負担には気をつけてあげましょう。</div>
+</div>
+
+<div class="card">
+  <h2>■ ダックス川柳（AI）</h2>
+  <div>AIがダックスフンドの川柳を五・七・五で作ります。「お手本を見る」はAIを使わない内蔵の川柳です。</div>
+  <button id="srAiBtn" type="button">川柳を作ってもらう</button>
+  <button id="srSampleBtn" type="button">お手本を見る</button>
+  <div class="stat" id="srStatus"></div>
+  <div class="greet-out" id="srText" style="display:none"></div>
 </div>
 
 <div class="card">
@@ -1495,6 +1517,136 @@ function initWave4() {
   el('mkBtn').onclick = loadMarket;
 }
 initWave4();
+</script>
+<script>
+/* ---------- ダックス名鑑 ---------- */
+var DAX_ZUKAN = [
+  { name: 'カニンヘン・ロングヘアード',
+    body: '大きさ：いちばん小さいサイズ。胸囲およそ30cmまで、体重は4kg前後が目安です。\n毛：長くてやわらかい毛が特徴。耳や胸、しっぽの飾り毛が優雅です。ブラッシングはこまめに。\n性格：おだやかで甘えん坊な子が多いと言われます。' },
+  { name: 'カニンヘン・スムースヘアード',
+    body: '大きさ：胸囲およそ30cmまでの最小サイズ。体重は4kg前後が目安です。\n毛：短くてなめらかな毛。お手入れは楽ですが、寒さには少し弱いタイプです。\n性格：もともとの猟犬らしい、活発で勇敢な一面があります。' },
+  { name: 'カニンヘン・ワイヤーヘアード',
+    body: '大きさ：胸囲およそ30cmまでの最小サイズ。体重は4kg前後が目安です。\n毛：針金のように硬い毛と、あごひげ・まゆ毛がチャームポイント。\n性格：テリアの血が入ったと言われ、明るくて少し頑固な子が多いようです。' },
+  { name: 'ミニチュア・ロングヘアード',
+    body: '大きさ：真ん中のサイズ。胸囲およそ30〜35cm、体重は5kg前後が目安です。\n毛：長くてさらさらの毛。毛玉ができやすいので、毎日のブラッシングがおすすめです。\n性格：穏やかで人なつっこく、日本でも特に人気のタイプです。' },
+  { name: 'ミニチュア・スムースヘアード',
+    body: '大きさ：胸囲およそ30〜35cm、体重は5kg前後が目安です。\n毛：短毛でつやがあり、ダックスらしいすっきりした姿です。\n性格：好奇心旺盛で遊び好き。穴掘りとお散歩が大好きです。' },
+  { name: 'ミニチュア・ワイヤーヘアード',
+    body: '大きさ：胸囲およそ30〜35cm、体重は5kg前後が目安です。\n毛：硬いワイヤー状の毛。抜け毛を整える「ストリッピング」というお手入れをすることもあります。\n性格：陽気で勇敢、家族思い。表情が豊かで人気があります。' },
+  { name: 'スタンダード・ダックスフンド',
+    body: '大きさ：いちばん大きいサイズ。胸囲35cm以上、体重は9kg前後からが目安です。\n毛：ロング・スムース・ワイヤーの3タイプがあります。\n性格：アナグマ猟の猟犬らしい堂々としたタイプ。力強く、頼りがいのある存在です。' },
+  { name: 'ダップル柄（毛柄）',
+    body: '種類ではなく「毛柄」の名前です。体にまだら模様が入る柄で、シルバーダップルなどが知られます。\nどのサイズ・毛のタイプにも現れることがあります。\n目が青くなることもある、不思議で人気の柄です。' },
+  { name: 'パイボールド柄（毛柄）',
+    body: 'こちらも毛柄の名前。白地に色の斑（はん）が入る柄で、背中や耳に色が残る子が多いです。\nもとはアメリカで人気が出た柄と言われます。\n白が多い分、夏の強い日差しには少し注意してあげましょう。' }
+];
+var zkCur = -1;
+function zkShow(i) {
+  zkCur = i;
+  for (var j = 0; j < DAX_ZUKAN.length; j++) {
+    var b = el('zkBtn' + j);
+    if (b) { b.className = 'linkbtn zk-item' + (j === i ? ' sel' : ''); }
+  }
+  el('zkName').textContent = DAX_ZUKAN[i].name;
+  el('zkBody').textContent = DAX_ZUKAN[i].body;
+  el('zkDetail').style.display = 'block';
+}
+function initZukan() {
+  var html = '';
+  for (var i = 0; i < DAX_ZUKAN.length; i++) {
+    html += '<button type="button" class="linkbtn zk-item" id="zkBtn' + i + '">' + esc(DAX_ZUKAN[i].name) + '</button>';
+  }
+  el('zkList').innerHTML = html;
+  for (var j = 0; j < DAX_ZUKAN.length; j++) {
+    (function (n) {
+      el('zkBtn' + n).onclick = function () { zkShow(n); };
+    })(j);
+  }
+}
+
+/* ---------- ダックス川柳（AI） ---------- */
+var SR_SAMPLES = [
+  { t: '胴長で ソファのはしっこ 遠すぎる', c: '端まで行くのに小旅行です。' },
+  { t: '散歩道 あっちこっちと におい旅', c: 'お散歩は寄り道こそが本番。' },
+  { t: '布団にも もぐりこむのが 仕事です', c: 'もぐるのは猟犬の本能です。' },
+  { t: '耳長く 風になびいて 散歩道', c: '耳が旗みたいにはためきます。' },
+  { t: 'おやつ見て 目がキラキラと 待てできぬ', c: '「待て」がいちばん難しい芸です。' }
+];
+var srBusy = false;
+var srSampleIdx = 0;
+function srError(msg, detail) {
+  var h = esc(msg);
+  if (detail !== null && detail !== undefined) {
+    h += ' <span style="font-size:13px">詳細：HTTP ' + detail + '</span>';
+  }
+  el('srStatus').innerHTML = h;
+}
+function srMake() {
+  if (srBusy) { return; }
+  srBusy = true;
+  el('srAiBtn').disabled = true;
+  var sec = 0;
+  el('srStatus').innerHTML = '考え中… 0秒';
+  var timer = setInterval(function () {
+    sec++;
+    el('srStatus').innerHTML = '考え中… ' + sec + '秒';
+  }, 1000);
+  var finished = false;
+  function done() {
+    if (finished) { return true; }
+    finished = true;
+    srBusy = false;
+    el('srAiBtn').disabled = false;
+    clearInterval(timer);
+    return false;
+  }
+  var prompt = 'ダックスフンドを題材にして、五・七・五の面白い川柳を1つ作ってください。そのあと改行して、一言コメントを1行添えてください。全体で120文字以内。マークダウン記号は使わないでください。';
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://text.pollinations.ai/', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 90000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    var body = xhr.responseText || '';
+    var status = xhr.status;
+    if (done()) { return; }
+    if (status === 402 || body.indexOf('Free limit') >= 0) {
+      srError('本日の無料AI回線は上限に達しました。明日の朝9時に回復します', status);
+      return;
+    }
+    if (status !== 200 || !body.replace(/\s/g, '')) {
+      srError('AI回線が混み合っています', status);
+      return;
+    }
+    var txt = body.replace(/^\s+|\s+$/g, '');
+    el('srText').style.display = 'block';
+    el('srText').textContent = txt;
+    el('srStatus').innerHTML = 'AIの川柳ができました';
+  };
+  xhr.ontimeout = function () {
+    if (done()) { return; }
+    srError('時間切れになりました。もう一度お試しください', null);
+  };
+  xhr.onerror = function () {
+    if (done()) { return; }
+    srError('AI回線が混み合っています', 0);
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+}
+function srSample() {
+  var n = srSampleIdx % SR_SAMPLES.length;
+  var s = SR_SAMPLES[n];
+  srSampleIdx++;
+  el('srText').style.display = 'block';
+  el('srText').textContent = s.t + '\n' + s.c;
+  el('srStatus').innerHTML = 'お手本 ' + (n + 1) + '／' + SR_SAMPLES.length + '（内蔵の川柳です）';
+}
+function initWave165() {
+  initZukan();
+  el('srAiBtn').onclick = srMake;
+  el('srSampleBtn').onclick = srSample;
+}
+initWave165();
 </script>
 </body>
 </html>

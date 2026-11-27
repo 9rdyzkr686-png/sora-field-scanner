@@ -143,6 +143,32 @@
   .choicebtn:disabled { opacity: 0.7; cursor: default; }
   .quizq { font-size: 18px; font-weight: bold; margin-top: 6px; }
   .quizfb { margin-top: 10px; font-size: 16px; }
+  /* 暖簾デザイン切替 */
+  .norenbtn.active { background: #f3d9a4; border-width: 3px; }
+  body.noren-ai .noren { background: #2b4a7a; border-bottom-color: #1c3255; }
+  body.noren-ai .panel h2, body.noren-ai .wxday, body.noren-ai .yucard .yuname, body.noren-ai .colname { color: #2b4a7a; }
+  body.noren-ai .bigbtn, body.noren-ai .chatrow button { background: #2b4a7a; }
+  body.noren-ai .bigbtn:active { background: #1c3255; }
+  body.noren-ai .subbtn, body.noren-ai .voicebtn { color: #2b4a7a; border-color: #2b4a7a; }
+  body.noren-ai .topbar a { color: #2b4a7a; }
+  body.noren-ai .panel { box-shadow: 0 2px 0 rgba(43,74,122,0.15); }
+  body.noren-enji .noren { background: #7e2233; border-bottom-color: #571523; }
+  body.noren-enji .panel h2, body.noren-enji .wxday, body.noren-enji .yucard .yuname, body.noren-enji .colname { color: #7e2233; }
+  body.noren-enji .bigbtn, body.noren-enji .chatrow button { background: #7e2233; }
+  body.noren-enji .bigbtn:active { background: #571523; }
+  body.noren-enji .subbtn, body.noren-enji .voicebtn { color: #7e2233; border-color: #7e2233; }
+  body.noren-enji .topbar a { color: #7e2233; }
+  body.noren-enji .panel { box-shadow: 0 2px 0 rgba(126,34,51,0.15); }
+  body.noren-matcha .noren { background: #5d7030; border-bottom-color: #43531f; }
+  body.noren-matcha .panel h2, body.noren-matcha .wxday, body.noren-matcha .yucard .yuname, body.noren-matcha .colname { color: #5d7030; }
+  body.noren-matcha .bigbtn, body.noren-matcha .chatrow button { background: #5d7030; }
+  body.noren-matcha .bigbtn:active { background: #43531f; }
+  body.noren-matcha .subbtn, body.noren-matcha .voicebtn { color: #5d7030; border-color: #5d7030; }
+  body.noren-matcha .topbar a { color: #5d7030; }
+  body.noren-matcha .panel { box-shadow: 0 2px 0 rgba(93,112,48,0.15); }
+  /* 名湯コラム */
+  .colname { font-size: 21px; font-weight: bold; color: #8a3324; margin-top: 10px; }
+  .colbody { margin-top: 6px; }
   .footer { text-align: center; font-size: 13px; color: #8a7a5f; margin-top: 22px; }
 </style>
 </head>
@@ -167,6 +193,16 @@
 </div>
 
 <div class="wrap">
+
+  <!-- 暖簾デザイン -->
+  <div class="panel">
+    <h2>🎨 暖簾（のれん）のデザイン</h2>
+    <div>お店の顔、暖簾の色を変えられます。選んだ色は、この端末に保存されます。</div>
+    <button type="button" class="subbtn norenbtn" id="norenBtnAi">藍色（あいいろ）</button>
+    <button type="button" class="subbtn norenbtn" id="norenBtnEnji">えんじ色</button>
+    <button type="button" class="subbtn norenbtn" id="norenBtnMatcha">抹茶（まっちゃ）グリーン</button>
+    <div class="stamp" id="norenInfo"></div>
+  </div>
 
   <!-- 番台の掲示板 -->
   <div class="panel">
@@ -218,6 +254,16 @@
     <div>実際に来たつもりで、今日の日付のスタンプを押せます（この端末の中だけに記録されます）。</div>
     <button type="button" class="bigbtn" id="stampBtn" style="margin-top:10px;">♨ 今日のスタンプを押す</button>
     <div class="stamp" id="stampInfo"></div>
+  </div>
+
+  <!-- 名湯コラム -->
+  <div class="panel">
+    <h2>📰 名湯コラム</h2>
+    <div>日本各地の名湯を、番台さんが少しずつ紹介します。</div>
+    <div class="colname" id="colName"></div>
+    <div class="colbody" id="colBody"></div>
+    <button type="button" class="subbtn" id="colNextBtn">次のコラムへ</button>
+    <div class="stamp" id="colInfo"></div>
   </div>
 
   <div class="footer">SENTO-6 銭湯いちばん ／ お湯は熱め、心はぬくめ</div>
@@ -645,6 +691,88 @@ el("stampBtn").onclick = function () {
   renderStamps("♨ 今日のスタンプを押しました！");
 };
 renderStamps("");
+
+/* ---------- 暖簾デザイン切替 ---------- */
+var NOREN_KEY = "sento6_noren_v1";
+var NOREN_NAMES = { ai: "藍色", enji: "えんじ色", matcha: "抹茶グリーン" };
+var NOREN_BTNS = { ai: "norenBtnAi", enji: "norenBtnEnji", matcha: "norenBtnMatcha" };
+
+function loadNoren() {
+  try {
+    var v = window.localStorage.getItem(NOREN_KEY);
+    if (v === "ai" || v === "enji" || v === "matcha") return v;
+  } catch (e) {}
+  return "";
+}
+
+function applyNoren(key) {
+  document.body.className = key ? ("noren-" + key) : "";
+  for (var k in NOREN_BTNS) {
+    var b = el(NOREN_BTNS[k]);
+    if (b) b.className = "subbtn norenbtn" + (k === key ? " active" : "");
+  }
+  el("norenInfo").innerHTML = key
+    ? ("いまの暖簾：" + NOREN_NAMES[key] + "です。")
+    : "いまの暖簾：元の色（あずき色）です。";
+}
+
+function setNoren(key) {
+  applyNoren(key);
+  try { window.localStorage.setItem(NOREN_KEY, key); } catch (e) {}
+}
+
+el("norenBtnAi").onclick = function () { setNoren("ai"); };
+el("norenBtnEnji").onclick = function () { setNoren("enji"); };
+el("norenBtnMatcha").onclick = function () { setNoren("matcha"); };
+applyNoren(loadNoren());
+
+/* ---------- 名湯コラム ---------- */
+var COLUMNS = [
+  {
+    name: "草津温泉（群馬県）",
+    text: "日本三名泉のひとつに数えられる名湯です。\n町の中心にある「湯畑」からは、毎分たくさんの湯が湧き出しています。\n強い酸性の湯で、湯もみ板で湯をかき混ぜて温度を下げる「湯もみ」が名物です。\n湯上がりは体がぽかぽか。寒い日に思い出す湯です。"
+  },
+  {
+    name: "箱根温泉（神奈川県）",
+    text: "東京から電車で手軽に行ける、人気の温泉地です。\n「箱根十七湯」と呼ばれるほど、地区ごとに泉質の違う湯が集まっています。\n芦ノ湖や美術館めぐりと合わせて楽しめるのが魅力です。\n寄木細工などの伝統工芸でも知られています。"
+  },
+  {
+    name: "別府温泉（大分県）",
+    text: "町じゅうから湯けむりが上がる、温泉の町です。\n源泉の数と湧き出る湯の量は、日本でも有数とされます。\n色とりどりの源泉をめぐる「地獄めぐり」が名物です。\n砂湯や蒸し湯など、湯の楽しみ方が多いのも特徴です。"
+  },
+  {
+    name: "道後温泉（愛媛県）",
+    text: "日本でも最古級といわれる温泉で、約3000年の歴史があると伝わります。\n国の重要文化財でもある道後温泉本館が、町のシンボルです。\n夏目漱石の小説「坊っちゃん」ゆかりの地としても知られています。\n温泉街には足湯もあり、散策しながら楽しめます。"
+  },
+  {
+    name: "有馬温泉（兵庫県）",
+    text: "日本三古泉のひとつに数えられる、歴史の古い温泉です。\n鉄分を含んで赤茶色に濁る「金泉」と、炭酸の「銀泉」が名物です。\n豊臣秀吉が愛した湯としても知られています。\n神戸の山あいにあり、坂の多い温泉街の散策も楽しみです。"
+  },
+  {
+    name: "下呂温泉（岐阜県）",
+    text: "草津・有馬と並ぶ「日本三名泉」のひとつです。\n飛騨川沿いに旅館が並ぶ、情緒のある温泉地です。\nアルカリ性のなめらかな湯は「美人の湯」とも呼ばれます。\n川沿いの足湯でのんびりするのもおすすめです。"
+  }
+];
+var colIdx = 0;
+
+function renderColumn() {
+  var c = COLUMNS[colIdx];
+  el("colName").innerHTML = esc(c.name);
+  el("colBody").innerHTML = esc(c.text).replace(/\n/g, "<br>");
+  el("colInfo").innerHTML = "コラム " + (colIdx + 1) + " / " + COLUMNS.length;
+}
+
+el("colNextBtn").onclick = function () {
+  colIdx = (colIdx + 1) % COLUMNS.length;
+  renderColumn();
+};
+
+(function () {
+  var d = new Date();
+  var seed = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  colIdx = seed % COLUMNS.length;
+  renderColumn();
+})();
 </script>
 </body>
 </html>
