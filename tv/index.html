@@ -340,6 +340,41 @@
     line-height: 1.6;
     padding: 12px 4px;
   }
+  .rec-search {
+    margin: 0 0 8px 0;
+  }
+  .rec-search input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 48px;
+    padding: 10px 12px;
+    font-size: 16px;
+    color: #eaf2f8;
+    background: #141824;
+    border: 2px solid #39445e;
+    border-radius: 10px;
+    -webkit-appearance: none;
+  }
+  .rec-search-clear {
+    display: inline-block;
+    min-height: 48px;
+    margin-top: 8px;
+    padding: 10px 16px;
+    font-size: 15px;
+    color: #ffb37a;
+    background: #2b1d16;
+    border: 2px solid #8a5a3d;
+    border-radius: 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .rec-hit {
+    font-size: 15px;
+    font-weight: bold;
+    color: #ffd76a;
+    margin: 0 0 6px 0;
+  }
 </style>
 </head>
 <body>
@@ -401,6 +436,11 @@
   <div class="rec-title">■ 録画リスト</div>
   <div class="rec-status" id="recStatus">録画した番組がここに残ります（最大30件）。行を押すと全文が開きます。</div>
   <div class="rec-filters" id="recFilters"></div>
+  <div class="rec-search">
+    <input type="text" id="recSearchInput" placeholder="録画を検索（タイトル・本文・チャンネル）">
+    <button class="rec-search-clear" id="recSearchClearBtn" type="button" style="display:none;">✕ 検索をクリア</button>
+  </div>
+  <div class="rec-hit" id="recHit"></div>
   <div id="recList"></div>
   <button class="rec-clear" id="recCopyBtn" type="button" style="display:none;">録画を全文コピー</button>
   <button class="rec-clear" id="recClearBtn" type="button">録画を全部消す</button>
@@ -914,6 +954,13 @@ function playGuide(n) {
 var REC_KEY = "tv6_saved_v1";
 var REC_MAX = 30;
 var recFilter = 0;
+var recQuery = "";
+
+function recMatchesQuery(item) {
+  if (!recQuery) { return true; }
+  var hay = ((item.ch || "") + "\n" + (item.title || "") + "\n" + (item.text || "")).toLowerCase();
+  return hay.indexOf(recQuery) >= 0;
+}
 
 function recChNum(item) {
   var s = (item && item.ch) ? String(item.ch) : "";
@@ -1004,6 +1051,8 @@ function renderRecs() {
     el("recClearBtn").style.display = "none";
     el("recCopyBtn").style.display = "none";
     el("recFilters").innerHTML = "";
+    el("recHit").textContent = "";
+    el("recSearchClearBtn").style.display = recQuery ? "inline-block" : "none";
     recFilter = 0;
     return;
   }
@@ -1013,6 +1062,7 @@ function renderRecs() {
   var shown = 0;
   for (var i = 0; i < list.length; i++) {
     if (recFilter !== 0 && recChNum(list[i]) !== recFilter) { continue; }
+    if (!recMatchesQuery(list[i])) { continue; }
     shown++;
     (function (idx, item) {
       var wrap = document.createElement("div");
@@ -1047,10 +1097,17 @@ function renderRecs() {
       box.appendChild(wrap);
     })(i, list[i]);
   }
+  if (recQuery) {
+    el("recHit").textContent = shown + "件ヒット";
+    el("recSearchClearBtn").style.display = "inline-block";
+  } else {
+    el("recHit").textContent = "";
+    el("recSearchClearBtn").style.display = "none";
+  }
   if (shown === 0) {
     var emp = document.createElement("div");
     emp.className = "rec-empty";
-    emp.textContent = "このチャンネルの録画はまだありません。";
+    emp.textContent = recQuery ? "検索に一致する録画はありません。" : "このチャンネルの録画はまだありません。";
     box.appendChild(emp);
   }
 }
@@ -1100,6 +1157,16 @@ function clearRecs() {
   renderRecs();
   el("recStatus").textContent = "録画を全部消しました。";
 }
+
+el("recSearchInput").oninput = function () {
+  recQuery = el("recSearchInput").value.replace(/^\s+|\s+$/g, "").toLowerCase();
+  renderRecs();
+};
+el("recSearchClearBtn").onclick = function () {
+  el("recSearchInput").value = "";
+  recQuery = "";
+  renderRecs();
+};
 
 /* ===== 時間帯のおすすめ ===== */
 function recoChannelByHour(h) {

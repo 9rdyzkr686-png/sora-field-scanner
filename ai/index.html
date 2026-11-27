@@ -138,6 +138,7 @@
   .favmeta { font-size:12px; color:#a9bde0; margin-top:4px; }
   .favdel { font-size:13px; min-height:48px; margin-top:6px; padding:6px 14px; }
   .favempty { font-size:14px; color:#a9bde0; line-height:1.6; }
+  .favcount { font-size:13px; color:#a9bde0; margin-bottom:8px; }
   .sentitem { border:1px dashed #7a5fd0; padding:8px; margin-bottom:8px; }
   body.sora .sentitem { border-color:#33ff66; }
   .sentdate { font-size:12px; color:#a9bde0; margin-bottom:4px; }
@@ -257,6 +258,7 @@
 
 <div class="panel" id="favPanel" style="display:none">
   <div class="panel-title">FAVORITES / お気に入り回答</div>
+  <div id="favCount" class="favcount">お気に入り 0件</div>
   <div id="favList"></div>
   <div class="utilrow">
     <button type="button" id="favCopyBtn">お気に入りを全文コピー</button>
@@ -581,6 +583,8 @@ function attachCopyBtn(msgEl, text) {
 }
 
 function renderFavs() {
+  var favCountEl = document.getElementById("favCount");
+  if (favCountEl) favCountEl.innerHTML = "お気に入り " + favs.length + "件";
   favListEl.innerHTML = "";
   if (favs.length === 0) {
     var d = document.createElement("div");

@@ -1409,16 +1409,20 @@ return node.textContent || node.innerText || "";
 function applyLogFilter() {
 var box = el("logBox");
 var nodes = box.childNodes;
-var i, node, hits = 0, total = 0;
+var i, node;
 for (i = 0; i < nodes.length; i++) {
 node = nodes[i];
 if (node.nodeType !== 1) continue;
-total++;
 if (!logSearchQuery || logNodeText(node).toLowerCase().indexOf(logSearchQuery) >= 0) {
 node.style.display = "";
-hits++;
 } else {
 node.style.display = "none";
+}
+}
+var hits = 0, total = logLines.length;
+if (logSearchQuery) {
+for (i = 0; i < logLines.length; i++) {
+if (logLines[i].toLowerCase().indexOf(logSearchQuery) >= 0) hits++;
 }
 }
 var cnt = el("logSearchCount");

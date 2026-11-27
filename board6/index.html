@@ -251,19 +251,20 @@ el("counter").innerHTML = "未済み " + undone + "件（全" + entries.length +
 var priCount = 0;
 var doneCount = 0;
 var siteCounts = {};
+var siteDoneCounts = {};
 var siteOrder = [];
 for (i = 0; i < entries.length; i++) {
-if (entries[i].done) { doneCount++; continue; }
 var sName = siteOf(entries[i]);
+if (siteCounts[sName] === undefined) { siteCounts[sName] = 0; siteDoneCounts[sName] = 0; siteOrder.push(sName); }
+if (entries[i].done) { doneCount++; siteDoneCounts[sName]++; continue; }
 if (entries[i].pri) priCount++;
-if (siteCounts[sName]) { siteCounts[sName]++; }
-else { siteCounts[sName] = 1; siteOrder.push(sName); }
+siteCounts[sName]++;
 }
 var sumHtml = "要望" + undone + "件（★優先" + priCount + "件）（対応済み" + doneCount + "件）";
 if (siteOrder.length > 0) {
 var sumParts = [];
 for (i = 0; i < siteOrder.length; i++) {
-sumParts.push(esc(siteOrder[i]) + "：" + siteCounts[siteOrder[i]] + "件");
+sumParts.push(esc(siteOrder[i]) + "：未" + siteCounts[siteOrder[i]] + "件・済" + siteDoneCounts[siteOrder[i]] + "件");
 }
 sumHtml += "<br>" + sumParts.join(" ／ ");
 }

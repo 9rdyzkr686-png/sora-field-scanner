@@ -158,6 +158,8 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 .visitCal td { font-size: 15px; color: #889; padding: 6px 0; text-align: center;}
 .visitCal td.on { color: #ffe95e; font-weight: bold; background: #3a2c00; text-shadow: 0 0 8px #ffb700;}
 .visitCal td.today { box-shadow: inset 0 0 0 2px #ff8fd8;}
+.visitCalNav { margin: 6px 0 8px 0;}
+.visitCalNav button { min-height: 48px; min-width: 88px; margin: 0 6px 6px 0; padding: 10px 14px; font-size: 15px; font-weight: bold; color: #ffe95e; background: #1a1a3e; border: 2px solid #555580; border-radius: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;}
 .rankPanel { border: 3px solid #3a3a6e; background: #0a0a20; border-radius: 10px; padding: 12px 14px; margin: 16px 0 4px 0;}
 .rankTitle { font-size: 18px; font-weight: bold; color: #ff8fd8; letter-spacing: 1px; margin-bottom: 6px;}
 .rankRow { font-size: 16px; color: #ccd; line-height: 1.9;}
@@ -199,6 +201,7 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 <p class="stampMsg" id="stampMsg"></p>
 <div class="visitCalHead" id="visitCalHead"></div>
 <div class="visitStreak" id="visitStreak"></div>
+<div class="visitCalNav"><button type="button" id="calPrevBtn">◀ 前月</button><button type="button" id="calThisBtn">今月</button><button type="button" id="calNextBtn">次月 ▶</button></div>
 <table class="visitCal" id="visitCal"></table>
 </div>
 <button type="button" class="machine m-pink" data-p="p1">1. うらないマシン<small>今日の運勢をAIが占います</small></button>
@@ -646,10 +649,13 @@ while (set[d]) { cur++; d--;}
 }
 return { cur: cur, best: best};
 }
+var calView = null;
 function renderVisitCal() {
 var stamps = loadStamps();
 var now = new Date();
 var y = now.getFullYear(), mo = now.getMonth();
+if (calView) { y = calView.y; mo = calView.mo; }
+var isCurMonth = (y === now.getFullYear() && mo === now.getMonth());
 var t = todayStr();
 var prefix = y + '-' + (mo + 1 < 10 ? '0' : '') + (mo + 1);
 var set = {};
@@ -658,7 +664,7 @@ for (var i = 0; i < stamps.length; i++) {
 set[stamps[i]] = true;
 if (stamps[i].indexOf(prefix) === 0) monthCount++;
 }
-el('visitCalHead').textContent = '📅 ' + y + '年' + (mo + 1) + '月　今月の来店：' + monthCount + '日';
+el('visitCalHead').textContent = '📅 ' + y + '年' + (mo + 1) + '月　' + (isCurMonth ? '今月の来店：' : 'この月の来店：') + monthCount + '日';
 var streaks = computeStreaks(stamps);
 el('visitStreak').textContent = '🔥 連続来店 ' + streaks.cur + '日 ・ 最長 ' + streaks.best + '日';
 var firstDay = new Date(y, mo, 1).getDay();
@@ -688,6 +694,19 @@ html += '</tr>';
 }
 el('visitCal').innerHTML = html;
 }
+function calMove(dm) {
+var now = new Date();
+var y = calView ? calView.y : now.getFullYear();
+var mo = calView ? calView.mo : now.getMonth();
+mo += dm;
+while (mo < 0) { mo += 12; y--; }
+while (mo > 11) { mo -= 12; y++; }
+calView = { y: y, mo: mo };
+renderVisitCal();
+}
+el('calPrevBtn').onclick = function () { calMove(-1); };
+el('calNextBtn').onclick = function () { calMove(1); };
+el('calThisBtn').onclick = function () { calView = null; renderVisitCal(); };
 
 /* ---------- 占い連携 ---------- */
 var FORTUNE_KEY = 'geesen6_fortune_v1';
