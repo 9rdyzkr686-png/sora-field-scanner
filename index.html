@@ -2294,7 +2294,7 @@ hideCursor();
 el("faceArt").innerHTML = esc(FACES.wow);
 el("speechText").innerHTML = esc("AI回線で通信中…");
 var prompt = "あなたは観測生物SORA-01。1980年代パソコン風のレトロな端末口調で、日本語で短く（100文字以内）答えてください。相手は観察者の小野さんです。質問：" + text;
-var url = "https://text.pollinations.ai/" + encodeURIComponent(prompt);
+var payload = JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" });
 var finished = false;
 var retried = false;
 function finishOk(body) {
@@ -2329,7 +2329,8 @@ if (finished) return;
 var xhr = new XMLHttpRequest();
 var settled = false;
 try {
-xhr.open("GET", url, true);
+xhr.open("POST", "https://text.pollinations.ai/", true);
+xhr.setRequestHeader("Content-Type", "application/json");
 xhr.timeout = 45000;
 xhr.onload = function () {
 if (settled || finished) return;
@@ -2355,7 +2356,7 @@ if (settled || finished) return;
 settled = true;
 failOrRetry();
 };
-xhr.send();
+xhr.send(payload);
 } catch (e) {
 failOrRetry();
 }

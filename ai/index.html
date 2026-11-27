@@ -324,7 +324,8 @@ function sendMessage(text) {
   function attempt() {
     try {
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", API_BASE + encodeURIComponent(buildPrompt(text)), true);
+      xhr.open("POST", API_BASE, true);
+      xhr.setRequestHeader("Content-Type", "application/json");
       xhr.timeout = 60000;
       xhr.onreadystatechange = function () {
         if (xhr.readyState !== 4) return;
@@ -337,7 +338,7 @@ function sendMessage(text) {
       };
       xhr.ontimeout = function () { failOrRetry(false); };
       xhr.onerror = function () { failOrRetry(false); };
-      xhr.send(null);
+      xhr.send(JSON.stringify({ messages: [{ role: "user", content: buildPrompt(text) }], model: "openai-fast" }));
     } catch (e) {
       failOrRetry(false);
     }
