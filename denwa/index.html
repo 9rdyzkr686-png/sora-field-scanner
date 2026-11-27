@@ -94,6 +94,22 @@
     padding: 10px 16px;
   }
   .book b { color: #e8c97a; }
+  .ringlabel { font-size: 14px; color: #c9a86a; margin: 4px 0 0; }
+  .anspanel {
+    max-width: 360px; margin: 16px auto 0;
+    background: #241a12; border: 2px solid #c9a86a; border-radius: 14px;
+    padding: 14px 16px;
+    font-size: 16px; line-height: 1.6; text-align: left;
+    display: none;
+  }
+  .anspanel .who { font-size: 14px; color: #e8c97a; display: block; margin-bottom: 8px; }
+  .anspanel input {
+    width: 100%; font-size: 17px; padding: 12px;
+    border-radius: 10px; border: 2px solid #c9a86a;
+    background: #fffaf0; color: #2a1c10;
+  }
+  .ansmsg { font-size: 15px; color: #e8c97a; min-height: 22px; margin-top: 6px; }
+  .ansnote { font-size: 13px; color: #8a7a5c; margin-top: 6px; }
   footer { margin-top: 26px; }
   a.portal {
     display: inline-block; min-height: 48px; line-height: 48px;
@@ -123,9 +139,26 @@
   <div class="btnrow">
     <button class="act" id="btnVoice">ボイス ON</button>
   </div>
+  <p class="ringlabel">呼び出し音のえらびかた（押すと試聴できます）</p>
+  <div class="btnrow">
+    <button class="act" id="btnRing0">レトロ電話</button>
+    <button class="act" id="btnRing1">電子音</button>
+    <button class="act" id="btnRing2">メロディ</button>
+  </div>
 </div>
 
 <div class="reply" id="reply"><span class="who" id="replyWho"></span><span id="replyText"></span></div>
+
+<div class="anspanel" id="ansPanel">
+  <span class="who">📼 留守番電話の伝言</span>
+  <input type="text" id="ansInput" maxlength="60" placeholder="伝言を書く（60字まで）">
+  <div class="btnrow">
+    <button class="act" id="btnRec">録音する</button>
+    <button class="act" id="btnPlay" style="display:none;">再生する</button>
+  </div>
+  <div class="ansmsg" id="ansMsg"></div>
+  <div class="ansnote">※ 伝言はこのページの中だけの記録です。端末を閉じると消えます。</div>
+</div>
 
 <div class="book">
   <b>でんわちょう</b><br>
@@ -133,6 +166,10 @@
   333 … 都市伝説ホットライン<br>
   808 … 宇宙ステーション<br>
   555 … 占い交換台<br>
+  767 … ニュース直通（CUTIE STREET）<br>
+  909 … 天気直通（ふじみ野）<br>
+  117 … 時報<br>
+  111 … 留守番電話<br>
   それ以外 … どうなるかは おたのしみ
 </div>
 
@@ -152,6 +189,15 @@ var audioCtx = null;
 var dachsIdx = 0;
 var legendIdx = 0;
 var jokeIdx = 0;
+var ringStyle = 0; /* 0 レトロ電話 / 1 電子音 / 2 メロディ */
+var ansMessage = "";
+var ansReactIdx = 0;
+
+var ANS_REACTIONS = [
+  "ダックスより：伝言、耳を長くして、しっかり聞きましたワン！",
+  "ダックスより：その伝言、電話の横で待っていたぼくが預かりましたワン。",
+  "ダックスより：伝言を聞いて、しっぽがゆれましたワン。ありがとう。"
+];
 
 var DACHS_LINES = [
   "ワン！ ダックス直通です。…はい、なでなでの予約ですね。あいてますよ。",
@@ -260,6 +306,192 @@ function answer(who, text) {
   speak(text);
 }
 
+function escHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function playRing() {
+  if (ringStyle === 1) {
+    beep(1250, 0.12, 0);
+    beep(1250, 0.12, 0.25);
+    beep(1250, 0.12, 0.5);
+    beep(1250, 0.12, 1.1);
+    beep(1250, 0.12, 1.35);
+    beep(1250, 0.12, 1.6);
+  } else if (ringStyle === 2) {
+    var notes = [523, 659, 784, 1047, 784, 659];
+    for (var i = 0; i < notes.length; i++) {
+      beep(notes[i], 0.22, i * 0.26);
+    }
+  } else {
+    beep(400, 0.5, 0);
+    beep(400, 0.5, 1.0);
+  }
+}
+
+function updateRingBtns() {
+  for (var i = 0; i < 3; i++) {
+    el("btnRing" + i).style.background = (i === ringStyle) ? "#e8c97a" : "";
+  }
+}
+
+function selectRing(n) {
+  if (state !== "idle") { return; }
+  ringStyle = n;
+  updateRingBtns();
+  playRing();
+}
+
+function seasonLine() {
+  var m = new Date().getMonth() + 1;
+  if (m >= 3 && m <= 5) { return "桜の季節ですね。お花見の電話もお待ちしています。"; }
+  if (m >= 6 && m <= 8) { return "暑い日が続きます。水分をとって、元気にお過ごしください。"; }
+  if (m >= 9 && m <= 11) { return "秋の夜長です。電話でのおしゃべりはいかがですか。"; }
+  return "寒い日が続きます。あたたかくしてお過ごしください。";
+}
+
+function answerClock() {
+  var now = new Date();
+  var h = now.getHours();
+  var min = now.getMinutes();
+  var text = "時報です。ただいまの時刻は、" + h + "時" + min + "分です。" + seasonLine();
+  answer("📞 117 時報", text);
+}
+
+function answerNews() {
+  var done = false;
+  function fallback() {
+    if (done) { return; }
+    if (state !== "ringing") { return; }
+    done = true;
+    answer("📞 767 ニュース直通", "ニュース直通です。すみません、今はニュースを取得できませんでした。電波の届くところで、もう一度かけてみてください。");
+  }
+  try {
+    var feed = "https://news.google.com/rss/search?q=%22CUTIE+STREET%22&hl=ja&gl=JP&ceid=JP:ja";
+    var url = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feed);
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.timeout = 8000;
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) { return; }
+      if (xhr.status === 200) {
+        try {
+          var d = JSON.parse(xhr.responseText);
+          var items = d.items || [];
+          var titles = [];
+          for (var i = 0; i < items.length && titles.length < 3; i++) {
+            var t = (items[i].title || "").replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, "”").replace(/&#39;/g, "'").replace(/</g, "").replace(/>/g, "");
+            if (t) { titles.push(t); }
+          }
+          if (!titles.length) { fallback(); return; }
+          if (!done && state === "ringing") {
+            done = true;
+            var text = "ニュース直通です。CUTIE STREETの最新ニュースをお伝えします。";
+            var nums = ["1つ目", "2つ目", "3つ目"];
+            for (var j = 0; j < titles.length; j++) {
+              text += nums[j] + "。" + titles[j] + "。";
+            }
+            text += "以上、ニュース直通でした。";
+            answer("📞 767 ニュース直通", text);
+          }
+        } catch (e) { fallback(); }
+      } else {
+        fallback();
+      }
+    };
+    xhr.ontimeout = fallback;
+    xhr.onerror = fallback;
+    xhr.send(null);
+    later(fallback, 9000);
+  } catch (e) {
+    fallback();
+  }
+}
+
+function wxText(code) {
+  if (code === 0) { return "快晴"; }
+  if (code === 1 || code === 2) { return "晴れ"; }
+  if (code === 3) { return "くもり"; }
+  if (code === 45 || code === 48) { return "霧"; }
+  if (code >= 51 && code <= 57) { return "霧雨"; }
+  if (code >= 61 && code <= 67) { return "雨"; }
+  if (code >= 71 && code <= 77) { return "雪"; }
+  if (code >= 80 && code <= 82) { return "にわか雨"; }
+  if (code >= 85 && code <= 86) { return "にわか雪"; }
+  if (code >= 95) { return "雷雨"; }
+  return "くもり";
+}
+
+function answerWeather() {
+  var done = false;
+  function fallback() {
+    if (done) { return; }
+    if (state !== "ringing") { return; }
+    done = true;
+    answer("📞 909 天気直通", "天気直通です。すみません、今は天気を取得できませんでした。電波の届くところで、もう一度かけてみてください。");
+  }
+  try {
+    var url = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo";
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.timeout = 8000;
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) { return; }
+      if (xhr.status === 200) {
+        try {
+          var d = JSON.parse(xhr.responseText);
+          var cur = Math.round(d.current.temperature_2m);
+          var w = wxText(d.current.weather_code);
+          var max = Math.round(d.daily.temperature_2m_max[0]);
+          var min = Math.round(d.daily.temperature_2m_min[0]);
+          if (!done && state === "ringing") {
+            done = true;
+            answer("📞 909 天気直通", "天気直通です。ふじみ野市の現在の天気は" + w + "、気温は" + cur + "度です。今日の最高気温は" + max + "度、最低気温は" + min + "度の見込みです。よい一日を。");
+          }
+        } catch (e) { fallback(); }
+      } else {
+        fallback();
+      }
+    };
+    xhr.ontimeout = fallback;
+    xhr.onerror = fallback;
+    xhr.send(null);
+    later(fallback, 9000);
+  } catch (e) {
+    fallback();
+  }
+}
+
+function answerAns() {
+  el("ansPanel").style.display = "block";
+  if (ansMessage) {
+    answer("📞 111 留守番電話", "留守番電話です。録音が1件あります。下の「再生する」を押すと聞けますよ。新しい伝言を書けば、上書きで録音できます。");
+  } else {
+    answer("📞 111 留守番電話", "留守番電話です。下のらんに伝言を書いて、「録音する」を押してください。あとで何度でも再生できます。");
+  }
+}
+
+function pressRec() {
+  var v = el("ansInput").value.replace(/^\s+|\s+$/g, "");
+  if (!v) {
+    el("ansMsg").innerHTML = "伝言を書いてから「録音する」を押してください。";
+    return;
+  }
+  ansMessage = v;
+  el("btnPlay").style.display = "inline-block";
+  el("ansMsg").innerHTML = "録音しました。「再生する」で聞けます。";
+}
+
+function pressPlay() {
+  if (!ansMessage) { return; }
+  var react = ANS_REACTIONS[ansReactIdx % ANS_REACTIONS.length];
+  ansReactIdx++;
+  el("replyWho").innerHTML = "📼 留守番電話 再生中";
+  el("replyText").innerHTML = "伝言を再生します。『" + escHtml(ansMessage) + "』 …以上です。" + react;
+  el("reply").style.display = "block";
+  speak("伝言を再生します。" + ansMessage + "。以上です。" + react);
+}
+
 function fortuneText() {
   var now = new Date();
   var seed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
@@ -281,6 +513,14 @@ function doAnswer() {
     answerISS();
   } else if (digits === "555") {
     answer("📞 555 占い交換台", fortuneText());
+  } else if (digits === "767") {
+    answerNews();
+  } else if (digits === "909") {
+    answerWeather();
+  } else if (digits === "117") {
+    answerClock();
+  } else if (digits === "111") {
+    answerAns();
   } else {
     var line3 = JOKE_LINES[jokeIdx % JOKE_LINES.length];
     jokeIdx++;
@@ -351,8 +591,7 @@ function pressCall() {
   el("btnCall").disabled = true;
   el("btnClear").disabled = true;
   el("btnHang").disabled = false;
-  beep(400, 0.5, 0);
-  beep(400, 0.5, 1.0);
+  playRing();
   later(function () {
     if (state === "ringing") { doAnswer(); }
   }, 2100);
@@ -412,6 +651,12 @@ el("btnCall").onclick = pressCall;
 el("btnClear").onclick = pressClear;
 el("btnHang").onclick = pressHang;
 el("btnVoice").onclick = pressVoice;
+el("btnRing0").onclick = function () { selectRing(0); };
+el("btnRing1").onclick = function () { selectRing(1); };
+el("btnRing2").onclick = function () { selectRing(2); };
+el("btnRec").onclick = pressRec;
+el("btnPlay").onclick = pressPlay;
+updateRingBtns();
 buildDial();
 showDisplay();
 </script>

@@ -174,6 +174,55 @@
     text-align: center;
     font-size: 17px;
   }
+  .dex-list { margin: 0; padding: 0; list-style: none; }
+  .dex-list li {
+    padding: 9px 4px;
+    border-bottom: 1px solid #4c431e;
+  }
+  .dex-list li:last-child { border-bottom: 0; }
+  .dex-date { color: #ffb3a0; font-weight: bold; }
+  .dex-name { color: #fff; font-weight: bold; }
+  .dex-level { color: #ffd400; font-weight: bold; }
+  .ai-status {
+    min-height: 28px;
+    margin: 9px 0 0;
+    color: #ffda45;
+    text-align: center;
+    font-size: 17px;
+  }
+  .ai-card {
+    display: none;
+    margin-top: 12px;
+    padding: 14px;
+    border: 2px solid #ffd400;
+    background: #0b0b09;
+  }
+  .ai-fiction {
+    display: inline-block;
+    padding: 2px 8px;
+    border: 1px solid #ff3b1f;
+    color: #ffb3a0;
+    font-size: 15px;
+    font-weight: bold;
+  }
+  .ai-name {
+    margin: 6px 0;
+    color: #ffffff;
+    font-size: 27px;
+    font-weight: bold;
+    line-height: 1.3;
+    overflow-wrap: break-word;
+  }
+  .ai-profile { margin: 0; color: #f5f0dc; white-space: pre-wrap; }
+  .timeline-list { margin: 0; padding: 0; list-style: none; }
+  .timeline-list li {
+    padding: 9px 4px;
+    border-bottom: 1px solid #4c431e;
+  }
+  .timeline-list li:last-child { border-bottom: 0; }
+  .timeline-year { color: #ffd400; font-weight: bold; }
+  .roar-btn { margin-bottom: 10px; background: #4a3400; }
+  .roar-btn:last-of-type { margin-bottom: 0; }
   .disclaimer {
     margin-top: 18px;
     padding: 15px;
@@ -263,6 +312,47 @@
     <section aria-labelledby="archiveHeading">
       <h2 id="archiveHeading">■ 過去の出現記録</h2>
       <ul class="archive-list" id="archiveList"></ul>
+    </section>
+
+    <section aria-labelledby="dexHeading">
+      <h2 id="dexHeading">■ 怪獣図鑑（過去14日）</h2>
+      <ul class="dex-list" id="dexList"></ul>
+    </section>
+
+    <section aria-labelledby="namingHeading">
+      <h2 id="namingHeading">■ AI怪獣命名局</h2>
+      <p class="summary">AIが新しい架空怪獣の名前とプロフィールを考えます。</p>
+      <button type="button" id="nameButton">新しい怪獣を命名</button>
+      <p class="ai-status" id="nameStatus" aria-live="polite"></p>
+      <div class="ai-card" id="aiCard">
+        <span class="ai-fiction">架空の怪獣です</span>
+        <div class="ai-name" id="aiName">―</div>
+        <p class="ai-profile" id="aiProfile"></p>
+      </div>
+    </section>
+
+    <section aria-labelledby="timelineHeading">
+      <h2 id="timelineHeading">■ 怪獣映画年表</h2>
+      <ul class="timeline-list">
+        <li><span class="timeline-year">1954年</span> 『ゴジラ』公開 ― 怪獣映画の原点</li>
+        <li><span class="timeline-year">1962年</span> 『キングコング対ゴジラ』公開 ― 夢の怪獣対決</li>
+        <li><span class="timeline-year">1964年</span> 『モスラ対ゴジラ』公開</li>
+        <li><span class="timeline-year">1965年</span> 『大怪獣ガメラ』公開 ― ガメラ登場</li>
+        <li><span class="timeline-year">1966年</span> 『ウルトラマン』放送開始 ― テレビでも怪獣ブーム</li>
+        <li><span class="timeline-year">1995年</span> 『ガメラ 大怪獣空中決戦』公開 ― 平成ガメラ三部作の始まり</li>
+        <li><span class="timeline-year">1999年</span> 『ガメラ3 邪神〈イリス〉覚醒』公開</li>
+        <li><span class="timeline-year">2014年</span> ハリウッド版『GODZILLA ゴジラ』公開</li>
+        <li><span class="timeline-year">2016年</span> 『シン・ゴジラ』公開 ― 大ヒット</li>
+        <li><span class="timeline-year">2023年</span> 『ゴジラ-1.0』公開 ― アカデミー視覚効果賞を受賞</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="roarHeading">
+      <h2 id="roarHeading">■ 鳴き声ジェネレーター</h2>
+      <button type="button" class="roar-btn" id="roarBtn1">🦖 ガオー</button>
+      <button type="button" class="roar-btn" id="roarBtn2">🦕 ギャオー</button>
+      <button type="button" class="roar-btn" id="roarBtn3">💥 ドドーン</button>
+      <p class="speech-status" id="roarStatus" aria-live="polite"></p>
     </section>
 
     <button type="button" id="readButton">🔊 本日の警報を読み上げ</button>
@@ -434,6 +524,163 @@
       status.textContent = "読み上げを開始できませんでした。";
     }
   };
+
+  /* ■ 怪獣図鑑：過去14日分を本日と同じシード計算で再現 */
+  function renderDex(today) {
+    var list = document.getElementById("dexList");
+    var html = "";
+    var i;
+    var pastDate;
+    var record;
+
+    for (i = 1; i <= 14; i++) {
+      pastDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+      record = makeForecast(pastDate, 0);
+      html += "<li><span class=\"dex-date\">" + formatDate(pastDate) + "</span><br>" +
+        "<span class=\"dex-name\">" + record.name + "</span>　" +
+        "<span class=\"dex-level\">レベル" + record.level + "</span></li>";
+    }
+    list.innerHTML = html;
+  }
+
+  renderDex(new Date());
+
+  /* ■ AI命名ジェネレーター */
+  var naming = false;
+
+  document.getElementById("nameButton").onclick = function () {
+    if (naming) { return; }
+    naming = true;
+
+    var status = document.getElementById("nameStatus");
+    var seconds = 0;
+    status.textContent = "考え中… 0秒";
+    var timer = setInterval(function () {
+      seconds++;
+      status.textContent = "考え中… " + seconds + "秒";
+    }, 1000);
+
+    function finish() {
+      clearInterval(timer);
+      naming = false;
+    }
+    function fail(msg, httpCode) {
+      finish();
+      if (httpCode) {
+        status.innerHTML = msg + " <span style=\"font-size:14px\">（詳細：HTTP " + httpCode + "）</span>";
+      } else {
+        status.textContent = msg;
+      }
+    }
+
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "https://text.pollinations.ai/", true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.timeout = 90000;
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) { return; }
+        var body = xhr.responseText || "";
+        if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+          fail("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+          return;
+        }
+        if (xhr.status !== 200 || !body.replace(/\s/g, "")) {
+          fail("AI回線が混み合っています", String(xhr.status));
+          return;
+        }
+        finish();
+        status.textContent = "";
+        var lines = body.replace(/^\s+|\s+$/g, "").split("\n");
+        var name = "";
+        var profile = "";
+        var i;
+        var t;
+        for (i = 0; i < lines.length; i++) {
+          t = lines[i].replace(/^\s+|\s+$/g, "");
+          if (!t) { continue; }
+          if (!name) { name = t; }
+          else { profile += (profile ? "\n" : "") + t; }
+        }
+        if (!name) { name = "ナゾノカイジュウ"; }
+        if (!profile) { profile = "プロフィールは観測できませんでした。"; }
+        document.getElementById("aiName").textContent = name;
+        document.getElementById("aiProfile").textContent = profile;
+        document.getElementById("aiCard").style.display = "block";
+      };
+      xhr.ontimeout = function () {
+        fail("AIの返事が時間切れになりました。もう一度お試しください", "");
+      };
+      xhr.onerror = function () {
+        fail("AI回線が混み合っています", "0");
+      };
+      var prompt = "架空の怪獣を1体考えてください。1行目に面白い怪獣の名前だけを書き、2行目と3行目に短いプロフィール（特徴や必殺技など）を書いてください。全体で150文字以内にしてください。実在の怪獣の名前は使わないでください。マークダウン記号は使わないでください。";
+      xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+    } catch (error) {
+      fail("AI回線が混み合っています", "0");
+    }
+  };
+
+  /* ■ 鳴き声ジェネレーター（WebAudio合成） */
+  var audioCtx = null;
+
+  function getAudioCtx() {
+    if (audioCtx) { return audioCtx; }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) { return null; }
+    audioCtx = new AC();
+    return audioCtx;
+  }
+
+  function playTone(ctx, type, f0, f1, dur, vol, delay) {
+    var t = ctx.currentTime + (delay || 0);
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(f0, t);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(f1, 1), t + dur);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(vol, t + 0.06);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + dur + 0.05);
+  }
+
+  function playRoar(kind) {
+    var status = document.getElementById("roarStatus");
+    try {
+      var ctx = getAudioCtx();
+      if (!ctx) {
+        status.textContent = "このブラウザでは音を再生できません。";
+        return;
+      }
+      if (ctx.state === "suspended") { ctx.resume(); }
+      if (kind === 1) {
+        playTone(ctx, "sawtooth", 110, 45, 0.8, 0.5, 0);
+        playTone(ctx, "sawtooth", 116, 50, 0.8, 0.35, 0);
+        playTone(ctx, "square", 55, 30, 0.8, 0.25, 0);
+        status.textContent = "ガオー！と鳴きました。";
+      } else if (kind === 2) {
+        playTone(ctx, "sawtooth", 700, 180, 0.7, 0.35, 0);
+        playTone(ctx, "sawtooth", 743, 196, 0.7, 0.25, 0);
+        playTone(ctx, "sawtooth", 90, 40, 0.8, 0.3, 0);
+        status.textContent = "ギャオー！と鳴きました。";
+      } else {
+        playTone(ctx, "sine", 130, 28, 0.5, 0.8, 0);
+        playTone(ctx, "sine", 130, 28, 0.5, 0.8, 0.3);
+        playTone(ctx, "triangle", 70, 25, 0.8, 0.5, 0);
+        status.textContent = "ドドーン！と地響きがしました。";
+      }
+    } catch (error) {
+      status.textContent = "音を再生できませんでした。";
+    }
+  }
+
+  document.getElementById("roarBtn1").onclick = function () { playRoar(1); };
+  document.getElementById("roarBtn2").onclick = function () { playRoar(2); };
+  document.getElementById("roarBtn3").onclick = function () { playRoar(3); };
 }());
 </script>
 </body>

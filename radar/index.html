@@ -43,6 +43,7 @@
     border:1px dashed #7a5a00; padding:6px 8px; background:rgba(40,26,0,.35);
   }
   #alertLine { font-size:15px; color:#ff8a80; margin-top:6px; min-height:22px; line-height:1.5; letter-spacing:1px; }
+  #seasonTargetLine { font-size:15px; color:#ff6ec8; margin-top:6px; min-height:22px; line-height:1.5; letter-spacing:1px; }
   .trow {
     display:block; width:100%; text-align:left; flex:none;
     border:1px solid #14532a; background:rgba(0,24,8,.5); color:#c8ffd6;
@@ -130,6 +131,7 @@
 </div>
 
 <canvas id="radar" width="640" height="640"></canvas>
+<div id="seasonTargetLine">季節ターゲット： --</div>
 <div id="statusLine">探知中： --件 / 全--件　スイープ方位： 000°</div>
 <div id="detailLine">探知リストの項目をタップすると詳細を表示します。</div>
 <div id="alertLine"></div>
@@ -178,8 +180,14 @@
 
 <div class="panel" style="margin-top:10px;">
   <div class="panel-title">CONTACT LIST / 探知リスト</div>
-  <div class="legend"><span style="color:#4da6ff;">●</span>駅　<span style="color:#33ff66;">●</span>自然　<span style="color:#ffe14d;">●</span>施設</div>
+  <div class="legend"><span style="color:#4da6ff;">●</span>駅　<span style="color:#33ff66;">●</span>自然　<span style="color:#ffe14d;">●</span>施設　<span style="color:#ff6ec8;">★</span>季節（ダックス型）</div>
   <div id="listBox"></div>
+</div>
+
+<div class="panel" style="margin-top:10px;">
+  <div class="panel-title">OBSERVATION LOG / 観測ログ</div>
+  <div class="legend" id="obsLogTotal">通算観測数：0件</div>
+  <div id="obsLogList"></div>
 </div>
 
 <footer>
@@ -215,9 +223,18 @@ var TARGETS = [
   { name:"千葉駅", lat:35.613, lon:140.114, note:"", cat:"st" },
   { name:"富士山", lat:35.3606, lon:138.7274, note:"標高3776m", cat:"nt", elev:"標高3776m" }
 ];
-var CAT_RGB = { st:"77,166,255", nt:"51,255,102", fc:"255,225,77" };
-var CAT_HEX = { st:"#4da6ff", nt:"#33ff66", fc:"#ffe14d" };
-var CAT_NAME = { st:"駅", nt:"自然", fc:"施設" };
+/* seasonal target: inserted just before Mt. Fuji so FUJI_IDX stays valid */
+var SMONTH = new Date().getMonth();
+var SEASONAL_TGT;
+if (SMONTH === 11 || SMONTH <= 1) SEASONAL_TGT = { name:"雪だるま反応", lat:35.8950, lon:139.5050, note:"冬の季節ターゲット", cat:"ss" };
+else if (SMONTH <= 4) SEASONAL_TGT = { name:"お花見ダックス", lat:35.9170, lon:139.4885, note:"川越・喜多院あたり／春の季節ターゲット", cat:"ss" };
+else if (SMONTH <= 7) SEASONAL_TGT = { name:"入道雲のかたまり", lat:35.8000, lon:139.6000, note:"夏の季節ターゲット", cat:"ss" };
+else SEASONAL_TGT = { name:"紅葉ダックス", lat:35.7990, lon:139.4700, note:"航空公園あたり／秋の季節ターゲット", cat:"ss" };
+TARGETS.splice(TARGETS.length - 1, 0, SEASONAL_TGT);
+var SEASON_IDX = TARGETS.length - 2;
+var CAT_RGB = { st:"77,166,255", nt:"51,255,102", fc:"255,225,77", ss:"255,110,200" };
+var CAT_HEX = { st:"#4da6ff", nt:"#33ff66", fc:"#ffe14d", ss:"#ff6ec8" };
+var CAT_NAME = { st:"駅", nt:"自然", fc:"施設", ss:"季節" };
 var WINDS = ["北","北北東","北東","東北東","東","東南東","南東","南南東","南","南南西","南西","西南西","西","西北西","北西","北北西"];
 var PAL_N = { bg:"#010a03", ring:"rgba(51,255,102,0.35)", cross:"rgba(51,255,102,0.25)", tick:"rgba(51,255,102,0.5)", label:"#33ffee", sweep:"51,255,102", sweepHead:"rgba(180,255,200,0.95)", center:"#ffb000" };
 var PAL_R = { bg:"#0a0101", ring:"rgba(255,80,60,0.35)", cross:"rgba(255,80,60,0.25)", tick:"rgba(255,80,60,0.5)", label:"#ff8a70", sweep:"255,90,70", sweepHead:"rgba(255,200,180,0.95)", center:"#ff5040" };
@@ -340,6 +357,7 @@ function isQuizHidden(idx) {
 }
 
 function buildList() {
+  updateSeasonNote();
   listEl.innerHTML = "";
   var arr = [], j;
   for (j = 0; j < TARGETS.length; j++) if (TARGETS[j].dist <= rangeKm && passDir(TARGETS[j])) arr.push(j);
@@ -360,9 +378,10 @@ function buildList() {
       var nm = isQuizHidden(idx) ? "？？？" : t.name;
       var extra = "";
       if (idx === FUJI_IDX) extra = "（視程：" + (fujiVis === 0 ? "良好" : (fujiVis === 1 ? "うっすら" : "不良")) + "）";
-      b.innerHTML = "<span style=\"color:" + CAT_HEX[t.cat] + ";\">●</span> <span class=\"nm\">" + nm + "</span>　<span class=\"ds\">" +
+      var mark = (idx === SEASON_IDX) ? "★" : "●";
+      b.innerHTML = "<span style=\"color:" + CAT_HEX[t.cat] + ";\">" + mark + "</span> <span class=\"nm\">" + nm + "</span>　<span class=\"ds\">" +
         fmtDist(t.dist) + "km</span>　<span class=\"dr\">" + t.wind + "</span>" + extra;
-      b.onclick = function () { highlight(idx); };
+      b.onclick = function () { highlight(idx); logObs(idx); };
       listEl.appendChild(b);
     })(arr[j]);
   }
@@ -548,8 +567,12 @@ function draw() {
     y = C - Math.cos(br) * rr;
     var alpha = 0.22 + 0.78 * t.bright;
     if (k === FUJI_IDX) alpha = alpha * fujiAlpha();
-    ctx.fillStyle = "rgba(" + CAT_RGB[t.cat] + "," + alpha.toFixed(2) + ")";
-    ctx.beginPath(); ctx.arc(x, y, 5 + 3 * t.bright, 0, Math.PI * 2); ctx.fill();
+    if (k === SEASON_IDX && !isQuizHidden(k)) {
+      drawDachshund(x, y, CAT_RGB[t.cat], alpha);
+    } else {
+      ctx.fillStyle = "rgba(" + CAT_RGB[t.cat] + "," + alpha.toFixed(2) + ")";
+      ctx.beginPath(); ctx.arc(x, y, 5 + 3 * t.bright, 0, Math.PI * 2); ctx.fill();
+    }
     if (isQuizHidden(k)) {
       ctx.strokeStyle = "#33ffee";
       ctx.lineWidth = 2;
@@ -845,6 +868,94 @@ function buildZukan() {
   document.getElementById("zukanPanel").className = "panel";
 }
 
+/* ---- seasonal target note ---- */
+function updateSeasonNote() {
+  var el = document.getElementById("seasonTargetLine");
+  if (!el) return;
+  var t = TARGETS[SEASON_IDX];
+  if (t.dist <= rangeKm && passDir(t)) {
+    el.innerHTML = "★ 季節ターゲット出現中：" + t.name + "（" + fmtDist(t.dist) + "km ／ " + t.wind + "）";
+  } else if (t.dist > rangeKm) {
+    el.innerHTML = "★ 季節ターゲット：" + t.name + "は現在の範囲外です（約" + fmtDist(t.dist) + "km）";
+  } else {
+    el.innerHTML = "★ 季節ターゲット：" + t.name + "は方面フィルターの範囲外です";
+  }
+}
+
+/* ---- observation log (localStorage rdr6_log_v1) ---- */
+var OBS_KEY = "rdr6_log_v1";
+var obsLog = [];
+function loadObs() {
+  try {
+    var raw = localStorage.getItem(OBS_KEY);
+    if (raw) {
+      var arr = JSON.parse(raw);
+      if (arr && typeof arr.length === "number") obsLog = arr;
+    }
+  } catch (e) { obsLog = []; }
+}
+function saveObs() {
+  try { localStorage.setItem(OBS_KEY, JSON.stringify(obsLog)); } catch (e) { /* ignore */ }
+}
+function logObs(idx) {
+  if (isQuizHidden(idx)) return;
+  var name = TARGETS[idx].name;
+  var date = todayKey();
+  var j;
+  for (j = 0; j < obsLog.length; j++) {
+    if (obsLog[j].name === name && obsLog[j].date === date) return;
+  }
+  obsLog.unshift({ name: name, date: date });
+  while (obsLog.length > 50) obsLog.pop();
+  saveObs();
+  renderObs();
+}
+function renderObs() {
+  var totalEl = document.getElementById("obsLogTotal");
+  if (totalEl) totalEl.innerHTML = "通算観測数：" + obsLog.length + "件（この端末に保存）";
+  var box = document.getElementById("obsLogList");
+  if (!box) return;
+  box.innerHTML = "";
+  if (obsLog.length === 0) {
+    var e = document.createElement("div");
+    e.className = "empty";
+    e.innerHTML = "まだ観測ログがありません。探知リストの項目をタップすると記録されます。";
+    box.appendChild(e);
+    return;
+  }
+  var n = Math.min(obsLog.length, 10), j;
+  for (j = 0; j < n; j++) {
+    var row = document.createElement("div");
+    row.className = "trow";
+    row.innerHTML = "<span class=\"ds\">" + obsLog[j].date + "</span>　<span class=\"nm\">" + obsLog[j].name + "</span>";
+    box.appendChild(row);
+  }
+}
+
+/* ---- dachshund silhouette blip for the seasonal target ---- */
+function drawDachshund(x, y, rgbStr, alpha) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(0.8, 0.8);
+  ctx.fillStyle = "rgba(" + rgbStr + "," + alpha.toFixed(2) + ")";
+  /* tail */
+  ctx.beginPath();
+  ctx.moveTo(-6, -3); ctx.lineTo(-11, -7); ctx.lineTo(-5, -1); ctx.closePath(); ctx.fill();
+  /* body */
+  ctx.fillRect(-7, -3, 12, 5);
+  /* legs */
+  ctx.fillRect(-6, 2, 2.4, 3);
+  ctx.fillRect(2, 2, 2.4, 3);
+  /* head */
+  ctx.beginPath(); ctx.arc(7, -4, 3.4, 0, Math.PI * 2); ctx.fill();
+  /* snout */
+  ctx.fillRect(9, -3.4, 3.4, 2.2);
+  /* floppy ear */
+  ctx.beginPath();
+  ctx.moveTo(4.6, -6.6); ctx.lineTo(7.6, -6.8); ctx.lineTo(6.2, -1.2); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
 /* ---- controls ---- */
 var rbtns = document.getElementsByClassName("rbtn");
 var ri;
@@ -979,6 +1090,8 @@ cv.onclick = function (e) {
 
 litDate = todayKey();
 fujiEl.innerHTML = "富士山視程：" + fujiVisText() + "（演出）";
+loadObs();
+renderObs();
 buildList();
 draw();
 setInterval(tick, 50);

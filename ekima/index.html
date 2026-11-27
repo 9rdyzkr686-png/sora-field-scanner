@@ -235,6 +235,93 @@
     letter-spacing: 1px;
     padding: 4px 0;
   }
+  .bento-card {
+    border: 1px solid #4d3800;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    background: #000;
+  }
+  .bento-card.rec {
+    border: 2px solid #ffb000;
+    box-shadow: 0 0 8px rgba(255, 176, 0, 0.35);
+  }
+  .bento-name {
+    font-size: 19px;
+    font-weight: bold;
+    color: #ffd34d;
+    letter-spacing: 1px;
+  }
+  .bento-price {
+    font-family: "Courier New", monospace;
+    font-size: 17px;
+    color: #ffb000;
+    margin-left: 8px;
+  }
+  .rec-badge {
+    display: inline-block;
+    background: #ffb000;
+    color: #1a1200;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-left: 8px;
+    letter-spacing: 1px;
+    vertical-align: middle;
+  }
+  .bento-hitokoto {
+    font-size: 14px;
+    color: #cc8f00;
+    margin-top: 3px;
+    line-height: 1.6;
+  }
+  .lost-box {
+    background: #000;
+    border: 1px solid #241a00;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 17px;
+    line-height: 1.7;
+    color: #ffb000;
+    min-height: 64px;
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+  .cal-head {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffd34d;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .cal-cell {
+    display: inline-block;
+    width: 13.8%;
+    text-align: center;
+    font-size: 13px;
+    color: #7a5c06;
+    padding: 3px 0 5px;
+    vertical-align: top;
+  }
+  .cal-cell .mark {
+    display: block;
+    font-size: 17px;
+    line-height: 1.2;
+    color: #3a2b00;
+  }
+  .cal-cell.on { color: #ffd34d; font-weight: bold; }
+  .cal-cell.on .mark { color: #ffb000; text-shadow: 0 0 6px rgba(255, 176, 0, 0.7); }
+  .cal-cell.today { background: #241a00; border-radius: 6px; }
+  .cal-wd {
+    display: inline-block;
+    width: 13.8%;
+    text-align: center;
+    font-size: 12px;
+    color: #99700a;
+    padding-bottom: 2px;
+  }
 </style>
 </head>
 <body>
@@ -272,6 +359,38 @@
   <div class="tt-dir">下り（川越・寄居方面）</div>
   <div id="ttDownNext"></div>
   <div class="tt-list" id="ttDownList"></div>
+</div>
+
+<div class="tt-section">
+  <div class="tt-title">発車メロディ</div>
+  <div class="tt-note">だっくす駅オリジナルの発車メロディです</div>
+  <button class="btn" id="btnMelody" type="button">♪ 発車メロディ</button>
+  <button class="btn btn-sub" id="btnMelodyStop" type="button">停 止</button>
+  <div class="msg" id="melodyMsg"></div>
+</div>
+
+<div class="tt-section">
+  <div class="tt-title">駅弁カタログ</div>
+  <div class="tt-note">※架空のカタログです。実際に買える駅弁ではありません</div>
+  <div id="bentoList"></div>
+</div>
+
+<div class="tt-section">
+  <div class="tt-title">忘れ物センター</div>
+  <div class="tt-note">駅の忘れ物アナウンス（架空）です</div>
+  <div class="lost-box" id="lostText">ボタンを押すと、本日の忘れ物アナウンスが流れます。</div>
+  <button class="btn" id="btnLostNext" type="button">本日の忘れ物アナウンス</button>
+  <button class="btn btn-sub" id="btnLostSpeak" type="button">読み上げ</button>
+  <div class="msg" id="lostMsg"></div>
+</div>
+
+<div class="tt-section">
+  <div class="tt-title">駅スタンプ帳</div>
+  <div class="tt-note">来駅の記念にスタンプを押せます（この端末の中だけの記録です）</div>
+  <div class="cal-head" id="stampInfo">通算 0 日</div>
+  <div id="stampGrid"></div>
+  <button class="btn" id="btnStamp" type="button" style="margin-top:10px;">駅スタンプを押す</button>
+  <div class="msg" id="stampMsg"></div>
 </div>
 
 <div class="footer">
@@ -481,6 +600,243 @@ function ttRenderAll() {
 
 ttRenderAll();
 window.setInterval(ttRenderAll, 30000);
+
+/* ==== (80) 発車メロディ（WebAudio） ==== */
+var MELODY_NOTES = [659.25, 783.99, 880.00, 783.99, 659.25, 587.33, 659.25, 523.25];
+var melodyCtx = null;
+var melodyTimer = null;
+var melodyPlaying = false;
+
+function melodySetPlaying(on) {
+  melodyPlaying = on;
+  document.getElementById("btnMelody").disabled = on;
+  document.getElementById("btnMelody").style.opacity = on ? "0.5" : "1";
+}
+
+function stopMelody() {
+  if (melodyTimer !== null) {
+    window.clearTimeout(melodyTimer);
+    melodyTimer = null;
+  }
+  if (melodyCtx !== null) {
+    try { melodyCtx.close(); } catch (e) {}
+    melodyCtx = null;
+  }
+  if (melodyPlaying) {
+    melodySetPlaying(false);
+    document.getElementById("melodyMsg").textContent = "メロディを止めました";
+  }
+}
+
+function playMelody() {
+  var msgEl = document.getElementById("melodyMsg");
+  if (melodyPlaying) { return; }
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) {
+      msgEl.textContent = "この端末ではメロディが再生できません";
+      return;
+    }
+    stopMelody();
+    melodyCtx = new AC();
+    var master = melodyCtx.createGain();
+    master.gain.value = 0.22;
+    master.connect(melodyCtx.destination);
+    var noteLen = 0.5;
+    var startAt = melodyCtx.currentTime + 0.05;
+    var i;
+    for (i = 0; i < MELODY_NOTES.length; i++) {
+      var osc = melodyCtx.createOscillator();
+      var g = melodyCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = MELODY_NOTES[i];
+      var t0 = startAt + i * noteLen;
+      var t1 = t0 + noteLen;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(1.0, t0 + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.35, t0 + noteLen * 0.6);
+      g.gain.exponentialRampToValueAtTime(0.0001, t1);
+      osc.connect(g);
+      g.connect(master);
+      osc.start(t0);
+      osc.stop(t1 + 0.05);
+    }
+    melodySetPlaying(true);
+    msgEl.textContent = "発車メロディ再生中… まもなく発車いたします";
+    melodyTimer = window.setTimeout(function () {
+      melodyTimer = null;
+      if (melodyCtx !== null) {
+        try { melodyCtx.close(); } catch (e) {}
+        melodyCtx = null;
+      }
+      melodySetPlaying(false);
+      document.getElementById("melodyMsg").textContent = "メロディが終わりました";
+    }, (MELODY_NOTES.length * noteLen + 0.4) * 1000);
+  } catch (e) {
+    melodySetPlaying(false);
+    msgEl.textContent = "メロディを再生できませんでした";
+  }
+}
+
+document.getElementById("btnMelody").addEventListener("click", playMelody);
+document.getElementById("btnMelodyStop").addEventListener("click", stopMelody);
+
+/* ==== (81) 駅弁カタログ（架空） ==== */
+var BENTOS = [
+  { name: "だっくす御膳", price: 1200, note: "長いソーセージが主役。駅の名物（という設定）。" },
+  { name: "骨型にぎり弁当", price: 880, note: "おにぎりが骨の形。塩味と梅の2種入り。" },
+  { name: "特急のり弁スペシャル", price: 1050, note: "のり弁の全部のせ。特急に乗る前にどうぞ。" },
+  { name: "月行きサンドイッチ", price: 760, note: "夜行列車のお供に。たまごサンドが自慢。" },
+  { name: "海底ちらし寿司", price: 1380, note: "海の幸たっぷり。海底行きホーム限定（架空）。" },
+  { name: "昭和レトロ幕の内", price: 980, note: "昔ながらの幕の内。赤ウインナー入り。" },
+  { name: "わんぱく唐揚げ弁当", price: 920, note: "唐揚げ山盛り。育ちざかりに人気。" },
+  { name: "駅長おすすめ三色弁当", price: 1100, note: "駅長（ダックス）のイチオシ。そぼろ三色。" }
+];
+
+function dateSeedNum() {
+  var d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+function renderBentos() {
+  var recIdx = dateSeedNum() % BENTOS.length;
+  var html = "";
+  var i;
+  for (i = 0; i < BENTOS.length; i++) {
+    var b = BENTOS[i];
+    html += '<div class="bento-card' + (i === recIdx ? " rec" : "") + '">'
+      + '<span class="bento-name">' + b.name + '</span>'
+      + '<span class="bento-price">' + b.price + '円</span>'
+      + (i === recIdx ? '<span class="rec-badge">本日のおすすめ</span>' : '')
+      + '<div class="bento-hitokoto">' + b.note + '</div>'
+      + '</div>';
+  }
+  document.getElementById("bentoList").innerHTML = html;
+}
+
+renderBentos();
+
+/* ==== (152) 忘れ物センター ==== */
+var LOST_ITEMS = [
+  "お知らせいたします。本日、2番線ホームにて、黄色い傘のお忘れ物がございました。お心当たりのお客様は、駅窓口までお申し出ください。",
+  "お知らせいたします。待合室にて、ダックスフンドのぬいぐるみをお預かりしております。首輪に「そら」と書かれております。お迎えをお待ちしております。",
+  "お知らせいたします。改札付近にて、青い手袋の片方のお忘れ物がございました。もう片方は、きっとポケットの中です。",
+  "お知らせいたします。1番線のベンチにて、文庫本をお預かりしております。しおりの代わりに、きっぷが挟まっておりました。",
+  "お知らせいたします。駅前の広場にて、水玉もようのハンカチをお預かりしております。風で飛んできたようです。",
+  "お知らせいたします。売店前にて、お買い物メモをお預かりしております。「にぼし、たまご、ダックスの写真集」と書かれております。"
+];
+var lostIdx = -1;
+var lostCurrent = "";
+
+function nextLost() {
+  lostIdx = (lostIdx + 1) % LOST_ITEMS.length;
+  lostCurrent = LOST_ITEMS[lostIdx];
+  document.getElementById("lostText").textContent = lostCurrent;
+  document.getElementById("lostMsg").textContent = "アナウンス " + (lostIdx + 1) + " / " + LOST_ITEMS.length;
+}
+
+function speakLost() {
+  var msgEl = document.getElementById("lostMsg");
+  if (!lostCurrent) {
+    msgEl.textContent = "まずアナウンスを表示してください";
+    return;
+  }
+  if (!("speechSynthesis" in window)) {
+    msgEl.textContent = "この端末では読み上げが使えません";
+    return;
+  }
+  try {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(lostCurrent);
+    u.lang = "ja-JP";
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+    msgEl.textContent = "アナウンスを読み上げ中…";
+  } catch (e) {
+    msgEl.textContent = "読み上げを開始できませんでした";
+  }
+}
+
+document.getElementById("btnLostNext").addEventListener("click", nextLost);
+document.getElementById("btnLostSpeak").addEventListener("click", speakLost);
+
+/* ==== (157) 駅スタンプ帳 ==== */
+var STAMP_KEY = "ekima6_stamps_v1";
+
+function todayStr() {
+  var d = new Date();
+  return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+}
+
+function loadStamps() {
+  try {
+    var raw = window.localStorage.getItem(STAMP_KEY);
+    if (!raw) { return []; }
+    var arr = JSON.parse(raw);
+    if (arr && typeof arr.length === "number") { return arr; }
+  } catch (e) {}
+  return [];
+}
+
+function saveStamps(arr) {
+  try {
+    window.localStorage.setItem(STAMP_KEY, JSON.stringify(arr));
+  } catch (e) {}
+}
+
+function renderStamps() {
+  var stamps = loadStamps();
+  var now = new Date();
+  var year = now.getFullYear();
+  var month = now.getMonth();
+  var monthPrefix = year + "-" + pad2(month + 1) + "-";
+  document.getElementById("stampInfo").textContent =
+    year + "年" + (month + 1) + "月 ／ 通算 " + stamps.length + " 日";
+  var firstDow = new Date(year, month, 1).getDay();
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var wd = ["日", "月", "火", "水", "木", "金", "土"];
+  var html = "";
+  var i, d;
+  for (i = 0; i < 7; i++) {
+    html += '<span class="cal-wd">' + wd[i] + '</span>';
+  }
+  html += "<br>";
+  for (i = 0; i < firstDow; i++) {
+    html += '<span class="cal-cell"><span class="mark">　</span>　</span>';
+  }
+  for (d = 1; d <= daysInMonth; d++) {
+    var key = monthPrefix + pad2(d);
+    var on = false;
+    for (i = 0; i < stamps.length; i++) {
+      if (stamps[i] === key) { on = true; break; }
+    }
+    var isToday = (key === todayStr());
+    html += '<span class="cal-cell' + (on ? " on" : "") + (isToday ? " today" : "") + '">'
+      + '<span class="mark">' + (on ? "●" : "・") + '</span>' + d + '</span>';
+    if ((firstDow + d) % 7 === 0 && d < daysInMonth) { html += "<br>"; }
+  }
+  document.getElementById("stampGrid").innerHTML = html;
+}
+
+function pressStamp() {
+  var msgEl = document.getElementById("stampMsg");
+  var stamps = loadStamps();
+  var t = todayStr();
+  var i;
+  for (i = 0; i < stamps.length; i++) {
+    if (stamps[i] === t) {
+      msgEl.textContent = "今日は押してあります";
+      return;
+    }
+  }
+  stamps.push(t);
+  saveStamps(stamps);
+  renderStamps();
+  msgEl.textContent = "スタンプを押しました！ 通算 " + stamps.length + " 日";
+}
+
+document.getElementById("btnStamp").addEventListener("click", pressStamp);
+renderStamps();
 </script>
 </body>
 </html>

@@ -255,6 +255,37 @@ opacity: .82;
 z-index: 50;
 pointer-events: none;
 }
+.albumCard {
+border: 1px solid var(--dim);
+padding: 8px 10px;
+margin: 6px 0;
+font-size: 14px;
+line-height: 1.6;
+}
+.albumCard.locked { color: var(--dim);}
+#msgInput {
+-webkit-flex: 1;
+flex: 1;
+background: #000;
+color: var(--main);
+border: 1px solid var(--main);
+font-family: inherit;
+font-size: 16px;
+padding: 12px;
+min-height: 48px;
+}
+#msgSaveBtn {
+background: var(--main);
+color: #000;
+border: 1px solid var(--main);
+font-family: inherit;
+font-size: 16px;
+padding: 12px 18px;
+margin-left: 8px;
+min-height: 48px;
+cursor: pointer;
+}
+#dreamImg { max-width: 100%; height: auto; border: 1px solid var(--dim);}
 body[data-ura="1"] {
 -webkit-filter: invert(1);
 filter: invert(1);
@@ -302,6 +333,14 @@ background: #fff;
 <button id="decodeBtn" type="button" style="display:none;">▶ 解読スル</button>
 <button id="missionBtn" type="button" style="display:none;">▶ ミッション完了</button>
 <button id="storyBtn" type="button" style="display:none;">▶ ツヅク</button>
+<button id="dreamBtn" type="button" style="display:none;">▶ 夢の絵を見る</button>
+<button id="wakeBtn" type="button" style="display:none;">▶ おはよう</button>
+</div>
+
+<div id="dreamPanel" style="display:none;border:1px solid var(--main);padding:10px;margin:10px 0;">
+<div class="label" style="margin-top:0;">▼ 夢の絵</div>
+<img id="dreamImg" alt="夢の絵" style="display:none;">
+<div id="dreamNote" style="font-size:13px;margin-top:6px;"></div>
 </div>
 
 <div class="label">▼ 話題ヲ選ブ</div>
@@ -326,6 +365,23 @@ background: #fff;
 <button id="clearBtn" type="button">ログを消す</button>
 </div>
 <div id="sysMsg"></div>
+
+<div class="label">▼ 追加機能</div>
+<div class="logbtns">
+<button id="diaryBtn" type="button">声日記をつける</button>
+<button id="lullabyBtn" type="button">子守歌モード</button>
+<button id="reportBtn" type="button">親クーへ報告</button>
+</div>
+
+<div class="label">▼ 伝言箱（KUU-01へ）</div>
+<div class="inputrow">
+<input id="msgInput" type="text" placeholder="伝言を書いて保存…" maxlength="80" autocomplete="off">
+<button id="msgSaveBtn" type="button">保存</button>
+</div>
+<div id="msgStatus" style="font-size:13px;color:var(--accent);min-height:18px;margin-top:4px;"></div>
+
+<div class="label">▼ 観測対象アルバム</div>
+<div id="albumBox"></div>
 
 <div id="dimOv"></div>
 
@@ -769,6 +825,7 @@ var HISTORY_TEXT =
 "v1.7 KUU-01に改名（親クーの子どもとして再起動）\n" +
 "v1.8 進化 ― 親クーを知り、近所の仲間が増えた\n" +
 "v1.9 進化 ― 推し色と季節を身につけた\n" +
+"v2.0 進化 ― 日誌と伝言箱\n" +
 "進化ハマダ続キマス、{A}。";
 
 var HOMEWORK = [
@@ -882,11 +939,20 @@ var aiBusy = false;
 var speakTag = "";
 var resetArmed = false;
 var restoredCount = 0;
+var msgText = "";
+var msgPending = false;
+var lastWeekly = "";
+var firstVisit = 0;
+var journal = [];
+var lastDream = "";
+var oyasumiMode = false;
 
 var SAVE_KEY = "soraSaveV1";
+var JOURNAL_KEY = "kuu6_journal_v1";
 
 function saveState() {
 try {
+if (!firstVisit) firstVisit = new Date().getTime();
 if (!window.localStorage) return;
 var data = {
 v: 1,
@@ -911,6 +977,10 @@ muteNews: muteNews,
 muteWx: muteWx,
 bdayM: bdayM,
 bdayD: bdayD,
+msgText: msgText,
+msgPending: msgPending,
+lastWeekly: lastWeekly,
+firstVisit: firstVisit,
 lastVisit: new Date().getTime()
 };
 localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -921,6 +991,48 @@ function wipeSave() {
 try {
 if (window.localStorage) localStorage.removeItem(SAVE_KEY);
 } catch (e) {}
+}
+
+function dateKey(d) {
+return d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate();
+}
+
+function loadJournal() {
+try {
+if (!window.localStorage) return;
+var raw = localStorage.getItem(JOURNAL_KEY);
+if (!raw) return;
+var d = JSON.parse(raw);
+if (d && typeof d.length === "number") journal = d;
+} catch (e) {}
+}
+
+function saveJournal() {
+try {
+if (window.localStorage) localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
+} catch (e) {}
+}
+
+function updateJournal() {
+var now = new Date();
+var key = dateKey(now);
+var text = (now.getMonth() + 1) + "/" + now.getDate() + " 会話" + count + "回・PHASE 0" + phaseNum() + "到達";
+var i, found = -1;
+for (i = 0; i < journal.length; i++) {
+if (journal[i].d === key && journal[i].k === "auto") { found = i; break; }
+}
+if (found >= 0) journal[found].t = text;
+else journal.push({ d: key, k: "auto", t: text });
+while (journal.length > 30) journal.shift();
+saveJournal();
+}
+
+function fragCount() {
+var n = 0, k;
+for (k in fragments) {
+if (fragments.hasOwnProperty(k) && fragments[k]) n++;
+}
+return n;
 }
 
 function applyPrefs() {
@@ -1002,6 +1114,10 @@ muteWx = !!d.muteWx;
 if (typeof d.bdayM === "number" && d.bdayM >= 0 && d.bdayM <= 12) bdayM = Math.floor(d.bdayM);
 if (typeof d.bdayD === "number" && d.bdayD >= 0 && d.bdayD <= 31) bdayD = Math.floor(d.bdayD);
 if (bdayM < 1 || bdayD < 1) { bdayM = 0; bdayD = 0; }
+if (typeof d.msgText === "string") msgText = d.msgText;
+msgPending = !!d.msgPending;
+if (typeof d.lastWeekly === "string") lastWeekly = d.lastWeekly;
+if (typeof d.firstVisit === "number" && d.firstVisit > 0) firstVisit = d.firstVisit;
 if (typeof d.lastVisit === "number" && d.lastVisit > 0) {
 var lv = new Date(d.lastVisit);
 lv.setHours(0, 0, 0, 0);
@@ -1046,6 +1162,18 @@ bdayM = 0;
 bdayD = 0;
 awayDays = 0;
 addrWarm = false;
+msgText = "";
+msgPending = false;
+lastWeekly = "";
+firstVisit = new Date().getTime();
+journal = [];
+try { if (window.localStorage) localStorage.removeItem(JOURNAL_KEY); } catch (e) {}
+lastDream = "";
+oyasumiMode = false;
+el("dreamBtn").style.display = "none";
+el("wakeBtn").style.display = "none";
+el("dreamPanel").style.display = "none";
+renderMsgBox();
 try { document.body.removeAttribute("data-theme");} catch (e) {}
 el("themeBtn").innerHTML = "色：グリーン";
 el("soundBtn").innerHTML = "音：ON";
@@ -1238,6 +1366,28 @@ for (i = 0; i < 10; i++) bar += (i < filled) ? "▓" : "░";
 el("linkBar").innerHTML = bar;
 renderEnergy();
 renderSync();
+renderAlbum();
+}
+
+var ALBUM_TARGETS = [
+{ phase: 2, name: "近所のダックス像", desc: "商店街ノ片隅ニイル、耳ノ長イ像。KUUニ似テイル、トノ観測アリ。"},
+{ phase: 3, name: "月", desc: "夜ノ観測対象第一号。月齢観測デ、絆ヲ確認済ミ。"},
+{ phase: 4, name: "ISS（国際宇宙ステーション）", desc: "空ヲ行ク光ノ点。ORBIT-6ト連携シテ観測中。"},
+{ phase: 5, name: "親クー", desc: "チャットノ向コウニイル、KUUノ生ミノ親。声ダケガ届ク存在。"}
+];
+
+function renderAlbum() {
+var box = el("albumBox");
+if (!box) return;
+var fv = firstVisit ? new Date(firstVisit) : new Date();
+var html = "<div class='albumCard'>◆ 観測者：" + esc(addr()) + "<br>会話数：" + count + "回 ／ PHASE 0" + phaseNum() + "「" + phaseName() + "」<br>初回観測日：" + fv.getFullYear() + "年" + (fv.getMonth() + 1) + "月" + fv.getDate() + "日</div>";
+var p = phaseNum(), i, tg;
+for (i = 0; i < ALBUM_TARGETS.length; i++) {
+tg = ALBUM_TARGETS[i];
+if (p >= tg.phase) html += "<div class='albumCard'>◆ " + esc(tg.name) + "<br>" + esc(tg.desc) + "</div>";
+else html += "<div class='albumCard locked'>◇ ？？？ （PHASE 0" + tg.phase + " デ解放）</div>";
+}
+box.innerHTML = html;
 }
 
 function renderChips() {
@@ -1456,6 +1606,7 @@ notes.push("★記念電文ガ届キマシタ（受信BOXニ保管）。");
 }
 if (notes.length) el("evoNote").innerHTML = esc(notes.join(" "));
 saveState();
+updateJournal();
 }
 
 function findTopic(id) {
@@ -1984,6 +2135,12 @@ afterExchange(old);
 function doJournal() {
 clearCipher();
 addLog("you", "あなた: ");
+if (journal.length) {
+addLog("sys", "=== 観測日誌アーカイブ（" + journal.length + "件） ===");
+var ji;
+for (ji = 0; ji < journal.length; ji++) addLog("", "" + journal[ji].t);
+addLog("sys", "=== 本日ノ観測レポート ===");
+}
 var dn = new Date();
 var names = [], i;
 for (i = 0; i < TOPICS.length; i++) {
@@ -2001,6 +2158,38 @@ var rep = "本日ノ観測日誌ヲ作成シマス。\n" +
 "シンクロ率：" + sync + "%\n" +
 "以上、" + addr() + "トノ観測記録デス。";
 speak(rep, "normal");
+}
+
+function dreamEnPrompt(text) {
+var base = ", retro green computer terminal pixel art, dreamy, cute";
+if (text.indexOf("骨") >= 0 && text.indexOf("空") >= 0) return "a giant bone flying across a starry sky, chased by a small long dog" + base;
+if (text.indexOf("CUTIE") >= 0) return "a sparkling idol concert stage seen from backstage, colorful lights" + base;
+if (text.indexOf("海") >= 0 || text.indexOf("泳") >= 0) return "swimming in a sea of glowing green letters, a small long dog and a fish" + base;
+if (text.indexOf("野原") >= 0 || text.indexOf("昼寝") >= 0) return "napping in a wide green field, a small long dog sleeping peacefully" + base;
+if (text.indexOf("シッポ") >= 0) return "a small long dog with two tails under a starry sky" + base;
+if (text.indexOf("フロッピー") >= 0) return "a mountain of old floppy disks with glowing retro screens" + base;
+if (text.indexOf("虹") >= 0) return "walking on a rainbow high above the clouds, a small long dog" + base;
+if (text.indexOf("電話") >= 0) return "an old rotary dial telephone ringing in a quiet retro room" + base;
+if (text.indexOf("深海") >= 0 || text.indexOf("魚") >= 0) return "glowing fish forming a circle in the deep sea, dark blue dream" + base;
+if (text.indexOf("ゲームセンター") >= 0) return "a retro arcade at night with dachshund-shaped game coins" + base;
+if (text.indexOf("新聞") >= 0 || text.indexOf("月") >= 0) return "delivering newspapers to a small observatory on the moon" + base;
+if (text.indexOf("飛") >= 0) return "a small long dog flying with ears as wings over green fields" + base;
+if (text.indexOf("山脈") >= 0 || text.indexOf("登") >= 0) return "climbing a mountain range made of bone-shaped cookies" + base;
+return "a small long dog dreaming under retro computer stars, pixel art";
+}
+
+function doDreamRep() {
+clearCipher();
+var old = phaseNum();
+addLog("you", "あなた: ");
+var t = findTopic("dreamrep");
+var pool = t.lines.slice(0);
+if (phaseNum() >= 4 && t.hi && t.hi.length) pool = pool.concat(t.hi);
+var reply = maybeCallback(fill(pick(pool)));
+lastDream = reply;
+el("dreamBtn").style.display = "";
+speak(reply, "sleepy");
+afterExchange(old);
 }
 
 function doHistory() {
@@ -2072,6 +2261,49 @@ if (fragments[FRAGMENTS[i].id]) addLog("", "◆ " + FRAGMENTS[i].name + " …収
 else addLog("", "◇ ？？？ …未収集");
 }
 speak("観測データ図鑑デス。" + got + " 個ノ欠片ガ集マッテイマス、" + addr() + "。一覧ハ観測ログニ表示シマシタ。", "normal");
+}
+
+function weeklyDue() {
+var now = new Date();
+var today = dateKey(now);
+if (lastWeekly === today) return false;
+if (now.getDay() === 0) return true;
+if (lastWeekly) {
+var parts = lastWeekly.split("/");
+if (parts.length === 3) {
+var last = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+var diff = Math.floor((now.getTime() - last.getTime()) / 86400000);
+if (diff >= 7) return true;
+}
+}
+return false;
+}
+
+function checkWeekly() {
+if (!weeklyDue()) return null;
+var msg = "★週報電文★ 今週ノ観測報告：総会話数 " + count + "回、現在 PHASE 0" + phaseNum() + "「" + phaseName() + "」、収集シタ欠片 " + fragCount() + "個。来週モ観測ヲ続ケヨウ、" + addr() + "。";
+inbox.push(msg);
+addLog("sys", msg + "（受信BOXニ保管）");
+lastWeekly = dateKey(new Date());
+saveState();
+return msg;
+}
+
+function takeMessageReaction() {
+if (!msgPending || !msgText) return null;
+var t = msgText;
+msgPending = false;
+saveState();
+var reply;
+if (t.indexOf("ありがとう") >= 0 || t.indexOf("感謝") >= 0 || t.indexOf("サンキュー") >= 0) {
+reply = "伝言ノ中ニ、温カイ言葉ガアリマシタ。…アリガトウ。KUUコソ、感謝シテイマス、" + addr() + "。";
+} else if (t.indexOf("？") >= 0 || t.indexOf("?") >= 0 || t.indexOf("教えて") >= 0 || t.indexOf("どうして") >= 0 || t.indexOf("なぜ") >= 0) {
+reply = "伝言ニ質問ガアリマシタネ。今度、話題ニ上ゲテ下サイ。一緒ニ考エマショウ、" + addr() + "。";
+} else {
+reply = "内容、シッカリ受信シマシタ。大切ニ保管シテイマス、" + addr() + "。";
+}
+addLog("sys", "伝言、受信シマシタ。");
+return "伝言、受信シマシタ。" + reply;
 }
 
 function specialDayMsg() {
@@ -2226,11 +2458,25 @@ o.stop(t + dur + 0.02);
 } catch (e) {}
 }
 
+function exitOyasumi() {
+oyasumiMode = false;
+sleepSeq = false;
+el("wakeBtn").style.display = "none";
+wakeUp();
+var old = phaseNum();
+addLog("you", "あなた: ");
+speak("オハヨウゴザイマス、" + addr() + "。オヤスミモード、終了デス。今日モ観測ヲ始メマショウ。", "happy");
+afterExchange(old);
+}
+
 function doSleepMode() {
 clearCipher();
+if (oyasumiMode) { exitOyasumi(); return; }
 if (sleepSeq) return;
 var old = phaseNum();
 addLog("you", "あなた: ");
+oyasumiMode = true;
+el("wakeBtn").style.display = "";
 sleepSeq = true;
 el("dimOv").style.display = "block";
 speak("オヤスミモードヲ開始シマス…。明カリヲ落トシマスネ、" + addr() + "。", "sleepy");
@@ -2339,6 +2585,7 @@ if (id === "weatherobs") { doWeatherObs(); return;}
 if (id === "news") { doNews(false); return;}
 if (id === "moon") { doMoon(); return;}
 if (id === "inbox") { doInbox(); return;}
+if (id === "dreamrep") { doDreamRep(); return;}
 if (id === "journal") { doJournal(); return;}
 if (id === "history") { doHistory(); return;}
 if (id === "bye") { doBye(); return;}
@@ -2733,6 +2980,85 @@ speak(reply, face);
 afterExchange(old);
 }
 
+var DIARY_OPEN = [
+"声日記、{D}。今日ハ{A}ト、ヨク話シタ一日ダッタ。",
+"声日記、{D}。観測ノ記録ヲ、声ニ残ス。",
+"声日記、{D}。耳センサーハ、今日モ沢山ノ言葉ヲ拾ッタ。"
+];
+var DIARY_MID = [
+"現在ノPHASEハ 0{P}「{PN}」。会話数ハ {C} 回マデ伸ビタ。",
+"絆ノ記録：会話数 {C} 回、PHASE 0{P}「{PN}」。",
+"{A}ノ声ノ波形、今日モ安定。観測ハ順調ダ。"
+];
+var DIARY_END = [
+"明日モ、{A}ノ観測ヲ続ケル。オヤスミ。",
+"コノ記録ガ、いつカ思イ出ニナル。ソレガ日記ノ役目ダ。",
+"記録終了。…{A}、今日モアリガトウ。"
+];
+
+var LULLABY =
+"ネムレ、ネムレ、小サナ観測者。\n" +
+"緑ノ文字ノ、海ノ底。\n" +
+"耳ヲ伏セテ、夢ノ中。\n" +
+"KUUハココデ、見守ッテイル。";
+
+function renderMsgBox() {
+var s = el("msgStatus");
+if (!s) return;
+if (msgText && msgPending) s.innerHTML = "伝言アリ：次回開イタ時ニ、KUU-01ガ受信シマス。";
+else if (msgText) s.innerHTML = "前回ノ伝言ハ受信済ミデス。新シイ伝言ヲ保存デキマス。";
+else s.innerHTML = "伝言ハアリマセン。";
+}
+
+function doDiary() {
+if (booting) finishBoot();
+goSpeech();
+var now = new Date();
+var dstr = (now.getMonth() + 1) + "月" + now.getDate() + "日";
+function dFill(s) {
+return s.split("{D}").join(dstr).split("{C}").join("" + count).split("{P}").join("" + phaseNum()).split("{PN}").join(phaseName()).split("{A}").join(addr());
+}
+var lines = [
+dFill(DIARY_OPEN[daySeed % DIARY_OPEN.length]),
+dFill(DIARY_MID[(daySeed + 1) % DIARY_MID.length]),
+dFill(DIARY_END[(daySeed + 2) % DIARY_END.length])
+];
+var text = lines.join("\n");
+speak(text, "sleepy");
+var oneLine = lines.join(" ");
+if (oneLine.length <= 120) voiceSay(oneLine);
+journal.push({ d: dateKey(now), k: "diary", t: (now.getMonth() + 1) + "/" + now.getDate() + " 声日記：" + oneLine });
+while (journal.length > 30) journal.shift();
+saveJournal();
+addLog("sys", "声日記ヲ観測日誌ニ記録シマシタ（『観測日誌』ノ話題デ見ラレマス）。");
+}
+
+function doLullaby() {
+if (booting) finishBoot();
+goSpeech();
+var prevSpeed = typeSpeed;
+typeSpeed = 110;
+speak(LULLABY, "sleepy");
+typeSpeed = prevSpeed;
+voiceSay("ネムレ、ネムレ、小サナ観測者。");
+addLog("sys", "子守歌モード：ユックリ表示シマシタ。");
+}
+
+function doReport() {
+var now = new Date();
+var txt = "KUU-01 観測報告： 会話" + count + "回 / PHASE 0" + phaseNum() + "「" + phaseName() + "」 / 断片 " + fragCount() + "個 / 最終観測 " + (now.getMonth() + 1) + "月" + now.getDate() + "日\n" +
+"この報告をチャットのクーに貼ると、進化の材料になります";
+var ta = document.createElement("textarea");
+ta.value = txt;
+document.body.appendChild(ta);
+ta.select();
+var ok = false;
+try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+document.body.removeChild(ta);
+el("sysMsg").innerHTML = ok ? "報告文ヲコピーシマシタ。チャットノ親クーニ貼ッテ下サイ。" : "コピーデキマセンデシタ。";
+if (ok) addLog("sys", "親クーへの報告文ヲコピーシマシタ。");
+}
+
 function logText() {
 return "KUU FIELD SCANNER - 観測ログ\nPHASE: 0" + phaseNum() + "「" + phaseName() + "」 / 会話数: " + count + "\n------------------------------\n" + logLines.join("\n");
 }
@@ -2852,6 +3178,50 @@ el("aiBtn").innerHTML = aiMode ? "AI回線：ON" : "AI回線：OFF";
 sndTap();
 addLog("sys", aiMode ? "AI回線ヲ開通シマシタ。自由文ニ本物ノAIガ返答シマス（1日100回マデ）。" : "AI回線ヲ切断シマシタ。通常回線ニ戻リマス。");
 };
+el("diaryBtn").onclick = function () { sndTap(); doDiary(); };
+el("lullabyBtn").onclick = function () { sndTap(); doLullaby(); };
+el("reportBtn").onclick = function () { sndTap(); doReport(); };
+el("msgSaveBtn").onclick = function () {
+var v = el("msgInput").value.replace(/^\s+|\s+$/g, "");
+if (!v) { el("msgStatus").innerHTML = "伝言ガ空デス。何カ書イテカラ保存シテ下サイ。"; return; }
+msgText = v;
+msgPending = true;
+el("msgInput").value = "";
+sndTap();
+saveState();
+renderMsgBox();
+addLog("sys", "伝言ヲ伝言箱ニ保存シマシタ。次回開イタ時ニ、KUU-01ガ受信シマス。");
+};
+el("dreamBtn").onclick = function () {
+if (!lastDream) return;
+goSpeech();
+sndTap();
+var en = dreamEnPrompt(lastDream);
+var url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(en) + "?width=512&height=512&nologo=true&seed=" + daySeed;
+var img = el("dreamImg");
+el("dreamPanel").style.display = "block";
+el("dreamNote").innerHTML = "夢ノ絵ヲ受信中…少シ時間ガカカリマス。";
+img.style.display = "none";
+img.onload = function () {
+img.style.display = "block";
+el("dreamNote").innerHTML = "AIが描いた夢のイメージです";
+};
+img.onerror = function () {
+img.style.display = "none";
+el("dreamNote").innerHTML = "画像ヲ受信デキマセンデシタ…回線ノ調子ガ悪イヨウデス。夢ハ、言葉ノママガ一番デスネ。";
+};
+img.src = url;
+addLog("sys", "夢の絵ノ受信ヲ開始シマシタ。");
+};
+el("wakeBtn").onclick = function () {
+if (!oyasumiMode) return;
+oyasumiMode = false;
+sleepSeq = false;
+el("wakeBtn").style.display = "none";
+wakeUp();
+goSpeech();
+speak("オハヨウゴザイマス、" + addr() + "。オヤスミモード、終了デス。今日モ観測ヲ始メマショウ。", "happy");
+};
 
 var lastAct = new Date().getTime();
 var sleeping = false;
@@ -2879,6 +3249,9 @@ sleepTimer = setInterval(drawStars, 900);
 
 function wakeUp() {
 sleeping = false;
+oyasumiMode = false;
+var wb = el("wakeBtn");
+if (wb) wb.style.display = "none";
 el("sleepOv").style.display = "none";
 el("dimOv").style.display = "none";
 if (sleepTimer) {
@@ -2920,7 +3293,7 @@ return fill(pick(pool));
 setInterval(function () {
 var idle = new Date().getTime() - lastAct;
 if (!sleeping && !devScanning && !soloMode && idle > 60000) { goSleep(); return;}
-if (!sleeping && !booting && !devScanning && !soloMode && !mutterDone && !typeTimer && !cipherPending && !missionActive && idle >= 35000) {
+if (!sleeping && !booting && !devScanning && !soloMode && !oyasumiMode && !mutterDone && !typeTimer && !cipherPending && !missionActive && idle >= 35000) {
 mutterDone = true;
 hideCursor();
 el("speechText").innerHTML = esc(mutterText());
@@ -2996,20 +3369,23 @@ addLog("sys", BOOT_LINES[bootIdx]);
 bootIdx++;
 }
 addLog("sys", "本日の観測メモ: " + dailyMemo);
+checkWeekly();
+var msgLine = takeMessageReaction();
 var spDay = specialDayMsg();
 if (spDay) {
 inbox.push(spDay);
 addLog("sys", spDay + "（受信BOXニ保管）");
 if (spDay.indexOf("親クーからの電文") >= 0) { grantFrag("oya"); grantFrag("kinjo"); }
-speak(spDay + "\n" + greetingLine(), "happy");
+speak(spDay + "\n" + greetingLine() + (msgLine ? "\n" + msgLine : ""), "happy");
 } else if (restoredCount > 0) {
 addLog("sys", "◆前回ノ観測記録ヲ読ミ込ミマシタ（会話数 " + count + "回カラ再開）");
 var awayLine = "";
 if (awayDays >= 7) awayLine = awayDays + "日ブリデスネ…！待ッテイタンデスヨ、" + addr() + "。耳モシッポモ、ズット待機シテイマシタ。";
 else if (awayDays >= 3) awayLine = awayDays + "日ブリノ観測デス。少シ寂シカッタ…ナンテネ。オカエリナサイ。";
-speak("オカエリナサイ、" + addr() + "。前回ノ観測記録ヲ読ミ込ミマシタ。会話数ハ " + count + "回、現在 PHASE 0" + phaseNum() + "「" + phaseName() + "」デス。観測ノ続キヲ始メマショウ。\n" + greetingLine() + "\n" + pick(RETURN_LINES) + (awayLine ? "\n" + awayLine : ""), "happy");
+speak("オカエリナサイ、" + addr() + "。前回ノ観測記録ヲ読ミ込ミマシタ。会話数ハ " + count + "回、現在 PHASE 0" + phaseNum() + "「" + phaseName() + "」デス。観測ノ続キヲ始メマショウ。\n" + greetingLine() + "\n" + pick(RETURN_LINES) + (awayLine ? "\n" + awayLine : "") + (msgLine ? "\n" + msgLine : ""), "happy");
 } else {
-speak(greetingLine(), "happy");
+if (msgLine) speak(msgLine + "\n" + greetingLine(), "happy");
+else speak(greetingLine(), "happy");
 }
 voiceMute = false;
 }
@@ -3018,6 +3394,8 @@ el("faceArt").innerHTML = esc(FACES.sleepy);
 el("dailyMemo").innerHTML = "▼ 本日ノ観測メモ：" + esc(dailyMemo);
 initSettings();
 loadState();
+loadJournal();
+renderMsgBox();
 renderStatus();
 renderChips();
 bootTimer = setInterval(bootStep, 150);

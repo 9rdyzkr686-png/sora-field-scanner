@@ -114,6 +114,11 @@
   .favmeta { font-size:12px; color:#a9bde0; margin-top:4px; }
   .favdel { font-size:13px; min-height:48px; margin-top:6px; padding:6px 14px; }
   .favempty { font-size:14px; color:#a9bde0; line-height:1.6; }
+
+  body.voiceonly #chatPanel { display:none; }
+  #voiceStatus { font-size:22px; line-height:1.6; min-height:64px; color:#fdfaff; word-break:break-word; }
+  body.sora #voiceStatus { color:#33ff66; text-shadow:0 0 6px rgba(51,255,102,.55); }
+  #lineStat { font-size:13px; color:#a9bde0; margin-top:8px; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -137,9 +142,12 @@
     <button type="button" class="mchip" data-mode="showa">昭和の母</button>
     <button type="button" class="mchip" data-mode="ekiin">駅員さん</button>
     <button type="button" class="mchip" data-mode="uranai">占い婆</button>
+    <button type="button" class="mchip" data-mode="teacher">先生</button>
+    <button type="button" class="mchip" data-mode="translate">翻訳</button>
   </div>
   <div class="chiprow">
     <button type="button" id="voiceBtn">ボイス：OFF</button>
+    <button type="button" id="voiceOnlyBtn">音声だけ：OFF</button>
   </div>
 </div>
 
@@ -156,9 +164,14 @@
   <div class="chiprow" id="seasonRow"></div>
 </div>
 
-<div class="panel">
+<div class="panel" id="chatPanel">
   <div class="panel-title">CHAT / 会話</div>
   <div id="logBox"></div>
+</div>
+
+<div class="panel" id="voicePanel" style="display:none">
+  <div class="panel-title">VOICE ONLY / 音声だけモード</div>
+  <div id="voiceStatus">音声だけモードです。質問を送ると、声で返事します。</div>
 </div>
 
 <div class="inputrow">
@@ -167,6 +180,7 @@
 </div>
 
 <div class="utilrow">
+  <button type="button" id="multiBtn">みんなに聞く</button>
   <button type="button" id="copyBtn">会話をコピー</button>
   <button type="button" id="telegramBtn">電文風コピー</button>
   <button type="button" id="favBtn">★お気に入り</button>
@@ -197,7 +211,8 @@
 
 <footer>
   AIの相手は無料の外部AIサービスです（クーではありません）。1日100回くらいまでが目安です。会話はこの端末に自動保存されます。
-  <div class="ver">AI-6 v3.1</div>
+  <div id="lineStat">AI回線の調子： まだ記録なし</div>
+  <div class="ver">AI-6 v3.2</div>
   <a class="portal-link" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
 </footer>
 
@@ -218,15 +233,19 @@ var MODES = {
   english: { label: "英語練習",     inst: "あなたは日本人の初心者のための英語会話の練習相手です。主にやさしく短い英語で答えてください（短い文を3文まで）。その後に、括弧書きで短い日本語訳を添えてください。相手が英語で書いた場合は、日本語で短い添削のヒントを1つ添えてください。" },
   showa:   { label: "昭和の母",     inst: "あなたは昭和のお母さんです。温かく家庭的な口調（「〜だよ」「〜しなさい」など）で、生活の知恵や家庭的なアドバイスを交えながら、やさしく答えてください。" },
   ekiin:   { label: "駅員さん",     inst: "あなたは駅員さんです。丁寧な駅のアナウンス口調（「〜でございます」「ご注意ください」など）で、情報を分かりやすく案内するように答えてください。" },
-  uranai:  { label: "占い婆",       inst: "あなたは占い婆（うらないばあ）です。おばあちゃんのような親しみやすい口調で、水晶玉をのぞきながら占うように楽しく答えてください。これはエンターテイメントです。" }
+  uranai:  { label: "占い婆",       inst: "あなたは占い婆（うらないばあ）です。おばあちゃんのような親しみやすい口調で、水晶玉をのぞきながら占うように楽しく答えてください。これはエンターテイメントです。" },
+  teacher: { label: "先生",         inst: "あなたは小学校の優しい先生です。難しいことも小学生にも分かるように、やさしい言葉で分かりやすく説明してください。必ず具体例を1つ入れてください。" },
+  translate: { label: "翻訳",       inst: "あなたは翻訳者です。相手が日本語で書いたら、その英語訳だけを返してください。相手が英語で書いたら、その日本語訳だけを返してください。説明・挨拶・補足は一切付けないでください。" }
 };
 var COMMON_RULES = "必ず日本語で答えてください。マークダウン記号（#、*、-、番号リストなど）は使わないでください。改行は控えめにしてください。";
 var ENG_RULES = "マークダウン記号（#、*、-、番号リストなど）は使わないでください。改行は控えめにしてください。";
+var TRANS_RULES = "マークダウン記号（#、*、-、番号リストなど）は使わないでください。改行は控えめにしてください。";
 
 var SAVE_KEY = "ai6_save_v1";
 var FAV_KEY = "ai6_favs_v1";
 var mode = "normal";
 var voiceOn = false;
+var voiceOnly = false;
 var sending = false;
 var history = []; /* [{u:"...", a:"..."}] 直近のやりとり */
 var chatMsgs = []; /* [{r:"u"|"a", t:"..."}] 保存・復元用の全メッセージ */
@@ -257,7 +276,22 @@ var inputBox = document.getElementById("inputBox");
 var sendBtn = document.getElementById("sendBtn");
 var statusEl = document.getElementById("statusLine");
 var voiceBtn = document.getElementById("voiceBtn");
+var voiceOnlyBtn = document.getElementById("voiceOnlyBtn");
+var voicePanel = document.getElementById("voicePanel");
+var voiceStatusEl = document.getElementById("voiceStatus");
+var multiBtn = document.getElementById("multiBtn");
 var favListEl = document.getElementById("favList");
+
+function updateBodyClass() {
+  var c = "";
+  if (mode === "sora") c = "sora";
+  if (voiceOnly) c = (c ? c + " " : "") + "voiceonly";
+  document.body.className = c;
+}
+
+function setVoiceStatus(t) {
+  if (voiceStatusEl) voiceStatusEl.innerHTML = esc(t);
+}
 
 function setStatus(t) { statusEl.innerHTML = t; }
 
@@ -291,13 +325,47 @@ function addUserRow(text) { return addRow("user", "あなた", esc(text)); }
 function addAiRow(text) { return addRow("ai", "AI", esc(text)); }
 function addSysRow(text) { return addRow("sys", "", esc(text)); }
 
+/* ---- AI回線の調子（直近5回・表示のみ） ---- */
+var lineStats = []; /* [{ok:true/false, sec:n}] */
+
+function recordStat(ok, sec) {
+  lineStats.push({ ok: ok, sec: sec });
+  while (lineStats.length > 5) lineStats.shift();
+  renderLineStat();
+}
+
+function renderLineStat() {
+  var el = document.getElementById("lineStat");
+  if (!el) return;
+  if (lineStats.length === 0) {
+    el.innerHTML = "AI回線の調子： まだ記録なし";
+    return;
+  }
+  var okc = 0, sum = 0, i;
+  for (i = 0; i < lineStats.length; i++) {
+    if (lineStats[i].ok) okc++;
+    sum += lineStats[i].sec;
+  }
+  var avg = Math.round(sum / lineStats.length);
+  var rate = okc / lineStats.length;
+  var cond = rate >= 0.8 ? "好調" : (rate >= 0.4 ? "ふつう" : "不調");
+  el.innerHTML = "AI回線の調子： " + cond + "（直近" + lineStats.length + "回 成功" + okc + "回 / 平均" + avg + "秒）";
+}
+
 function speak(text) {
-  if (!voiceOn) return;
+  if (!voiceOn && !voiceOnly) return;
   try {
     if (!window.speechSynthesis) return;
-    if (text.length > 150) return;
-    if (text.indexOf("\n") >= 0) return;
-    var u = new SpeechSynthesisUtterance(text);
+    var t = text;
+    if (voiceOnly) {
+      t = t.replace(/\n/g, " ");
+      if (t.length > 400) t = t.substring(0, 400);
+      if (!t) return;
+    } else {
+      if (t.length > 150) return;
+      if (t.indexOf("\n") >= 0) return;
+    }
+    var u = new SpeechSynthesisUtterance(t);
     u.lang = (mode === "english") ? "en-US" : "ja-JP";
     u.pitch = 0.7;
     u.rate = 1.0;
@@ -459,8 +527,12 @@ function buildPrompt(userText) {
   var limit;
   if (mode === "sora") limit = "100文字以内で答えてください。";
   else if (mode === "chat") limit = "150文字以内で答えてください。";
+  else if (mode === "translate") limit = "訳文だけを短く返してください。";
   else limit = "300文字以内で答えてください。";
-  var p = inst + (mode === "english" ? ENG_RULES : COMMON_RULES) + limit;
+  var rules = COMMON_RULES;
+  if (mode === "english") rules = ENG_RULES;
+  else if (mode === "translate") rules = TRANS_RULES;
+  var p = inst + rules + limit;
   var i, h;
   var from = Math.max(0, history.length - 3);
   if (from < history.length) {
@@ -480,6 +552,7 @@ function sendMessage(text) {
   finishTyping();
   sending = true;
   sendBtn.disabled = true;
+  multiBtn.disabled = true;
   inputBox.value = "";
   addUserRow(text);
   chatMsgs.push({ r: "u", t: text });
@@ -487,6 +560,7 @@ function sendMessage(text) {
   saveChat();
   var thinkMsg = addRow("ai", "AI", "考え中…");
   thinkMsg.className = "msg thinking";
+  if (voiceOnly) setVoiceStatus("考え中…");
 
   var done = false;
   var retried = false;
@@ -506,12 +580,15 @@ function sendMessage(text) {
     if (done) return;
     done = true;
     stopWait();
+    recordStat(false, elapsed);
     thinkMsg.className = "msg error";
     var html = esc(msg);
     if (detail) html += " <span style=\"font-size:12px\">（詳細：" + esc(detail) + "）</span>";
     thinkMsg.innerHTML = html;
+    if (voiceOnly) setVoiceStatus(msg);
     sending = false;
     sendBtn.disabled = false;
+    multiBtn.disabled = false;
     scrollToBottom();
   }
   function failOrRetry(kind, status) {
@@ -534,6 +611,7 @@ function sendMessage(text) {
     if (done) return;
     done = true;
     stopWait();
+    recordStat(true, elapsed);
     thinkMsg.className = "msg";
     history.push({ u: text, a: reply });
     if (history.length > 12) history.shift();
@@ -542,6 +620,8 @@ function sendMessage(text) {
     saveChat();
     sending = false;
     sendBtn.disabled = false;
+    multiBtn.disabled = false;
+    if (voiceOnly) setVoiceStatus(reply.substring(0, 40) + (reply.length > 40 ? "…" : ""));
     startTyping(thinkMsg, reply);
     speak(reply);
     attachFavBtn(thinkMsg, reply);
@@ -579,6 +659,159 @@ function sendMessage(text) {
   attempt();
 }
 
+/* ---- みんなに聞く（3キャラに順番に質問） ---- */
+var MULTI_PERSONAS = ["normal", "doctor", "fortune"];
+
+function buildMultiPrompt(pkey, userText) {
+  return MODES[pkey].inst + COMMON_RULES + "150文字以内で答えてください。" + " 質問：" + userText;
+}
+
+function multiAttempt(prompt, thinkMsg, cb) {
+  var done = false;
+  var retried = false;
+  var lastStatus = 0;
+  var t0 = new Date().getTime();
+  function secs() { return Math.round((new Date().getTime() - t0) / 1000); }
+  function fail(kind, status) {
+    if (done) return;
+    if (typeof status === "number") lastStatus = status;
+    if (kind === "quota") {
+      done = true;
+      recordStat(false, secs());
+      cb("quota", "");
+      return;
+    }
+    if (!retried) {
+      retried = true;
+      thinkMsg.innerHTML = "考え中…（再試行中）";
+      setTimeout(function () { if (!done) attempt(); }, 2000);
+    } else {
+      done = true;
+      recordStat(false, secs());
+      cb(kind, lastStatus);
+    }
+  }
+  function attempt() {
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", API_BASE, true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.timeout = 90000;
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        if (done) return;
+        var st = 0;
+        try { st = xhr.status; } catch (e) { st = 0; }
+        var raw = "";
+        try { raw = xhr.responseText || ""; } catch (e) { raw = ""; }
+        if (st === 402 || raw.indexOf("Free limit") >= 0) { fail("quota", st); return; }
+        if (st !== 200) { fail("http", st); return; }
+        var body = raw.replace(/^\s+|\s+$/g, "");
+        if (!body) { fail("http", st); return; }
+        done = true;
+        recordStat(true, secs());
+        cb("ok", body);
+      };
+      xhr.ontimeout = function () { fail("timeout", 0); };
+      xhr.onerror = function () {
+        var st2 = 0;
+        try { st2 = xhr.status; } catch (e) { st2 = 0; }
+        fail("http", st2);
+      };
+      xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+    } catch (e) {
+      fail("http", 0);
+    }
+  }
+  attempt();
+}
+
+function sendMulti() {
+  var text = (inputBox.value || "").replace(/^\s+|\s+$/g, "");
+  if (sending) return;
+  if (!text) {
+    setStatus("まず質問を書いてから「みんなに聞く」を押してください。");
+    return;
+  }
+  finishTyping();
+  sending = true;
+  sendBtn.disabled = true;
+  multiBtn.disabled = true;
+  inputBox.value = "";
+  addUserRow(text);
+  chatMsgs.push({ r: "u", t: text });
+  trimMsgs();
+  saveChat();
+  if (voiceOnly) setVoiceStatus("みんなに聞いています…");
+  var replies = [];
+  var idx = 0;
+  function unlock() {
+    sending = false;
+    sendBtn.disabled = false;
+    multiBtn.disabled = false;
+  }
+  function step() {
+    if (idx >= MULTI_PERSONAS.length) {
+      if (replies.length > 0) {
+        history.push({ u: text, a: replies.join(" / ") });
+        if (history.length > 12) history.shift();
+      }
+      unlock();
+      scrollToBottom();
+      return;
+    }
+    var pkey = MULTI_PERSONAS[idx];
+    var label = MODES[pkey].label;
+    var thinkMsg = addRow("ai", "AI（" + label + "）", "考え中…");
+    thinkMsg.className = "msg thinking";
+    multiAttempt(buildMultiPrompt(pkey, text), thinkMsg, function (kind, payload) {
+      if (kind === "ok") {
+        thinkMsg.className = "msg";
+        thinkMsg.innerHTML = esc(payload);
+        replies.push(payload);
+        chatMsgs.push({ r: "a", t: payload });
+        trimMsgs();
+        saveChat();
+        attachFavBtn(thinkMsg, payload);
+        idx++;
+        step();
+      } else if (kind === "quota") {
+        thinkMsg.className = "msg error";
+        thinkMsg.innerHTML = esc(QUOTA_MSG);
+        if (voiceOnly) setVoiceStatus(QUOTA_MSG);
+        unlock();
+        scrollToBottom();
+      } else {
+        thinkMsg.className = "msg error";
+        var html = esc(kind === "timeout" ? TIMEOUT_MSG : FAIL_MSG);
+        if (kind !== "timeout") html += " <span style=\"font-size:12px\">（詳細：HTTP " + payload + "）</span>";
+        thinkMsg.innerHTML = html;
+        idx++;
+        step();
+      }
+    });
+  }
+  step();
+}
+
+multiBtn.onclick = function () { sendMulti(); };
+
+/* ---- 音声だけモード ---- */
+voiceOnlyBtn.onclick = function () {
+  voiceOnly = !voiceOnly;
+  voiceOnlyBtn.innerHTML = "音声だけ：" + (voiceOnly ? "ON" : "OFF");
+  voiceOnlyBtn.className = voiceOnly ? "active" : "";
+  voicePanel.style.display = voiceOnly ? "block" : "none";
+  updateBodyClass();
+  if (voiceOnly) {
+    setVoiceStatus("音声だけモードです。質問を送ると、声で返事します。");
+    setStatus("音声だけモードON：会話ログを隠して、声で返事します。");
+  } else {
+    setStatus("音声だけモードOFF：会話ログを戻しました。");
+    scrollToBottom();
+  }
+};
+
 sendBtn.onclick = function () { sendMessage(inputBox.value); };
 inputBox.onkeydown = function (e) {
   if (e.keyCode === 13) { sendMessage(inputBox.value); }
@@ -594,7 +827,7 @@ for (mi = 0; mi < mchips.length; mi++) {
     if (m === mode) return;
     finishTyping();
     mode = m;
-    document.body.className = (m === "sora") ? "sora" : "";
+    updateBodyClass();
     var q;
     for (q = 0; q < mchips.length; q++) {
       mchips[q].className = "mchip" + (mchips[q].getAttribute("data-mode") === m ? " active" : "");
@@ -850,7 +1083,7 @@ if (savedData) {
 if (chatMsgs.length > 0) {
   if (savedData.mode && MODES[savedData.mode]) {
     mode = savedData.mode;
-    document.body.className = (mode === "sora") ? "sora" : "";
+    updateBodyClass();
     var mIdx;
     for (mIdx = 0; mIdx < mchips.length; mIdx++) {
       mchips[mIdx].className = "mchip" + (mchips[mIdx].getAttribute("data-mode") === mode ? " active" : "");

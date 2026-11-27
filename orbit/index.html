@@ -149,6 +149,11 @@ button:active { background: #33ff66; color: #000; }
     <div class="cell"><div class="k">次の満月 NEXT FULL MOON</div><div class="v" style="font-size:16px;" id="nextFull">---</div></div>
     <div class="cell"><div class="k">次の新月 NEXT NEW MOON</div><div class="v" style="font-size:16px;" id="nextNew">---</div></div>
   </div>
+  <div class="row" style="margin-top:4px;">
+    <div class="cell"><div class="k">月までの距離 MOON DISTANCE</div><div class="v" style="font-size:16px;" id="moonDist">---</div></div>
+    <div class="cell"><div class="k">近地点〜遠地点</div><div class="v" style="font-size:16px;">約35.6万〜40.7万<small>km</small></div></div>
+  </div>
+  <div class="note">※ 距離は月の公転周期（近点月）からの簡易計算による概算です。月は楕円軌道を回るため、距離は日々変化します。</div>
   <div class="panel-title" style="margin-top:12px;">MOON MAP <span class="jp">月面マップ（海の名前）</span></div>
   <canvas id="moonMapCanvas" width="320" height="320"></canvas>
   <div id="seaList"></div>
@@ -171,6 +176,46 @@ button:active { background: #33ff66; color: #000; }
   <div class="msg" id="planetMsg"></div>
   <button id="planetStopBtn" style="display:none;">読み上げを止める STOP</button>
   <div class="note">※ 案内文はAIが生成します。日没・月相はこのページの実データ（取得値・計算値）を使います。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">STAR CHART <span class="jp">今夜の星空マップ（21時ごろ）</span></div>
+  <canvas id="starCanvas" width="340" height="340"></canvas>
+  <div class="note">※ 模式図です（おおよその配置）。日付に合わせて少しずつ回転させています。空を見上げた向きで描いているため、東は左・西は右です。明るい星と有名な星座だけの簡易版です。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">PLANET CARDS <span class="jp">惑星パネル（基礎データと見頃の目安）</span></div>
+  <div id="planetCards"></div>
+  <button id="planetAiBtn">今夜の惑星を聞く</button>
+  <div id="planetCardsText" style="font-size:16px; min-height:24px; color:#eafff8; line-height:1.7;">上のボタンを押すと、今夜の惑星の見どころをAIが案内します。</div>
+  <div class="msg" id="planetCardsMsg"></div>
+  <div class="note">※ 各カードの「見える時期」は一般的な目安です。正確な位置は日々変わります。案内文はAIが生成します。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">SPACE WEATHER <span class="jp">宇宙天気（Kp指数・オーロラ）</span></div>
+  <div class="row">
+    <div class="cell"><div class="k">Kp指数 KP INDEX（0〜9）</div><div class="v" id="kpNow">---</div></div>
+    <div class="cell"><div class="k">日本でオーロラが見える可能性</div><div class="v" id="kpChance">---</div></div>
+  </div>
+  <div class="msg" id="swMsg">宇宙天気データ取得中…</div>
+  <div class="note">※ Kp指数は地球の磁場の乱れ具合を0〜9で表す指標です。本州でオーロラが見えるのは、Kp7以上の大きな磁気嵐の時に北の低空でごくまれに、が目安。北海道ではKp5〜6でもチャンスがあります。データ：NOAA SWPC。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">MOON CALENDAR <span class="jp">満月・新月カレンダー（計算値）</span></div>
+  <div class="row">
+    <div class="cell"><div class="k">満月 FULL MOON</div><div id="fullList" style="font-size:15px; line-height:1.7;">---</div></div>
+    <div class="cell"><div class="k">新月 NEW MOON</div><div id="newList" style="font-size:15px; line-height:1.7;">---</div></div>
+  </div>
+  <div class="note">※ 月齢計算から求めた概算日です（±1日程度ずれることがあります）。</div>
+</div>
+
+<div class="panel">
+  <div class="panel-title">SPACE QUOTES <span class="jp">宇宙の名言カード</span></div>
+  <div id="quoteText" style="font-size:16px; min-height:48px; color:#eafff8; line-height:1.7;"></div>
+  <button id="quoteBtn">次の名言 NEXT</button>
 </div>
 
 <div class="panel">
@@ -361,14 +406,21 @@ button:active { background: #33ff66; color: #000; }
 </div>
 
 <div class="panel">
+  <div class="panel-title">ROCKET NEWS <span class="jp">ロケット打ち上げニュース</span></div>
+  <div id="rocketList"></div>
+  <div class="msg" id="rocketMsg">ロケットニュース取得中…</div>
+  <div class="note">※ 見出しはGoogle News経由で取得しています。打ち上げ日程などの公式情報は、各宇宙機関・事業者の発表をご確認ください。</div>
+</div>
+
+<div class="panel">
   <div class="panel-title">SPACE TRIVIA <span class="jp">宇宙の雑学</span></div>
   <div id="triviaText"></div>
   <button id="triviaBtn">次の雑学 NEXT</button>
 </div>
 
 <div class="footer">
-  DATA SOURCES: wheretheiss.at / Open-Meteo / sorae.info<br>
-  ORBIT-6 v1.2 — 観測地：埼玉県ふじみ野市 (35.8795, 139.5197)
+  DATA SOURCES: wheretheiss.at / Open-Meteo / sorae.info / NOAA SWPC / Google News<br>
+  ORBIT-6 v1.3 — 観測地：埼玉県ふじみ野市 (35.8795, 139.5197)
 </div>
 
 <script>
@@ -492,6 +544,13 @@ function moonCalc() {
   var nDate = new Date(Date.now() + toNew * 86400000);
   el("nextFull").innerHTML = (fDate.getMonth() + 1) + "月" + fDate.getDate() + "日ごろ <small>あと" + Math.ceil(toFull) + "日</small>";
   el("nextNew").innerHTML = (nDate.getMonth() + 1) + "月" + nDate.getDate() + "日ごろ <small>あと" + Math.ceil(toNew) + "日</small>";
+  /* 月までの距離（概算）：近点月27.55455日を周期とする簡易モデル。基準は朔望月と同じ
+     2000-01-06 18:14 UTC。356,100〜407,000kmの範囲に収まる近似式。 */
+  var anom = 27.55455;
+  var ageAnom = (nowDays - newMoon) % anom;
+  if (ageAnom < 0) { ageAnom += anom; }
+  var distKm = 381550 - 25450 * Math.cos(2 * Math.PI * ageAnom / anom);
+  el("moonDist").innerHTML = "約" + fmtNum(Math.round(distKm)) + " <small>km（概算）</small>";
   drawMoon(age / synodic);
 }
 
@@ -1063,11 +1122,322 @@ function planetGo() {
 el("planetBtn").addEventListener("click", function () { planetGo(); });
 el("planetStopBtn").addEventListener("click", function () { planetStop(); });
 
+/* ---------- STAR CHART （模式図） ---------- */
+/* チャート座標は単位円内の固定値（x:東←→西, y:北↑-1〜南↓+1 の模式配置） */
+var CHART_STARS = [
+  { x: -0.18, y: 0.18, s: 3, n: "ベテルギウス" },
+  { x: 0.14, y: 0.20, s: 2 },
+  { x: -0.05, y: 0.38, s: 2 },
+  { x: 0.00, y: 0.40, s: 2 },
+  { x: 0.05, y: 0.42, s: 2 },
+  { x: -0.10, y: 0.58, s: 2 },
+  { x: 0.10, y: 0.60, s: 3, n: "リゲル" },
+  { x: -0.62, y: -0.55, s: 2 },
+  { x: -0.52, y: -0.50, s: 2 },
+  { x: -0.42, y: -0.44, s: 2, n: "北斗七星" },
+  { x: -0.44, y: -0.54, s: 2 },
+  { x: -0.34, y: -0.58, s: 2 },
+  { x: -0.26, y: -0.60, s: 2 },
+  { x: -0.16, y: -0.56, s: 2 },
+  { x: 0.42, y: -0.48, s: 2 },
+  { x: 0.52, y: -0.58, s: 2 },
+  { x: 0.60, y: -0.50, s: 2, n: "カシオペヤ" },
+  { x: 0.68, y: -0.60, s: 2 },
+  { x: 0.78, y: -0.54, s: 2 },
+  { x: 0.02, y: -0.74, s: 2, n: "北極星" },
+  { x: 0.30, y: 0.55, s: 3, n: "シリウス" },
+  { x: 0.44, y: 0.32, s: 2, n: "プロキオン" },
+  { x: -0.58, y: 0.02, s: 3, n: "ベガ" },
+  { x: -0.66, y: -0.16, s: 2 },
+  { x: 0.32, y: -0.38, s: 2, n: "カペラ" },
+  { x: 0.22, y: 0.05, s: 2, n: "アルデバラン" }
+];
+var CHART_LINES = [
+  [0, 2], [2, 3], [3, 4], [1, 4], [2, 5], [4, 6], [0, 1],
+  [7, 8], [8, 9], [9, 10], [10, 7], [10, 11], [11, 12], [12, 13],
+  [14, 15], [15, 16], [16, 17], [17, 18]
+];
+
+function drawStarChart() {
+  var cv = el("starCanvas");
+  if (!cv) { return; }
+  var ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height;
+  var cx = W / 2, cy = H / 2, R = W / 2 - 26;
+  var now = new Date();
+  var yearStart = new Date(now.getFullYear(), 0, 0);
+  var doy = Math.floor((now.getTime() - yearStart.getTime()) / 86400000);
+  var ang = doy * Math.PI / 180;
+  var ca = Math.cos(ang), sa = Math.sin(ang);
+  var i, p, q;
+  function proj(st) {
+    var x = st.x * ca - st.y * sa;
+    var y = st.x * sa + st.y * ca;
+    return [cx + x * R, cy + y * R];
+  }
+  ctx.fillStyle = "#000a10";
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = "rgba(77,255,210,0.7)";
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = "rgba(77,255,210,0.25)";
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.5, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx - 5, cy); ctx.lineTo(cx + 5, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy - 5); ctx.lineTo(cx, cy + 5); ctx.stroke();
+  ctx.strokeStyle = "rgba(51,255,102,0.45)";
+  for (i = 0; i < CHART_LINES.length; i++) {
+    p = proj(CHART_STARS[CHART_LINES[i][0]]);
+    q = proj(CHART_STARS[CHART_LINES[i][1]]);
+    ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+  }
+  for (i = 0; i < CHART_STARS.length; i++) {
+    p = proj(CHART_STARS[i]);
+    ctx.fillStyle = CHART_STARS[i].s >= 3 ? "#ffe9a8" : "#eafff8";
+    ctx.beginPath();
+    ctx.arc(p[0], p[1], CHART_STARS[i].s >= 3 ? 3.4 : 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = "#7fb8a8";
+  ctx.font = "11px monospace";
+  ctx.textAlign = "left";
+  for (i = 0; i < CHART_STARS.length; i++) {
+    if (!CHART_STARS[i].n) { continue; }
+    p = proj(CHART_STARS[i]);
+    ctx.fillText(CHART_STARS[i].n, p[0] + 6, p[1] - 5);
+  }
+  ctx.fillStyle = "#ffb000";
+  ctx.font = "15px monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("北", cx, 17);
+  ctx.fillText("南", cx, H - 7);
+  ctx.fillText("東", 13, cy + 5);
+  ctx.fillText("西", W - 13, cy + 5);
+}
+
+/* ---------- PLANET CARDS ---------- */
+var PLANET_FACTS = [
+  { name: "水星 MERCURY", fact: "太陽にいちばん近い小さな惑星。直径は月の約1.4倍で、昼と夜の温度差が600度近くにもなる。", season: "見える時期の目安：年に数回、日没直後の西の低い空か、日の出前の東の低い空に短時間だけ。春の夕方・秋の明け方が探しやすい時期とされる。" },
+  { name: "金星 VENUS", fact: "分厚い雲に覆われた高温の惑星。大きさは地球とほぼ同じで、全天でいちばん明るく輝く。", season: "見える時期の目安：「宵の明星」の時期は夕方の西の空、「明けの明星」の時期は明け方の東の空。数か月ごとに夕方と明け方を入れ替わる。" },
+  { name: "火星 MARS", fact: "赤い砂漠の惑星。直径は地球の半分ほど。太陽系最大の火山オリンポス山がある。", season: "見える時期の目安：約2年2か月ごとの地球への接近の年が見頃。接近のころは真夜中の南の空でひときわ明るく赤く見える。" },
+  { name: "木星 JUPITER", fact: "太陽系最大の惑星。直径は地球の約11倍。大赤斑と呼ばれる巨大な嵐の渦がある。", season: "見える時期の目安：衝（太陽の反対側に来る）の前後数か月が観察の好期。好期は毎年少しずつずれていく。双眼鏡でも4つの衛星が見える。" },
+  { name: "土星 SATURN", fact: "氷の粒でできた大きな環を持つ惑星。環まで含めた幅は地球の約9倍にもなる。", season: "見える時期の目安：衝の前後数か月が観察の好期。環の傾きは年によって変わり、細く見える年と大きく開く年がある。" }
+];
+
+function renderPlanetCards() {
+  var html = "", i, p;
+  for (i = 0; i < PLANET_FACTS.length; i++) {
+    p = PLANET_FACTS[i];
+    html += '<div class="planet-item">' + p.name +
+      '<div class="planet-cmt" style="font-size:14px; color:#eafff8;">' + p.fact + "</div>" +
+      '<div class="planet-cmt">' + p.season + "</div></div>";
+  }
+  el("planetCards").innerHTML = html;
+}
+
+var pcBusy = false;
+var pcTimer = null;
+
+function pcFinish() {
+  pcBusy = false;
+  if (pcTimer) { clearInterval(pcTimer); pcTimer = null; }
+}
+
+function pcShow(text) {
+  pcFinish();
+  el("planetCardsText").innerHTML = planetEsc(text);
+  el("planetCardsMsg").innerHTML = "";
+  if (text.length <= 300) { planetSpeak(text); }
+}
+
+function pcError(msg, detail) {
+  pcFinish();
+  el("planetCardsText").innerHTML = planetEsc(msg);
+  el("planetCardsMsg").innerHTML = detail ? planetEsc(detail) : "";
+}
+
+function pcAsk(dateStr, sunset, moonName) {
+  var facts = "今日は" + dateStr + "です。観測地は埼玉県ふじみ野市です。";
+  if (sunset) { facts += "今夜の日没は" + sunset + "ごろです。"; }
+  if (moonName) { facts += "今夜の月は「" + moonName + "」です。"; }
+  var prompt = "あなたはプラネタリウムの案内役です。次の情報をもとに、今夜の惑星の見どころを案内する文章を、優しい口調で書いてください。どの惑星がいつ頃どの方角に見えるか、見えにくい惑星はその理由も添えてください。250文字以内。マークダウンなし、プレーンテキストのみ。情報にない数値や時刻は断定しないでください。【情報】" + facts;
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  xhr.onload = function () {
+    var body = xhr.responseText || "";
+    if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+      pcError("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+      return;
+    }
+    if (xhr.status !== 200 || body.replace(/\s/g, "") === "") {
+      pcError("AI回線が混み合っています", "詳細：HTTP " + xhr.status);
+      return;
+    }
+    pcShow(body.replace(/\s+$/, ""));
+  };
+  xhr.ontimeout = function () {
+    pcError("AIの返事が時間切れになりました。もう一度押してみてください", "");
+  };
+  xhr.onerror = function () {
+    pcError("AI回線が混み合っています", "詳細：HTTP " + xhr.status);
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+}
+
+function pcGo() {
+  if (pcBusy) { return; }
+  pcBusy = true;
+  planetStop();
+  var sec = 0;
+  el("planetCardsText").innerHTML = "投影準備中… 0秒";
+  el("planetCardsMsg").innerHTML = "";
+  if (pcTimer) { clearInterval(pcTimer); }
+  pcTimer = setInterval(function () {
+    sec++;
+    if (pcBusy) { el("planetCardsText").innerHTML = "投影準備中… " + sec + "秒"; }
+  }, 1000);
+  var now = new Date();
+  var wd = ["日", "月", "火", "水", "木", "金", "土"][now.getDay()];
+  var dateStr = (now.getMonth() + 1) + "月" + now.getDate() + "日（" + wd + "）";
+  var moonName = el("moonName").textContent || "";
+  if (moonName === "" || moonName === "---") { moonName = planetMoonNameLocal(); }
+  var sunset = el("sunsetT").textContent || "";
+  if (/^\d{1,2}:\d{2}$/.test(sunset)) {
+    pcAsk(dateStr, sunset, moonName);
+  } else {
+    var url = "https://api.open-meteo.com/v1/forecast?latitude=" + LAT + "&longitude=" + LON +
+      "&daily=sunset&timezone=Asia%2FTokyo&forecast_days=1";
+    getJSON(url, function (d) {
+      var ss = "";
+      try { ss = d.daily.sunset[0].substring(11, 16); } catch (e) { ss = ""; }
+      if (!/^\d{1,2}:\d{2}$/.test(ss)) { ss = ""; }
+      pcAsk(dateStr, ss, moonName);
+    }, function () {
+      pcAsk(dateStr, "", moonName);
+    });
+  }
+}
+
+el("planetAiBtn").addEventListener("click", function () { pcGo(); });
+
+/* ---------- SPACE WEATHER （NOAA SWPC Kp指数） ---------- */
+function fetchKp() {
+  getJSON("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json", function (d) {
+    if (!d || d.length === 0) {
+      el("swMsg").innerHTML = "宇宙天気データを取得できませんでした。";
+      return;
+    }
+    var last = d[d.length - 1];
+    var kp = parseFloat(last.Kp);
+    if (isNaN(kp)) {
+      el("swMsg").innerHTML = "宇宙天気データを取得できませんでした。";
+      return;
+    }
+    el("kpNow").innerHTML = kp.toFixed(1) + " <small>/ 9</small>";
+    var chance = "低";
+    if (kp >= 7) { chance = "高"; }
+    else if (kp >= 5) { chance = "中"; }
+    el("kpChance").innerHTML = chance;
+    var tt = last.time_tag ? String(last.time_tag) : "";
+    el("swMsg").innerHTML = "NOAA SWPC 実測値" + (tt ? "（" + tt.substring(0, 10) + " " + tt.substring(11, 16) + " UTC）" : "");
+  }, function () {
+    el("kpNow").innerHTML = "---";
+    el("kpChance").innerHTML = "---";
+    el("swMsg").innerHTML = "宇宙天気データを取得できませんでした。次回更新で再試行します。";
+  });
+}
+
+/* ---------- MOON CALENDAR ---------- */
+function moonAgeAt(ms) {
+  var synodic = 29.530588853;
+  var ref = Date.UTC(2000, 0, 6, 18, 14) / 86400000;
+  var age = (ms / 86400000 - ref) % synodic;
+  if (age < 0) { age += synodic; }
+  return age;
+}
+
+function renderMoonCal() {
+  var synodic = 29.530588853;
+  var start = new Date();
+  start.setHours(12, 0, 0, 0);
+  var prev = moonAgeAt(start.getTime());
+  var fulls = [], news = [];
+  var i, d, age;
+  for (i = 1; i <= 220 && (fulls.length < 6 || news.length < 6); i++) {
+    d = new Date(start.getTime() + i * 86400000);
+    age = moonAgeAt(d.getTime());
+    if (age < prev && news.length < 6) { news.push(d); }
+    if (prev < synodic / 2 && age >= synodic / 2 && fulls.length < 6) { fulls.push(d); }
+    prev = age;
+  }
+  var wd = ["日", "月", "火", "水", "木", "金", "土"];
+  function fmt(dt) {
+    return (dt.getMonth() + 1) + "月" + dt.getDate() + "日（" + wd[dt.getDay()] + "）";
+  }
+  var fh = "", nh = "", j;
+  for (j = 0; j < fulls.length; j++) { fh += fmt(fulls[j]) + "<br>"; }
+  for (j = 0; j < news.length; j++) { nh += fmt(news[j]) + "<br>"; }
+  el("fullList").innerHTML = fh || "---";
+  el("newList").innerHTML = nh || "---";
+}
+
+/* ---------- SPACE QUOTES ---------- */
+var QUOTES = [
+  { t: "地球は青かった", a: "ユーリ・ガガーリン（1961年、人類初の宇宙飛行）" },
+  { t: "これは一人の人間にとっては小さな一歩だが、人類にとっては大きな飛躍である", a: "ニール・アームストロング（1969年、月面着陸の第一声）" },
+  { t: "ヒューストン、こちら静かの海基地。鷲（イーグル）は着陸した", a: "ニール・アームストロング（1969年、アポロ11号着陸時）" },
+  { t: "ヒューストン、問題が発生した", a: "ジャック・スワイガート（1970年、アポロ13号）" },
+  { t: "失敗は選択肢にない（Failure is not an option）", a: "ジーン・クランツ（アポロ13号の飛行管制官。映画『アポロ13』の台詞として有名）" },
+  { t: "地球は人類のゆりかごであるが、人類は永遠にゆりかごの中に留まることはできない", a: "コンスタンチン・ツィオルコフスキー（ロケット工学の先駆者）" },
+  { t: "私たちは星の材料でできている", a: "カール・セーガン（天文学者、『コスモス』著者）" },
+  { t: "宇宙からは、国境線は見えませんでした", a: "毛利衛（1992年、日本人初のスペースシャトル搭乗）" }
+];
+var quoteIdx = 0;
+
+function renderQuote() {
+  el("quoteText").innerHTML = "「" + QUOTES[quoteIdx].t + "」<br>" +
+    '<span style="font-size:13px; color:#7fb8a8;">— ' + QUOTES[quoteIdx].a + "</span>";
+}
+
+function nextQuote() {
+  quoteIdx = (quoteIdx + 1) % QUOTES.length;
+  renderQuote();
+}
+
+el("quoteBtn").addEventListener("click", function () { nextQuote(); });
+
+/* ---------- ROCKET NEWS ---------- */
+function fetchRocketNews() {
+  var rss = "https://news.google.com/rss/search?q=" + encodeURIComponent("ロケット 打ち上げ") + "&hl=ja&gl=JP&ceid=JP:ja";
+  var url = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(rss);
+  getJSON(url, function (d) {
+    if (!d.items || d.items.length === 0) {
+      el("rocketMsg").innerHTML = "ロケットニュースを取得できませんでした。";
+      return;
+    }
+    var html = "";
+    var i, it, dtxt;
+    for (i = 0; i < d.items.length && i < 4; i++) {
+      it = d.items[i];
+      dtxt = it.pubDate ? it.pubDate.substring(0, 10) : "";
+      html += '<div class="news-item"><a href="' + it.link + '">' + it.title + "</a>" +
+        ' <span class="news-date">' + dtxt + "</span></div>";
+    }
+    el("rocketList").innerHTML = html;
+    el("rocketMsg").innerHTML = "";
+  }, function () {
+    el("rocketMsg").innerHTML = "ロケットニュースを取得できませんでした。時間をおいて再度お試しください。";
+  });
+}
+
 /* ---------- INIT ---------- */
 function refreshAll() {
   fetchISS();
   fetchSun();
   fetchNews();
+  fetchRocketNews();
+  fetchKp();
   renderSun();
   renderLight();
 }
@@ -1088,6 +1458,11 @@ renderSun();
 renderLight();
 renderQuiz();
 showTrivia();
+drawStarChart();
+renderPlanetCards();
+renderMoonCal();
+quoteIdx = Math.floor(Date.now() / 86400000) % QUOTES.length;
+renderQuote();
 drawMap();
 refreshAll();
 setInterval(fetchISS, 10000);

@@ -97,6 +97,25 @@
   .nextBtn { background: #fdf8e7; color: #1d2a4a; }
   .goBtn { background: #8a2b23; color: #fff8ea; border-color: #8a2b23; font-size: 22px; letter-spacing: 4px; }
   .goBtn:disabled { background: #b9a894; border-color: #b9a894; }
+  .zukanBox {
+    background: #fdf8e7; border: 2px solid #1d2a4a; border-radius: 6px;
+    padding: 12px; margin-top: 12px;
+  }
+  .zukanHead { font-size: 20px; font-weight: bold; color: #8a2b23; }
+  .zukanCeleb {
+    margin-top: 6px; padding: 8px 10px; border-radius: 6px;
+    background: #8a2b23; color: #fff8ea; font-weight: bold; font-size: 17px;
+    text-align: center;
+  }
+  .zukanList { list-style: none; margin: 10px 0 0; padding: 0; }
+  .zukanList li {
+    padding: 8px 4px; border-bottom: 1px dashed #a5977a; font-size: 17px;
+    overflow: hidden;
+  }
+  .zukanList li:last-child { border-bottom: none; }
+  .zukanList .zname { font-weight: bold; }
+  .zukanList .zcount { float: right; color: #8a2b23; font-weight: bold; }
+  .zukanList .zcount.none { color: #8a8064; font-weight: normal; }
   .log {
     margin-top: 12px; background: #1d2a4a; color: #f3ead2; border-radius: 6px;
     padding: 12px 14px; min-height: 60px; font-size: 17px; display: none;
@@ -151,6 +170,13 @@
 <button class="bigBtn goBtn" id="goBtn" style="display:none;">しゅっぱつ！</button>
 
 <div class="log" id="journeyLog"></div>
+
+<h2>切符図鑑</h2>
+<div class="zukanBox">
+  <div class="zukanHead" id="zukanHead">0/9 時代制覇</div>
+  <div class="zukanCeleb" id="zukanCeleb" style="display:none;">🎉 全時代制覇！あなたは真の時間旅行者です！</div>
+  <ul class="zukanList" id="zukanList"></ul>
+</div>
 
 <footer>
   <a class="portalBtn" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
@@ -377,6 +403,49 @@ function selectEra(idx) {
   el("journeyLog").style.display = "none";
   el("journeyLog").innerHTML = "";
   showTrivia();
+  recordTicket(idx);
+}
+
+var ZUKAN_KEY = "jikan6_zukan_v1";
+
+function loadZukan() {
+  try {
+    var s = localStorage.getItem(ZUKAN_KEY);
+    if (s) {
+      var o = JSON.parse(s);
+      if (o && typeof o === "object") { return o; }
+    }
+  } catch (e) { }
+  return {};
+}
+
+function recordTicket(idx) {
+  try {
+    var z = loadZukan();
+    var k = ERAS[idx].name;
+    z[k] = (z[k] || 0) + 1;
+    localStorage.setItem(ZUKAN_KEY, JSON.stringify(z));
+  } catch (e) { }
+  renderZukan();
+}
+
+function renderZukan() {
+  var z = loadZukan();
+  var got = 0;
+  var html = "";
+  var i, c;
+  for (i = 0; i < ERAS.length; i++) {
+    c = z[ERAS[i].name] || 0;
+    if (c > 0) { got++; }
+    html += "<li><span class=\"zname\">" + ERAS[i].name + "</span>" +
+      (c > 0
+        ? "<span class=\"zcount\">発行 " + c + " 枚</span>"
+        : "<span class=\"zcount none\">未発行</span>") +
+      "</li>";
+  }
+  el("zukanList").innerHTML = html;
+  el("zukanHead").innerHTML = got + "/9 時代制覇";
+  el("zukanCeleb").style.display = (got === ERAS.length) ? "block" : "none";
 }
 
 function nextTrivia() {
@@ -429,6 +498,7 @@ function init() {
   el("osusumeWhy").innerHTML = ERAS[rec].why;
   el("triviaBtn").onclick = nextTrivia;
   el("goBtn").onclick = depart;
+  renderZukan();
 }
 
 init();

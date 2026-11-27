@@ -65,6 +65,9 @@ letter-spacing: 1px;
 .m-purple { color: #d3a6ff; border-color: #a55eff; box-shadow: 0 0 12px rgba(165,94,255,0.35);}
 .m-orange { color: #ffc48f; border-color: #ff9430; box-shadow: 0 0 12px rgba(255,148,48,0.35);}
 .m-red { color: #ff9d9d; border-color: #ff4040; box-shadow: 0 0 12px rgba(255,64,64,0.35);}
+.m-blue { color: #a8c8ff; border-color: #3d7bff; box-shadow: 0 0 12px rgba(61,123,255,0.35);}
+.artImg { display: none; width: 100%; border: 3px solid #3d7bff; border-radius: 10px; margin-top: 12px;}
+.personaNote { text-align: center; color: #99a; font-size: 14px; margin: 4px 0 0 0;}
 .panel {
 display: none; border: 3px solid #3a3a6e; border-radius: 12px;
 background: #0a0a20; padding: 16px 14px 20px 14px; margin-top: 8px;
@@ -171,6 +174,7 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 台は全部、最新AIが中身。コインを入れて入店してください。
 </p>
 <p class="managerLine" id="managerLine"></p>
+<p class="personaNote" id="personaNote"></p>
 </div>
 
 <!-- ===== 店内 ===== -->
@@ -189,6 +193,7 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 <button type="button" class="machine m-purple" data-p="p5">5. ポエムプリント機<small>AIの俳句・川柳をカードに印刷</small></button>
 <button type="button" class="machine m-orange" data-p="p6">6. おなやみメダル相談所<small>悩みを書くとAIが短くアドバイス</small></button>
 <button type="button" class="machine m-red" data-p="p7">7. AIニュース解説台<small>最新ニュースをAIが一文で解説</small></button>
+<button type="button" class="machine m-blue" data-p="p8">8. AI画伯<small>テーマを選ぶとAIが絵を描きます</small></button>
 <div class="rankPanel" id="rankPanel">
 <div class="rankTitle">🏆 人気ランキング</div>
 <div id="rankList"></div>
@@ -210,6 +215,7 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 <div class="panel" id="p2">
 <h2 style="color:#8ff6ff;">AI店長</h2>
 <p class="desc">GEESEN-6の店長と雑談できます。話しかけてみてください。</p>
+<p class="note" id="fortuneNote2" style="display:none;"></p>
 <div class="chatLog clearfix" id="chatLog"></div>
 <input type="text" id="tenchoIn" placeholder="店長へのメッセージ">
 <button type="button" class="bigBtn" id="tenchoBtn">店長に話す</button>
@@ -236,6 +242,7 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 <div class="panel" id="p4">
 <h2 style="color:#a6ffb8;">ものしり博士マシン</h2>
 <p class="desc">知りたいことを書くと、博士AIがやさしく短く解説します。</p>
+<p class="note" id="fortuneNote4" style="display:none;"></p>
 <input type="text" id="hakaseIn" placeholder="例：なぜ空は青いの？">
 <button type="button" class="bigBtn" id="hakaseBtn">博士に聞く</button>
 <div class="status" id="st4"></div>
@@ -282,6 +289,23 @@ margin: 0 4px 6px 0; border: 2px dashed #555580; border-radius: 50%; color: #667
 <button type="button" class="bigBtn" id="newsBtn">AIに解説してもらう</button>
 <div class="status" id="st7"></div>
 <div class="result" id="res7"></div>
+<button type="button" class="backBtn">← もどる（店内へ）</button>
+</div>
+
+<!-- ===== 8. AI画伯 ===== -->
+<div class="panel" id="p8">
+<h2 style="color:#a8c8ff;">AI画伯</h2>
+<p class="desc">テーマを選んで「描く！」を押すと、AIがその場で絵を描きます。できあがるまで少し時間がかかります。</p>
+<div id="artChips">
+<button type="button" class="chip sel" data-v="a cute long-haired dachshund dog, colorful illustration">ダックスの絵</button>
+<button type="button" class="chip" data-v="outer space with planets and stars, colorful illustration">宇宙の絵</button>
+<button type="button" class="chip" data-v="a majestic medieval castle, colorful illustration">お城の絵</button>
+<button type="button" class="chip" data-v="ocean waves and a beautiful sunset, colorful illustration">海の絵</button>
+</div>
+<button type="button" class="bigBtn" id="artBtn">描く！</button>
+<div class="status" id="st8"></div>
+<img class="artImg" id="artImg" alt="AIが描いた絵">
+<button type="button" class="bigBtn" id="artAgainBtn" style="display:none;">もう一枚</button>
 <button type="button" class="backBtn">← もどる（店内へ）</button>
 </div>
 
@@ -334,7 +358,7 @@ setTimeout(function () { try { o.stop(); ctx.close();} catch (e) {}}, 320);
 }
 
 /* ---------- 画面遷移 ---------- */
-var panelIds = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7'];
+var panelIds = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8'];
 function hideAllPanels() {
 for (var i = 0; i < panelIds.length; i++) { el(panelIds[i]).style.display = 'none';}
 }
@@ -353,6 +377,8 @@ el(pid).style.display = 'block';
 window.scrollTo(0, 0);
 if (pid === 'p2' &&!tenchoGreeted) { tenchoGreet();}
 if (pid === 'p7' &&!newsLoaded) { loadNews();}
+showFortuneNote('fortuneNote2', pid === 'p2');
+showFortuneNote('fortuneNote4', pid === 'p4');
 }
 el('coinBtn').onclick = function () {
 coinSound();
@@ -424,7 +450,7 @@ r.textContent = text;
 var MACHINE_NAMES = {
 p1: 'うらないマシン', p2: 'AI店長', p3: 'おすすめクレーン',
 p4: 'ものしり博士マシン', p5: 'ポエムプリント機',
-p6: 'おなやみメダル相談所', p7: 'AIニュース解説台'
+p6: 'おなやみメダル相談所', p7: 'AIニュース解説台', p8: 'AI画伯'
 };
 var currentMachine = '';
 var COUNT_KEY = 'geesen6_counts_v1';
@@ -494,17 +520,77 @@ el('stampSlots').innerHTML = html;
 el('stampMsg').textContent = added? '本日のスタンプを押しました！': '今日のスタンプは押してあります';
 }
 
-/* ---------- 店長の日替わり挨拶 ---------- */
-var GREETINGS = [
+/* ---------- 占い連携 ---------- */
+var FORTUNE_KEY = 'geesen6_fortune_v1';
+function parseRank(t) {
+var ranks = ['大吉', '中吉', '小吉', '末吉', '凶', '吉'];
+for (var i = 0; i < ranks.length; i++) { if (t.indexOf(ranks[i]) >= 0) return ranks[i];}
+return '';
+}
+function saveFortune(text) {
+var rank = parseRank(text);
+if (!rank) return;
+try { localStorage.setItem(FORTUNE_KEY, JSON.stringify({ date: todayStr(), rank: rank}));} catch (e) {}
+}
+function todayFortune() {
+try {
+var s = localStorage.getItem(FORTUNE_KEY);
+if (s) { var o = JSON.parse(s); if (o && o.date === todayStr() && o.rank) return o.rank;}
+} catch (e) {}
+return '';
+}
+function showFortuneNote(id, active) {
+var n = el(id);
+if (!n) return;
+var rank = active? todayFortune(): '';
+if (rank) {
+n.textContent = '今日の運勢は' + rank + 'でしたね。';
+n.style.display = 'block';
+} else {
+n.style.display = 'none';
+}
+}
+
+/* ---------- 店長の修行モード（日替わり店長） ---------- */
+var PERSONAS = [
+{
+name: '昭和の店長',
+desc: '温かくて少し昭和な口調の、昔ながらのベテラン店長',
+greetings: [
 'いらっしゃい！今日もいい台そろってますよ。',
 'やあ、待ってましたよ。ゆっくりしていってください。',
-'いらっしゃいませ。コイン1枚で、AIが7台お相手します。',
-'おお、常連さん。今日はどの台からいきますか。',
-'いらっしゃい。雨の日も風の日も、うちは年中無休です。',
-'ようこそGEESEN-6へ。店長の私がご案内しますよ。',
-'いらっしゃい！新台は無いけど、AIはいつも新品です。',
-'やあやあ、よく来てくださいました。楽しんでいってくださいね。'
+'いらっしゃいませ。コイン1枚で、AIがお相手しますよ。',
+'おお、常連さん。今日はどの台からいきますか。'
+]
+},
+{
+name: '若い店長',
+desc: '明るく元気で、少し砕けた今どきの口調の若い店長',
+greetings: [
+'いらっしゃいませー！今日も元気に営業中です！',
+'やっほー！来てくれてありがとうございます！',
+'こんにちは！AIの台、どれも絶好調ですよー！',
+'待ってました！今日はどの台で遊びます？'
+]
+},
+{
+name: '謎の店長',
+desc: '寡黙でミステリアス、短い言葉で静かに語る謎の店長',
+greetings: [
+'……よく来たな。台は、好きに使え。',
+'ふむ、客か。……楽しんでいくといい。',
+'……運命に導かれて来たのだろう。入るがいい。',
+'待っていた……ような気がする。どうぞ。'
+]
+}
 ];
+function dateSeed() {
+var now = new Date();
+return now.getFullYear() * 372 + (now.getMonth() + 1) * 31 + now.getDate();
+}
+function personaToday() {
+return PERSONAS[dateSeed() % PERSONAS.length];
+}
 function weatherLabel(code) {
 if (code === 0 || code === 1) return '晴れ';
 if (code === 2) return '晴れ時々くもり';
@@ -521,10 +607,11 @@ if (code === 95 || code === 96 || code === 99) return '雷雨';
 return '';
 }
 function managerGreeting() {
-var now = new Date();
-var seed = now.getFullYear() * 372 + (now.getMonth() + 1) * 31 + now.getDate();
-var g = GREETINGS[seed % GREETINGS.length];
+var persona = personaToday();
+var seed = dateSeed();
+var g = persona.greetings[seed % persona.greetings.length];
 el('managerLine').textContent = '店長：' + g;
+el('personaNote').textContent = '本日の店長：' + persona.name;
 var xhr = new XMLHttpRequest();
 xhr.open('GET', 'https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&current=weather_code&timezone=Asia%2FTokyo', true);
 xhr.timeout = 15000;
@@ -562,6 +649,7 @@ callAI(prompt, 'st1', function (err, text) {
 if (err) { showResult('res1', err); return;}
 var t = capText(text, 160);
 showResult('res1', t);
+saveFortune(t);
 speak(t);
 });
 };
@@ -590,7 +678,8 @@ addBubble('me', msg);
 var histText = '';
 var start = tenchoHist.length > 6? tenchoHist.length - 6: 0;
 for (var i = start; i < tenchoHist.length; i++) { histText += tenchoHist[i] + '\n';}
-var prompt = 'あなたはレトロなゲームセンター「GEESEN-6」の店長です。温かくて少し昭和な口調で、お客さんの小野さんと雑談してください。返事は120文字以内で、マークダウンは使わないでください。\n\nこれまでの会話:\n' + histText + 'お客さん: ' + msg + '\n店長:';
+var persona = personaToday();
+var prompt = 'あなたはレトロなゲームセンター「GEESEN-6」の店長です。今日の店長は「' + persona.name + '」です。' + persona.desc + 'として、お客さんの小野さんと雑談してください。返事は120文字以内で、マークダウンは使わないでください。\n\nこれまでの会話:\n' + histText + 'お客さん: ' + msg + '\n店長:';
 callAI(prompt, 'st2', function (err, text) {
 if (err) { addBubble('ai', err); return;}
 var t = capText(text, 160);
@@ -760,6 +849,31 @@ showResult('res7', t);
 speak(t);
 });
 };
+
+/* ---------- 8. AI画伯 ---------- */
+setupChips('artChips');
+function requestArt() {
+var promptEn = selectedChip('artChips');
+var seed = Math.floor(Math.random() * 1000000) + 1;
+bumpCount('p8');
+var img = el('artImg');
+el('st8').textContent = '描いています…';
+img.style.display = 'none';
+el('artAgainBtn').style.display = 'none';
+img.onload = function () {
+el('st8').textContent = '描けました！';
+img.style.display = 'block';
+el('artAgainBtn').style.display = 'block';
+};
+img.onerror = function () {
+el('st8').textContent = '絵の生成に失敗しました。少し待って、もう一度試してみてください。';
+img.style.display = 'none';
+el('artAgainBtn').style.display = 'block';
+};
+img.src = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(promptEn) + '?width=512&height=512&nologo=true&seed=' + seed;
+}
+el('artBtn').onclick = requestArt;
+el('artAgainBtn').onclick = requestArt;
 </script>
 </body>
 </html>
