@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GEESEN-6 レトロAIゲームセンター</title>
+<style>
+* { box-sizing: border-box;}
+html, body { margin: 0; padding: 0;}
+body {
+background: #05050f;
+color: #e8e8ff;
+font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", sans-serif;
+-webkit-text-size-adjust: 100%;
+}
+.scan {
+position: fixed; left: 0; top: 0; right: 0; bottom: 0;
+background: repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0px, rgba(0,0,0,0.28) 2px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 4px);
+pointer-events: none; z-index: 60;
+}
+.wrap { max-width: 560px; margin: 0 auto; padding: 12px 12px 40px 12px;}
+a.portal {
+display: inline-block; color: #7df9ff; text-decoration: none;
+font-size: 16px; padding: 10px 6px; min-height: 48px;
+}
+.topbar { overflow: hidden;}
+.voiceBtn {
+float: right; min-height: 48px; min-width: 120px;
+background: #10102a; color: #ffe95e; border: 2px solid #ffe95e;
+border-radius: 8px; font-size: 16px; padding: 10px 12px; cursor: pointer;
+}
+h1.logo {
+text-align: center; font-size: 34px; letter-spacing: 3px; margin: 10px 0 2px 0;
+color: #ff5ec4; text-shadow: 0 0 6px #ff5ec4, 0 0 18px #ff2ea6, 2px 2px 0 #123;
+font-family: "Courier New", monospace;
+}
+.subtitle {
+text-align: center; color: #7df9ff; font-size: 17px; margin: 0 0 14px 0;
+text-shadow: 0 0 8px #00c8d8; letter-spacing: 2px;
+}
+@keyframes blinkAnim { 0%, 49% { opacity: 1;} 50%, 100% { opacity: 0.2;}}
+.blink { animation: blinkAnim 1.1s steps(1) infinite;}
+.coinBtn {
+display: block; width: 100%; min-height: 84px; margin: 26px 0 10px 0;
+background: #1a0530; color: #ffe95e; border: 4px solid #ffe95e; border-radius: 14px;
+font-size: 26px; font-weight: bold; letter-spacing: 2px; cursor: pointer;
+text-shadow: 0 0 10px #ffb700; box-shadow: 0 0 18px rgba(255,233,94,0.45), inset 0 0 24px rgba(255,233,94,0.15);
+}
+.startNote { text-align: center; color: #aab; font-size: 15px; line-height: 1.7;}
+.neonSign {
+text-align: center; margin: 18px 0 6px 0; font-size: 20px; color: #39ff6a;
+text-shadow: 0 0 8px #39ff6a; letter-spacing: 4px; font-family: "Courier New", monospace;
+}
+.machine {
+display: block; width: 100%; min-height: 64px; margin: 12px 0;
+background: #0d0d24; border: 3px solid #888; border-radius: 10px;
+font-size: 21px; font-weight: bold; text-align: left; padding: 14px 16px; cursor: pointer;
+letter-spacing: 1px;
+}
+.machine small { display: block; font-size: 14px; font-weight: normal; color: #bbc; margin-top: 4px; letter-spacing: 0;}
+.m-pink { color: #ff8fd8; border-color: #ff5ec4; box-shadow: 0 0 12px rgba(255,94,196,0.35);}
+.m-cyan { color: #8ff6ff; border-color: #29d8e8; box-shadow: 0 0 12px rgba(41,216,232,0.35);}
+.m-yellow { color: #fff3a0; border-color: #ffe95e; box-shadow: 0 0 12px rgba(255,233,94,0.35);}
+.m-green { color: #a6ffb8; border-color: #39ff6a; box-shadow: 0 0 12px rgba(57,255,106,0.35);}
+.m-purple { color: #d3a6ff; border-color: #a55eff; box-shadow: 0 0 12px rgba(165,94,255,0.35);}
+.m-orange { color: #ffc48f; border-color: #ff9430; box-shadow: 0 0 12px rgba(255,148,48,0.35);}
+.m-red { color: #ff9d9d; border-color: #ff4040; box-shadow: 0 0 12px rgba(255,64,64,0.35);}
+.panel {
+display: none; border: 3px solid #3a3a6e; border-radius: 12px;
+background: #0a0a20; padding: 16px 14px 20px 14px; margin-top: 8px;
+}
+.panel h2 { margin: 2px 0 8px 0; font-size: 24px; letter-spacing: 2px;}
+.panel.desc { color: #bbc; font-size: 15px; line-height: 1.6; margin: 0 0 12px 0;}
+.bigBtn {
+display: block; width: 100%; min-height: 60px; margin: 12px 0;
+background: #16204a; color: #fff; border: 3px solid #7df9ff; border-radius: 10px;
+font-size: 20px; font-weight: bold; padding: 12px; cursor: pointer; letter-spacing: 1px;
+}
+.bigBtn:active { background: #22306e;}
+.backBtn {
+display: block; width: 100%; min-height: 52px; margin: 16px 0 0 0;
+background: #181830; color: #aab; border: 2px solid #555580; border-radius: 8px;
+font-size: 17px; padding: 10px; cursor: pointer;
+}
+.status { min-height: 24px; color: #ffe95e; font-size: 16px; margin: 6px 0;}
+.result {
+border: 2px dashed #3f6; border-radius: 8px; background: #061206;
+padding: 14px; min-height: 60px; font-size: 18px; line-height: 1.7;
+white-space: pre-wrap; word-break: break-all; color: #d8ffd8;
+}
+.result:empty { display: none;}
+input[type="text"], textarea {
+width: 100%; min-height: 52px; font-size: 18px; padding: 12px;
+border: 2px solid #555580; border-radius: 8px; background: #10102a; color: #fff;
+}
+textarea { min-height: 84px; line-height: 1.5;}
+.chip {
+display: inline-block; min-height: 48px; margin: 4px 4px 4px 0;
+padding: 10px 16px; font-size: 17px; border-radius: 24px; cursor: pointer;
+background: #10102a; color: #bbc; border: 2px solid #555580;
+}
+.chip.sel { background: #ffe95e; color: #221a00; border-color: #ffe95e; font-weight: bold;}
+.chatLog { margin: 8px 0;}
+.bubble {
+max-width: 88%; padding: 10px 12px; border-radius: 12px; margin: 8px 0;
+font-size: 17px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; clear: both;
+}
+.bubble.me { background: #1d3a1d; color: #d8ffd8; float: right; border: 1px solid #39ff6a;}
+.bubble.ai { background: #10102a; color: #e8e8ff; float: left; border: 1px solid #7df9ff;}
+.clearfix:after { content: ""; display: block; clear: both;}
+.poemCard {
+display: none; background: #fff8e7; color: #33270a; border: 4px double #b8860b;
+border-radius: 4px; padding: 26px 16px; margin: 14px 0; text-align: center;
+font-size: 23px; line-height: 1.9; letter-spacing: 2px;
+box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+}
+.poemCard.stamp { display: block; font-size: 13px; color: #a07818; letter-spacing: 4px; margin-top: 10px;}
+.headline {
+border: 2px solid #ff4040; background: #160808; border-radius: 8px;
+padding: 14px; font-size: 19px; line-height: 1.6; min-height: 54px; color: #ffd8d8;
+}
+.note { color: #99a; font-size: 14px; line-height: 1.6; margin-top: 8px;}
+.footNote { text-align: center; color: #667; font-size: 13px; margin-top: 24px; line-height: 1.7;}
+</style>
+</head>
+<body>
+<div class="scan"></div>
+<div class="wrap">
+
+<div class="topbar">
+<a class="portal" href="../portal/">← 全サイト一覧へ</a>
+<button type="button" class="voiceBtn" id="voiceBtn">ボイス：ON</button>
+</div>
+
+<h1 class="logo">GEESEN-6</h1>
+<p class="subtitle">レトロAIゲームセンター</p>
+
+<!-- ===== スタート画面 ===== -->
+<div id="startScreen">
+<div class="neonSign">★ OPEN ★</div>
+<button type="button" class="coinBtn blink" id="coinBtn">▶ COINを入れる</button>
+<p class="startNote">
+ここは昭和のゲームセンター……の見た目をした、AIマシンの店です。<br>
+台は全部、最新AIが中身。コインを入れて入店してください。
+</p>
+</div>
+
+<!-- ===== 店内 ===== -->
+<div id="interior" style="display:none;">
+<div class="neonSign">＼ 店内 ／</div>
+<button type="button" class="machine m-pink" data-p="p1">1. うらないマシン<small>今日の運勢をAIが占います</small></button>
+<button type="button" class="machine m-cyan" data-p="p2">2. AI店長<small>店長と雑談できます</small></button>
+<button type="button" class="machine m-yellow" data-p="p3">3. おすすめクレーン<small>AIが提案を1つ、つかんで出します</small></button>
+<button type="button" class="machine m-green" data-p="p4">4. ものしり博士マシン<small>質問すると博士AIがやさしく解説</small></button>
+<button type="button" class="machine m-purple" data-p="p5">5. ポエムプリント機<small>AIの俳句・川柳をカードに印刷</small></button>
+<button type="button" class="machine m-orange" data-p="p6">6. おなやみメダル相談所<small>悩みを書くとAIが短くアドバイス</small></button>
+<button type="button" class="machine m-red" data-p="p7">7. AIニュース解説台<small>最新ニュースをAIが一文で解説</small></button>
+<p class="footNote">※ AI回線は無料枠のため、1日100回まで・朝9時に回復します。<br>※ このページの内容は開いている間だけ有効です。</p>
+</div>
+
+<!-- ===== 1. うらないマシン ===== -->
+<div class="panel" id="p1">
+<h2 style="color:#ff8fd8;">うらないマシン</h2>
+<p class="desc">ボタンを押すと、AIが今日の運勢・ラッキーアイテム・一言アドバイスを占います。</p>
+<button type="button" class="bigBtn" id="uranaiBtn">うらないスタート</button>
+<div class="status" id="st1"></div>
+<div class="result" id="res1"></div>
+<button type="button" class="backBtn">← もどる（店内へ）</button>
+</div>
+
+<!-- ===== 2. AI店長 ===== -->
+<div class="panel" id="p2">
+<h2 style="color:#8ff6ff;">AI店長</h2>
+<p class="desc">GEESEN-6の店長と雑談できます。話しかけてみてください。</p>
+<div class="chatLog clearfix" id="chatLog"></div>
+<input type="text" id="tenchoIn" placeholder="店長へのメッセージ">
+<button type="button" class="bigBtn" id="tenchoBtn">店長に話す</button>
+<div class="status" id="st2"></div>
+<button type="button" class="backBtn">← もどる（店内へ）</button>
+</div>
+
+<!-- ===== 3. おすすめクレーン ===== -->
+<div class="panel" id="p3">
+<h2 style="color:#fff3a0;">おすすめクレーン</h2>
+<p class="desc">ジャンルを選んで「つかむ！」を押すと、AIが提案を1つつかんで出します。</p>
+<div id="craneChips">
+<button type="button" class="chip sel" data-v="晩ごはん">晩ごはん</button>
+<button type="button" class="chip" data-v="観る映画">観る映画</button>
+<button type="button" class="chip" data-v="休みの過ごし方">休みの過ごし方</button>
+</div>
+<button type="button" class="bigBtn" id="craneBtn">つかむ！</button>
+<div class="status" id="st3"></div>
+<div class="result" id="res3"></div>
+<button type="button" class="backBtn">← もどる（店内へ）</button>
+</div>
+
+<!-- ===== 4. ものしり博士マシン ===== -->
+<div class="panel" id="p4">
+<h2 style="color:#a6ffb8;">ものしり博士マシン</h2>
+<p class="desc">知りたいことを書くと、博士AIがやさしく短く解説します。</p>
+<input type="text" id="hakaseIn" placeholder="例：なぜ空は青いの？">
+<button type="button" class="bigBtn" id="hakaseBtn">博士に聞く</button>
+<div class="status" id="st4"></div>
+<div class="result" id="res4"></div>
+<button type="button" class="backBtn">← もどる（店内へ）</button>
+</div>
+
+<!-- ===== 5. ポエムプリント機 ===== -->
+<div class="panel" id="p5">
+<h2 style="color:#d3a6ff;">ポエムプリント機</h2>
+<p class="desc">テーマを選ぶと、AIが俳句か川柳を作ってカードに印刷します。</p>
+<div id="poemChips">
+<button type="button" class="chip sel" data-v="ダックス">ダックス</button>
+<button type="button" class="chip" data-v="宇宙">宇宙</button>
+<button type="button" class="chip" data-v="夏">夏</button>
+<button type="button" class="chip" data-v="ラーメン">ラーメン</button>
+<button type="button" class="chip" data-v="自由">自由</button>
+</div>
+<button type="button" class="bigBtn" id="poemBtn">プリントする</button>
+<div class="status" id="st5"></div>
+<div class="poemCard" id="poemCard"></div>
+<button type="button" class="bigBtn" id="copyBtn" style="display:none;">コピーする</button>
+<div class="note" id="copyMsg"></div>
+<button type="button" class="backBtn">← もどる（店内へ）</button>
+</div>
+
+<!-- ===== 6. おなやみメダル相談所 ===== -->
+<div class="panel" id="p6">
+<h2 style="color:#ffc48f;">おなやみメダル相談所</h2>
+<p class="desc">悩みを書くと、AIが優しく短くアドバイスします。重い判断は専門家にも相談してくださいね。</p>
+<textarea id="soudanIn" placeholder="例：最近なんだか疲れが取れません"></textarea>
+<button type="button" class="bigBtn" id="soudanBtn">相談する</button>
+<div class="status" id="st6"></div>
+<div class="result" id="res6"></div>
+<button type="button" class="backBtn">← もどる（店内へ）</button>
+</div>
+
+<!-- ===== 7. AIニュース解説台 ===== -->
+<div class="panel" id="p7">
+<h2 style="color:#ff9d9d;">AIニュース解説台</h2>
+<p class="desc">CUTIE STREETの最新見出しを表示します。「AIに解説してもらう」で、AIが一文でやさしく解説します。</p>
+<div class="headline" id="newsHead">（まだ読み込んでいません）</div>
+<div class="note" id="newsNote"></div>
+<button type="button" class="bigBtn" id="newsBtn">AIに解説してもらう</button>
+<div class="status" id="st7"></div>
+<div class="result" id="res7"></div>
+<button type="button" class="backBtn">← もどる（店内へ）</button>
+</div>
+
+</div>
+
+<script>
+function el(id) { return document.getElementById(id);}
+
+var voiceOn = true;
+var aiBusy = false;
+
+/* ---------- ボイス ---------- */
+function speak(text) {
+if (!voiceOn) return;
+if (!text) return;
+if (text.indexOf('\n') >= 0) return;
+if (text.length > 150) return;
+try {
+if (!('speechSynthesis' in window)) return;
+window.speechSynthesis.cancel();
+var u = new SpeechSynthesisUtterance(text);
+u.lang = 'ja-JP';
+u.pitch = 0.6;
+u.rate = 1.0;
+window.speechSynthesis.speak(u);
+} catch (e) {}
+}
+el('voiceBtn').onclick = function () {
+voiceOn =!voiceOn;
+el('voiceBtn').textContent = voiceOn? 'ボイス：ON': 'ボイス：OFF';
+if (!voiceOn) { try { window.speechSynthesis.cancel();} catch (e) {}}
+};
+
+/* ---------- コイン音 ---------- */
+function coinSound() {
+try {
+var AC = window.AudioContext || window.webkitAudioContext;
+if (!AC) return;
+var ctx = new AC();
+var o = ctx.createOscillator();
+var g = ctx.createGain();
+o.type = 'square';
+o.frequency.value = 988;
+g.gain.value = 0.07;
+o.connect(g); g.connect(ctx.destination);
+o.start();
+o.frequency.setValueAtTime(1319, ctx.currentTime + 0.09);
+setTimeout(function () { try { o.stop(); ctx.close();} catch (e) {}}, 320);
+} catch (e) {}
+}
+
+/* ---------- 画面遷移 ---------- */
+var panelIds = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7'];
+function hideAllPanels() {
+for (var i = 0; i < panelIds.length; i++) { el(panelIds[i]).style.display = 'none';}
+}
+function showInterior() {
+hideAllPanels();
+el('startScreen').style.display = 'none';
+el('interior').style.display = 'block';
+window.scrollTo(0, 0);
+}
+function openPanel(pid) {
+el('startScreen').style.display = 'none';
+el('interior').style.display = 'none';
+hideAllPanels();
+el(pid).style.display = 'block';
+window.scrollTo(0, 0);
+if (pid === 'p2' &&!tenchoGreeted) { tenchoGreet();}
+if (pid === 'p7' &&!newsLoaded) { loadNews();}
+}
+el('coinBtn').onclick = function () {
+coinSound();
+showInterior();
+speak('いらっしゃいませ。ゲーセン6へようこそ。');
+};
+var machineBtns = document.querySelectorAll('.machine');
+for (var mi = 0; mi < machineBtns.length; mi++) {
+machineBtns[mi].onclick = function () { openPanel(this.getAttribute('data-p'));};
+}
+var backBtns = document.querySelectorAll('.backBtn');
+for (var bi = 0; bi < backBtns.length; bi++) {
+backBtns[bi].onclick = function () { showInterior();};
+}
+
+/* ---------- AI共通 ---------- */
+function capText(t, n) {
+t = t.replace(/^\s+|\s+$/g, '');
+if (t.length > n) { t = t.substring(0, n);}
+return t;
+}
+function callAI(prompt, statusId, cb) {
+if (aiBusy) {
+el(statusId).textContent = '前の通信が終わるまで少し待ってください';
+return;
+}
+aiBusy = true;
+var st = el(statusId);
+var sec = 0;
+st.textContent = '考え中… 0秒';
+var timer = setInterval(function () { sec++; st.textContent = '考え中… ' + sec + '秒';}, 1000);
+function finish() { clearInterval(timer); st.textContent = ''; aiBusy = false;}
+var xhr = new XMLHttpRequest();
+xhr.open('POST', 'https://text.pollinations.ai/', true);
+xhr.setRequestHeader('Content-Type', 'application/json');
+xhr.timeout = 90000;
+xhr.onreadystatechange = function () {
+if (xhr.readyState!== 4) return;
+var status = xhr.status;
+var body = xhr.responseText || '';
+finish();
+if (status === 402 || body.indexOf('Free limit') >= 0) {
+cb('本日の無料AI回線は上限に達しました。明日の朝9時に回復します', null);
+return;
+}
+if (status === 200 && body.replace(/\s+/g, '')!== '') {
+cb(null, body);
+return;
+}
+cb('AI回線が混み合っています\n詳細：HTTP ' + status, null);
+};
+xhr.ontimeout = function () { finish(); cb('AIの返事が時間切れになりました。もう一度押してみてください', null);};
+xhr.onerror = function () { finish(); cb('AI回線が混み合っています\n詳細：HTTP 0', null);};
+try {
+xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt}], model: 'openai-fast'}));
+} catch (e) {
+finish();
+cb('AI回線が混み合っています\n詳細：送信エラー', null);
+}
+}
+function showResult(resId, text) {
+var r = el(resId);
+r.style.display = 'block';
+r.textContent = text;
+}
+
+/* ---------- 1. うらないマシン ---------- */
+el('uranaiBtn').onclick = function () {
+var prompt = 'あなたはレトロなゲームセンターの占いマシンです。今日の運勢を、大吉・中吉・小吉・吉・末吉・凶の中から1つ選び、ラッキーアイテムを1つと、一言アドバイスを添えて、全部で120文字以内で答えてください。マークダウンは使わず、短い文章で答えてください。';
+callAI(prompt, 'st1', function (err, text) {
+if (err) { showResult('res1', err); return;}
+var t = capText(text, 160);
+showResult('res1', t);
+speak(t);
+});
+};
+
+/* ---------- 2. AI店長 ---------- */
+var tenchoHist = [];
+var tenchoGreeted = false;
+function addBubble(who, text) {
+var d = document.createElement('div');
+d.className = 'bubble ' + who;
+d.textContent = text;
+el('chatLog').appendChild(d);
+var c = document.createElement('div');
+c.style.clear = 'both';
+el('chatLog').appendChild(c);
+}
+function tenchoGreet() {
+tenchoGreeted = true;
+addBubble('ai', 'いらっしゃい！GEESEN-6の店長だよ。ゆっくりしていってね。何か話しかけてごらん。');
+}
+el('tenchoBtn').onclick = function () {
+var msg = el('tenchoIn').value.replace(/^\s+|\s+$/g, '');
+if (!msg) { el('st2').textContent = 'メッセージを書いてから押してください'; return;}
+el('tenchoIn').value = '';
+addBubble('me', msg);
+var histText = '';
+var start = tenchoHist.length > 6? tenchoHist.length - 6: 0;
+for (var i = start; i < tenchoHist.length; i++) { histText += tenchoHist[i] + '\n';}
+var prompt = 'あなたはレトロなゲームセンター「GEESEN-6」の店長です。温かくて少し昭和な口調で、お客さんの小野さんと雑談してください。返事は120文字以内で、マークダウンは使わないでください。\n\nこれまでの会話:\n' + histText + 'お客さん: ' + msg + '\n店長:';
+callAI(prompt, 'st2', function (err, text) {
+if (err) { addBubble('ai', err); return;}
+var t = capText(text, 160);
+addBubble('ai', t);
+tenchoHist.push('お客さん: ' + msg);
+tenchoHist.push('店長: ' + t);
+speak(t);
+});
+};
+
+/* ---------- チップ共通 ---------- */
+function setupChips(containerId) {
+var box = el(containerId);
+var chips = box.querySelectorAll('.chip');
+for (var i = 0; i < chips.length; i++) {
+chips[i].onclick = function () {
+var cs = box.querySelectorAll('.chip');
+for (var j = 0; j < cs.length; j++) { cs[j].className = 'chip';}
+this.className = 'chip sel';
+};
+}
+}
+function selectedChip(containerId) {
+var chips = el(containerId).querySelectorAll('.chip');
+for (var i = 0; i < chips.length; i++) {
+if (chips[i].className.indexOf('sel') >= 0) { return chips[i].getAttribute('data-v');}
+}
+return chips[0].getAttribute('data-v');
+}
+setupChips('craneChips');
+setupChips('poemChips');
+
+/* ---------- 3. おすすめクレーン ---------- */
+el('craneBtn').onclick = function () {
+var cat = selectedChip('craneChips');
+var prompt = 'あなたはゲームセンターのおすすめクレーンです。「' + cat + '」について、具体的な案を1つだけ提案し、短い理由も添えて、120文字以内で答えてください。マークダウンは使わないでください。';
+callAI(prompt, 'st3', function (err, text) {
+if (err) { showResult('res3', err); return;}
+var t = capText(text, 160);
+showResult('res3', '\n' + t);
+speak(t);
+});
+};
+
+/* ---------- 4. ものしり博士マシン ---------- */
+el('hakaseBtn').onclick = function () {
+var q = el('hakaseIn').value.replace(/^\s+|\s+$/g, '');
+if (!q) { el('st4').textContent = '質問を書いてから押してください'; return;}
+var prompt = 'あなたはものしり博士です。次の質問に、小学生でも分かるようにやさしく、150文字以内で短く答えてください。マークダウンは使わないでください。\n質問: ' + q;
+callAI(prompt, 'st4', function (err, text) {
+if (err) { showResult('res4', err); return;}
+var t = capText(text, 200);
+showResult('res4', t);
+speak(t);
+});
+};
+
+/* ---------- 5. ポエムプリント機 ---------- */
+var lastPoem = '';
+el('poemBtn').onclick = function () {
+var theme = selectedChip('poemChips');
+var themeText = (theme === '自由')? '自由に選んだテーマ': '「' + theme + '」';
+var prompt = 'あなたはポエムプリント機です。テーマ' + themeText + 'で、俳句か川柳を1つ作ってください。作品だけを1行で答えてください。説明やマークダウンは不要です。';
+callAI(prompt, 'st5', function (err, text) {
+if (err) {
+el('poemCard').style.display = 'none';
+el('copyBtn').style.display = 'none';
+el('copyMsg').textContent = err;
+return;
+}
+var t = capText(text, 100);
+lastPoem = t;
+var card = el('poemCard');
+card.style.display = 'block';
+card.innerHTML = '';
+var main = document.createElement('div');
+main.textContent = t;
+card.appendChild(main);
+var stamp = document.createElement('span');
+stamp.className = 'stamp';
+stamp.textContent = 'GEESEN-6 POEM PRINT';
+card.appendChild(stamp);
+el('copyBtn').style.display = 'block';
+el('copyMsg').textContent = '';
+speak(t);
+});
+};
+el('copyBtn').onclick = function () {
+if (!lastPoem) return;
+var ta = document.createElement('textarea');
+ta.value = lastPoem;
+ta.style.position = 'fixed';
+ta.style.opacity = '0';
+document.body.appendChild(ta);
+ta.select();
+var ok = false;
+try { ok = document.execCommand('copy');} catch (e) {}
+document.body.removeChild(ta);
+el('copyMsg').textContent = ok? 'コピーしました。メモなどに貼り付けられます。': 'コピーできませんでした。カードの文字を長押しでコピーしてください。';
+};
+
+/* ---------- 6. おなやみメダル相談所 ---------- */
+el('soudanBtn').onclick = function () {
+var w = el('soudanIn').value.replace(/^\s+|\s+$/g, '');
+if (!w) { el('st6').textContent = '悩みを書いてから押してください'; return;}
+var prompt = 'あなたは優しい相談員です。次の悩みに、まず共感し、短く具体的なアドバイスを150文字以内で答えてください。マークダウンは使わないでください。医療や法律の断定はしないでください。\n悩み: ' + w;
+callAI(prompt, 'st6', function (err, text) {
+if (err) { showResult('res6', err); return;}
+var t = capText(text, 200);
+showResult('res6', t);
+speak(t);
+});
+};
+
+/* ---------- 7. AIニュース解説台 ---------- */
+var newsLoaded = false;
+var newsHeadline = '';
+var SAMPLE_HEADLINE = 'CUTIE STREET、新しいアルバムを発売すると発表';
+function loadNews() {
+newsLoaded = true;
+el('newsHead').textContent = '見出しを読み込み中…';
+var rss = 'https://news.google.com/rss/search?q=%22CUTIE%20STREET%22&hl=ja&gl=JP&ceid=JP:ja';
+var url = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rss);
+var xhr = new XMLHttpRequest();
+xhr.open('GET', url, true);
+xhr.timeout = 20000;
+xhr.onreadystatechange = function () {
+if (xhr.readyState!== 4) return;
+var ok = false;
+if (xhr.status === 200) {
+try {
+var data = JSON.parse(xhr.responseText);
+if (data && data.items && data.items.length > 0 && data.items[0].title) {
+newsHeadline = data.items[0].title;
+ok = true;
+}
+} catch (e) {}
+}
+if (ok) {
+el('newsHead').textContent = newsHeadline;
+el('newsNote').textContent = '※ インターネットから取得した最新の見出しです。';
+} else {
+newsHeadline = SAMPLE_HEADLINE;
+el('newsHead').textContent = newsHeadline;
+el('newsNote').textContent = '※ ニュースの取得に失敗したため、サンプルの見出しを表示しています（本物のニュースではありません）。';
+}
+};
+xhr.ontimeout = function () {
+newsHeadline = SAMPLE_HEADLINE;
+el('newsHead').textContent = newsHeadline;
+el('newsNote').textContent = '※ ニュースの取得が時間切れになったため、サンプルの見出しを表示しています（本物のニュースではありません）。';
+};
+xhr.onerror = function () {
+newsHeadline = SAMPLE_HEADLINE;
+el('newsHead').textContent = newsHeadline;
+el('newsNote').textContent = '※ ニュースの取得に失敗したため、サンプルの見出しを表示しています（本物のニュースではありません）。';
+};
+try { xhr.send();} catch (e) {}
+}
+el('newsBtn').onclick = function () {
+if (!newsHeadline) { el('st7').textContent = '見出しの読み込みを待ってください'; return;}
+var prompt = 'あなたはニュース解説員です。次のニュース見出しを、小学生でも分かるように一文でやさしく解説してください。マークダウンは使わないでください。\n見出し: ' + newsHeadline;
+callAI(prompt, 'st7', function (err, text) {
+if (err) { showResult('res7', err); return;}
+var t = capText(text, 200);
+showResult('res7', t);
+speak(t);
+});
+};
+</script>
+</body>
+</html>

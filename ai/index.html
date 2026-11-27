@@ -3,53 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>AI-6 おしゃべりAI端末</title>
+<title>AI-6 おしゃべりゲームセンター</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { background:#050807; }
+  html,body { background:#04040e; }
   body {
-    color:#e8f5e9; font-family:"Courier New", monospace;
+    color:#eaf6ff; font-family:"Courier New", monospace;
     padding:12px 10px 24px; max-width:640px; margin:0 auto;
   }
-  h1 { font-size:22px; color:#7dff9a; letter-spacing:2px; text-shadow:0 0 8px rgba(80,255,140,.6); }
-  h1 .sub { color:#cfe8d4; font-size:13px; letter-spacing:1px; text-shadow:none; }
-  .desc { font-size:14px; color:#a9cbb2; margin:6px 0 10px; line-height:1.6; }
+  .marquee {
+    border:4px double #ff2fd6; background:#0a0a22; text-align:center;
+    padding:12px 8px 10px; margin-bottom:10px;
+    box-shadow:0 0 14px rgba(255,47,214,.35), inset 0 0 18px rgba(0,229,255,.12);
+  }
+  h1 { font-size:23px; color:#00e5ff; letter-spacing:2px; text-shadow:0 0 10px rgba(0,229,255,.8), 0 0 22px rgba(0,229,255,.35); }
+  h1 .sub { color:#ffe600; font-size:14px; letter-spacing:1px; text-shadow:0 0 8px rgba(255,230,0,.55); }
+  .coin { color:#ffe600; font-size:15px; letter-spacing:4px; margin-top:8px; text-shadow:0 0 8px rgba(255,230,0,.7); }
+  @-webkit-keyframes blink { 0%,49% { opacity:1; } 50%,100% { opacity:0; } }
+  @keyframes blink { 0%,49% { opacity:1; } 50%,100% { opacity:0; } }
+  .blink { -webkit-animation:blink 1.2s steps(1) infinite; animation:blink 1.2s steps(1) infinite; }
+  .desc { font-size:14px; color:#a9bde0; margin:6px 0 10px; line-height:1.6; }
 
-  .panel { border:1px solid #1e4d2c; background:rgba(0,25,10,.35); padding:10px; margin-bottom:10px; }
-  .panel-title { font-size:13px; color:#7dff9a; letter-spacing:2px; border-bottom:1px solid #1e4d2c; padding-bottom:4px; margin-bottom:8px; }
+  .panel { border:3px double #00e5ff; background:rgba(8,10,34,.55); padding:10px; margin-bottom:10px; box-shadow:inset 0 0 14px rgba(0,229,255,.08); }
+  .panel-title { font-size:13px; color:#ffe600; letter-spacing:2px; border-bottom:1px dashed #00e5ff; padding-bottom:4px; margin-bottom:8px; text-shadow:0 0 6px rgba(255,230,0,.45); }
 
   .chiprow { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
   .chiprow:last-child { margin-bottom:0; }
   button {
-    background:#021a08; color:#b9f5c6; border:1px solid #2e7d46;
+    background:#0a0a26; color:#c8fbff; border:2px solid #00e5ff;
     font-family:inherit; font-size:15px; cursor:pointer; padding:8px 10px; min-height:48px;
+    box-shadow:0 3px 0 #065a6e;
   }
-  button.active { background:#2e7d46; color:#fff; font-weight:bold; }
-  button:active { background:#14532a; }
+  button.active { background:#ff2fd6; color:#fff; font-weight:bold; border-color:#ffe600; box-shadow:0 3px 0 #7a5a00, 0 0 10px rgba(255,47,214,.55); }
+  button:active { background:#173a5e; }
   button:disabled { opacity:.45; cursor:default; }
   .mchip { flex:1 1 30%; }
-  .qchip { flex:1 1 45%; font-size:14px; }
+  .qchip { flex:1 1 45%; font-size:14px; border-color:#7a5fd0; color:#e6dcff; box-shadow:0 3px 0 #372a66; }
 
   #logBox { min-height:220px; }
   .row { margin-bottom:12px; line-height:1.6; }
   .row .who { font-size:12px; letter-spacing:1px; margin-bottom:2px; }
   .row .msg { font-size:17px; white-space:pre-wrap; word-break:break-word; }
   .row.user { text-align:right; }
-  .row.user .who { color:#8fd0ff; }
+  .row.user .who { color:#00e5ff; }
   .row.user .msg {
-    display:inline-block; text-align:left; color:#eaf7ff;
-    background:rgba(20,60,110,.45); border:1px solid #2c5f8a;
+    display:inline-block; text-align:left; color:#eafcff;
+    background:rgba(0,50,80,.5); border:2px solid #00e5ff;
     padding:8px 10px; max-width:88%;
   }
   .row.ai { text-align:left; }
-  .row.ai .who { color:#7dff9a; }
+  .row.ai .who { color:#ff7ae9; }
   .row.ai .msg {
-    display:inline-block; color:#eefbee;
-    background:rgba(0,40,16,.5); border:1px solid #1e4d2c;
+    display:inline-block; color:#fdfaff;
+    background:rgba(46,0,54,.5); border:2px solid #ff2fd6;
     padding:8px 10px; max-width:88%;
   }
-  .row.ai .msg.thinking { color:#ffe9a8; border-color:#7a5a00; background:rgba(40,26,0,.4); }
-  .row.ai .msg.error { color:#ffb3ab; border-color:#7a2d24; background:rgba(50,10,5,.4); }
+  .row.ai .msg.thinking { color:#ffe600; border-color:#ffe600; background:rgba(46,38,0,.45); }
+  .row.ai .msg.error { color:#ffb3ab; border-color:#ff5252; background:rgba(54,8,8,.5); }
   body.sora .row.ai .who { color:#33ff66; }
   body.sora .row.ai .msg {
     background:#000; color:#33ff66; border:1px solid #33ff66;
@@ -63,26 +73,30 @@
   .inputrow { display:flex; gap:6px; margin-bottom:10px; }
   #inputBox {
     flex:1 1 auto; min-width:0; min-height:52px; font-size:17px; font-family:inherit;
-    background:#0a140c; color:#eefbee; border:1px solid #2e7d46; padding:10px;
+    background:#07071c; color:#f2feff; border:2px solid #00e5ff; padding:10px;
   }
-  #sendBtn { flex:0 0 92px; min-height:52px; font-size:17px; font-weight:bold; background:#2e7d46; color:#fff; border-color:#7dff9a; }
-  #sendBtn:disabled { background:#12351c; border-color:#1e4d2c; color:#7d9a86; }
+  #sendBtn { flex:0 0 92px; min-height:52px; font-size:17px; font-weight:bold; background:#ff2fd6; color:#fff; border-color:#ffe600; box-shadow:0 3px 0 #7a5a00; }
+  #sendBtn:disabled { background:#2a1030; border-color:#5e2a52; color:#9a7d94; box-shadow:none; }
 
   .utilrow { display:flex; gap:6px; flex-wrap:wrap; }
   .utilrow button { flex:1 1 30%; font-size:14px; }
-  #statusLine { font-size:13px; color:#9fb8a6; min-height:18px; margin-top:6px; line-height:1.5; }
+  #statusLine { font-size:13px; color:#a9bde0; min-height:18px; margin-top:6px; line-height:1.5; }
 
-  footer { font-size:13px; color:#6f9279; margin-top:14px; line-height:1.7; }
+  footer { font-size:13px; color:#7d8fb8; margin-top:14px; line-height:1.7; }
+  .ver { color:#ffe600; letter-spacing:3px; margin-top:8px; text-shadow:0 0 6px rgba(255,230,0,.45); }
   .portal-link {
     display:block; text-align:center; text-decoration:none;
-    border:1px solid #2e7d46; color:#b9f5c6; background:#021a08;
+    border:3px double #00e5ff; color:#c8fbff; background:#0a0a26;
     padding:12px; font-size:16px; margin-top:10px; min-height:48px;
   }
 </style>
 </head>
 <body>
 
-<h1>AI-6 <span class="sub">おしゃべりAI端末</span></h1>
+<div class="marquee">
+<h1>AI-6 <span class="sub">おしゃべりゲームセンター</span></h1>
+<div class="coin blink">★ INSERT COIN ★</div>
+</div>
 <p class="desc">自由に文章を送ると、AIが返事をします。モードを変えると、相手の性格が変わります。</p>
 
 <div class="panel">
@@ -130,6 +144,7 @@
 
 <footer>
   AIの相手は無料の外部AIサービスです（クーではありません）。1日100回くらいまでが目安です。会話はこの端末に自動保存されます。
+  <div class="ver">AI-6 v3</div>
   <a class="portal-link" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
 </footer>
 
@@ -137,7 +152,8 @@
 var API_BASE = "https://text.pollinations.ai/";
 var GREETING = "こんにちは、小野さん。AI-6です。何でも聞いてください。";
 var FAIL_MSG = "AI回線が混み合っています。少し待って、もう一度送ってみてください。";
-var QUOTA_MSG = "本日の無料枠（1日100回）を使い切ったようです。毎朝9時にリセットされます。";
+var QUOTA_MSG = "本日の無料AI回線は上限に達しました。明日の朝9時に回復します";
+var TIMEOUT_MSG = "AIの返事が時間切れになりました（90秒）。もう一度送ってみてください";
 
 var MODES = {
   normal:  { label: "ふつう",       inst: "あなたは親切なAIアシスタントです。丁寧で簡潔に答えてください。" },
@@ -316,26 +332,34 @@ function sendMessage(text) {
   function stopWait() {
     if (waitTimer) { clearInterval(waitTimer); waitTimer = null; }
   }
-  function finalFail(msg) {
+  var lastKind = "http";
+  var lastStatus = 0;
+  function finalFail(msg, detail) {
     if (done) return;
     done = true;
     stopWait();
     thinkMsg.className = "msg error";
-    thinkMsg.innerHTML = esc(msg);
+    var html = esc(msg);
+    if (detail) html += " <span style=\"font-size:12px\">（詳細：" + esc(detail) + "）</span>";
+    thinkMsg.innerHTML = html;
     sending = false;
     sendBtn.disabled = false;
     scrollToBottom();
   }
-  function failOrRetry(isQuota) {
+  function failOrRetry(kind, status) {
     if (done) return;
-    if (isQuota) { finalFail(QUOTA_MSG); return; }
+    lastKind = kind;
+    if (typeof status === "number") lastStatus = status;
+    if (kind === "quota") { finalFail(QUOTA_MSG, ""); return; }
     if (!retried) {
       retried = true;
       retrying = true;
       thinkMsg.innerHTML = "考え中… " + elapsed + "秒（再試行中）";
       setTimeout(function () { if (!done) attempt(); }, 2000);
+    } else if (kind === "timeout") {
+      finalFail(TIMEOUT_MSG, "");
     } else {
-      finalFail(FAIL_MSG);
+      finalFail(FAIL_MSG, "HTTP " + lastStatus);
     }
   }
   function succeed(reply) {
@@ -358,21 +382,29 @@ function sendMessage(text) {
       var xhr = new XMLHttpRequest();
       xhr.open("POST", API_BASE, true);
       xhr.setRequestHeader("Content-Type", "application/json");
-      xhr.timeout = 60000;
+      xhr.timeout = 90000;
       xhr.onreadystatechange = function () {
         if (xhr.readyState !== 4) return;
         if (done) return;
-        if (xhr.status !== 200) { failOrRetry(false); return; }
-        var body = (xhr.responseText || "").replace(/^\s+|\s+$/g, "");
-        if (!body) { failOrRetry(false); return; }
-        if (body.indexOf("Free limit reached") === 0) { failOrRetry(true); return; }
+        var st = 0;
+        try { st = xhr.status; } catch (e) { st = 0; }
+        var raw = "";
+        try { raw = xhr.responseText || ""; } catch (e) { raw = ""; }
+        if (st === 402 || raw.indexOf("Free limit") >= 0) { failOrRetry("quota", st); return; }
+        if (st !== 200) { failOrRetry("http", st); return; }
+        var body = raw.replace(/^\s+|\s+$/g, "");
+        if (!body) { failOrRetry("http", st); return; }
         succeed(body);
       };
-      xhr.ontimeout = function () { failOrRetry(false); };
-      xhr.onerror = function () { failOrRetry(false); };
+      xhr.ontimeout = function () { failOrRetry("timeout", 0); };
+      xhr.onerror = function () {
+        var st2 = 0;
+        try { st2 = xhr.status; } catch (e) { st2 = 0; }
+        failOrRetry("http", st2);
+      };
       xhr.send(JSON.stringify({ messages: [{ role: "user", content: buildPrompt(text) }], model: "openai-fast" }));
     } catch (e) {
-      failOrRetry(false);
+      failOrRetry("http", 0);
     }
   }
   attempt();
