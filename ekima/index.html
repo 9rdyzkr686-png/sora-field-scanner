@@ -159,6 +159,82 @@
     letter-spacing: 1px;
     line-height: 1.6;
   }
+  .tt-section {
+    margin-top: 18px;
+    border: 2px solid #4d3800;
+    border-radius: 8px;
+    background: #0a0800;
+    padding: 10px 8px;
+  }
+  .tt-title {
+    font-size: 19px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #ffd34d;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .tt-note {
+    font-size: 12px;
+    color: #cc8f00;
+    text-align: center;
+    letter-spacing: 1px;
+    line-height: 1.6;
+    margin-bottom: 8px;
+  }
+  .tt-dir {
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #ffd34d;
+    border-bottom: 1px dashed #4d3800;
+    padding-bottom: 3px;
+    margin: 10px 0 6px;
+  }
+  .tt-next-row {
+    display: table;
+    width: 100%;
+    font-family: "Courier New", monospace;
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffb000;
+    text-shadow: 0 0 6px rgba(255, 176, 0, 0.55);
+    padding: 5px 0;
+    border-bottom: 1px solid #1c1400;
+  }
+  .tt-next-row span { display: table-cell; }
+  .tt-cd { text-align: right; color: #ffd34d; font-size: 17px; }
+  .tt-list {
+    max-height: 240px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #241a00;
+    border-radius: 6px;
+    padding: 4px 8px;
+    background: #000;
+  }
+  .tt-item {
+    display: inline-block;
+    font-family: "Courier New", monospace;
+    font-size: 16px;
+    color: #cc8f00;
+    margin: 3px 8px 3px 0;
+    letter-spacing: 1px;
+  }
+  .tt-item.next {
+    color: #1a1200;
+    background: #ffb000;
+    font-weight: bold;
+    border-radius: 4px;
+    padding: 1px 6px;
+    text-shadow: none;
+  }
+  .tt-ended {
+    font-size: 15px;
+    color: #cc8f00;
+    letter-spacing: 1px;
+    padding: 4px 0;
+  }
 </style>
 </head>
 <body>
@@ -186,6 +262,17 @@
   <button class="btn btn-sub" id="btnSpeak" type="button">発車案内（音声）</button>
 </div>
 <div class="msg" id="msg"></div>
+
+<div class="tt-section">
+  <div class="tt-title">ふじみ野駅 本物の時刻表（目安）</div>
+  <div class="tt-note">東武東上線 ふじみ野駅・平日パターンダイヤ<br>※パターンダイヤによる目安です。実際の時刻表・運行情報とは異なります</div>
+  <div class="tt-dir">上り（池袋方面）</div>
+  <div id="ttUpNext"></div>
+  <div class="tt-list" id="ttUpList"></div>
+  <div class="tt-dir">下り（川越・寄居方面）</div>
+  <div id="ttDownNext"></div>
+  <div class="tt-list" id="ttDownList"></div>
+</div>
 
 <div class="footer">
   <a class="portal-link" href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
@@ -313,6 +400,87 @@ document.getElementById("btnSpeak").addEventListener("click", speakNext);
 
 buildBoard();
 timerId = window.setInterval(updateCountdown, 1000);
+
+/* ==== ふじみ野駅 パターンダイヤ時刻表（目安） ==== */
+/* dir: "up"=上り（池袋方面）, "down"=下り（川越・寄居方面） */
+function ttMinutesFor(dir, hour) {
+  if (hour === 5) {
+    return dir === "up" ? [5, 25, 45] : [12, 32, 52];
+  }
+  if (hour === 6) {
+    return dir === "up" ? [2, 17, 32, 47] : [5, 20, 35, 50];
+  }
+  if (hour >= 7 && hour <= 21) {
+    return dir === "up" ? [3, 13, 23, 33, 43, 53] : [7, 17, 27, 37, 47, 57];
+  }
+  if (hour === 22 || hour === 23) {
+    return dir === "up" ? [0, 15, 30, 45] : [8, 23, 38, 53];
+  }
+  if (hour === 24) {
+    return dir === "up" ? [3, 23, 43] : [10, 30, 50];
+  }
+  return [];
+}
+
+function ttBuildDay(dir) {
+  var list = [];
+  var h, mins, i;
+  for (h = 5; h <= 24; h++) {
+    mins = ttMinutesFor(dir, h);
+    for (i = 0; i < mins.length; i++) {
+      list.push(h * 60 + mins[i]);
+    }
+  }
+  return list;
+}
+
+function ttFmt(absMin) {
+  var h = Math.floor(absMin / 60);
+  var m = absMin % 60;
+  return pad2(h) + ":" + pad2(m);
+}
+
+var TT_UP = ttBuildDay("up");
+var TT_DOWN = ttBuildDay("down");
+
+function ttRenderDir(list, nextElId, listElId) {
+  var now = new Date();
+  var nowMs = ((now.getHours() * 60 + now.getMinutes()) * 60 + now.getSeconds()) * 1000;
+  var nextIdx = -1;
+  var i;
+  for (i = 0; i < list.length; i++) {
+    if (list[i] * 60000 > nowMs) { nextIdx = i; break; }
+  }
+  var nextHtml = "";
+  if (nextIdx < 0) {
+    nextHtml = '<div class="tt-ended">本日の列車は終了しました</div>';
+  } else {
+    var shown = 0;
+    for (i = nextIdx; i < list.length && shown < 3; i++) {
+      var diffMs = list[i] * 60000 - nowMs;
+      var cdMin = Math.ceil(diffMs / 60000);
+      var cdText = cdMin <= 1 ? "まもなく" : "あと" + cdMin + "分";
+      nextHtml += '<div class="tt-next-row"><span>' + ttFmt(list[i]) + '</span>'
+        + '<span class="tt-cd">' + cdText + '</span></div>';
+      shown++;
+    }
+  }
+  document.getElementById(nextElId).innerHTML = nextHtml;
+  var listHtml = "";
+  for (i = 0; i < list.length; i++) {
+    listHtml += '<span class="tt-item' + (i === nextIdx ? " next" : "") + '">'
+      + ttFmt(list[i]) + '</span>';
+  }
+  document.getElementById(listElId).innerHTML = listHtml;
+}
+
+function ttRenderAll() {
+  ttRenderDir(TT_UP, "ttUpNext", "ttUpList");
+  ttRenderDir(TT_DOWN, "ttDownNext", "ttDownList");
+}
+
+ttRenderAll();
+window.setInterval(ttRenderAll, 30000);
 </script>
 </body>
 </html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>PHOTO-6 フォトスタンド</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #000; color: #eee; font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; overflow: hidden; }
+  body { position: relative; }
+
+  /* ===== Stage (photos) ===== */
+  #stage { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: #000; }
+  #stage img.photo {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    object-fit: contain; background: #000;
+    opacity: 0; transition: opacity 1s ease;
+  }
+  #stage img.photo.show { opacity: 1; }
+
+  /* ===== Empty state ===== */
+  #emptyState {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 24px; color: #ccc;
+  }
+  #emptyState .big { font-size: 44px; margin-bottom: 10px; }
+  #emptyState h1 { font-size: 22px; margin-bottom: 12px; color: #fff; letter-spacing: 2px; }
+  #emptyState p { font-size: 14px; line-height: 1.8; color: #aaa; }
+
+  /* ===== Clock overlay on slideshow ===== */
+  #clockOverlay {
+    position: absolute; right: 14px; bottom: 96px; text-align: right;
+    pointer-events: none; text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 2px #000;
+  }
+  #clockTime { font-size: 52px; font-weight: 200; letter-spacing: 2px; line-height: 1; }
+  #clockDate { font-size: 16px; margin-top: 6px; color: #ddd; }
+
+  /* ===== UI (fades out) ===== */
+  #ui { position: absolute; left: 0; top: 0; right: 0; bottom: 0; pointer-events: none; opacity: 1; transition: opacity 0.6s ease; }
+  #ui.hidden { opacity: 0; }
+  #ui .bar { pointer-events: auto; }
+
+  #topBar {
+    position: absolute; left: 0; top: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px;
+    background: linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0));
+  }
+  #topBar .title { font-size: 15px; letter-spacing: 2px; color: #fff; }
+  #counter { font-size: 14px; color: #ddd; background: rgba(0,0,0,0.45); padding: 3px 10px; border-radius: 12px; }
+
+  #bottomBar {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 10px 12px 12px;
+    background: linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.75));
+    text-align: center;
+  }
+  .row { margin-top: 8px; }
+  .row:first-child { margin-top: 0; }
+  button {
+    font-family: inherit; font-size: 15px; color: #fff;
+    background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 10px; padding: 10px 14px; margin: 2px; min-width: 56px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:active { background: rgba(255,255,255,0.35); }
+  button.on { background: #2e7d32; border-color: #66bb6a; }
+  button.seg { min-width: 44px; padding: 8px 10px; font-size: 14px; }
+  #pickLabel {
+    display: inline-block; font-size: 16px; color: #fff;
+    background: #1565c0; border: 1px solid #64b5f6; border-radius: 10px;
+    padding: 11px 18px; margin: 2px; cursor: pointer;
+  }
+  #fileInput { display: none; }
+  #pauseBadge {
+    position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%);
+    font-size: 15px; color: #fff; background: rgba(0,0,0,0.55);
+    padding: 8px 18px; border-radius: 20px; display: none; pointer-events: none; letter-spacing: 2px;
+  }
+  #note { font-size: 11px; color: #999; line-height: 1.6; margin-top: 8px; }
+  #note a { color: #90caf9; }
+
+  /* ===== Clock-only mode ===== */
+  #clockMode {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: #000;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 50; text-align: center;
+  }
+  #clockModeTime { font-size: 96px; font-weight: 100; letter-spacing: 3px; line-height: 1; color: #fff; }
+  #clockModeDate { font-size: 22px; margin-top: 14px; color: #bbb; }
+  #clockMode .hint { margin-top: 34px; font-size: 12px; color: #666; }
+</style>
+</head>
+<body>
+
+  <!-- Photos -->
+  <div id="stage">
+    <img id="imgA" class="photo" alt="">
+    <img id="imgB" class="photo" alt="">
+    <div id="emptyState">
+      <div class="big">🖼️</div>
+      <h1>PHOTO-6 フォトスタンド</h1>
+      <p>「写真を選ぶ」から写真を選ぶと、<br>スライドショーが始まります。<br><br>写真はこの画面を開いている間だけ表示されます。<br>（端末やサーバーには保存されません）</p>
+    </div>
+  </div>
+
+  <!-- Clock overlay -->
+  <div id="clockOverlay">
+    <div id="clockTime">--:--</div>
+    <div id="clockDate"></div>
+  </div>
+
+  <div id="pauseBadge">⏸ 一時停止中</div>
+
+  <!-- UI -->
+  <div id="ui">
+    <div id="topBar" class="bar">
+      <span class="title">PHOTO-6</span>
+      <span id="counter">0 / 0</span>
+    </div>
+    <div id="bottomBar" class="bar">
+      <div class="row">
+        <label id="pickLabel" for="fileInput">📷 写真を選ぶ</label>
+        <input type="file" id="fileInput" accept="image/*" multiple>
+        <button id="playBtn" type="button">⏸ 停止</button>
+        <button id="prevBtn" type="button">◀ 前</button>
+        <button id="nextBtn" type="button">次 ▶</button>
+      </div>
+      <div class="row">
+        <span style="font-size:13px;color:#bbb;">間隔</span>
+        <button type="button" class="seg intervalBtn" data-sec="3">3秒</button>
+        <button type="button" class="seg intervalBtn on" data-sec="5">5秒</button>
+        <button type="button" class="seg intervalBtn" data-sec="10">10秒</button>
+        <button type="button" class="seg intervalBtn" data-sec="30">30秒</button>
+      </div>
+      <div class="row">
+        <button id="clockToggleBtn" type="button" class="on">🕐 時計表示</button>
+        <button id="clockModeBtn" type="button">🌙 時計だけ</button>
+      </div>
+      <div id="note">
+        写真立てとして使うときは、iPhoneの「設定 → 画面表示と明るさ → 自動ロック」を「なし」にすると画面が消えません。<br>
+        <a href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Clock-only mode -->
+  <div id="clockMode">
+    <div id="clockModeTime">--:--</div>
+    <div id="clockModeDate"></div>
+    <div class="hint">タップで戻る</div>
+  </div>
+
+<script>
+var photos = [];        // array of object URLs (session only)
+var idx = 0;            // current photo index
+var playing = true;
+var intervalSec = 5;
+var timer = null;
+var frontIsA = true;    // which <img> is currently visible
+var showClock = true;
+var uiHideTimer = null;
+
+var WEEK = ["日", "月", "火", "水", "木", "金", "土"];
+
+function el(id) { return document.getElementById(id); }
+
+function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+function dateText(d) {
+  return (d.getMonth() + 1) + "月" + d.getDate() + "日（" + WEEK[d.getDay()] + "）";
+}
+
+function updateClock() {
+  var now = new Date();
+  var t = pad2(now.getHours()) + ":" + pad2(now.getMinutes());
+  var dt = dateText(now);
+  el("clockTime").textContent = t;
+  el("clockDate").textContent = dt;
+  el("clockModeTime").textContent = t;
+  el("clockModeDate").textContent = dt;
+}
+
+function updateCounter() {
+  if (photos.length === 0) {
+    el("counter").textContent = "0 / 0";
+  } else {
+    el("counter").textContent = (idx + 1) + " / " + photos.length;
+  }
+}
+
+function showPhoto(newIdx) {
+  if (photos.length === 0) return;
+  idx = ((newIdx % photos.length) + photos.length) % photos.length;
+  var front = frontIsA ? el("imgA") : el("imgB");
+  var back = frontIsA ? el("imgB") : el("imgA");
+  back.src = photos[idx];
+  back.className = "photo show";
+  front.className = "photo";
+  frontIsA = !frontIsA;
+  updateCounter();
+}
+
+function nextPhoto() { showPhoto(idx + 1); }
+function prevPhoto() { showPhoto(idx - 1); }
+
+function stopTimer() {
+  if (timer !== null) { clearInterval(timer); timer = null; }
+}
+
+function startTimer() {
+  stopTimer();
+  if (playing && photos.length > 1) {
+    timer = setInterval(nextPhoto, intervalSec * 1000);
+  }
+}
+
+function setPlaying(p) {
+  playing = p;
+  el("playBtn").textContent = playing ? "⏸ 停止" : "▶ 再生";
+  el("pauseBadge").style.display = (!playing && photos.length > 0) ? "block" : "none";
+  startTimer();
+}
+
+function showUI() {
+  el("ui").className = "";
+  if (uiHideTimer !== null) { clearTimeout(uiHideTimer); uiHideTimer = null; }
+  uiHideTimer = setTimeout(function () {
+    if (playing && photos.length > 0) { el("ui").className = "hidden"; }
+  }, 4000);
+}
+
+/* ===== Events ===== */
+
+el("fileInput").addEventListener("change", function (e) {
+  var files = e.target.files;
+  if (!files || files.length === 0) return;
+  var i, url;
+  for (i = 0; i < files.length; i++) {
+    if (files[i].type && files[i].type.indexOf("image/") !== 0) continue;
+    url = URL.createObjectURL(files[i]);
+    photos.push(url);
+  }
+  if (photos.length > 0) {
+    el("emptyState").style.display = "none";
+    showPhoto(0);
+    setPlaying(true);
+    showUI();
+  }
+  e.target.value = "";
+});
+
+el("playBtn").addEventListener("click", function () {
+  setPlaying(!playing);
+  showUI();
+});
+
+el("nextBtn").addEventListener("click", function () {
+  nextPhoto();
+  startTimer();
+  showUI();
+});
+
+el("prevBtn").addEventListener("click", function () {
+  prevPhoto();
+  startTimer();
+  showUI();
+});
+
+var intervalBtns = document.querySelectorAll(".intervalBtn");
+var bi;
+for (bi = 0; bi < intervalBtns.length; bi++) {
+  intervalBtns[bi].addEventListener("click", function () {
+    var j;
+    for (j = 0; j < intervalBtns.length; j++) { intervalBtns[j].className = "seg intervalBtn"; }
+    this.className = "seg intervalBtn on";
+    intervalSec = parseInt(this.getAttribute("data-sec"), 10);
+    startTimer();
+    showUI();
+  });
+}
+
+el("clockToggleBtn").addEventListener("click", function () {
+  showClock = !showClock;
+  el("clockOverlay").style.display = showClock ? "block" : "none";
+  this.className = showClock ? "on" : "";
+  showUI();
+});
+
+el("clockModeBtn").addEventListener("click", function () {
+  el("clockMode").style.display = "flex";
+  updateClock();
+});
+
+el("clockMode").addEventListener("click", function () {
+  el("clockMode").style.display = "none";
+  showUI();
+});
+
+/* Tap on the stage: toggle pause and reveal UI */
+el("stage").addEventListener("click", function () {
+  if (photos.length > 0) { setPlaying(!playing); }
+  showUI();
+});
+
+/* Keep taps on the control bars from reaching the stage */
+el("ui").addEventListener("click", function (e) { e.stopPropagation(); });
+
+/* ===== Init ===== */
+updateClock();
+setInterval(updateClock, 1000);
+updateCounter();
+showUI();
+</script>
+</body>
+</html>

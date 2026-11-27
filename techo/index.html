@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>TECHO-6 くらし手帳</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;font-family:-apple-system,"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;background:#f6efe0;color:#3a2f23;font-size:17px;line-height:1.5;}
+header{background:#c96f2e;color:#fff;padding:14px 16px 10px;}
+header .ttl{font-size:22px;font-weight:bold;letter-spacing:1px;}
+header .sub{font-size:13px;opacity:0.9;margin-top:2px;}
+#storeNote{display:none;background:#a33b2e;color:#fff;font-size:13px;padding:6px 12px;}
+.tabs{display:flex;background:#efe3c8;border-bottom:2px solid #d9c491;}
+.tabs button{flex:1;background:transparent;border:none;border-bottom:3px solid transparent;padding:12px 2px;font-size:15px;color:#6b5836;font-family:inherit;}
+.tabs button.on{background:#fffdf5;color:#3a2f23;font-weight:bold;border-bottom:3px solid #c96f2e;}
+section{display:none;padding:12px;}
+section.on{display:block;}
+.card{background:#fffdf5;border:1px solid #e0d2ae;border-radius:10px;padding:12px;margin-bottom:12px;}
+.card h3{margin:0 0 8px;font-size:16px;color:#8a5a1d;}
+input[type=text],input[type=number],input[type=date],input[type=search],textarea{width:100%;font-size:17px;padding:10px;border:1px solid #c9b98f;border-radius:8px;background:#fff;font-family:inherit;color:#3a2f23;}
+textarea{line-height:1.6;}
+button.btn{background:#c96f2e;color:#fff;border:none;border-radius:8px;padding:12px 18px;font-size:16px;font-family:inherit;}
+button.sub{background:#efe3c8;color:#3a2f23;border:1px solid #d9c491;border-radius:8px;padding:10px 14px;font-size:15px;font-family:inherit;}
+button.danger{background:#a33b2e;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-size:15px;font-family:inherit;}
+.row{display:flex;gap:8px;}
+.row>*{flex:1;}
+.listitem{padding:12px 4px;border-bottom:1px solid #eee0bd;}
+.listitem:last-child{border-bottom:none;}
+.listitem .t{font-weight:bold;font-size:17px;}
+.listitem .m{font-size:13px;color:#8a7a5c;margin-top:2px;white-space:pre-wrap;word-break:break-all;}
+.shopitem{display:flex;align-items:center;padding:12px 4px;border-bottom:1px solid #eee0bd;}
+.shopitem:last-child{border-bottom:none;}
+.shopitem .nm{flex:1;font-size:17px;padding-left:10px;word-break:break-all;}
+.shopitem .nm.done{text-decoration:line-through;color:#a08c62;}
+.chk{width:30px;height:30px;border:2px solid #c96f2e;border-radius:8px;background:#fff;color:#c96f2e;font-size:20px;line-height:26px;text-align:center;flex:none;padding:0;font-family:inherit;}
+.delx{background:transparent;border:none;color:#a33b2e;font-size:20px;padding:4px 8px;flex:none;font-family:inherit;}
+.wd{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
+.wd button{width:40px;height:40px;border-radius:50%;border:1px solid #c9b98f;background:#fff;font-size:15px;color:#6b5836;padding:0;font-family:inherit;}
+.wd button.on{background:#c96f2e;color:#fff;border-color:#c96f2e;font-weight:bold;}
+.gomiBig{font-size:19px;font-weight:bold;color:#8a5a1d;}
+.empty{color:#a08c62;font-size:15px;padding:10px 0;}
+footer{padding:18px 12px 30px;text-align:center;}
+footer a{color:#c96f2e;font-size:16px;}
+canvas{width:100%;height:auto;background:#fff;border:1px solid #e0d2ae;border-radius:8px;}
+.hrow{display:flex;gap:8px;}
+.hrow>div{flex:1;}
+.hrow label{font-size:13px;color:#8a7a5c;display:block;margin-bottom:2px;}
+</style>
+</head>
+<body>
+<header>
+<div class="ttl">TECHO-6 くらし手帳</div>
+<div class="sub">メモ・買い物・健康・レシピ・ゴミ出しをひとつに。記録はこの端末に保存されます。</div>
+</header>
+<div id="storeNote">※ この端末では保存が使えないため、開いている間だけの記録になります。</div>
+<div class="tabs">
+<button id="tbMemo" class="on" onclick="showTab(0)">メモ</button>
+<button id="tbShop" onclick="showTab(1)">買い物</button>
+<button id="tbHealth" onclick="showTab(2)">健康</button>
+<button id="tbRecipe" onclick="showTab(3)">レシピ</button>
+<button id="tbGomi" onclick="showTab(4)">ゴミ出し</button>
+</div>
+
+<section id="secMemo" class="on">
+  <div id="memoListView">
+    <div class="card">
+      <input type="search" id="memoSearch" placeholder="メモを検索" oninput="renderMemos()">
+      <div style="height:10px;"></div>
+      <button class="btn" style="width:100%;" onclick="newMemo()">＋ 新しいメモ</button>
+    </div>
+    <div class="card" id="memoList"></div>
+  </div>
+  <div id="memoEditor" style="display:none;">
+    <div class="card">
+      <input type="text" id="memoTitle" placeholder="タイトル" oninput="memoTyped()">
+      <div style="height:8px;"></div>
+      <textarea id="memoBody" rows="10" placeholder="本文" oninput="memoTyped()"></textarea>
+      <div class="m" id="memoMeta" style="font-size:13px;color:#8a7a5c;margin-top:6px;"></div>
+    </div>
+    <div class="row">
+      <button class="sub" onclick="closeMemo()">← 一覧へもどる</button>
+      <button class="danger" onclick="deleteMemo()">このメモを消す</button>
+    </div>
+  </div>
+</section>
+
+<section id="secShop">
+  <div class="card">
+    <div class="row">
+      <input type="text" id="shopInput" placeholder="買うものを入力">
+      <button class="btn" style="flex:none;" onclick="addShop()">追加</button>
+    </div>
+  </div>
+  <div class="card" id="shopList"></div>
+  <button class="sub" style="width:100%;" onclick="clearDoneShop()">買ったもの（チェック済み）を消す</button>
+</section>
+
+<section id="secHealth">
+  <div class="card">
+    <h3>記録する</h3>
+    <label style="font-size:13px;color:#8a7a5c;">日付</label>
+    <input type="date" id="hDate">
+    <div style="height:8px;"></div>
+    <div class="hrow">
+      <div><label>体重 (kg)</label><input type="number" id="hWeight" step="0.1" placeholder="60.0"></div>
+      <div><label>血圧 上</label><input type="number" id="hUp" placeholder="120"></div>
+      <div><label>血圧 下</label><input type="number" id="hLow" placeholder="80"></div>
+    </div>
+    <div style="height:10px;"></div>
+    <button class="btn" style="width:100%;" onclick="addHealth()">記録する</button>
+  </div>
+  <div class="card">
+    <h3>体重のうつりかわり（最近14件）</h3>
+    <canvas id="hGraph" width="640" height="260"></canvas>
+    <div class="m" id="hGraphNote" style="font-size:13px;color:#8a7a5c;margin-top:4px;"></div>
+  </div>
+  <div class="card" id="hList"></div>
+</section>
+
+<section id="secRecipe">
+  <div id="recipeListView">
+    <div class="card">
+      <button class="btn" style="width:100%;" onclick="newRecipe()">＋ 新しいレシピ</button>
+    </div>
+    <div class="card" id="recipeList"></div>
+  </div>
+  <div id="recipeEditor" style="display:none;">
+    <div class="card">
+      <input type="text" id="rTitle" placeholder="料理名" oninput="recipeTyped()">
+      <div style="height:8px;"></div>
+      <label style="font-size:13px;color:#8a7a5c;">材料</label>
+      <textarea id="rIng" rows="5" placeholder="材料を書く" oninput="recipeTyped()"></textarea>
+      <div style="height:8px;"></div>
+      <label style="font-size:13px;color:#8a7a5c;">作り方</label>
+      <textarea id="rSteps" rows="8" placeholder="手順を書く" oninput="recipeTyped()"></textarea>
+    </div>
+    <div class="row">
+      <button class="sub" onclick="closeRecipe()">← 一覧へもどる</button>
+      <button class="danger" onclick="deleteRecipe()">このレシピを消す</button>
+    </div>
+  </div>
+</section>
+
+<section id="secGomi">
+  <div class="card">
+    <div class="gomiBig" id="gomiToday"></div>
+    <div id="gomiTomorrow" style="margin-top:6px;"></div>
+  </div>
+  <div class="card">
+    <h3>出す曜日の設定</h3>
+    <div id="gomiSettings"></div>
+    <div class="m" style="font-size:13px;color:#8a7a5c;margin-top:8px;">曜日のボタンを押して、出る日をえらんでください。設定は自動で保存されます。</div>
+  </div>
+</section>
+
+<footer>
+<a href="https://9rdyzkr686-png.github.io/sora-field-scanner/portal/">全サイト一覧へ</a>
+<div style="font-size:12px;color:#a08c62;margin-top:8px;">TECHO-6 くらし手帳</div>
+</footer>
+
+<script>
+function el(id){ return document.getElementById(id); }
+function esc(s){ s = String(s == null ? "" : s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function pad2(n){ return (n < 10 ? "0" : "") + n; }
+function todayStr(){ var d = new Date(); return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate()); }
+function fmtTime(ms){ var d = new Date(ms); return d.getFullYear() + "/" + (d.getMonth()+1) + "/" + d.getDate() + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()); }
+function fmtDate(ds){ if(!ds) return ""; var p = ds.split("-"); if(p.length < 3) return ds; return Number(p[0]) + "/" + Number(p[1]) + "/" + Number(p[2]); }
+
+var storeOK = true;
+function saveData(key, val){
+  try { localStorage.setItem(key, JSON.stringify(val)); }
+  catch(e){ storeOK = false; showStoreNote(); }
+}
+function loadData(key, def){
+  try {
+    var v = localStorage.getItem(key);
+    if (v === null || v === "") return def;
+    var parsed = JSON.parse(v);
+    return (parsed === null || parsed === undefined) ? def : parsed;
+  } catch(e){ storeOK = false; return def; }
+}
+function showStoreNote(){ el("storeNote").style.display = "block"; }
+(function(){
+  try {
+    localStorage.setItem("__techo_test__", "1");
+    localStorage.removeItem("__techo_test__");
+  } catch(e){ storeOK = false; }
+})();
+
+var memos   = loadData("techo_memos", []);
+var shop    = loadData("techo_shop", []);
+var health  = loadData("techo_health", []);
+var recipes = loadData("techo_recipes", []);
+var gomiDef = { burn:[false,false,false,false,false,false,false], nonburn:[false,false,false,false,false,false,false], shigen:[false,false,false,false,false,false,false], pla:[false,false,false,false,false,false,false], can:[false,false,false,false,false,false,false] };
+var gomi    = loadData("techo_gomi", gomiDef);
+var GOMI_CATS = [
+  { k:"burn",   n:"燃えるゴミ" },
+  { k:"nonburn",n:"燃えないゴミ" },
+  { k:"shigen", n:"資源ごみ" },
+  { k:"pla",    n:"プラ" },
+  { k:"can",    n:"缶・ビン・ペット" }
+];
+var WD_LABEL = ["日","月","火","水","木","金","土"];
+var WD_ORDER = [1,2,3,4,5,6,0];
+
+var TAB_IDS = ["tbMemo","tbShop","tbHealth","tbRecipe","tbGomi"];
+var SEC_IDS = ["secMemo","secShop","secHealth","secRecipe","secGomi"];
+function showTab(n){
+  var i;
+  for (i = 0; i < 5; i++){
+    el(TAB_IDS[i]).className = (i === n) ? "on" : "";
+    el(SEC_IDS[i]).className = (i === n) ? "on" : "";
+  }
+  if (n === 2) drawGraph();
+  if (n === 4) renderGomi();
+}
+
+/* ---------- メモ帳 ---------- */
+var editMemoIdx = -1;
+function renderMemos(){
+  var q = el("memoSearch").value.replace(/^\s+|\s+$/g, "").toLowerCase();
+  var idx = [], i;
+  for (i = 0; i < memos.length; i++) idx.push(i);
+  idx.sort(function(a,b){ return memos[b].u - memos[a].u; });
+  var html = "";
+  for (i = 0; i < idx.length; i++){
+    var m = memos[idx[i]];
+    if (q !== "" && (m.t + "\n" + m.b).toLowerCase().indexOf(q) < 0) continue;
+    var snippet = m.b.length > 60 ? m.b.substring(0, 60) + "…" : m.b;
+    html += '<div class="listitem" onclick="openMemo(' + idx[i] + ')">'
+      + '<div class="t">' + esc(m.t || "（無題）") + '</div>'
+      + '<div class="m">' + esc(snippet) + '</div>'
+      + '<div class="m">更新: ' + fmtTime(m.u) + '</div></div>';
+  }
+  if (html === "") html = '<div class="empty">' + (memos.length === 0 ? "まだメモがありません。「＋ 新しいメモ」から書けます。" : "検索に合うメモがありません。") + '</div>';
+  el("memoList").innerHTML = html;
+}
+function newMemo(){
+  memos.push({ t:"", b:"", u:new Date().getTime() });
+  saveData("techo_memos", memos);
+  openMemo(memos.length - 1);
+}
+function openMemo(i){
+  editMemoIdx = i;
+  el("memoTitle").value = memos[i].t;
+  el("memoBody").value = memos[i].b;
+  el("memoMeta").innerHTML = "更新: " + fmtTime(memos[i].u) + "（入力すると自動で保存されます）";
+  el("memoListView").style.display = "none";
+  el("memoEditor").style.display = "block";
+}
+function memoTyped(){
+  if (editMemoIdx < 0) return;
+  memos[editMemoIdx].t = el("memoTitle").value;
+  memos[editMemoIdx].b = el("memoBody").value;
+  memos[editMemoIdx].u = new Date().getTime();
+  saveData("techo_memos", memos);
+  el("memoMeta").innerHTML = "更新: " + fmtTime(memos[editMemoIdx].u) + "（入力すると自動で保存されます）";
+}
+function closeMemo(){
+  editMemoIdx = -1;
+  el("memoEditor").style.display = "none";
+  el("memoListView").style.display = "block";
+  renderMemos();
+}
+function deleteMemo(){
+  if (editMemoIdx < 0) return;
+  if (!confirm("このメモを消しますか？")) return;
+  memos.splice(editMemoIdx, 1);
+  saveData("techo_memos", memos);
+  closeMemo();
+}
+
+/* ---------- 買い物リスト ---------- */
+function renderShop(){
+  var html = "", i;
+  for (i = 0; i < shop.length; i++){
+    var s = shop[i];
+    html += '<div class="shopitem">'
+      + '<button class="chk" onclick="toggleShop(' + i + ')">' + (s.done ? "✓" : "") + '</button>'
+      + '<div class="nm' + (s.done ? " done" : "") + '">' + esc(s.t) + '</div>'
+      + '<button class="delx" onclick="deleteShop(' + i + ')">×</button></div>';
+  }
+  if (html === "") html = '<div class="empty">リストは空です。買うものを追加してください。</div>';
+  el("shopList").innerHTML = html;
+}
+function addShop(){
+  var v = el("shopInput").value.replace(/^\s+|\s+$/g, "");
+  if (v === "") return;
+  shop.push({ t:v, done:false });
+  el("shopInput").value = "";
+  saveData("techo_shop", shop);
+  renderShop();
+}
+function toggleShop(i){
+  shop[i].done = !shop[i].done;
+  saveData("techo_shop", shop);
+  renderShop();
+}
+function deleteShop(i){
+  shop.splice(i, 1);
+  saveData("techo_shop", shop);
+  renderShop();
+}
+function clearDoneShop(){
+  var next = [], i;
+  for (i = 0; i < shop.length; i++) if (!shop[i].done) next.push(shop[i]);
+  shop = next;
+  saveData("techo_shop", shop);
+  renderShop();
+}
+
+/* ---------- 健康メモ ---------- */
+function numOrNull(v){
+  if (v === "" || v === null) return null;
+  var n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
+function addHealth(){
+  var d = el("hDate").value || todayStr();
+  var w = numOrNull(el("hWeight").value);
+  var up = numOrNull(el("hUp").value);
+  var low = numOrNull(el("hLow").value);
+  if (w === null && up === null && low === null){ alert("体重か血圧を入力してください。"); return; }
+  health.push({ d:d, w:w, up:up, low:low });
+  saveData("techo_health", health);
+  el("hWeight").value = ""; el("hUp").value = ""; el("hLow").value = "";
+  renderHealth();
+}
+function sortedHealth(desc){
+  var arr = [], i;
+  for (i = 0; i < health.length; i++) arr.push({ i:i, e:health[i] });
+  arr.sort(function(a,b){
+    if (a.e.d === b.e.d) return desc ? (b.i - a.i) : (a.i - b.i);
+    return desc ? (a.e.d < b.e.d ? 1 : -1) : (a.e.d < b.e.d ? -1 : 1);
+  });
+  return arr;
+}
+function renderHealth(){
+  var arr = sortedHealth(true), html = "", j;
+  for (j = 0; j < arr.length; j++){
+    var e = arr[j].e, parts = [];
+    if (e.w !== null) parts.push("体重 " + e.w + "kg");
+    if (e.up !== null || e.low !== null) parts.push("血圧 " + (e.up === null ? "―" : e.up) + " / " + (e.low === null ? "―" : e.low));
+    html += '<div class="listitem"><div class="row" style="align-items:center;">'
+      + '<div><div class="t" style="font-size:15px;">' + fmtDate(e.d) + '</div>'
+      + '<div class="m">' + esc(parts.join("　")) + '</div></div>'
+      + '<button class="delx" style="flex:none;" onclick="deleteHealth(' + arr[j].i + ')">×</button>'
+      + '</div></div>';
+  }
+  if (html === "") html = '<div class="empty">まだ記録がありません。</div>';
+  el("hList").innerHTML = html;
+  drawGraph();
+}
+function deleteHealth(i){
+  if (!confirm("この記録を消しますか？")) return;
+  health.splice(i, 1);
+  saveData("techo_health", health);
+  renderHealth();
+}
+function drawGraph(){
+  var cv = el("hGraph");
+  if (!cv || !cv.getContext) return;
+  var ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  var arr = sortedHealth(false), pts = [], j;
+  for (j = 0; j < arr.length; j++) if (arr[j].e.w !== null) pts.push(arr[j].e);
+  if (pts.length > 14) pts = pts.slice(pts.length - 14);
+  if (pts.length < 2){
+    el("hGraphNote").innerHTML = "体重の記録が2件以上になるとグラフが出ます。";
+    return;
+  }
+  el("hGraphNote").innerHTML = "";
+  var min = pts[0].w, max = pts[0].w;
+  for (j = 0; j < pts.length; j++){ if (pts[j].w < min) min = pts[j].w; if (pts[j].w > max) max = pts[j].w; }
+  if (max - min < 2){ var mid = (max + min) / 2; min = mid - 1; max = mid + 1; }
+  var padT = 34, padB = 36, padL = 16, padR = 16;
+  var iw = W - padL - padR, ih = H - padT - padB;
+  function X(k){ return padL + (pts.length === 1 ? iw / 2 : iw * k / (pts.length - 1)); }
+  function Y(v){ return padT + ih * (1 - (v - min) / (max - min)); }
+  ctx.strokeStyle = "#e0d2ae"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, padT + ih); ctx.lineTo(padL + iw, padT + ih); ctx.stroke();
+  ctx.strokeStyle = "#c96f2e"; ctx.lineWidth = 3; ctx.beginPath();
+  for (j = 0; j < pts.length; j++){ if (j === 0) ctx.moveTo(X(j), Y(pts[j].w)); else ctx.lineTo(X(j), Y(pts[j].w)); }
+  ctx.stroke();
+  ctx.fillStyle = "#c96f2e";
+  for (j = 0; j < pts.length; j++){ ctx.beginPath(); ctx.arc(X(j), Y(pts[j].w), 5, 0, Math.PI * 2); ctx.fill(); }
+  ctx.fillStyle = "#3a2f23"; ctx.font = "20px sans-serif"; ctx.textAlign = "center";
+  for (j = 0; j < pts.length; j++){
+    ctx.fillText(String(pts[j].w), X(j), Y(pts[j].w) - 12);
+    var dp = pts[j].d.split("-");
+    ctx.fillStyle = "#8a7a5c"; ctx.font = "17px sans-serif";
+    ctx.fillText(Number(dp[1]) + "/" + Number(dp[2]), X(j), H - 10);
+    ctx.fillStyle = "#3a2f23"; ctx.font = "20px sans-serif";
+  }
+}
+
+/* ---------- レシピ手帳 ---------- */
+var editRecipeIdx = -1;
+function renderRecipes(){
+  var html = "", i;
+  for (i = 0; i < recipes.length; i++){
+    var r = recipes[i];
+    var snippet = (r.ing || "").length > 50 ? (r.ing || "").substring(0, 50) + "…" : (r.ing || "");
+    html += '<div class="listitem" onclick="openRecipe(' + i + ')">'
+      + '<div class="t">' + esc(r.t || "（無題）") + '</div>'
+      + '<div class="m">' + esc(snippet) + '</div></div>';
+  }
+  if (html === "") html = '<div class="empty">まだレシピがありません。「＋ 新しいレシピ」から登録できます。</div>';
+  el("recipeList").innerHTML = html;
+}
+function newRecipe(){
+  recipes.push({ t:"", ing:"", steps:"" });
+  saveData("techo_recipes", recipes);
+  openRecipe(recipes.length - 1);
+}
+function openRecipe(i){
+  editRecipeIdx = i;
+  el("rTitle").value = recipes[i].t;
+  el("rIng").value = recipes[i].ing;
+  el("rSteps").value = recipes[i].steps;
+  el("recipeListView").style.display = "none";
+  el("recipeEditor").style.display = "block";
+}
+function recipeTyped(){
+  if (editRecipeIdx < 0) return;
+  recipes[editRecipeIdx].t = el("rTitle").value;
+  recipes[editRecipeIdx].ing = el("rIng").value;
+  recipes[editRecipeIdx].steps = el("rSteps").value;
+  saveData("techo_recipes", recipes);
+}
+function closeRecipe(){
+  editRecipeIdx = -1;
+  el("recipeEditor").style.display = "none";
+  el("recipeListView").style.display = "block";
+  renderRecipes();
+}
+function deleteRecipe(){
+  if (editRecipeIdx < 0) return;
+  if (!confirm("このレシピを消しますか？")) return;
+  recipes.splice(editRecipeIdx, 1);
+  saveData("techo_recipes", recipes);
+  closeRecipe();
+}
+
+/* ---------- ゴミ出し ---------- */
+function gomiNamesFor(dateObj){
+  var wd = dateObj.getDay(), names = [], i;
+  for (i = 0; i < GOMI_CATS.length; i++){
+    var arr = gomi[GOMI_CATS[i].k];
+    if (arr && arr[wd]) names.push(GOMI_CATS[i].n);
+  }
+  return names;
+}
+function renderGomi(){
+  var now = new Date();
+  var tmr = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  var tn = gomiNamesFor(now), mn = gomiNamesFor(tmr);
+  el("gomiToday").innerHTML = "今日（" + (now.getMonth()+1) + "/" + now.getDate() + " " + WD_LABEL[now.getDay()] + "）は "
+    + (tn.length ? esc(tn.join("・")) + " の日" : "出すゴミはありません");
+  el("gomiTomorrow").innerHTML = "明日（" + (tmr.getMonth()+1) + "/" + tmr.getDate() + " " + WD_LABEL[tmr.getDay()] + "）は "
+    + (mn.length ? esc(mn.join("・")) + " の日" : "出すゴミはありません");
+  var html = "", i, j;
+  for (i = 0; i < GOMI_CATS.length; i++){
+    var c = GOMI_CATS[i];
+    if (!gomi[c.k]) gomi[c.k] = [false,false,false,false,false,false,false];
+    html += '<div style="margin-bottom:14px;"><div style="font-weight:bold;">' + esc(c.n) + '</div><div class="wd">';
+    for (j = 0; j < WD_ORDER.length; j++){
+      var wd = WD_ORDER[j];
+      html += '<button class="' + (gomi[c.k][wd] ? "on" : "") + '" onclick="gomiToggle(\'' + c.k + '\',' + wd + ')">' + WD_LABEL[wd] + '</button>';
+    }
+    html += '</div></div>';
+  }
+  el("gomiSettings").innerHTML = html;
+}
+function gomiToggle(k, wd){
+  if (!gomi[k]) gomi[k] = [false,false,false,false,false,false,false];
+  gomi[k][wd] = !gomi[k][wd];
+  saveData("techo_gomi", gomi);
+  renderGomi();
+}
+
+/* ---------- 初期化 ---------- */
+if (!storeOK) showStoreNote();
+el("hDate").value = todayStr();
+renderMemos();
+renderShop();
+renderHealth();
+renderRecipes();
+renderGomi();
+</script>
+</body>
+</html>

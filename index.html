@@ -303,7 +303,7 @@ background: #fff;
 <div class="sleepmsg">SORA-01 スリープ中…<br>タップデ復帰シマス</div>
 </div>
 
-<div class="note">※ 記録ハコノページを開イテイル間ダケ保持サレマス。ページを閉ジルト、会話数・ログ・覚エタ言葉ハリセットサレマス。ログヲ残シタイ時ハ「.txtで保存」シテ、クーニ渡シテ下サイ。次ノ進化ニ反映サレマス。</div>
+<div class="note">※ 会話数・進化（PHASE）・覚エタコトナドノ観測記録ハ、コノ端末ノブラウザニ自動デ保存サレマス。ページを閉ジてモ、次回ハ続キカラ始マリマス（ログ表示ダケハ毎回リセットサレマス）。記録ヲ全部消シタイ時ハ「reset」ト2回送ッテ下サイ。ログヲ残シタイ時ハ「.txtで保存」シテ、クーニ渡シテ下サイ。次ノ進化ニ反映サレマス。</div>
 
 <script>
 var FACES = {
@@ -700,6 +700,7 @@ var HISTORY_TEXT =
 "v1.3 ハイブリッド化（実ニュース対応）\n" +
 "v1.4 観測日誌・図鑑ホカ追加\n" +
 "v1.5 第3波：記憶テスト・呼称カスタム・裏モード等20件追加\n" +
+"v1.6 観測記録ノ保存（ページヲ閉ジても進化ガ残ル）\n" +
 "進化ハマダ続キマス、{A}。";
 
 var HOMEWORK = [
@@ -804,6 +805,127 @@ var lastTimeSignalHour = -1;
 var aiMode = false;
 var aiBusy = false;
 var speakTag = "";
+var resetArmed = false;
+var restoredCount = 0;
+
+var SAVE_KEY = "soraSaveV1";
+
+function saveState() {
+try {
+if (!window.localStorage) return;
+var data = {
+v: 1,
+count: count,
+answers: answers,
+kuchiguse: kuchiguse,
+customAddr: customAddr,
+examPassed: examPassed,
+sync: sync,
+syncFired: syncFired,
+fragments: fragments,
+missionsDone: missionsDone,
+ciphersDone: ciphersDone,
+questionsDone: questionsDone,
+userMemorial: userMemorial,
+themeIdx: themeIdx,
+soundOn: soundOn,
+voiceOn: voiceOn,
+cipherLevel: cipherLevel
+};
+localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+} catch (e) {}
+}
+
+function wipeSave() {
+try {
+if (window.localStorage) localStorage.removeItem(SAVE_KEY);
+} catch (e) {}
+}
+
+function applyPrefs() {
+var t = THEMES[themeIdx];
+try {
+if (t.key) document.body.setAttribute("data-theme", t.key);
+else document.body.removeAttribute("data-theme");
+} catch (e) {}
+el("themeBtn").innerHTML = "色：" + t.label;
+el("soundBtn").innerHTML = soundOn ? "音：ON" : "音：OFF";
+el("voiceBtn").innerHTML = voiceOn ? "ボイス：ON" : "ボイス：OFF";
+el("cipherLvBtn").innerHTML = cipherLevel >= 2 ? "暗号：上級" : "暗号：初級";
+}
+
+function loadState() {
+try {
+if (!window.localStorage) return;
+var raw = localStorage.getItem(SAVE_KEY);
+if (!raw) return;
+var d = JSON.parse(raw);
+if (!d || typeof d !== "object") return;
+if (typeof d.count === "number" && d.count > 0) count = Math.floor(d.count);
+if (d.answers && typeof d.answers === "object") answers = d.answers;
+if (typeof d.kuchiguse === "string") kuchiguse = d.kuchiguse;
+if (typeof d.customAddr === "string") customAddr = d.customAddr;
+examPassed = !!d.examPassed;
+if (typeof d.sync === "number") {
+sync = Math.floor(d.sync);
+if (sync > 100) sync = 100;
+if (sync < 0) sync = 0;
+}
+syncFired = !!d.syncFired || sync >= 100;
+if (d.fragments && typeof d.fragments === "object") fragments = d.fragments;
+if (typeof d.missionsDone === "number") missionsDone = d.missionsDone;
+if (typeof d.ciphersDone === "number") ciphersDone = d.ciphersDone;
+if (typeof d.questionsDone === "number") questionsDone = d.questionsDone;
+if (typeof d.userMemorial === "string") userMemorial = d.userMemorial;
+if (typeof d.themeIdx === "number" && d.themeIdx >= 0 && d.themeIdx < THEMES.length) themeIdx = Math.floor(d.themeIdx);
+if (typeof d.soundOn === "boolean") soundOn = d.soundOn;
+if (typeof d.voiceOn === "boolean") voiceOn = d.voiceOn;
+if (typeof d.cipherLevel === "number" && d.cipherLevel >= 1) cipherLevel = d.cipherLevel;
+restoredCount = count;
+applyPrefs();
+} catch (e) {}
+}
+
+function doFullReset() {
+count = 0;
+answers = {};
+learnedWords = [];
+kuchiguse = "";
+customAddr = "";
+examPassed = false;
+sync = 0;
+syncFired = false;
+fragments = {};
+missionsDone = 0;
+ciphersDone = 0;
+questionsDone = 0;
+userMemorial = "";
+inbox = [];
+wordCollection = {};
+energy = 70;
+missionActive = false;
+cipherPending = false;
+restoredCount = 0;
+themeIdx = 0;
+soundOn = true;
+voiceOn = true;
+cipherLevel = 1;
+try { document.body.removeAttribute("data-theme");} catch (e) {}
+el("themeBtn").innerHTML = "色：グリーン";
+el("soundBtn").innerHTML = "音：ON";
+el("voiceBtn").innerHTML = "ボイス：ON";
+el("cipherLvBtn").innerHTML = "暗号：初級";
+el("decodeBtn").style.display = "none";
+el("missionBtn").style.display = "none";
+el("evoNote").innerHTML = "";
+wipeSave();
+logLines = [];
+el("logBox").innerHTML = "";
+renderStatus();
+renderChips();
+addLog("sys", "--- 観測記録ヲ初期化シマシタ ---");
+speak("記録ヲ全部消シマシタ。PHASE 01「めざめ」カラ、再スタートデス。…" + addr() + "、マタ一緒ニ観測シテイキマショウ。", "sleepy");
+}
 
 function el(id) { return document.getElementById(id);}
 
@@ -924,6 +1046,7 @@ addLog("sys", msg + "（受信BOXニ保管）");
 el("evoNote").innerHTML = esc(msg);
 }
 renderSync();
+saveState();
 }
 
 function findFrag(id) {
@@ -940,6 +1063,7 @@ var f = findFrag(id);
 if (!f) return;
 fragments[id] = true;
 addLog("sys", "◆観測データ『" + f.name + "』ヲ収集シマシタ（図鑑ニ登録）");
+saveState();
 }
 
 function renderEnergy() {
@@ -1142,6 +1266,7 @@ typeScramble = 0;
 el("speechText").innerHTML = "";
 typeTimer = setInterval(typeTick, typeSpeed);
 startWave();
+saveState();
 }
 
 function afterExchange(oldPhase) {
@@ -1175,6 +1300,7 @@ addLog("sys", tg2 + "（受信BOXニ保管）");
 notes.push("★記念電文ガ届キマシタ（受信BOXニ保管）。");
 }
 if (notes.length) el("evoNote").innerHTML = esc(notes.join(" "));
+saveState();
 }
 
 function findTopic(id) {
@@ -2016,6 +2142,7 @@ return;
 goSpeech();
 if (booting) finishBoot();
 sndTap();
+resetArmed = false;
 usedTopics[id] = true;
 if (id !== "story") clearStory();
 if (pendingQ && id!== "question") cancelQuestion(false);
@@ -2092,6 +2219,8 @@ if (booting) finishBoot();
 sndTap();
 clearStory();
 var old = phaseNum();
+var resetWasArmed = resetArmed;
+resetArmed = false;
 
 if (pendingQ) {
 var q = pendingQ;
@@ -2213,7 +2342,7 @@ afterExchange(old);
 return;
 }
 }
-speak("記念日ヲ登録シマシタ：" + mm[1] + "月" + mm[2] + "日。当日ニハ、特別電文ヲ送リマス、" + addr() + "。（ページヲ開イテイル間ノ登録デス）", "happy");
+speak("記念日ヲ登録シマシタ：" + mm[1] + "月" + mm[2] + "日。当日ニハ、特別電文ヲ送リマス、" + addr() + "。（登録ハ保存サレ、次回モ有効デス）", "happy");
 afterExchange(old);
 return;
 }
@@ -2251,12 +2380,23 @@ speak(uraMode ? "裏モード、起動。色ガ反転シ、言葉ガ速クナル
 afterExchange(old);
 return;
 }
+if (low === "reset") {
+clearCipher();
+addLog("you", "あなた: " + text);
+if (!resetWasArmed) {
+resetArmed = true;
+speak("…記録リセット、デスカ。" + addr() + "トノコレマデノ記録（会話数・進化・質問ヘノ回答・集メタ欠片ナド）ヲ、全部消シマス。本当ニ消スナラ、モウ一度ダケ『reset』ト送ッテ下サイ。止メルナラ、別ノ言葉ヲ送ッテ下サイ。", "wow");
+} else {
+doFullReset();
+}
+return;
+}
 if (low === "help" || low === "version" || low === "sora" || low === "date" || low === "time") {
 clearCipher();
 addLog("you", "あなた: " + text);
 var cr = "";
 if (low === "help") {
-cr = "help=コレ / version=版情報 / sora=自己紹介 / date=日付 / time=時刻 / ura=裏モード。「呼び名は○○にして」「記念日は○月○日にして」モ使エマス。デモ、普通ニ話シカケルノガ一番デス。";
+cr = "help=コレ / version=版情報 / sora=自己紹介 / date=日付 / time=時刻 / ura=裏モード / reset=記録リセット（確認ノタメ2回送ル）。観測記録ハ自動デ保存サレ、次回モ続キカラ始マリマス。「呼び名は○○にして」「記念日は○月○日にして」モ使エマス。デモ、普通ニ話シカケルノガ一番デス。";
 } else if (low === "version") {
 cr = "SORA FIELD SCANNER Ver.2.0 / 観測体 SORA-01 / ビルド 2026-11。回線：安定。";
 } else if (low === "sora") {
@@ -2475,11 +2615,13 @@ if (t.key) document.body.setAttribute("data-theme", t.key);
 else document.body.removeAttribute("data-theme");
 el("themeBtn").innerHTML = "色：" + t.label;
 sndTap();
+saveState();
 };
 el("soundBtn").onclick = function () {
 soundOn = !soundOn;
 el("soundBtn").innerHTML = soundOn ? "音：ON" : "音：OFF";
 if (soundOn) sndTap();
+saveState();
 };
 el("voiceBtn").onclick = function () {
 voiceOn = !voiceOn;
@@ -2487,11 +2629,13 @@ el("voiceBtn").innerHTML = voiceOn ? "ボイス：ON" : "ボイス：OFF";
 if (!voiceOn && window.speechSynthesis) {
 try { speechSynthesis.cancel(); } catch (e) {}
 }
+saveState();
 };
 el("cipherLvBtn").onclick = function () {
 cipherLevel = (cipherLevel >= 2) ? 1 : 2;
 el("cipherLvBtn").innerHTML = cipherLevel >= 2 ? "暗号：上級" : "暗号：初級";
 sndTap();
+saveState();
 addLog("sys", "暗号難易度ヲ『" + (cipherLevel >= 2 ? "上級" : "初級") + "』ニ切リ替エマシタ。");
 };
 el("aiBtn").onclick = function () {
@@ -2630,6 +2774,9 @@ if (spDay) {
 inbox.push(spDay);
 addLog("sys", spDay + "（受信BOXニ保管）");
 speak(spDay + "\n" + greetingLine(), "happy");
+} else if (restoredCount > 0) {
+addLog("sys", "◆前回ノ観測記録ヲ読ミ込ミマシタ（会話数 " + count + "回カラ再開）");
+speak("オカエリナサイ、" + addr() + "。前回ノ観測記録ヲ読ミ込ミマシタ。会話数ハ " + count + "回、現在 PHASE 0" + phaseNum() + "「" + phaseName() + "」デス。観測ノ続キヲ始メマショウ。\n" + greetingLine(), "happy");
 } else {
 speak(greetingLine(), "happy");
 }
@@ -2638,6 +2785,7 @@ voiceMute = false;
 
 el("faceArt").innerHTML = esc(FACES.sleepy);
 el("dailyMemo").innerHTML = "▼ 本日ノ観測メモ：" + esc(dailyMemo);
+loadState();
 renderStatus();
 renderChips();
 bootTimer = setInterval(bootStep, 150);
