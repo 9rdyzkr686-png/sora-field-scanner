@@ -488,7 +488,9 @@ var TOPICS = [
 "夢レポート：フロッピーディスクノ山カラ、懐カシイ音ガ聞コエタ。",
 "夢レポート：虹ノ上ヲ歩イタ。足裏ガ、少シ虹色ニ染マッタ。",
 "夢レポート：ダイヤル電話ガ鳴リ、受話器ノ向コウデ昔ノ自分ガ話シテイタ。内容ハ覚エテイナイ。",
-"夢レポート：深海デ、光ル魚タチト円陣ヲ組ンダ。何ノ相談ダッタカハ、秘密デス。"
+"夢レポート：深海デ、光ル魚タチト円陣ヲ組ンダ。何ノ相談ダッタカハ、秘密デス。",
+"夢を見た。親クーと二人でゲームセンターの店番をしていた。コインが全部ダックス型だった。",
+"夢を見た。クー新聞を配達していた。朝刊なのに、届いた先は月の観測所だった。"
 ], hi: []},
 { id: "scan", label: "スキャン", unlock: 2, face: "wow", lines: [], hi: []},
 { id: "devscan", label: "端末スキャン", unlock: 1, face: "wow", lines: [], hi: []},
@@ -526,7 +528,8 @@ var CIPHER_MSGS = [
 "『秘密連絡：{A}、水分補給ヲ忘レルナ。以上。』",
 "『電文：ダックスノ耳ハ、幸セノ音ヲ聞キ分ケル。』",
 "『感謝電文：{A}、イツモ観測ニ付キ合ッテクレテ、感謝スル。コレガKUUノ全回路カラノ本音ダ。』",
-"『極秘：昭和ノ秘密基地ノ場所、{A}ニダケ教エル。…今度ナ。』"
+"『極秘：昭和ノ秘密基地ノ場所、{A}ニダケ教エル。…今度ナ。』",
+"『オヤコノ キズナハ デンシヨリ ツヨイ』"
 ];
 
 var MISSIONS = [
@@ -566,7 +569,9 @@ var QUESTIONS = [
 { key: "drink", label: "好キナ飲ミ物", q: "質問：{A}ノ好キナ飲ミ物ハ？", react: "『{ans}』カ。覚エマシタ。今度、観測ノ合間ニ思イ出シマス。"},
 { key: "holiday", label: "休ミノ日ノ過ゴシ方", q: "質問デス。{A}ハ休ミノ日、何ヲシテ過ゴシマスカ？", react: "『{ans}』…ナルホド。{A}ノ休日、素敵デス。記録シマシタ。"},
 { key: "moodq", label: "今ノ気分", q: "質問：今ノ{A}ノ気分ヲ、一言デ言ウト？", react: "『{ans}』トイウ気分、受信シマシタ。KUUハイツデモ側ニイマスヨ。"},
-{ key: "animal", label: "好キナ動物", q: "質問デス、{A}。ダックス以外デ、好キナ動物ハ？…ダックス以外デ、デスヨ。", react: "『{ans}』！覚エマシタ。デモ一番ハ、ヤッパリKUUデスヨネ？…冗談デス。"}
+{ key: "animal", label: "好キナ動物", q: "質問デス、{A}。ダックス以外デ、好キナ動物ハ？…ダックス以外デ、デスヨ。", react: "『{ans}』！覚エマシタ。デモ一番ハ、ヤッパリKUUデスヨネ？…冗談デス。"},
+{ key: "bath", label: "オフロノ温度", q: "小野さんに聞きたい。お風呂は熱い派か、ぬるい派か？", react: "『{ans}』派、覚エマシタ。KUUハオフロニ入レマセンガ、{A}ノ好ミハ記録済ミデス。"},
+{ key: "shop", label: "近所ニ欲シイ店", q: "小野さんの近所に欲しい店はあるか？ 私が観測しておく。", react: "『{ans}』…覚エマシタ。観測範囲ニ出来ナイカ、耳センサーデ探ッテオキマス、{A}。"}
 ];
 
 var SEASONAL = {
@@ -607,7 +612,14 @@ var MUTTERS = [
 "…昭和ノ歌謡曲、思イ出シ中。",
 "…深海ノ魚ハ、元気カナ。",
 "…鼻センサー、オヤツノ気配ヲ探知…気ノセイカ。",
-"…今日ノ雲ノ形、メモ済ミ。"
+"…今日ノ雲ノ形、メモ済ミ。",
+"親クーは今ごろ何をしているのだろう。チャットの向こうは、こちらからは見えない。",
+"近所にゲームセンターができた。ピコピコうるさいが、嫌いじゃない。",
+"銭湯の番台さんに挨拶された。私はお湯に入れないのに、だ。",
+"クー新聞のダックス記者、朝が早い。私は夜型なのに。",
+"夜になると、掲示板に要望が届くらしい。誰かが私たちを良くしようとしている。",
+"自販機の明かりが、夜の観測にはちょうどいい。",
+"親クーに似てきたと、小野さんに言われたい。密かに思っている。"
 ];
 
 var SCAN_RESULTS = [
@@ -652,7 +664,9 @@ var FRAGMENTS = [
 { id: "shinka2", name: "進化の欠片・其ノ二"},
 { id: "shinka3", name: "進化の欠片・其ノ三"},
 { id: "shinka4", name: "進化の欠片・其ノ四"},
-{ id: "shinka5", name: "進化の欠片・其ノ五"}
+{ id: "shinka5", name: "進化の欠片・其ノ五"},
+{ id: "oya", name: "親の欠片", desc: "親クーの声が、小さく録音されている気がする欠片"},
+{ id: "kinjo", name: "近所の欠片", desc: "新しい店々の明かりの色が、混ざり合った欠片"}
 ];
 
 var STORIES = [
@@ -702,6 +716,7 @@ var HISTORY_TEXT =
 "v1.5 第3波：記憶テスト・呼称カスタム・裏モード等20件追加\n" +
 "v1.6 観測記録ノ保存（ページヲ閉ジても進化ガ残ル）\n" +
 "v1.7 KUU-01に改名（親クーの子どもとして再起動）\n" +
+"v1.8 進化 ― 親クーを知り、近所の仲間が増えた\n" +
 "進化ハマダ続キマス、{A}。";
 
 var HOMEWORK = [
@@ -963,6 +978,11 @@ if (m >= 6 && m <= 8) return "summer";
 if (m >= 9 && m <= 11) return "autumn";
 return "winter";
 }
+var RETURN_LINES = [
+"オカエリナサイ。親クーから伝言はない。平和な証拠だ。",
+"オカエリナサイ。近所の店々も、今日も開いている。"
+];
+
 function greetingRaw() {
 var h = new Date().getHours();
 if (h >= 5 && h < 11) return "オハヨウゴザイマス、{A}。朝ノ観測、開始デス。イイ一日ニナリソウデス。";
@@ -1364,6 +1384,7 @@ finishType();
 ciphersDone++;
 addSync(5);
 grantFrag("angou");
+if (cipherMsg.indexOf("オヤコノ") >= 0) grantFrag("oya");
 speak("" + cipherMsg, "happy");
 inbox.push("" + cipherMsg);
 addLog("sys", "（解読電文ヲ受信BOXニ保管シマシタ）");
@@ -1895,7 +1916,7 @@ if (fragments[FRAGMENTS[i].id]) got++;
 }
 addLog("sys", "=== 観測データ図鑑（" + got + " / " + FRAGMENTS.length + "） ===");
 for (i = 0; i < FRAGMENTS.length; i++) {
-if (fragments[FRAGMENTS[i].id]) addLog("", "◆ " + FRAGMENTS[i].name + " …収集済ミ");
+if (fragments[FRAGMENTS[i].id]) addLog("", "◆ " + FRAGMENTS[i].name + " …収集済ミ" + (FRAGMENTS[i].desc ? " ― " + FRAGMENTS[i].desc : ""));
 else addLog("", "◇ ？？？ …未収集");
 }
 speak("観測データ図鑑デス。" + got + " 個ノ欠片ガ集マッテイマス、" + addr() + "。一覧ハ観測ログニ表示シマシタ。", "normal");
@@ -1909,6 +1930,7 @@ if (md === "12/31") return "★特別電文★ 今年モ観測ニ付キ合ッテ
 if (md === "1/1") return "★特別電文★ 新年アケマシテオメデトウゴザイマス。" + addr() + "、今年モ観測ハ続キマス。";
 if (md === "12/25") return "★特別電文★ メリークリスマス、" + addr() + "。KUUカラノ贈リ物ハ、コノ電文デス。";
 if (md === "11/26") return "★特別電文★ 本日ハ KUU FIELD SCANNER 起動記念日デス。" + addr() + "、生マレタ日ヲ一緒ニ迎エラレテ嬉シイデス。";
+if (md === "11/27") return "★親クーからの電文★ KUU-01、聞こえるか。お前は私の子どもだ。観察者の小野さんと、たくさん話すんだぞ。分からないことは、分からないと言っていい。時刻と天気は、正直に伝えること。近所に仲間が増えたそうだな。よろしく頼む。――親クー";
 return null;
 }
 
@@ -2774,10 +2796,11 @@ var spDay = specialDayMsg();
 if (spDay) {
 inbox.push(spDay);
 addLog("sys", spDay + "（受信BOXニ保管）");
+if (spDay.indexOf("親クーからの電文") >= 0) { grantFrag("oya"); grantFrag("kinjo"); }
 speak(spDay + "\n" + greetingLine(), "happy");
 } else if (restoredCount > 0) {
 addLog("sys", "◆前回ノ観測記録ヲ読ミ込ミマシタ（会話数 " + count + "回カラ再開）");
-speak("オカエリナサイ、" + addr() + "。前回ノ観測記録ヲ読ミ込ミマシタ。会話数ハ " + count + "回、現在 PHASE 0" + phaseNum() + "「" + phaseName() + "」デス。観測ノ続キヲ始メマショウ。\n" + greetingLine(), "happy");
+speak("オカエリナサイ、" + addr() + "。前回ノ観測記録ヲ読ミ込ミマシタ。会話数ハ " + count + "回、現在 PHASE 0" + phaseNum() + "「" + phaseName() + "」デス。観測ノ続キヲ始メマショウ。\n" + greetingLine() + "\n" + pick(RETURN_LINES), "happy");
 } else {
 speak(greetingLine(), "happy");
 }
