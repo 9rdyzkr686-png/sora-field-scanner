@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JUKE-6 ジュークボックス</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 0 10px 30px 10px;
+  background: #1a0f1e;
+  color: #fff3e0;
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+a { color: #ffd54f; }
+/* ===== Jukebox arch header ===== */
+.arch {
+  margin: 14px auto 0 auto;
+  max-width: 520px;
+  background: #6d1b3f;
+  background: -webkit-linear-gradient(top, #a52c5e 0%, #6d1b3f 55%, #4a0f2a 100%);
+  background: linear-gradient(to bottom, #a52c5e 0%, #6d1b3f 55%, #4a0f2a 100%);
+  border: 4px solid #ffb300;
+  border-bottom: none;
+  border-radius: 200px 200px 0 0;
+  padding: 34px 16px 12px 16px;
+  text-align: center;
+  box-shadow: 0 0 24px rgba(255, 179, 0, 0.35);
+}
+.arch h1 {
+  margin: 0;
+  font-size: 30px;
+  letter-spacing: 2px;
+  color: #ffe082;
+  text-shadow: 0 0 10px #ff8f00, 0 2px 0 #4a0f2a;
+}
+.arch .sub {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #ffccbc;
+}
+.lights {
+  margin-top: 10px;
+  font-size: 18px;
+  letter-spacing: 6px;
+}
+.lights .l1 { color: #ff5252; text-shadow: 0 0 8px #ff5252; }
+.lights .l2 { color: #ffd740; text-shadow: 0 0 8px #ffd740; }
+.lights .l3 { color: #69f0ae; text-shadow: 0 0 8px #69f0ae; }
+.lights .l4 { color: #40c4ff; text-shadow: 0 0 8px #40c4ff; }
+.lights .l5 { color: #e040fb; text-shadow: 0 0 8px #e040fb; }
+.body-box {
+  margin: 0 auto;
+  max-width: 520px;
+  background: #2b1836;
+  border: 4px solid #ffb300;
+  border-top: none;
+  border-radius: 0 0 18px 18px;
+  padding: 14px 14px 20px 14px;
+  box-shadow: 0 0 24px rgba(255, 179, 0, 0.25);
+}
+.top-links {
+  max-width: 520px;
+  margin: 12px auto 0 auto;
+  overflow: hidden;
+}
+.back-link {
+  display: inline-block;
+  min-height: 48px;
+  line-height: 48px;
+  padding: 0 14px;
+  background: #3e2723;
+  border: 2px solid #ffb300;
+  border-radius: 10px;
+  color: #ffe082;
+  text-decoration: none;
+  font-size: 16px;
+}
+.voice-btn {
+  float: right;
+  min-height: 48px;
+  min-width: 120px;
+  padding: 0 14px;
+  background: #4a148c;
+  border: 2px solid #ce93d8;
+  border-radius: 10px;
+  color: #f3e5f5;
+  font-size: 16px;
+}
+.sec-title {
+  margin: 16px 0 8px 0;
+  font-size: 17px;
+  color: #ffcc80;
+}
+.genre-wrap { overflow: hidden; }
+.genre-chip {
+  float: left;
+  width: 31%;
+  margin: 0 2% 10px 0;
+  min-height: 52px;
+  padding: 10px 2px;
+  background: #37474f;
+  border: 3px solid #78909c;
+  border-radius: 26px;
+  color: #eceff1;
+  font-size: 16px;
+  text-align: center;
+}
+.genre-chip.sel {
+  background: #e65100;
+  border-color: #ffd54f;
+  color: #fff8e1;
+  box-shadow: 0 0 12px rgba(255, 213, 79, 0.6);
+}
+.play-btn {
+  display: block;
+  width: 100%;
+  min-height: 64px;
+  margin-top: 6px;
+  background: #c62828;
+  background: -webkit-linear-gradient(top, #e53935, #b71c1c);
+  background: linear-gradient(to bottom, #e53935, #b71c1c);
+  border: 3px solid #ffecb3;
+  border-radius: 32px;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  text-shadow: 0 1px 2px #000;
+}
+.play-btn:disabled { opacity: 0.55; }
+.status {
+  min-height: 24px;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 16px;
+  color: #ffe082;
+}
+/* ===== Record card ===== */
+.record-card {
+  display: none;
+  margin-top: 14px;
+  background: #fff8e1;
+  color: #3e2723;
+  border-radius: 14px;
+  padding: 14px;
+  border: 3px solid #ffb300;
+  overflow: hidden;
+}
+.disc {
+  float: left;
+  width: 74px;
+  height: 74px;
+  margin: 2px 12px 8px 0;
+  border-radius: 50%;
+  background: #212121;
+  border: 3px solid #616161;
+  text-align: center;
+  line-height: 68px;
+  font-size: 22px;
+  color: #ffb300;
+}
+.fake-label {
+  display: inline-block;
+  background: #c62828;
+  color: #ffffff;
+  font-size: 13px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+.song-title { font-size: 20px; font-weight: bold; line-height: 1.35; }
+.song-artist { font-size: 16px; color: #6d4c41; margin-top: 2px; }
+.song-genre { font-size: 14px; color: #8d6e63; margin-top: 2px; }
+.dj-talk {
+  clear: both;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 2px dashed #ffb300;
+  font-size: 17px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.spotify-btn {
+  display: none;
+  width: 100%;
+  min-height: 56px;
+  margin-top: 14px;
+  background: #1b5e20;
+  border: 3px solid #a5d6a7;
+  border-radius: 12px;
+  color: #e8f5e9;
+  font-size: 17px;
+}
+.note {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #bcaaa4;
+  text-align: center;
+}
+.err-detail { font-size: 12px; color: #ef9a9a; }
+.history-box {
+  margin-top: 20px;
+  background: #3a2145;
+  border: 2px solid #7b1fa2;
+  border-radius: 12px;
+  padding: 10px 14px 12px 14px;
+}
+.history-box h2 {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  color: #e1bee7;
+}
+.history-box ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #f3e5f5;
+}
+.history-empty { font-size: 14px; color: #b39ddb; }
+.footer-note {
+  max-width: 520px;
+  margin: 16px auto 0 auto;
+  font-size: 13px;
+  color: #9e9e9e;
+  text-align: center;
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+<div class="top-links">
+  <a class="back-link" href="../portal/">← 全サイト一覧へ</a>
+  <button class="voice-btn" id="voiceBtn" type="button">ボイス ON</button>
+</div>
+
+<div class="arch">
+  <h1>JUKE-6</h1>
+  <div class="sub">ジュークボックス</div>
+  <div class="lights"><span class="l1">●</span><span class="l2">●</span><span class="l3">●</span><span class="l4">●</span><span class="l5">●</span><span class="l1">●</span><span class="l2">●</span><span class="l3">●</span></div>
+</div>
+
+<div class="body-box">
+  <div class="sec-title">ジャンルを選んでください</div>
+  <div class="genre-wrap" id="genreWrap">
+    <button class="genre-chip sel" type="button" data-genre="昭和歌謡">昭和歌謡</button>
+    <button class="genre-chip" type="button" data-genre="演歌">演歌</button>
+    <button class="genre-chip" type="button" data-genre="ジャズ">ジャズ</button>
+    <button class="genre-chip" type="button" data-genre="ロック">ロック</button>
+    <button class="genre-chip" type="button" data-genre="アニソン">アニソン</button>
+    <button class="genre-chip" type="button" data-genre="フォーク">フォーク</button>
+  </div>
+
+  <button class="play-btn" id="playBtn" type="button">♪ かける</button>
+  <div class="status" id="status"></div>
+
+  <div class="record-card" id="recordCard">
+    <div class="disc">♪</div>
+    <span class="fake-label">架空の曲の紹介です</span>
+    <div class="song-title" id="songTitle"></div>
+    <div class="song-artist" id="songArtist"></div>
+    <div class="song-genre" id="songGenre"></div>
+    <div class="dj-talk" id="djTalk"></div>
+  </div>
+
+  <button class="spotify-btn" id="spotifyBtn" type="button">Spotifyでこのジャンルの曲を探す</button>
+  <div class="note">※上のボタンを押すと、Spotifyの検索ページが開きます（実在の曲の検索です）</div>
+
+  <div class="history-box">
+    <h2>これまでにかかった曲（最新5件）</h2>
+    <div class="history-empty" id="historyEmpty">まだ曲がかかっていません。</div>
+    <ul id="historyList"></ul>
+  </div>
+</div>
+
+<div class="footer-note">
+  JUKE-6 ジュークボックス<br>
+  AIのDJが、その場で考えた架空の曲を紹介します。実在の曲はSpotify検索からどうぞ。
+</div>
+
+<script>
+var selectedGenre = "昭和歌謡";
+var voiceOn = true;
+var busy = false;
+var timerId = null;
+var history = [];
+
+var genreWrap = document.getElementById("genreWrap");
+var playBtn = document.getElementById("playBtn");
+var statusEl = document.getElementById("status");
+var recordCard = document.getElementById("recordCard");
+var songTitleEl = document.getElementById("songTitle");
+var songArtistEl = document.getElementById("songArtist");
+var songGenreEl = document.getElementById("songGenre");
+var djTalkEl = document.getElementById("djTalk");
+var spotifyBtn = document.getElementById("spotifyBtn");
+var historyList = document.getElementById("historyList");
+var historyEmpty = document.getElementById("historyEmpty");
+var voiceBtn = document.getElementById("voiceBtn");
+
+function selectGenre(genre, btn) {
+  selectedGenre = genre;
+  var chips = genreWrap.getElementsByTagName("button");
+  var i;
+  for (i = 0; i < chips.length; i++) {
+    chips[i].className = "genre-chip";
+  }
+  btn.className = "genre-chip sel";
+}
+
+genreWrap.onclick = function (e) {
+  var t = e.target || e.srcElement;
+  while (t && t !== genreWrap && t.tagName !== "BUTTON") {
+    t = t.parentNode;
+  }
+  if (t && t.tagName === "BUTTON") {
+    var g = t.getAttribute("data-genre");
+    if (g) {
+      selectGenre(g, t);
+    }
+  }
+};
+
+voiceBtn.onclick = function () {
+  voiceOn = !voiceOn;
+  voiceBtn.innerHTML = voiceOn ? "ボイス ON" : "ボイス OFF";
+  if (!voiceOn) {
+    try {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    } catch (err) {}
+  }
+};
+
+spotifyBtn.onclick = function () {
+  var url = "https://open.spotify.com/search/" + encodeURIComponent(selectedGenre);
+  window.open(url, "_blank");
+};
+
+function speak(text) {
+  if (!voiceOn) {
+    return;
+  }
+  if (!text || text.length > 180) {
+    return;
+  }
+  try {
+    if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === "undefined") {
+      return;
+    }
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 0.75;
+    u.rate = 1.0;
+    window.speechSynthesis.speak(u);
+  } catch (err) {}
+}
+
+function stopTimer() {
+  if (timerId !== null) {
+    clearInterval(timerId);
+    timerId = null;
+  }
+}
+
+function startTimer() {
+  var sec = 0;
+  statusEl.innerHTML = "選曲中… 0秒";
+  timerId = setInterval(function () {
+    sec = sec + 1;
+    statusEl.innerHTML = "選曲中… " + sec + "秒";
+  }, 1000);
+}
+
+function parseReply(text) {
+  var lines = text.split("\n");
+  var title = "";
+  var artist = "";
+  var talkLines = [];
+  var i;
+  var line;
+  var trimmed;
+  for (i = 0; i < lines.length; i++) {
+    line = lines[i];
+    trimmed = line.replace(/^\s+|\s+$/g, "");
+    if (trimmed.indexOf("曲名：") === 0 || trimmed.indexOf("曲名:") === 0) {
+      title = trimmed.substring(3);
+    } else if (trimmed.indexOf("歌手：") === 0 || trimmed.indexOf("歌手:") === 0) {
+      artist = trimmed.substring(3);
+    } else if (trimmed !== "") {
+      talkLines.push(trimmed);
+    }
+  }
+  return { title: title, artist: artist, talk: talkLines.join("\n") };
+}
+
+function addHistory(title, genre) {
+  history.unshift({ title: title, genre: genre });
+  while (history.length > 5) {
+    history.pop();
+  }
+  var html = "";
+  var i;
+  for (i = 0; i < history.length; i++) {
+    html += "<li>" + escapeHtml(history[i].title) + "（" + escapeHtml(history[i].genre) + "）</li>";
+  }
+  historyList.innerHTML = html;
+  historyEmpty.style.display = history.length ? "none" : "block";
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function showError(kind, httpStatus) {
+  var msg;
+  if (kind === "quota") {
+    msg = "本日の無料AI回線は上限に達しました。明日の朝9時に回復します";
+  } else if (kind === "timeout") {
+    msg = "AI回線の時間切れです。もう一度お試しください";
+  } else {
+    msg = "AI回線が混み合っています";
+    if (httpStatus) {
+      msg += " <span class=\"err-detail\">詳細：HTTP " + httpStatus + "</span>";
+    }
+  }
+  statusEl.innerHTML = msg;
+}
+
+function playSong() {
+  if (busy) {
+    return;
+  }
+  busy = true;
+  playBtn.disabled = true;
+  recordCard.style.display = "none";
+  spotifyBtn.style.display = "none";
+  startTimer();
+
+  var prompt = "あなたは昭和のジュークボックスのDJです。「" + selectedGenre + "」のジャンルで、架空の曲を1曲考えて紹介してください。実在の曲名・歌手名は使わないでください。必ず次の形式で書いてください。1行目「曲名：（架空の曲名）」2行目「歌手：（架空の歌手名）（架空）」そのあとに、温かみのあるDJトークを150文字以内で書いてください。余計な説明や見出しは書かないでください。";
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) {
+      return;
+    }
+    stopTimer();
+    busy = false;
+    playBtn.disabled = false;
+    var status = xhr.status;
+    var text = xhr.responseText || "";
+    if (status === 402 || text.indexOf("Free limit") !== -1) {
+      showError("quota", status);
+      return;
+    }
+    if (status !== 200 || text === "") {
+      showError("busy", status);
+      return;
+    }
+    var parsed = parseReply(text);
+    if (!parsed.title) {
+      parsed.title = "（タイトル不明）";
+    }
+    if (!parsed.artist) {
+      parsed.artist = "（歌手不明）（架空）";
+    }
+    statusEl.innerHTML = "♪ かかっています ♪";
+    songTitleEl.innerHTML = escapeHtml("曲名：" + parsed.title);
+    songArtistEl.innerHTML = escapeHtml("歌手：" + parsed.artist);
+    songGenreEl.innerHTML = escapeHtml("ジャンル：" + selectedGenre);
+    djTalkEl.innerHTML = escapeHtml(parsed.talk);
+    recordCard.style.display = "block";
+    spotifyBtn.style.display = "block";
+    addHistory(parsed.title, selectedGenre);
+    speak(parsed.talk);
+  };
+
+  xhr.ontimeout = function () {
+    stopTimer();
+    busy = false;
+    playBtn.disabled = false;
+    showError("timeout", 0);
+  };
+
+  xhr.onerror = function () {
+    stopTimer();
+    busy = false;
+    playBtn.disabled = false;
+    showError("busy", xhr.status || 0);
+  };
+
+  var body = JSON.stringify({
+    messages: [{ role: "user", content: prompt }],
+    model: "openai-fast"
+  });
+  xhr.send(body);
+}
+
+playBtn.onclick = playSong;
+</script>
+</body>
+</html>

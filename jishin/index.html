@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JISHIN-6 地震専門端末</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 12px;
+    background: #101418; color: #e8ecef;
+    font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+    font-size: 16px; line-height: 1.6;
+  }
+  a.back {
+    display: inline-block; min-height: 48px; line-height: 48px;
+    padding: 0 14px; margin-bottom: 12px;
+    color: #9fd0ff; text-decoration: none;
+    border: 1px solid #3a4652; border-radius: 8px; background: #1a2129;
+    font-size: 17px;
+  }
+  h1 { font-size: 24px; margin: 4px 0 2px 0; letter-spacing: 1px; }
+  .sub { color: #9aa7b1; font-size: 14px; margin-bottom: 14px; }
+  .card {
+    background: #1a2129; border: 1px solid #2c3641; border-radius: 10px;
+    padding: 14px; margin-bottom: 16px;
+  }
+  .card h2 { font-size: 19px; margin: 0 0 10px 0; color: #cfdce8; }
+  button {
+    min-height: 48px; min-width: 48px;
+    padding: 10px 18px; font-size: 17px;
+    background: #2c4a6b; color: #fff; border: 1px solid #4a7099;
+    border-radius: 8px; cursor: pointer;
+  }
+  button:active { background: #3a5f86; }
+  .status { color: #9aa7b1; font-size: 14px; margin: 8px 0; }
+  .quake {
+    border-top: 1px solid #2c3641; padding: 10px 0;
+  }
+  .quake:first-of-type { border-top: none; }
+  .qhead { overflow: hidden; }
+  .chip {
+    display: inline-block; min-width: 64px; text-align: center;
+    padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 18px;
+    color: #101418; background: #8a97a3; float: left; margin-right: 10px;
+  }
+  .s1 { background: #aeb9c2; }
+  .s2 { background: #9fc3e0; }
+  .s3 { background: #7fd08c; }
+  .s4 { background: #f2d24b; }
+  .s5w { background: #f0a13c; }
+  .s5s { background: #e97e2f; color: #fff; }
+  .s6w { background: #d94f3d; color: #fff; }
+  .s6s { background: #b03060; color: #fff; }
+  .s7 { background: #6e2a7a; color: #fff; }
+  .qtime { font-size: 16px; font-weight: bold; }
+  .qplace { font-size: 16px; }
+  .qmeta { color: #9aa7b1; font-size: 14px; margin-top: 2px; }
+  .scale-row { padding: 6px 0; border-top: 1px solid #242e38; overflow: hidden; }
+  .scale-row:first-of-type { border-top: none; }
+  .scale-row .chip { float: none; display: inline-block; vertical-align: middle; }
+  .scale-row span { vertical-align: middle; }
+  textarea {
+    width: 100%; min-height: 130px; padding: 10px;
+    font-size: 17px; line-height: 1.6;
+    background: #101418; color: #e8ecef;
+    border: 1px solid #3a4652; border-radius: 8px;
+  }
+  .note { color: #9aa7b1; font-size: 14px; margin-top: 8px; }
+  .saved { color: #7fd08c; font-size: 15px; margin-left: 10px; }
+  .err { color: #f0a13c; font-size: 15px; }
+</style>
+</head>
+<body>
+
+<a class="back" href="../portal/">← 全サイト一覧へ</a>
+
+<h1>JISHIN-6 地震専門端末</h1>
+<div class="sub">最近の地震情報と、わが家の防災メモをまとめた端末です。</div>
+
+<div class="card">
+  <h2>最近の地震</h2>
+  <button id="reloadBtn" type="button">↻ 更新</button>
+  <div class="status" id="fetchStatus">読み込み中…</div>
+  <div id="quakeList"></div>
+</div>
+
+<div class="card">
+  <h2>震度の目安</h2>
+  <div class="scale-row"><span class="chip s5w">5弱</span><span>多くの人が身の安全を図ろうとします。食器や本が落ちることがあります。</span></div>
+  <div class="scale-row"><span class="chip s5s">5強</span><span>身の安全を図らなければ行動が難しくなります。固定していない家具が倒れることがあります。</span></div>
+  <div class="scale-row"><span class="chip s6w">6弱</span><span>立っていることが困難になります。耐震性の低い建物では壁などにひびが入ることがあります。</span></div>
+  <div class="scale-row"><span class="chip s6s">6強</span><span>這わないと動けません。耐震性の低い木造建物は傾いたり倒れたりすることがあります。</span></div>
+  <div class="scale-row"><span class="chip s7">7</span><span>耐震性の高い建物でも傾いたり大きな被害を受けることがあります。大規模な地滑りが起こることがあります。</span></div>
+  <div class="note">※一般的な目安です。実際の被害は建物や地盤の状況によって異なります。</div>
+</div>
+
+<div class="card">
+  <h2>わが家の防災メモ</h2>
+  <textarea id="memoArea" placeholder="例：集合場所は○○小学校の校庭／連絡先 090-XXXX-XXXX／備蓄は玄関の収納"></textarea>
+  <div style="margin-top:10px;">
+    <button id="saveBtn" type="button">保存</button><span class="saved" id="savedMsg"></span>
+  </div>
+  <div class="note">この端末の中だけに保存されます（外部に送信されません）。</div>
+</div>
+
+<script>
+var API_URL = "https://api.p2pquake.net/v2/history?codes=551&limit=10";
+var MEMO_KEY = "jishin6_memo_v1";
+
+function scaleInfo(scale) {
+  if (scale === 10) { return { label: "1", cls: "s1" }; }
+  if (scale === 20) { return { label: "2", cls: "s2" }; }
+  if (scale === 30) { return { label: "3", cls: "s3" }; }
+  if (scale === 40) { return { label: "4", cls: "s4" }; }
+  if (scale === 45) { return { label: "5弱", cls: "s5w" }; }
+  if (scale === 50) { return { label: "5強", cls: "s5s" }; }
+  if (scale === 55) { return { label: "6弱", cls: "s6w" }; }
+  if (scale === 60) { return { label: "6強", cls: "s6s" }; }
+  if (scale === 70) { return { label: "7", cls: "s7" }; }
+  return null;
+}
+
+function esc(s) {
+  if (s === null || s === undefined) { return ""; }
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function fmtTime(t) {
+  if (!t) { return "時刻不明"; }
+  var s = String(t).replace(/-/g, "/");
+  var parts = s.split(" ");
+  if (parts.length < 2) { return s; }
+  var d = parts[0].split("/");
+  var hm = parts[1].split(":");
+  var md = (d.length === 3) ? (d[1] + "月" + d[2] + "日") : parts[0];
+  var time = (hm.length >= 2) ? (hm[0] + ":" + hm[1]) : parts[1];
+  return md + " " + time;
+}
+
+function renderQuakes(items) {
+  var list = document.getElementById("quakeList");
+  if (!items || items.length === 0) {
+    list.innerHTML = '<div class="note">表示できる地震情報がありませんでした。</div>';
+    return;
+  }
+  var html = "";
+  var count = 0;
+  for (var i = 0; i < items.length && count < 10; i++) {
+    var it = items[i];
+    if (!it || !it.earthquake) { continue; }
+    var eq = it.earthquake;
+    var info = scaleInfo(eq.maxScale);
+    if (!info && typeof eq.maxScale === "number") {
+      info = { label: String(eq.maxScale), cls: "" };
+    }
+    if (!info) { info = { label: "―", cls: "" }; }
+    var hypo = eq.hypocenter || {};
+    var name = hypo.name ? hypo.name : "震源地不明";
+    var mag = (typeof hypo.magnitude === "number" && hypo.magnitude >= 0) ? ("M" + hypo.magnitude.toFixed(1)) : "M不明";
+    var depth = (typeof hypo.depth === "number" && hypo.depth >= 0) ? ("深さ約" + hypo.depth + "km") : "深さ不明";
+    html += '<div class="quake"><div class="qhead">' +
+      '<span class="chip ' + info.cls + '">' + esc(info.label) + '</span>' +
+      '<span class="qtime">' + esc(fmtTime(eq.time)) + '</span></div>' +
+      '<div class="qplace">' + esc(name) + '</div>' +
+      '<div class="qmeta">' + esc(mag) + "／" + esc(depth) + "</div></div>";
+    count++;
+  }
+  if (count === 0) {
+    list.innerHTML = '<div class="note">表示できる地震情報がありませんでした。</div>';
+    return;
+  }
+  list.innerHTML = html;
+}
+
+function fetchQuakes() {
+  var status = document.getElementById("fetchStatus");
+  status.innerHTML = "読み込み中…";
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", API_URL, true);
+  xhr.timeout = 20000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    if (xhr.status === 200) {
+      var data = null;
+      try { data = JSON.parse(xhr.responseText); } catch (e) { data = null; }
+      if (data) {
+        renderQuakes(data);
+        var now = new Date();
+        status.innerHTML = now.getHours() + "時" + now.getMinutes() + "分取得（P2P地震情報より）";
+      } else {
+        status.innerHTML = '<span class="err">情報を読み取れませんでした。「更新」でもう一度お試しください。</span>';
+      }
+    } else {
+      status.innerHTML = '<span class="err">情報を取得できませんでした（通信エラー）。「更新」でもう一度お試しください。</span>';
+    }
+  };
+  xhr.ontimeout = function () {
+    status.innerHTML = '<span class="err">時間内に取得できませんでした。「更新」でもう一度お試しください。</span>';
+  };
+  xhr.onerror = function () {
+    status.innerHTML = '<span class="err">情報を取得できませんでした（通信エラー）。「更新」でもう一度お試しください。</span>';
+  };
+  xhr.send(null);
+}
+
+function loadMemo() {
+  var area = document.getElementById("memoArea");
+  try {
+    var v = localStorage.getItem(MEMO_KEY);
+    if (v) { area.value = v; }
+  } catch (e) { }
+}
+
+function saveMemo() {
+  var area = document.getElementById("memoArea");
+  var msg = document.getElementById("savedMsg");
+  try {
+    localStorage.setItem(MEMO_KEY, area.value);
+    msg.innerHTML = "保存しました";
+  } catch (e) {
+    msg.innerHTML = "保存できませんでした";
+  }
+  setTimeout(function () { msg.innerHTML = ""; }, 3000);
+}
+
+document.getElementById("reloadBtn").addEventListener("click", fetchQuakes, false);
+document.getElementById("saveBtn").addEventListener("click", saveMemo, false);
+
+loadMemo();
+fetchQuakes();
+</script>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SAUNA-6 サウナ</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { background:#2a1a10; color:#f5e6d3; font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif; font-size:17px; line-height:1.6; padding:0 0 40px 0; }
+a { color:#ffb066; }
+header { background:linear-gradient(180deg,#4a2c17,#3a2110); border-bottom:4px solid #ff7b2d; padding:14px 12px 12px 12px; text-align:center; position:relative; }
+header .steam { font-size:22px; letter-spacing:6px; color:#ffb066; }
+h1 { font-size:27px; color:#ffd9a8; letter-spacing:2px; margin:2px 0; text-shadow:0 2px 0 #7a3c00; }
+header .sub { font-size:14px; color:#d9b48c; }
+.wood { height:10px; background:repeating-linear-gradient(90deg,#5a3a1e 0 46px,#4a2f16 46px 48px); border-bottom:2px solid #1c0f06; }
+.backlink { display:block; margin:12px; font-size:16px; }
+.wrap { padding:0 12px; }
+.panel { background:#3a2415; border:2px solid #6b4423; border-radius:12px; padding:14px 12px; margin:14px 0; box-shadow:0 3px 0 #170b04; }
+.panel h2 { font-size:20px; color:#ffb066; border-bottom:2px solid #6b4423; padding-bottom:6px; margin-bottom:10px; }
+.btn { display:block; width:100%; min-height:56px; background:linear-gradient(180deg,#ff8a3d,#e05f00); color:#fff; border:none; border-radius:12px; font-size:20px; font-weight:bold; padding:14px 10px; cursor:pointer; box-shadow:0 4px 0 #8a3c00; }
+.btn:active { transform:translateY(2px); box-shadow:0 2px 0 #8a3c00; }
+.btn:disabled { background:#6b5540; box-shadow:0 4px 0 #40342a; color:#cbb79e; }
+.subbtn { display:block; width:100%; min-height:48px; background:#5a3a1e; color:#ffd9a8; border:2px solid #8a5a2b; border-radius:10px; font-size:17px; font-weight:bold; padding:10px; cursor:pointer; margin-top:10px; }
+.voiceRow { text-align:center; margin:12px 0 0 0; }
+.voiceBtn { min-height:48px; min-width:170px; background:#241408; color:#ffb066; border:2px solid #ff7b2d; border-radius:24px; font-size:16px; font-weight:bold; padding:10px 18px; cursor:pointer; }
+#heatWrap { background:#1c0f06; border:2px solid #6b4423; border-radius:10px; height:30px; margin:12px 0 6px 0; overflow:hidden; display:none; }
+#heatBar { height:100%; width:0%; background:linear-gradient(90deg,#ffb066,#ff7b2d,#ff3d00); transition:width 0.4s; }
+#heatLabel { font-size:14px; color:#d9b48c; text-align:center; display:none; }
+#aiStatus { font-size:15px; color:#ffb066; min-height:22px; margin-top:8px; text-align:center; }
+#aiText { background:#241408; border:2px dashed #8a5a2b; border-radius:10px; padding:14px; font-size:19px; min-height:60px; white-space:pre-wrap; word-break:break-all; }
+.errDetail { font-size:12px; color:#a98d6d; }
+label.f { display:block; font-size:15px; color:#d9b48c; margin:12px 0 6px 0; }
+input[type="date"], input[type="text"] { width:100%; min-height:50px; font-size:17px; padding:10px; border-radius:8px; border:2px solid #6b4423; background:#241408; color:#f5e6d3; }
+.chips { overflow:hidden; }
+.chip { float:left; width:18%; margin-right:2.5%; min-height:52px; background:#241408; color:#ffd9a8; border:2px solid #8a5a2b; border-radius:10px; font-size:19px; font-weight:bold; cursor:pointer; }
+.chip:last-child { margin-right:0; }
+.chip.sel { background:#e05f00; color:#fff; border-color:#ffb066; }
+#totalLine { font-size:16px; color:#ffd9a8; margin:6px 0 10px 0; }
+.logItem { background:#241408; border:1px solid #6b4423; border-left:6px solid #ff7b2d; border-radius:8px; padding:10px; margin:8px 0; overflow:hidden; }
+.logItem .d { font-size:16px; font-weight:bold; color:#ffd9a8; }
+.logItem .m { font-size:15px; color:#e8d3b5; white-space:pre-wrap; word-break:break-all; }
+.delBtn { float:right; min-height:48px; min-width:64px; background:#5a2015; color:#ffb59d; border:2px solid #a04028; border-radius:8px; font-size:15px; font-weight:bold; cursor:pointer; }
+.card { background:#241408; border:1px solid #6b4423; border-radius:10px; padding:12px; margin:10px 0; }
+.card h3 { font-size:17px; color:#ffb066; margin-bottom:4px; }
+.card p { font-size:15px; color:#e8d3b5; }
+.warn { color:#ffcf9e; font-weight:bold; }
+footer { text-align:center; font-size:13px; color:#a98d6d; margin-top:20px; padding:0 12px; }
+</style>
+</head>
+<body>
+<header>
+<div class="steam">♨ ♨ ♨</div>
+<h1>SAUNA-6 サウナ</h1>
+<div class="sub">熱波師がいる、ちいさなサウナ室</div>
+</header>
+<div class="wood"></div>
+<a class="backlink" href="../portal/">← 全サイト一覧へ</a>
+<div class="wrap">
+
+<div class="voiceRow">
+<button class="voiceBtn" id="voiceBtn" onclick="toggleVoice()">ボイス：ON</button>
+</div>
+
+<div class="panel">
+<h2>🔥 AI熱波師</h2>
+<div id="aiText">熱波師がスタンバイ中です。下のボタンで熱波を受けてみてください。</div>
+<div id="heatWrap"><div id="heatBar"></div></div>
+<div id="heatLabel">熱波をためています…</div>
+<button class="btn" id="heatBtn" onclick="callAufguss()">熱波を受ける</button>
+<div id="aiStatus"></div>
+</div>
+
+<div class="panel">
+<h2>🪵 ととのう記録</h2>
+<div id="totalLine">通算0回</div>
+<label class="f" for="logDate">日付</label>
+<input type="date" id="logDate">
+<label class="f">セット数</label>
+<div class="chips" id="setChips">
+<button class="chip" data-n="1" onclick="pickSet(1)">1</button>
+<button class="chip sel" data-n="2" onclick="pickSet(2)">2</button>
+<button class="chip" data-n="3" onclick="pickSet(3)">3</button>
+<button class="chip" data-n="4" onclick="pickSet(4)">4</button>
+<button class="chip" data-n="5" onclick="pickSet(5)">5</button>
+</div>
+<label class="f" for="logMemo">一言メモ</label>
+<input type="text" id="logMemo" placeholder="例：今日はよく汗が出た">
+<button class="subbtn" onclick="saveLog()">記録する</button>
+<div id="logList"></div>
+</div>
+
+<div class="panel">
+<h2>📜 サウナの作法</h2>
+<div class="card">
+<h3>1. 水分補給を忘れずに</h3>
+<p>サウナではたくさん汗をかきます。入る前と出たあとに、コップ1杯の水やお茶を飲みましょう。のどが渇く前に、こまめに飲むのがコツです。</p>
+</div>
+<div class="card">
+<h3>2. 無理をしない</h3>
+<p>熱いと感じたら、我慢せずに出てください。最初は5〜8分くらいから始めて、体調に合わせて少しずつ慣らしていくのがおすすめです。</p>
+</div>
+<div class="card">
+<h3>3. セットの合間に休憩を</h3>
+<p>サウナ、水風呂（またはシャワー）、休憩を1セットとして、合間にはしっかり休みましょう。休憩中に体がふわっと軽くなるのが「ととのう」感覚です。</p>
+</div>
+<div class="card">
+<h3>4. まわりへの気づかい</h3>
+<p>入る前に体の汗を流し、タオルを絞ってから入るのがマナーです。大きな声でのおしゃべりは控えて、みんなで静かに気持ちよく過ごしましょう。</p>
+</div>
+<p class="warn">体調が悪いときは無理をしないでください。気分が悪くなったら、すぐに涼しい場所で休んでください。</p>
+</div>
+
+</div>
+<footer>SAUNA-6 ／ 熱波師の言葉はAIが作っています</footer>
+
+<script>
+var voiceOn = true;
+var setCount = 2;
+var aiBusy = false;
+
+function toggleVoice() {
+  voiceOn = !voiceOn;
+  document.getElementById("voiceBtn").innerHTML = voiceOn ? "ボイス：ON" : "ボイス：OFF";
+  if (!voiceOn && window.speechSynthesis) { speechSynthesis.cancel(); }
+}
+
+function speak(text) {
+  if (!voiceOn) { return; }
+  if (!window.speechSynthesis) { return; }
+  try {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 1.0;
+    u.rate = 1.05;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+var PROMPT = "あなたはサウナの熱波師（アウフギーサー）です。大きなタオルを振る元気な掛け声（ロウリュのコール）と、熱さへの一言コメントを、明るく大きな声の口調で言ってください。条件：日本語のプレーンテキストのみ、120文字以内、記号や絵文字は使わない、元気で楽しい内容にすること。";
+
+function setStatus(html) {
+  document.getElementById("aiStatus").innerHTML = html;
+}
+
+function callAufguss() {
+  if (aiBusy) { return; }
+  aiBusy = true;
+  var btn = document.getElementById("heatBtn");
+  btn.disabled = true;
+  var wrap = document.getElementById("heatWrap");
+  var bar = document.getElementById("heatBar");
+  var label = document.getElementById("heatLabel");
+  wrap.style.display = "block";
+  label.style.display = "block";
+  bar.style.width = "0%";
+  var start = new Date().getTime();
+  var tick = setInterval(function() {
+    var sec = Math.floor((new Date().getTime() - start) / 1000);
+    setStatus("熱波を準備中… " + sec + "秒");
+    var pct = sec * 4;
+    if (pct > 92) { pct = 92; }
+    bar.style.width = pct + "%";
+  }, 500);
+
+  function finish() {
+    clearInterval(tick);
+    bar.style.width = "100%";
+    setTimeout(function() {
+      wrap.style.display = "none";
+      label.style.display = "none";
+      bar.style.width = "0%";
+    }, 600);
+    btn.disabled = false;
+    aiBusy = false;
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) { return; }
+    var body = xhr.responseText || "";
+    if (xhr.status === 200 && body.replace(/\s/g, "") !== "") {
+      if (body.indexOf("Free limit") >= 0) {
+        document.getElementById("aiText").innerHTML = "熱波師は今日はもう声がかれてしまいました。";
+        setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
+      } else {
+        var t = body.replace(/^\s+|\s+$/g, "");
+        if (t.length > 200) { t = t.substring(0, 200); }
+        document.getElementById("aiText").innerHTML = escapeHtml(t);
+        setStatus("");
+        speak(t);
+      }
+    } else if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+      document.getElementById("aiText").innerHTML = "熱波師は今日はもう声がかれてしまいました。";
+      setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
+    } else {
+      setStatus("AI回線が混み合っています <span class=\"errDetail\">詳細：HTTP " + xhr.status + "</span>");
+    }
+    finish();
+  };
+  xhr.ontimeout = function() {
+    setStatus("AI回線の時間切れです。少し待ってからもう一度どうぞ");
+    finish();
+  };
+  xhr.onerror = function() {
+    setStatus("AI回線が混み合っています <span class=\"errDetail\">詳細：HTTP 0</span>");
+    finish();
+  };
+  try {
+    xhr.send(JSON.stringify({ messages: [{ role: "user", content: PROMPT }], model: "openai-fast" }));
+  } catch (e) {
+    setStatus("AI回線が混み合っています");
+    finish();
+  }
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/* ---- ととのう記録 ---- */
+var LS_KEY = "sauna6_log_v1";
+
+function loadLogs() {
+  try {
+    var raw = localStorage.getItem(LS_KEY);
+    if (!raw) { return []; }
+    var arr = JSON.parse(raw);
+    if (arr && arr.length !== undefined) { return arr; }
+    return [];
+  } catch (e) { return []; }
+}
+
+function storeLogs(arr) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(arr)); } catch (e) {}
+}
+
+function pickSet(n) {
+  setCount = n;
+  var chips = document.getElementById("setChips").getElementsByTagName("button");
+  for (var i = 0; i < chips.length; i++) {
+    if (parseInt(chips[i].getAttribute("data-n"), 10) === n) {
+      chips[i].className = "chip sel";
+    } else {
+      chips[i].className = "chip";
+    }
+  }
+}
+
+function saveLog() {
+  var d = document.getElementById("logDate").value;
+  if (!d) {
+    var now = new Date();
+    d = now.getFullYear() + "-" + pad2(now.getMonth() + 1) + "-" + pad2(now.getDate());
+  }
+  var memo = document.getElementById("logMemo").value.replace(/^\s+|\s+$/g, "");
+  var arr = loadLogs();
+  arr.unshift({ date: d, sets: setCount, memo: memo, ts: new Date().getTime() });
+  storeLogs(arr);
+  document.getElementById("logMemo").value = "";
+  renderLogs();
+}
+
+function deleteLog(idx) {
+  var arr = loadLogs();
+  arr.splice(idx, 1);
+  storeLogs(arr);
+  renderLogs();
+}
+
+function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+function renderLogs() {
+  var arr = loadLogs();
+  document.getElementById("totalLine").innerHTML = "通算" + arr.length + "回";
+  var html = "";
+  for (var i = 0; i < arr.length; i++) {
+    var it = arr[i];
+    html += "<div class=\"logItem\">";
+    html += "<button class=\"delBtn\" onclick=\"deleteLog(" + i + ")\">削除</button>";
+    html += "<div class=\"d\">" + escapeHtml(it.date || "") + " ／ " + it.sets + "セット</div>";
+    if (it.memo) { html += "<div class=\"m\">" + escapeHtml(it.memo) + "</div>"; }
+    html += "</div>";
+  }
+  if (arr.length === 0) {
+    html = "<p style=\"font-size:15px;color:#a98d6d;\">まだ記録がありません。サウナに入ったら記録してみてください。</p>";
+  }
+  document.getElementById("logList").innerHTML = html;
+}
+
+function initDate() {
+  var now = new Date();
+  document.getElementById("logDate").value = now.getFullYear() + "-" + pad2(now.getMonth() + 1) + "-" + pad2(now.getDate());
+}
+
+initDate();
+renderLogs();
+</script>
+</body>
+</html>

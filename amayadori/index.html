@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMAYADORI-6 雨宿り</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #5d7186;
+    background: -webkit-linear-gradient(#71879c, #54687d 60%, #49596c);
+    background: linear-gradient(#71879c, #54687d 60%, #49596c);
+    color: #eef3f7;
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+    min-height: 100vh;
+    padding: 14px 12px 40px;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; }
+  a.back {
+    display: inline-block;
+    color: #dfeaf2;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 12px 16px;
+    min-height: 48px;
+    border: 1px solid rgba(255,255,255,0.45);
+    border-radius: 24px;
+    background: rgba(255,255,255,0.10);
+  }
+  header { text-align: center; margin: 18px 0 6px; }
+  header .drop { font-size: 34px; letter-spacing: 10px; color: #bcd3e4; }
+  h1 { font-size: 27px; margin: 4px 0 2px; font-weight: bold; letter-spacing: 3px; }
+  header .sub { font-size: 15px; color: #c9d8e4; margin: 0 0 8px; }
+  .card {
+    background: rgba(238, 244, 249, 0.94);
+    color: #33424f;
+    border-radius: 14px;
+    padding: 16px 16px 18px;
+    margin: 16px 0;
+    box-shadow: 0 3px 10px rgba(20, 32, 44, 0.35);
+  }
+  .card h2 {
+    font-size: 19px;
+    margin: 0 0 8px;
+    color: #46617a;
+    border-bottom: 2px solid #b9cddc;
+    padding-bottom: 6px;
+  }
+  .card p { margin: 8px 0; }
+  .small { font-size: 14px; color: #6a7f90; }
+  .sky-main { font-size: 20px; font-weight: bold; color: #33506b; }
+  button {
+    display: block;
+    width: 100%;
+    min-height: 52px;
+    font-size: 18px;
+    font-family: inherit;
+    border: none;
+    border-radius: 26px;
+    background: #5b7d99;
+    color: #ffffff;
+    padding: 12px 16px;
+    margin: 10px 0 4px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  button:active { background: #486a86; }
+  button.sub-btn { background: #87a3ba; }
+  button.on { background: #3f6d8e; box-shadow: inset 0 0 0 2px #cfe2ef; }
+  .toprow { overflow: hidden; margin-top: 12px; }
+  .voice-btn {
+    float: right;
+    width: auto;
+    min-height: 48px;
+    font-size: 16px;
+    padding: 10px 18px;
+    margin: 0;
+    background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.45);
+  }
+  .essay-title { font-size: 18px; font-weight: bold; color: #33506b; margin: 4px 0; }
+  .poem-card {
+    background: #f4f8fb;
+    border: 1px solid #b9cddc;
+    border-left: 6px solid #7fa3bd;
+    border-radius: 8px;
+    padding: 14px;
+    margin: 10px 0;
+    font-size: 19px;
+    line-height: 1.9;
+    color: #2f4356;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .status { font-size: 15px; color: #57708a; min-height: 24px; margin: 6px 0 0; }
+  .err-detail { font-size: 13px; color: #8a9dab; }
+  footer { text-align: center; color: #c9d8e4; font-size: 14px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="toprow">
+    <a class="back" href="../portal/">← 全サイト一覧へ</a>
+    <button type="button" class="voice-btn" id="voiceBtn">ボイス ON</button>
+  </div>
+
+  <header>
+    <div class="drop">☂ ☂ ☂</div>
+    <h1>AMAYADORI-6 雨宿り</h1>
+    <p class="sub">雨の日に、軒下でひと息つくための場所です。</p>
+  </header>
+
+  <div class="card">
+    <h2>☔ いまの空（ふじみ野）</h2>
+    <p class="sky-main" id="skyMain">空の様子を調べています…</p>
+    <p class="small" id="skyTime"></p>
+    <p class="small" id="skyNote"></p>
+  </div>
+
+  <div class="card">
+    <h2>🎧 雨音</h2>
+    <p>端末の中で雨を降らせます。目を閉じて聞いてみてください。</p>
+    <button type="button" id="rainBtn">▶ 雨音を流す</button>
+    <p class="status" id="rainStatus"></p>
+  </div>
+
+  <div class="card">
+    <h2>📖 雨の読み物</h2>
+    <p class="essay-title" id="essayTitle"></p>
+    <p id="essayText"></p>
+    <button type="button" class="sub-btn" id="essaySpeakBtn">🔊 読む</button>
+    <button type="button" id="essayNextBtn">次の読み物 →</button>
+    <p class="small" id="essayCount"></p>
+  </div>
+
+  <div class="card">
+    <h2>✒ 雨の詩</h2>
+    <p>AIが雨の短い詩をひとつ書きます。</p>
+    <div class="poem-card" id="poemCard">まだ詩はありません。「詩をもらう」を押してみてください。</div>
+    <button type="button" id="poemBtn">詩をもらう</button>
+    <p class="status" id="poemStatus"></p>
+  </div>
+
+  <footer>AMAYADORI-6 雨宿り<br>雨の日も、雨じゃない日も、どうぞごゆっくり。</footer>
+
+</div>
+
+<script>
+var voiceOn = true;
+
+/* ---------- 音声読み上げ ---------- */
+function speak(text) {
+  if (!voiceOn) { return; }
+  if (!('speechSynthesis' in window)) { return; }
+  try {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP';
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function speakForce(text) {
+  if (!('speechSynthesis' in window)) { return; }
+  try {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP';
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+var voiceBtn = document.getElementById('voiceBtn');
+voiceBtn.onclick = function () {
+  voiceOn = !voiceOn;
+  voiceBtn.innerHTML = voiceOn ? 'ボイス ON' : 'ボイス OFF';
+  if (!voiceOn && ('speechSynthesis' in window)) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+};
+
+/* ---------- いまの空 ---------- */
+var RAIN_CODES = [51, 53, 55, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99];
+function isRainCode(code) {
+  for (var i = 0; i < RAIN_CODES.length; i++) {
+    if (RAIN_CODES[i] === code) { return true; }
+  }
+  return false;
+}
+function codeLabel(code) {
+  if (code === 0) { return '快晴'; }
+  if (code === 1) { return '晴れ'; }
+  if (code === 2) { return '晴れ時々曇り'; }
+  if (code === 3) { return '曇り'; }
+  if (code === 45 || code === 48) { return '霧'; }
+  if (code === 51 || code === 53 || code === 55) { return '霧雨'; }
+  if (code === 56 || code === 57) { return '着氷性の霧雨'; }
+  if (code === 61 || code === 63 || code === 65) { return '雨'; }
+  if (code === 66 || code === 67) { return '着氷性の雨'; }
+  if (code === 71 || code === 73 || code === 75 || code === 77) { return '雪'; }
+  if (code === 80 || code === 81 || code === 82) { return 'にわか雨'; }
+  if (code === 85 || code === 86) { return 'にわか雪'; }
+  if (code === 95 || code === 96 || code === 99) { return '雷雨'; }
+  return '不明な天気';
+}
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+function nowTimeStr() {
+  var d = new Date();
+  return d.getHours() + ':' + pad2(d.getMinutes());
+}
+
+function loadSky() {
+  var skyMain = document.getElementById('skyMain');
+  var skyTime = document.getElementById('skyTime');
+  var skyNote = document.getElementById('skyNote');
+  var xhr = new XMLHttpRequest();
+  var url = 'https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&current_weather=true&timezone=Asia%2FTokyo';
+  xhr.open('GET', url, true);
+  xhr.timeout = 15000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var code = data.current_weather.weathercode;
+        var temp = data.current_weather.temperature;
+        if (isRainCode(code)) {
+          skyMain.innerHTML = '☔ ふじみ野は今、雨です（' + codeLabel(code) + '・' + temp + '℃）';
+          skyNote.innerHTML = '本物の雨宿り日和です。どうぞごゆっくり。';
+        } else {
+          skyMain.innerHTML = '🌂 ふじみ野は今、雨ではありません（' + codeLabel(code) + '・' + temp + '℃）。雨の日の気分でどうぞ';
+          skyNote.innerHTML = '雨音と読み物で、静かな雨宿りの時間をお楽しみください。';
+        }
+        skyTime.innerHTML = '取得： ' + nowTimeStr() + '（Open-Meteo）';
+      } catch (e) {
+        skyMain.innerHTML = '空の様子は分かりませんでした。';
+        skyNote.innerHTML = '雨の日の気分でどうぞ。';
+      }
+    } else {
+      skyMain.innerHTML = '空の様子は分かりませんでした。';
+      skyNote.innerHTML = '雨の日の気分でどうぞ。';
+    }
+  };
+  xhr.ontimeout = function () {
+    skyMain.innerHTML = '空の様子は分かりませんでした。';
+    skyNote.innerHTML = '雨の日の気分でどうぞ。';
+  };
+  xhr.onerror = function () {
+    skyMain.innerHTML = '空の様子は分かりませんでした。';
+    skyNote.innerHTML = '雨の日の気分でどうぞ。';
+  };
+  xhr.send(null);
+}
+loadSky();
+
+/* ---------- 雨音（WebAudio生成） ---------- */
+var audioCtx = null;
+var rainNodes = null;
+var rainOn = false;
+var rainBtn = document.getElementById('rainBtn');
+var rainStatus = document.getElementById('rainStatus');
+
+function makeNoiseBuffer(ctx, brown) {
+  var len = 2 * ctx.sampleRate;
+  var buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+  var data = buffer.getChannelData(0);
+  var last = 0;
+  var i;
+  if (brown) {
+    for (i = 0; i < len; i++) {
+      var w = Math.random() * 2 - 1;
+      last = (last + 0.02 * w) / 1.02;
+      data[i] = last * 3.0;
+    }
+  } else {
+    for (i = 0; i < len; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+  }
+  return buffer;
+}
+
+function startRain() {
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) {
+    rainStatus.innerHTML = 'この端末では雨音を再生できませんでした。';
+    return;
+  }
+  if (!audioCtx) { audioCtx = new AC(); }
+  if (audioCtx.resume) { audioCtx.resume(); }
+  var ctx = audioCtx;
+
+  /* 主な雨音：ノイズ＋ローパス */
+  var src = ctx.createBufferSource();
+  src.buffer = makeNoiseBuffer(ctx, true);
+  src.loop = true;
+  var lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 900;
+  var g = ctx.createGain();
+  g.gain.value = 0;
+  g.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 1.5);
+  src.connect(lp);
+  lp.connect(g);
+  g.connect(ctx.destination);
+
+  /* ゆっくりうねるLFO */
+  var lfo = ctx.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = 0.09;
+  var lfoGain = ctx.createGain();
+  lfoGain.gain.value = 0.12;
+  lfo.connect(lfoGain);
+  lfoGain.connect(g.gain);
+
+  /* パチパチという粒の音：白ノイズ＋バンドパス＋速いLFO */
+  var src2 = ctx.createBufferSource();
+  src2.buffer = makeNoiseBuffer(ctx, false);
+  src2.loop = true;
+  var bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 2600;
+  bp.Q.value = 0.7;
+  var g2 = ctx.createGain();
+  g2.gain.value = 0.035;
+  src2.connect(bp);
+  bp.connect(g2);
+  g2.connect(ctx.destination);
+  var lfo2 = ctx.createOscillator();
+  lfo2.type = 'sine';
+  lfo2.frequency.value = 6.3;
+  var lfo2Gain = ctx.createGain();
+  lfo2Gain.gain.value = 0.025;
+  lfo2.connect(lfo2Gain);
+  lfo2Gain.connect(g2.gain);
+
+  src.start(0);
+  src2.start(0);
+  lfo.start(0);
+  lfo2.start(0);
+
+  rainNodes = { src: src, src2: src2, lfo: lfo, lfo2: lfo2, g: g, g2: g2 };
+  rainOn = true;
+  rainBtn.innerHTML = '⏹ 雨音を止める';
+  rainBtn.className = 'on';
+  rainStatus.innerHTML = '☔ 雨音を流しています…';
+}
+
+function stopRain() {
+  if (!rainNodes || !audioCtx) { rainOn = false; return; }
+  var nodes = rainNodes;
+  var ctx = audioCtx;
+  try {
+    nodes.g.gain.cancelScheduledValues(ctx.currentTime);
+    nodes.g.gain.setValueAtTime(nodes.g.gain.value, ctx.currentTime);
+    nodes.g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+    nodes.g2.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+  } catch (e) {}
+  setTimeout(function () {
+    try { nodes.src.stop(0); } catch (e) {}
+    try { nodes.src2.stop(0); } catch (e) {}
+    try { nodes.lfo.stop(0); } catch (e) {}
+    try { nodes.lfo2.stop(0); } catch (e) {}
+    try { nodes.src.disconnect(); } catch (e) {}
+    try { nodes.src2.disconnect(); } catch (e) {}
+  }, 900);
+  rainNodes = null;
+  rainOn = false;
+  rainBtn.innerHTML = '▶ 雨音を流す';
+  rainBtn.className = '';
+  rainStatus.innerHTML = '雨音を止めました。';
+}
+
+rainBtn.onclick = function () {
+  if (rainOn) { stopRain(); } else { startRain(); }
+};
+
+/* ---------- 雨の読み物 ---------- */
+var ESSAYS = [
+  {
+    title: '一、雨の音',
+    text: '雨の音は、屋根や傘や地面によって少しずつ違います。トタン屋根はにぎやかに、土の庭は静かに受け止めます。耳を澄ますと、雨にも表情があることに気づきます。急ぐ用事のない日は、その違いを聞き分けるだけでも、いい時間の使い方です。'
+  },
+  {
+    title: '二、雨の匂い',
+    text: '降り始めの雨には、土の匂いがします。乾いた地面が雨を迎える匂いです。子どものころに嗅いだのと、今嗅ぐのと、不思議と同じ匂いがします。匂いは記憶の戸を、そっと開ける鍵なのかもしれません。'
+  },
+  {
+    title: '三、窓の雨粒',
+    text: '窓ガラスを流れる雨粒は、小さい粒が大きい粒にくっついて、急に速く流れ出します。レースのように競い合う姿を見ていると、つい時間を忘れます。窓の外がぼやける日は、心の中も少しぼやけて、ちょうどいい休息になります。'
+  },
+  {
+    title: '四、温かいお茶',
+    text: '雨の日は、お茶がひときわ温かく感じます。湯気の向こうに雨の庭を見ながら飲む一杯は、急な用事を少し遠くへ追いやってくれます。雨宿りとは、雨を避けることではなく、雨と一緒にお茶を飲むことなのかもしれません。'
+  },
+  {
+    title: '五、傘の花',
+    text: '雨の日の駅前には、色とりどりの傘の花が咲きます。濡れた歩道に映る信号の光も、雨の日だけの景色です。足元は気をつけながら、たまには上を見上げて、雨の日だけの町の色を楽しみたいものです。'
+  },
+  {
+    title: '六、雨上がりの約束',
+    text: 'どんな雨も、やまない雨はありません。雲の切れ間から光が差すと、濡れた葉っぱがみんな光ります。雨宿りの時間は、雨上がりを待つ時間でもあります。焦らず待てば、空はちゃんと約束を守ってくれます。'
+  }
+];
+var essayIdx = 0;
+var essayTitle = document.getElementById('essayTitle');
+var essayText = document.getElementById('essayText');
+var essayCount = document.getElementById('essayCount');
+
+function showEssay() {
+  var e = ESSAYS[essayIdx];
+  essayTitle.innerHTML = e.title;
+  essayText.innerHTML = e.text;
+  essayCount.innerHTML = '（' + (essayIdx + 1) + ' / ' + ESSAYS.length + '）';
+}
+showEssay();
+
+document.getElementById('essayNextBtn').onclick = function () {
+  essayIdx = essayIdx + 1;
+  if (essayIdx >= ESSAYS.length) { essayIdx = 0; }
+  showEssay();
+};
+document.getElementById('essaySpeakBtn').onclick = function () {
+  var e = ESSAYS[essayIdx];
+  speakForce(e.title + '。' + e.text);
+};
+
+/* ---------- 雨の詩（AI） ---------- */
+var poemBusy = false;
+var poemTimer = null;
+var poemBtn = document.getElementById('poemBtn');
+var poemCard = document.getElementById('poemCard');
+var poemStatus = document.getElementById('poemStatus');
+
+function poemError(msg, detail) {
+  poemStatus.innerHTML = msg + (detail ? ' <span class="err-detail">' + detail + '</span>' : '');
+}
+
+poemBtn.onclick = function () {
+  if (poemBusy) { return; }
+  poemBusy = true;
+  poemBtn.innerHTML = '考え中…';
+  var sec = 0;
+  poemStatus.innerHTML = '考え中… 0秒';
+  if (poemTimer) { clearInterval(poemTimer); }
+  poemTimer = setInterval(function () {
+    sec = sec + 1;
+    poemStatus.innerHTML = '考え中… ' + sec + '秒';
+  }, 1000);
+
+  var prompt = '雨をテーマに、短い詩か俳句のような短い作品を、120文字以内でひとつだけ書いてください。タイトルや説明は付けず、作品の本文だけを返してください。静かで優しい雰囲気でお願いします。';
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://text.pollinations.ai/', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 90000;
+
+  function finish() {
+    if (poemTimer) { clearInterval(poemTimer); poemTimer = null; }
+    poemBusy = false;
+    poemBtn.innerHTML = '詩をもらう';
+  }
+
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    finish();
+    if (xhr.status === 200) {
+      var body = xhr.responseText || '';
+      if (body.indexOf('Free limit') !== -1) {
+        poemError('本日の無料AI回線は上限に達しました。明日の朝9時に回復します', '');
+        return;
+      }
+      var text = body.replace(/^\s+|\s+$/g, '');
+      if (!text) {
+        poemError('AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
+        return;
+      }
+      if (text.length > 300) { text = text.substring(0, 300); }
+      poemCard.innerHTML = '';
+      poemCard.appendChild(document.createTextNode(text));
+      poemStatus.innerHTML = '詩が届きました。';
+      if (voiceOn) { speak(text); }
+    } else if (xhr.status === 402) {
+      poemError('本日の無料AI回線は上限に達しました。明日の朝9時に回復します', '');
+    } else {
+      poemError('AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
+    }
+  };
+  xhr.ontimeout = function () {
+    finish();
+    poemError('AI回線の時間切れです。少し待ってからもう一度どうぞ', '');
+  };
+  xhr.onerror = function () {
+    finish();
+    poemError('AI回線が混み合っています', '詳細：HTTP 0');
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+};
+</script>
+</body>
+</html>

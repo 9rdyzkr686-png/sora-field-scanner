@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>MEISHO-6 ふじみ野・川越 名所案内</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { background:#f7f3e3; color:#2f3a2a; font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif; font-size:17px; line-height:1.6; padding:12px 12px 40px; }
+a.back { display:block; min-height:48px; line-height:48px; text-align:center; background:#4a7c59; color:#fff; text-decoration:none; border-radius:10px; font-size:17px; font-weight:bold; margin-bottom:14px; }
+header { text-align:center; margin-bottom:12px; }
+header .mark { font-size:34px; }
+h1 { font-size:23px; color:#33603f; letter-spacing:1px; }
+.sub { font-size:14px; color:#6b7a5e; margin-top:2px; }
+#recoBanner { background:#fff8d6; border:2px solid #d9a441; border-radius:12px; padding:12px 14px; margin-bottom:14px; font-size:16px; }
+#recoBanner .ttl { font-weight:bold; color:#a8741a; font-size:15px; }
+#recoBanner .nm { font-weight:bold; font-size:19px; color:#33603f; }
+.card { background:#fffdf4; border:2px solid #b9cfa8; border-radius:12px; padding:14px; margin-bottom:12px; }
+.card.reco { border-color:#d9a441; background:#fffbe8; box-shadow:0 0 0 3px #f3df9e inset; }
+.card .row { overflow:hidden; }
+.card h2 { font-size:20px; color:#33603f; float:left; }
+.tag { float:right; background:#4a7c59; color:#fff; font-size:13px; border-radius:10px; padding:2px 10px; margin-top:4px; }
+.tag.fuji { background:#7a9e4f; }
+.recoBadge { display:none; background:#d9a441; color:#fff; font-size:13px; font-weight:bold; border-radius:10px; padding:2px 10px; margin-left:8px; vertical-align:middle; }
+.card.reco .recoBadge { display:inline-block; }
+.card p { clear:both; padding-top:6px; font-size:16px; color:#43513c; }
+.mapBtn { display:block; min-height:48px; line-height:48px; text-align:center; background:#eef5e4; border:2px solid #4a7c59; color:#33603f; text-decoration:none; border-radius:10px; font-size:17px; font-weight:bold; margin-top:10px; }
+footer { margin-top:18px; font-size:14px; color:#6b7a5e; text-align:center; line-height:1.7; }
+</style>
+</head>
+<body>
+<a class="back" href="../portal/">← 全サイト一覧へ</a>
+<header>
+<div class="mark">🌿</div>
+<h1>MEISHO-6 名所案内</h1>
+<div class="sub">ふじみ野・川越 おでかけガイド</div>
+</header>
+
+<div id="recoBanner">
+<div class="ttl">🌟 今日のおすすめ</div>
+<div class="nm" id="recoName">読み込み中…</div>
+<div id="recoDesc"></div>
+</div>
+
+<div id="cards"></div>
+
+<footer>
+営業時間・休館日はリンク先や公式サイトで確認してください。<br>
+MEISHO-6 ｜ 掲載情報は一般的な紹介です
+</footer>
+
+<script>
+var SPOTS = [
+ { name:"川越 蔵造りの町並み（一番街）", area:"川越", desc:"江戸の面影を残す蔵造りの商家が並ぶ、小江戸・川越の顔ともいえる通り。重厚な黒漆喰の建物を眺めながら、のんびり食べ歩き散策が楽しめます。" },
+ { name:"時の鐘（川越）", area:"川越", desc:"川越のシンボルとして親しまれる鐘つき堂。江戸時代から時を知らせてきた鐘の音は、今も一日に数回、町並みに響きます。" },
+ { name:"菓子屋横丁（川越）", area:"川越", desc:"石畳の小さな路地に、昔ながらの駄菓子屋さんが軒を連ねる横丁。飴やせんべいなど、懐かしいお菓子との出会いが楽しめます。" },
+ { name:"川越氷川神社", area:"川越", desc:"縁結びの神様として知られる、川越の総鎮守。色とりどりの風鈴が境内を彩る夏の風物詩でも有名な神社です。" },
+ { name:"喜多院（川越）", area:"川越", desc:"天台宗の名刹で、徳川家ゆかりの建物や、表情豊かな五百羅漢の石像で知られるお寺。四季の庭の散策も楽しめます。" },
+ { name:"川越城 本丸御殿", area:"川越", desc:"川越城の本丸御殿として現存する貴重な建物。大広間や玄関まわりから、藩政時代の暮らしぶりをうかがい知ることができます。" },
+ { name:"新河岸川の桜（氷川神社裏）", area:"川越", desc:"川越氷川神社の裏手を流れる新河岸川沿いの桜並木。春には川面に映る桜と花筏（はないかだ）が美しい、人気の花見スポットです。" },
+ { name:"びん沼自然公園", area:"ふじみ野・富士見", desc:"富士見市にある、沼と緑に囲まれた自然公園。バードウォッチングや釣り、のんびりした散策が楽しめる憩いの場所です。" },
+ { name:"福岡河岸記念館", area:"ふじみ野・富士見", desc:"新河岸川の舟運で栄えた福岡河岸の歴史を伝える記念館。廻船問屋の建物などから、当時の川越街道の賑わいを感じられます。" },
+ { name:"難波田城公園", area:"ふじみ野・富士見", desc:"中世の城跡を整備した歴史公園。資料館や復元された古民家があり、城跡の堀や土塁を眺めながら歴史散策ができます。" }
+];
+
+function mapUrl(name) {
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(name);
+}
+
+function dateSeed() {
+  var d = new Date();
+  return d.getFullYear() * 372 + (d.getMonth() + 1) * 31 + d.getDate();
+}
+
+var recoIdx = dateSeed() % SPOTS.length;
+
+function render() {
+  var html = "";
+  var i, s;
+  for (i = 0; i < SPOTS.length; i++) {
+    s = SPOTS[i];
+    html += '<div class="card' + (i === recoIdx ? ' reco' : '') + '">';
+    html += '<div class="row"><h2>' + s.name + '<span class="recoBadge">今日のおすすめ</span></h2>';
+    html += '<span class="tag' + (s.area === "川越" ? '' : ' fuji') + '">' + s.area + '</span></div>';
+    html += '<p>' + s.desc + '</p>';
+    html += '<a class="mapBtn" href="' + mapUrl(s.name) + '" target="_blank" rel="noopener">🗺 地図で見る</a>';
+    html += '</div>';
+  }
+  document.getElementById("cards").innerHTML = html;
+  var r = SPOTS[recoIdx];
+  document.getElementById("recoName").innerHTML = r.name;
+  document.getElementById("recoDesc").innerHTML = r.desc;
+}
+
+render();
+</script>
+</body>
+</html>

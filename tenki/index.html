@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TENKI-6 天気専門端末</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+    background: #dff2ff;
+    color: #123a52;
+    padding: 10px;
+    -webkit-text-size-adjust: 100%;
+  }
+  a.back {
+    display: block;
+    text-align: center;
+    background: #ffffff;
+    color: #1a6fb5;
+    border: 2px solid #1a6fb5;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    text-decoration: none;
+    min-height: 48px;
+    margin-bottom: 10px;
+  }
+  header {
+    background: #1a6fb5;
+    color: #ffffff;
+    border-radius: 12px;
+    padding: 14px 12px;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  header .ttl { font-size: 24px; font-weight: bold; letter-spacing: 2px; }
+  header .sub { font-size: 13px; margin-top: 4px; color: #cfeaff; }
+  .card {
+    background: #ffffff;
+    border: 2px solid #9fd3f5;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .card h2 {
+    font-size: 17px;
+    color: #1a6fb5;
+    border-bottom: 2px solid #dff2ff;
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+  }
+  .bigtemp { font-size: 64px; font-weight: bold; text-align: center; color: #0d4f7c; line-height: 1.1; }
+  .nowwx { font-size: 22px; font-weight: bold; text-align: center; margin-bottom: 8px; }
+  .nowgrid { width: 100%; border-collapse: collapse; }
+  .nowgrid td {
+    width: 33%;
+    text-align: center;
+    background: #f2faff;
+    border: 1px solid #dff2ff;
+    padding: 8px 2px;
+    font-size: 15px;
+  }
+  .nowgrid td b { display: block; font-size: 19px; color: #0d4f7c; }
+  .fetchline { text-align: center; font-size: 13px; color: #5b87a3; margin-top: 8px; }
+  table.list { width: 100%; border-collapse: collapse; font-size: 16px; }
+  table.list td { padding: 8px 4px; border-bottom: 1px solid #dff2ff; }
+  table.list tr:last-child td { border-bottom: none; }
+  td.r { text-align: right; }
+  .tmax { color: #d3543c; font-weight: bold; }
+  .tmin { color: #2470c2; font-weight: bold; }
+  .sunrow { font-size: 18px; text-align: center; line-height: 1.8; }
+  .sunrow b { color: #0d4f7c; }
+  .moonrow { font-size: 18px; text-align: center; line-height: 1.8; }
+  .moonrow b { color: #0d4f7c; }
+  button.reload {
+    display: block;
+    width: 100%;
+    min-height: 52px;
+    font-size: 18px;
+    font-weight: bold;
+    background: #1a6fb5;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  button.reload:active { background: #0d4f7c; }
+  .status {
+    text-align: center;
+    font-size: 15px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #fff7e0;
+    border: 2px solid #f0d48a;
+    border-radius: 10px;
+    color: #6b5310;
+    display: none;
+  }
+  .note { font-size: 12px; color: #5b87a3; text-align: center; line-height: 1.6; padding: 4px 0 14px 0; }
+</style>
+</head>
+<body>
+
+<a class="back" href="../portal/">← 全サイト一覧へ</a>
+
+<header>
+  <div class="ttl">☀ TENKI-6 ☀</div>
+  <div class="sub">天気専門端末 ／ 埼玉県ふじみ野市</div>
+</header>
+
+<div class="status" id="statusBox">読み込み中…</div>
+
+<button class="reload" id="reloadBtn">↻ 更新する</button>
+
+<div class="card">
+  <h2>いまの天気</h2>
+  <div class="bigtemp" id="nowTemp">--℃</div>
+  <div class="nowwx" id="nowWx">―</div>
+  <table class="nowgrid">
+    <tr>
+      <td>体感<b id="nowFeel">--℃</b></td>
+      <td>湿度<b id="nowHum">--%</b></td>
+      <td>風速<b id="nowWind">--m/s</b></td>
+    </tr>
+  </table>
+  <div class="fetchline" id="fetchTime">まだ取得していません</div>
+</div>
+
+<div class="card">
+  <h2>この先24時間（2時間ごと）</h2>
+  <table class="list" id="hourlyTable">
+    <tr><td>取得待ち…</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>週間天気（7日間）</h2>
+  <table class="list" id="dailyTable">
+    <tr><td>取得待ち…</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>日の出・日の入り（今日）</h2>
+  <div class="sunrow">
+    日の出 <b id="sunriseT">--:--</b><br>
+    日の入り <b id="sunsetT">--:--</b>
+  </div>
+</div>
+
+<div class="card">
+  <h2>月</h2>
+  <div class="moonrow">
+    月齢 <b id="moonAge">―</b><br>
+    <b id="moonName">―</b>
+  </div>
+</div>
+
+<div class="note">
+  天気データ： Open-Meteo（実データを取得して表示しています）<br>
+  月齢は端末内で計算した目安です。
+</div>
+
+<script>
+var API_URL = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197"
+  + "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m"
+  + "&hourly=temperature_2m,precipitation_probability"
+  + "&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max"
+  + "&timezone=Asia%2FTokyo&forecast_days=7";
+
+var WD = ["日", "月", "火", "水", "木", "金", "土"];
+
+function wxName(code) {
+  if (code === 0) return "晴れ";
+  if (code === 1) return "ほぼ晴れ";
+  if (code === 2) return "晴れ時々くもり";
+  if (code === 3) return "くもり";
+  if (code === 45 || code === 48) return "霧";
+  if (code === 51) return "霧雨（弱）";
+  if (code === 53) return "霧雨";
+  if (code === 55) return "霧雨（強）";
+  if (code === 56 || code === 57) return "着氷性の霧雨";
+  if (code === 61) return "雨（弱）";
+  if (code === 63) return "雨";
+  if (code === 65) return "雨（強）";
+  if (code === 66 || code === 67) return "着氷性の雨";
+  if (code === 71) return "雪（弱）";
+  if (code === 73) return "雪";
+  if (code === 75) return "雪（強）";
+  if (code === 77) return "雪（あられ）";
+  if (code === 80) return "にわか雨（弱）";
+  if (code === 81) return "にわか雨";
+  if (code === 82) return "にわか雨（強）";
+  if (code === 85) return "にわか雪";
+  if (code === 86) return "にわか雪（強）";
+  if (code === 95) return "雷雨";
+  if (code === 96 || code === 99) return "雷雨（ひょう）";
+  return "不明";
+}
+
+function pad2(n) {
+  return (n < 10 ? "0" : "") + n;
+}
+
+function setStatus(msg) {
+  var box = document.getElementById("statusBox");
+  if (msg) {
+    box.style.display = "block";
+    box.innerHTML = msg;
+  } else {
+    box.style.display = "none";
+    box.innerHTML = "";
+  }
+}
+
+/* 日時文字列 "2026-11-27T13:00" から 時 だけ取り出す */
+function hourOf(iso) {
+  var t = iso.split("T")[1];
+  if (!t) return "";
+  return t.split(":")[0] + "時";
+}
+
+/* 日時文字列 "2026-11-27T06:42" から "6:42" を取り出す */
+function hmOf(iso) {
+  var t = iso.split("T")[1];
+  if (!t) return "--:--";
+  var p = t.split(":");
+  var h = parseInt(p[0], 10);
+  return h + ":" + p[1];
+}
+
+/* "2026-11-27" を M/D（曜日）に整形する。端末のタイムゾーンに影響されないよう手で分解する */
+function dateLabel(dstr) {
+  var p = dstr.split("-");
+  var y = parseInt(p[0], 10);
+  var m = parseInt(p[1], 10);
+  var d = parseInt(p[2], 10);
+  var dt = new Date(y, m - 1, d);
+  return m + "/" + d + "（" + WD[dt.getDay()] + "）";
+}
+
+function render(data) {
+  var cur = data.current;
+  document.getElementById("nowTemp").innerHTML = Math.round(cur.temperature_2m) + "℃";
+  document.getElementById("nowWx").innerHTML = wxName(cur.weather_code);
+  document.getElementById("nowFeel").innerHTML = Math.round(cur.apparent_temperature) + "℃";
+  document.getElementById("nowHum").innerHTML = Math.round(cur.relative_humidity_2m) + "%";
+  document.getElementById("nowWind").innerHTML = Math.round(cur.wind_speed_10m * 10) / 10 + "m/s";
+
+  var now = new Date();
+  document.getElementById("fetchTime").innerHTML =
+    now.getHours() + "時" + pad2(now.getMinutes()) + "分取得（Open-Meteo実データ）";
+
+  /* この先24時間：現在時刻の行を探し、2時間ごとに最大12行 */
+  var ht = data.hourly.time;
+  var start = 0;
+  var curKey = cur.time.substring(0, 13);
+  var i;
+  for (i = 0; i < ht.length; i++) {
+    if (ht[i].substring(0, 13) <= curKey) start = i;
+    else break;
+  }
+  var hHtml = "";
+  var count = 0;
+  for (i = start; i < ht.length && count < 12; i += 2) {
+    var prob = data.hourly.precipitation_probability[i];
+    var probTxt = (prob === null || prob === undefined) ? "―" : Math.round(prob) + "%";
+    hHtml += "<tr><td>" + hourOf(ht[i]) + "</td>"
+      + "<td class=\"r\">" + Math.round(data.hourly.temperature_2m[i]) + "℃</td>"
+      + "<td class=\"r\">降水確率 " + probTxt + "</td></tr>";
+    count++;
+  }
+  if (!hHtml) hHtml = "<tr><td>データがありませんでした</td></tr>";
+  document.getElementById("hourlyTable").innerHTML = hHtml;
+
+  /* 週間7日 */
+  var dy = data.daily;
+  var dHtml = "";
+  for (i = 0; i < dy.time.length && i < 7; i++) {
+    var dp = dy.precipitation_probability_max[i];
+    var dpTxt = (dp === null || dp === undefined) ? "―" : Math.round(dp) + "%";
+    dHtml += "<tr><td>" + dateLabel(dy.time[i]) + "</td>"
+      + "<td>" + wxName(dy.weather_code[i]) + "</td>"
+      + "<td class=\"r\"><span class=\"tmax\">" + Math.round(dy.temperature_2m_max[i]) + "℃</span>"
+      + " / <span class=\"tmin\">" + Math.round(dy.temperature_2m_min[i]) + "℃</span></td>"
+      + "<td class=\"r\">" + dpTxt + "</td></tr>";
+  }
+  if (!dHtml) dHtml = "<tr><td>データがありませんでした</td></tr>";
+  document.getElementById("dailyTable").innerHTML = dHtml;
+
+  /* 日の出・日の入り（今日 = daily の先頭） */
+  document.getElementById("sunriseT").innerHTML = hmOf(dy.sunrise[0]);
+  document.getElementById("sunsetT").innerHTML = hmOf(dy.sunset[0]);
+
+  setStatus("");
+}
+
+function loadWeather() {
+  setStatus("天気を取得中…");
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", API_URL, true);
+  xhr.timeout = 30000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) return;
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        render(data);
+      } catch (e) {
+        setStatus("データの読み取りに失敗しました。「更新する」でもう一度お試しください。");
+      }
+    } else {
+      setStatus("天気を取得できませんでした（通信エラー）。「更新する」でもう一度お試しください。");
+    }
+  };
+  xhr.ontimeout = function () {
+    setStatus("時間がかかりすぎました。「更新する」でもう一度お試しください。");
+  };
+  xhr.onerror = function () {
+    setStatus("天気を取得できませんでした（通信エラー）。「更新する」でもう一度お試しください。");
+  };
+  xhr.send(null);
+}
+
+/* 月齢と月の名前を端末内で計算する（朔望月 29.530588853日、基準の新月 2000-01-06 18:14 UTC） */
+function renderMoon() {
+  var synodic = 29.530588853;
+  var ref = Date.UTC(2000, 0, 6, 18, 14) / 86400000;
+  var nowDays = new Date().getTime() / 86400000;
+  var age = (nowDays - ref) % synodic;
+  if (age < 0) age += synodic;
+  var names = ["新月", "三日月", "上弦の月", "十三夜月", "満月", "十六夜月", "下弦の月", "有明月"];
+  var idx = Math.floor(((age / synodic) * 8) + 0.5) % 8;
+  document.getElementById("moonAge").innerHTML = "約" + (Math.round(age * 10) / 10) + "日";
+  document.getElementById("moonName").innerHTML = names[idx];
+}
+
+document.getElementById("reloadBtn").onclick = function () {
+  renderMoon();
+  loadWeather();
+};
+
+renderMoon();
+loadWeather();
+</script>
+</body>
+</html>

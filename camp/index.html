@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CAMP-6 焚き火</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #05060a;
+    color: #e8ddc9;
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+    padding: 14px 12px 40px;
+    -webkit-text-size-adjust: 100%;
+  }
+  .portal-link {
+    display: inline-block;
+    color: #ffb36b;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 10px 4px;
+    min-height: 48px;
+    line-height: 28px;
+  }
+  h1 {
+    font-size: 26px;
+    text-align: center;
+    color: #ffd9a0;
+    letter-spacing: 3px;
+    margin: 2px 0 2px;
+    text-shadow: 0 0 14px rgba(255,140,40,0.55);
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #9a8d76;
+    margin-bottom: 10px;
+  }
+  .stars {
+    text-align: center;
+    color: #5f6d8a;
+    font-size: 13px;
+    letter-spacing: 8px;
+    height: 18px;
+    overflow: hidden;
+  }
+  /* ===== 焚き火 ===== */
+  .fire-stage {
+    position: relative;
+    height: 300px;
+    margin: 6px auto 4px;
+    max-width: 420px;
+  }
+  .glow-outer, .flame-mid, .flame-inner {
+    position: absolute;
+    left: 50%;
+    border-radius: 50%;
+    -webkit-transform-origin: 50% 100%;
+    transform-origin: 50% 100%;
+  }
+  .glow-outer {
+    width: 300px; height: 300px;
+    margin-left: -150px;
+    bottom: 6px;
+    background: radial-gradient(circle at 50% 72%, rgba(255,120,20,0.34) 0%, rgba(255,80,10,0.16) 42%, rgba(255,60,0,0) 70%);
+  }
+  .flame-mid {
+    width: 170px; height: 210px;
+    margin-left: -85px;
+    bottom: 34px;
+    background: radial-gradient(ellipse 50% 62% at 50% 78%, rgba(255,166,0,0.95) 0%, rgba(255,94,0,0.85) 45%, rgba(214,40,0,0.35) 72%, rgba(180,20,0,0) 100%);
+    border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  }
+  .flame-inner {
+    width: 92px; height: 128px;
+    margin-left: -46px;
+    bottom: 38px;
+    background: radial-gradient(ellipse 50% 60% at 50% 80%, rgba(255,246,190,0.98) 0%, rgba(255,205,66,0.92) 52%, rgba(255,140,0,0.45) 80%, rgba(255,120,0,0) 100%);
+    border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  }
+  .log {
+    position: absolute;
+    left: 50%;
+    bottom: 26px;
+    width: 168px; height: 22px;
+    margin-left: -84px;
+    background: linear-gradient(180deg, #6b4423 0%, #4a2c14 55%, #2e1a0a 100%);
+    border-radius: 11px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.7);
+  }
+  .log-a { -webkit-transform: rotate(7deg); transform: rotate(7deg); }
+  .log-b { -webkit-transform: rotate(-8deg); transform: rotate(-8deg); bottom: 40px; }
+  .ground {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 320px; height: 26px;
+    margin-left: -160px;
+    background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255,110,20,0.20) 0%, rgba(0,0,0,0) 70%);
+  }
+  .fire-note {
+    text-align: center;
+    font-size: 13px;
+    color: #8a7c64;
+    margin-bottom: 12px;
+  }
+  /* ===== ボタン ===== */
+  .btn-row { text-align: center; margin: 8px 0; }
+  button {
+    font-family: inherit;
+    font-size: 18px;
+    min-height: 52px;
+    padding: 12px 20px;
+    margin: 4px;
+    border-radius: 12px;
+    border: 1px solid #6e4a22;
+    background: #1c130b;
+    color: #ffd9a0;
+    cursor: pointer;
+  }
+  button:active { background: #33200f; }
+  button:disabled { opacity: 0.45; }
+  .btn-fire {
+    background: linear-gradient(180deg, #7a2d08 0%, #571d04 100%);
+    border-color: #a85a1c;
+    color: #ffe9c4;
+    font-size: 20px;
+    padding: 14px 30px;
+    box-shadow: 0 0 16px rgba(255,110,20,0.35);
+  }
+  .btn-sub { font-size: 16px; padding: 10px 16px; }
+  .toggle-state { color: #ffb36b; font-weight: bold; }
+  /* ===== 語り ===== */
+  .story-box {
+    max-width: 560px;
+    margin: 18px auto 0;
+    background: #0c0a08;
+    border: 1px solid #3a2a16;
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .story-box h2 {
+    font-size: 19px;
+    color: #ffd9a0;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .story-status {
+    font-size: 14px;
+    color: #b09a76;
+    min-height: 20px;
+    margin: 6px 0;
+  }
+  .story-text {
+    font-size: 18px;
+    line-height: 1.9;
+    color: #f2e7cf;
+    white-space: pre-wrap;
+    word-break: break-all;
+    min-height: 60px;
+  }
+  .detail {
+    font-size: 12px;
+    color: #77694f;
+    margin-top: 6px;
+  }
+  .orbit-line {
+    text-align: center;
+    margin-top: 26px;
+    font-size: 16px;
+  }
+  .orbit-line a {
+    color: #a9c2ff;
+    text-decoration: none;
+    display: inline-block;
+    padding: 12px 8px;
+    min-height: 48px;
+    line-height: 24px;
+  }
+  .footer {
+    text-align: center;
+    font-size: 12px;
+    color: #5d5342;
+    margin-top: 18px;
+  }
+</style>
+</head>
+<body>
+
+<a class="portal-link" href="../portal/">← 全サイト一覧へ</a>
+
+<h1>CAMP-6 焚き火</h1>
+<div class="subtitle">火を見ながら、静かに過ごす場所</div>
+<div class="stars">・　✦　・　✦　・</div>
+
+<div class="fire-stage">
+  <div class="ground"></div>
+  <div class="glow-outer" id="glowOuter"></div>
+  <div class="flame-mid" id="flameMid"></div>
+  <div class="flame-inner" id="flameInner"></div>
+  <div class="log log-b"></div>
+  <div class="log log-a"></div>
+</div>
+<div class="fire-note" id="fireNote">パチパチと、火が燃えています</div>
+
+<div class="btn-row">
+  <button class="btn-fire" id="addLogBtn">🪵 薪をくべる</button>
+</div>
+<div class="btn-row">
+  <button class="btn-sub" id="soundBtn">焚き火の音：<span class="toggle-state" id="soundState">OFF</span></button>
+  <button class="btn-sub" id="voiceBtn">ボイス：<span class="toggle-state" id="voiceState">ON</span></button>
+</div>
+
+<div class="story-box">
+  <h2>🔥 静かな語り</h2>
+  <div style="font-size:14px;color:#9a8d76;">焚き火のそばで聞く、小さな独り言のような語りです。1回ごとにAIが新しい語りを届けます。</div>
+  <div class="btn-row">
+    <button id="storyBtn">語りを聞く</button>
+  </div>
+  <div class="story-status" id="storyStatus"></div>
+  <div class="story-text" id="storyText">まだ語りはありません。「語りを聞く」を押してみてください。</div>
+  <div class="detail" id="storyDetail"></div>
+</div>
+
+<div class="orbit-line">
+  <a href="../orbit/">星空の観測は ORBIT-6 へ →</a>
+</div>
+
+<div class="footer">CAMP-6 焚き火 ／ 音は端末の中で合成しています（外部ファイルなし）</div>
+
+<script>
+var voiceOn = true;
+var flareUntil = 0;
+
+/* ============ 焚き火のゆらめき ============ */
+var glowOuter = document.getElementById('glowOuter');
+var flameMid = document.getElementById('flameMid');
+var flameInner = document.getElementById('flameInner');
+var fireNote = document.getElementById('fireNote');
+
+function rnd(min, max) { return min + Math.random() * (max - min); }
+
+function flicker() {
+  var now = new Date().getTime();
+  var flare = now < flareUntil;
+  var boost = flare ? 1.38 : 1.0;
+
+  var gs = rnd(0.94, 1.07) * boost;
+  glowOuter.style.transform = 'scale(' + gs.toFixed(3) + ')';
+  glowOuter.style.opacity = (flare ? rnd(0.95, 1.0) : rnd(0.7, 0.95)).toFixed(2);
+
+  var msx = rnd(0.92, 1.08) * boost;
+  var msy = rnd(0.94, 1.13) * boost;
+  flameMid.style.transform = 'scale(' + msx.toFixed(3) + ',' + msy.toFixed(3) + ') skewX(' + rnd(-2.5, 2.5).toFixed(1) + 'deg)';
+  flameMid.style.opacity = rnd(0.85, 1.0).toFixed(2);
+
+  var isx = rnd(0.88, 1.12) * boost;
+  var isy = rnd(0.9, 1.2) * boost;
+  flameInner.style.transform = 'scale(' + isx.toFixed(3) + ',' + isy.toFixed(3) + ') skewX(' + rnd(-3.5, 3.5).toFixed(1) + 'deg)';
+  flameInner.style.opacity = rnd(0.85, 1.0).toFixed(2);
+}
+setInterval(flicker, 120);
+flicker();
+
+document.getElementById('addLogBtn').onclick = function() {
+  flareUntil = new Date().getTime() + 3000;
+  fireNote.innerHTML = '薪をくべました。火が大きく燃え上がっています';
+  setTimeout(function() {
+    if (new Date().getTime() >= flareUntil) {
+      fireNote.innerHTML = 'パチパチと、火が燃えています';
+    }
+  }, 3100);
+};
+
+/* ============ 音声読み上げ ============ */
+function speak(text) {
+  if (!voiceOn) return;
+  if (!('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ja-JP';
+    u.pitch = 0.85;
+    u.rate = 0.92;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+document.getElementById('voiceBtn').onclick = function() {
+  voiceOn = !voiceOn;
+  document.getElementById('voiceState').innerHTML = voiceOn ? 'ON' : 'OFF';
+  if (!voiceOn && 'speechSynthesis' in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+};
+
+/* ============ 焚き火の音（WebAudio） ============ */
+var audioCtx = null;
+var soundOn = false;
+var rumbleGain = null;
+var rumbleSrc = null;
+var crackleTimer = null;
+
+function makeNoiseBuffer(seconds) {
+  var len = Math.floor(audioCtx.sampleRate * seconds);
+  var buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  var data = buf.getChannelData(0);
+  var i;
+  for (i = 0; i < len; i++) { data[i] = Math.random() * 2 - 1; }
+  return buf;
+}
+
+function scheduleCrackle() {
+  if (!soundOn || !audioCtx) return;
+  /* 短いノイズバースト = パチッという音 */
+  var dur = rnd(0.02, 0.07);
+  var src = audioCtx.createBufferSource();
+  src.buffer = makeNoiseBuffer(dur + 0.02);
+  var bp = audioCtx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = rnd(900, 3200);
+  bp.Q.value = rnd(1.0, 2.5);
+  var g = audioCtx.createGain();
+  var t = audioCtx.currentTime;
+  var peak = rnd(0.05, 0.22);
+  g.gain.setValueAtTime(peak, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  src.connect(bp);
+  bp.connect(g);
+  g.connect(audioCtx.destination);
+  src.start(t);
+  src.stop(t + dur + 0.05);
+  crackleTimer = setTimeout(scheduleCrackle, Math.floor(rnd(50, 300)));
+}
+
+function startFireSound() {
+  try {
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return false;
+      audioCtx = new AC();
+    }
+    if (audioCtx.resume) audioCtx.resume();
+    /* 低い燃焼音：ループするフィルタ済みノイズ */
+    rumbleSrc = audioCtx.createBufferSource();
+    rumbleSrc.buffer = makeNoiseBuffer(2.0);
+    rumbleSrc.loop = true;
+    var lp = audioCtx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 320;
+    rumbleGain = audioCtx.createGain();
+    rumbleGain.gain.value = 0.045;
+    rumbleSrc.connect(lp);
+    lp.connect(rumbleGain);
+    rumbleGain.connect(audioCtx.destination);
+    rumbleSrc.start();
+    soundOn = true;
+    scheduleCrackle();
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function stopFireSound() {
+  soundOn = false;
+  if (crackleTimer) { clearTimeout(crackleTimer); crackleTimer = null; }
+  if (rumbleSrc) {
+    try { rumbleSrc.stop(); } catch (e) {}
+    try { rumbleSrc.disconnect(); } catch (e) {}
+    rumbleSrc = null;
+  }
+  if (rumbleGain) {
+    try { rumbleGain.disconnect(); } catch (e) {}
+    rumbleGain = null;
+  }
+}
+
+document.getElementById('soundBtn').onclick = function() {
+  if (soundOn) {
+    stopFireSound();
+    document.getElementById('soundState').innerHTML = 'OFF';
+  } else {
+    if (startFireSound()) {
+      document.getElementById('soundState').innerHTML = 'ON';
+    } else {
+      document.getElementById('soundState').innerHTML = 'OFF';
+    }
+  }
+};
+
+/* ============ 静かな語り（AI） ============ */
+var storyBusy = false;
+
+function aiErrorMessage(status, bodyText) {
+  if (status === 402 || (bodyText && bodyText.indexOf('Free limit') >= 0)) {
+    return '本日の無料AI回線は上限に達しました。明日の朝9時に回復します';
+  }
+  return 'AI回線が混み合っています';
+}
+
+document.getElementById('storyBtn').onclick = function() {
+  if (storyBusy) return;
+  storyBusy = true;
+  var btn = document.getElementById('storyBtn');
+  var statusEl = document.getElementById('storyStatus');
+  var textEl = document.getElementById('storyText');
+  var detailEl = document.getElementById('storyDetail');
+  btn.disabled = true;
+  detailEl.innerHTML = '';
+  var start = new Date().getTime();
+  statusEl.innerHTML = '考え中… 0秒';
+  var counter = setInterval(function() {
+    var sec = Math.floor((new Date().getTime() - start) / 1000);
+    statusEl.innerHTML = '考え中… ' + sec + '秒';
+  }, 500);
+
+  var prompt = 'あなたは焚き火のそばで静かに語る語り手です。星空、火の温もり、懐かしい記憶、静かな夜の気持ちなどをテーマに、焚き火を囲む一人が聴くための、穏やかで短い独り言のような語りを日本語で書いてください。条件：200文字以内、1〜3文、プレーンテキストのみ（マークダウン・記号装飾・タイトル禁止）、静かで温かい文体。';
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://text.pollinations.ai/', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 90000;
+
+  function finish() {
+    clearInterval(counter);
+    storyBusy = false;
+    btn.disabled = false;
+  }
+
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    finish();
+    var body = xhr.responseText || '';
+    if (xhr.status === 200 && body) {
+      var reply = body.replace(/^\s+|\s+$/g, '');
+      if (reply.indexOf('Free limit') >= 0) {
+        statusEl.innerHTML = '';
+        textEl.innerHTML = '本日の無料AI回線は上限に達しました。明日の朝9時に回復します';
+        return;
+      }
+      statusEl.innerHTML = '焚き火のそばで、どうぞ。';
+      textEl.innerHTML = reply.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      speak(reply);
+    } else {
+      statusEl.innerHTML = '';
+      textEl.innerHTML = aiErrorMessage(xhr.status, body);
+      if (xhr.status && xhr.status !== 402) {
+        detailEl.innerHTML = '詳細：HTTP ' + xhr.status;
+      }
+    }
+  };
+  xhr.ontimeout = function() {
+    finish();
+    statusEl.innerHTML = '';
+    textEl.innerHTML = 'AI回線が時間切れになりました。少し待ってからもう一度押してみてください';
+  };
+  xhr.onerror = function() {
+    finish();
+    statusEl.innerHTML = '';
+    textEl.innerHTML = 'AI回線が混み合っています';
+    detailEl.innerHTML = '詳細：HTTP 0';
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TSUKI-6 月の観測所</title>
+<style>
+* { box-sizing: border-box; }
+body { margin:0; padding:0; background:#0d1230; color:#e8eaf6; font-family: sans-serif; font-size:17px; line-height:1.6; }
+a { color:#9fa8da; }
+.topbar { padding:12px; }
+.topbar a { display:inline-block; min-height:48px; line-height:48px; padding:0 14px; background:#1a2350; border:1px solid #3f51b5; border-radius:10px; text-decoration:none; color:#c5cae9; font-size:16px; }
+header { text-align:center; padding:10px 12px 4px; }
+h1 { margin:0; font-size:28px; color:#ffe082; letter-spacing:2px; }
+.sub { color:#9fa8da; font-size:14px; margin-top:4px; }
+.wrap { max-width:640px; margin:0 auto; padding:12px; }
+.card { background:#151c42; border:1px solid #303a75; border-radius:14px; padding:16px; margin-bottom:16px; }
+.card h2 { margin:0 0 12px; font-size:20px; color:#ffe082; border-bottom:1px solid #303a75; padding-bottom:8px; }
+.moonStage { text-align:center; padding:10px 0 4px; }
+.moonDisc { position:relative; width:180px; height:180px; margin:0 auto; border-radius:50%; background:#f7efcf; overflow:hidden; box-shadow:0 0 34px rgba(255,238,160,0.35); }
+.moonShadow { position:absolute; top:0; width:180px; height:180px; border-radius:50%; background:#141a38; }
+.moonCrater { position:absolute; border-radius:50%; background:rgba(190,175,120,0.35); }
+.phaseName { font-size:26px; color:#fff9c4; margin-top:14px; font-weight:bold; }
+.stats { margin-top:10px; font-size:17px; }
+.stats div { padding:3px 0; }
+.stats b { color:#ffe082; }
+.btn { display:block; width:100%; min-height:52px; font-size:18px; border-radius:12px; border:1px solid #5c6bc0; background:#283593; color:#ffffff; padding:12px; cursor:pointer; }
+.btn:active { background:#3949ab; }
+.toggleRow { text-align:center; margin-bottom:14px; }
+.toggleBtn { display:inline-block; min-height:48px; min-width:150px; font-size:17px; border-radius:24px; border:1px solid #5c6bc0; background:#1a2350; color:#e8eaf6; padding:10px 20px; cursor:pointer; }
+#aiStatus { text-align:center; color:#9fa8da; min-height:26px; margin-top:10px; font-size:15px; }
+#aiText { background:#0d1230; border:1px solid #303a75; border-radius:10px; padding:14px; min-height:70px; font-size:18px; white-space:pre-wrap; }
+.errDetail { font-size:13px; color:#7986cb; text-align:center; margin-top:4px; }
+.dayRow { padding:9px 10px; border-bottom:1px solid #232a58; font-size:16px; overflow:hidden; }
+.dayRow:last-child { border-bottom:none; }
+.dayRow .d { float:left; width:86px; color:#c5cae9; }
+.dayRow .a { float:left; width:86px; }
+.dayRow .p { float:left; color:#fff9c4; }
+.dayRow .mark { float:right; color:#ffe082; font-weight:bold; }
+.today { background:#283593; border-radius:8px; }
+.today .d { color:#ffffff; font-weight:bold; }
+footer { text-align:center; color:#7986cb; font-size:13px; padding:8px 12px 28px; }
+</style>
+</head>
+<body>
+<div class="topbar"><a href="../portal/">← 全サイト一覧へ</a></div>
+<header>
+<h1>🌙 TSUKI-6</h1>
+<div style="font-size:20px; color:#c5cae9;">月の観測所</div>
+<div class="sub">月の満ち欠けを、端末の中で計算しています（通信なし）</div>
+</header>
+<div class="wrap">
+
+<div class="toggleRow">
+<button class="toggleBtn" id="voiceBtn" onclick="toggleVoice()">ボイス：ON</button>
+</div>
+
+<div class="card">
+<h2>今夜の月</h2>
+<div class="moonStage">
+<div class="moonDisc" id="moonDisc">
+<div class="moonCrater" style="left:38px; top:44px; width:30px; height:30px;"></div>
+<div class="moonCrater" style="left:104px; top:96px; width:22px; height:22px;"></div>
+<div class="moonCrater" style="left:70px; top:122px; width:16px; height:16px;"></div>
+<div class="moonShadow" id="moonShadow"></div>
+</div>
+<div class="phaseName" id="phaseName">計算中…</div>
+</div>
+<div class="stats">
+<div>月齢：<b id="moonAge">―</b> 日</div>
+<div>照度：<b id="moonIllum">―</b> ％</div>
+<div>次の満月まで：<b id="toFull">―</b></div>
+<div>次の新月まで：<b id="toNew">―</b></div>
+</div>
+</div>
+
+<div class="card">
+<h2>月の便り</h2>
+<div id="aiText">ボタンを押すと、今夜の月からの便りが届きます。</div>
+<button class="btn" id="aiBtn" style="margin-top:12px;" onclick="askMoon()">🌙 月の便りを受け取る</button>
+<div id="aiStatus"></div>
+<div class="errDetail" id="aiDetail"></div>
+</div>
+
+<div class="card">
+<h2 id="calTitle">1ヶ月の月カレンダー</h2>
+<div id="calList"></div>
+<div style="font-size:14px; color:#9fa8da; margin-top:10px;">◎ ＝ 満月・新月の日（月齢は各日の正午で計算）</div>
+</div>
+
+</div>
+<footer>TSUKI-6 月の観測所 ／ 月齢計算：新月基準 2000-01-06 18:14 UTC・朔望月 29.530588853日</footer>
+
+<script>
+var SYNODIC = 29.530588853;
+var REF = Date.UTC(2000, 0, 6, 18, 14, 0);
+var voiceOn = true;
+var aiBusy = false;
+var aiTimer = null;
+
+function moonAge(dateObj) {
+  var diff = (dateObj.getTime() - REF) / 86400000;
+  var age = diff % SYNODIC;
+  if (age < 0) age += SYNODIC;
+  return age;
+}
+function phaseNameFor(age) {
+  var names = ["新月", "三日月", "上弦の月", "十三夜の月", "満月", "居待月", "下弦の月", "有明月"];
+  var idx = Math.floor(age / SYNODIC * 8);
+  if (idx < 0) idx = 0;
+  if (idx > 7) idx = 7;
+  return names[idx];
+}
+function illumFor(age) {
+  return (1 - Math.cos(2 * Math.PI * age / SYNODIC)) / 2;
+}
+function fmtDays(x) {
+  if (x < 0.5) return "今日";
+  return "あと約 " + Math.ceil(x) + " 日";
+}
+
+function renderTonight() {
+  var now = new Date();
+  var age = moonAge(now);
+  var illum = illumFor(age);
+  document.getElementById("phaseName").innerHTML = phaseNameFor(age);
+  document.getElementById("moonAge").innerHTML = age.toFixed(1);
+  document.getElementById("moonIllum").innerHTML = Math.round(illum * 100);
+  var half = SYNODIC / 2;
+  var toFull = (half - age + SYNODIC) % SYNODIC;
+  var toNew = (SYNODIC - age) % SYNODIC;
+  document.getElementById("toFull").innerHTML = fmtDays(toFull);
+  document.getElementById("toNew").innerHTML = fmtDays(toNew);
+  var f = age / SYNODIC;
+  var shadow = document.getElementById("moonShadow");
+  var off;
+  if (f < 0.5) {
+    off = -Math.round(f * 2 * 180);
+  } else {
+    off = Math.round(360 * (1 - f));
+  }
+  shadow.style.left = off + "px";
+}
+
+function renderCalendar() {
+  var now = new Date();
+  var y = now.getFullYear();
+  var m = now.getMonth();
+  var todayD = now.getDate();
+  document.getElementById("calTitle").innerHTML = y + "年" + (m + 1) + "月の月カレンダー";
+  var daysInMonth = new Date(y, m + 1, 0).getDate();
+  var html = "";
+  var i, d, noon, age, startAge, endAge, mark, cls;
+  var half = SYNODIC / 2;
+  var week = ["日", "月", "火", "水", "木", "金", "土"];
+  for (i = 1; i <= daysInMonth; i++) {
+    d = new Date(y, m, i);
+    noon = new Date(y, m, i, 12, 0, 0);
+    age = moonAge(noon);
+    startAge = moonAge(new Date(y, m, i, 0, 0, 0));
+    endAge = startAge + 1;
+    mark = "";
+    if (startAge <= half && endAge >= half) mark = "◎満月";
+    if (endAge >= SYNODIC) mark = "◎新月";
+    cls = (i === todayD) ? "dayRow today" : "dayRow";
+    html += '<div class="' + cls + '"><span class="d">' + (m + 1) + '/' + i + '（' + week[d.getDay()] + '）</span>' +
+      '<span class="a">月齢 ' + age.toFixed(1) + '</span>' +
+      '<span class="p">' + phaseNameFor(age) + '</span>' +
+      '<span class="mark">' + mark + '</span></div>';
+  }
+  document.getElementById("calList").innerHTML = html;
+}
+
+function toggleVoice() {
+  voiceOn = !voiceOn;
+  document.getElementById("voiceBtn").innerHTML = voiceOn ? "ボイス：ON" : "ボイス：OFF";
+  if (!voiceOn && window.speechSynthesis) speechSynthesis.cancel();
+}
+function speak(text) {
+  if (!voiceOn) return;
+  if (!window.speechSynthesis) return;
+  try {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 0.9;
+    u.rate = 0.95;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+function askMoon() {
+  if (aiBusy) return;
+  aiBusy = true;
+  var btn = document.getElementById("aiBtn");
+  var status = document.getElementById("aiStatus");
+  var detail = document.getElementById("aiDetail");
+  var out = document.getElementById("aiText");
+  btn.disabled = true;
+  detail.innerHTML = "";
+  out.innerHTML = "月に便りを送っています…";
+  var started = new Date().getTime();
+  status.innerHTML = "考え中… 0秒";
+  aiTimer = setInterval(function () {
+    var s = Math.floor((new Date().getTime() - started) / 1000);
+    status.innerHTML = "考え中… " + s + "秒";
+  }, 500);
+
+  var now = new Date();
+  var age = moonAge(now);
+  var pname = phaseNameFor(age);
+  var prompt = "あなたは月の住人で、月で暮らすウサギの語り手です。今夜の月は「" + pname + "」（月齢" + age.toFixed(1) + "）です。今夜のその月の様子に触れながら、地上の観測者へ短い便りをください。150文字以内、本文のみ、プレーンテキストで。マークダウンや記号の装飾は使わないでください。";
+
+  function finish() {
+    aiBusy = false;
+    btn.disabled = false;
+    if (aiTimer) { clearInterval(aiTimer); aiTimer = null; }
+    status.innerHTML = "";
+  }
+  function fail(msg, det) {
+    finish();
+    out.innerHTML = msg;
+    detail.innerHTML = det ? ("詳細：HTTP " + det) : "";
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) return;
+    if (xhr.status === 200) {
+      var t = (xhr.responseText || "").replace(/^\s+|\s+$/g, "");
+      if (!t) { fail("AI回線が混み合っています", 200); return; }
+      if (t.indexOf("Free limit") >= 0) { fail("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", ""); return; }
+      finish();
+      out.innerHTML = t.replace(/</g, "&lt;");
+      speak(t);
+    } else if (xhr.status === 402) {
+      fail("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+    } else {
+      var body = xhr.responseText || "";
+      if (body.indexOf("Free limit") >= 0) {
+        fail("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+      } else {
+        fail("AI回線が混み合っています", xhr.status);
+      }
+    }
+  };
+  xhr.ontimeout = function () {
+    fail("AI回線が混み合っています（時間切れ）", "");
+  };
+  xhr.onerror = function () {
+    fail("AI回線が混み合っています", 0);
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+}
+
+renderTonight();
+renderCalendar();
+</script>
+</body>
+</html>
