@@ -89,6 +89,7 @@ var voiceOn = true;
 var history = [];
 var sending = false;
 var timerId = null;
+var aiRetrying = false;
 
 var DIARY = [
   "チェックインしたのは午前0時を回ってから。ロビーには誰もいなくて、フロントの方が静かに微笑んで鍵をくれた。部屋の窓から見える夜景が、疲れた心をほどいてくれる。",
@@ -166,7 +167,7 @@ function startCounter() {
   setStatus("考え中… 0秒");
   timerId = setInterval(function () {
     sec++;
-    setStatus("考え中… " + sec + "秒");
+    setStatus((aiRetrying ? "再試行中… " : "考え中… ") + sec + "秒");
   }, 1000);
 }
 function stopCounter() {
@@ -198,49 +199,70 @@ function sendChat() {
   $("sendBtn").disabled = true;
   startCounter();
 
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://text.pollinations.ai/", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) { return; }
-    stopCounter();
-    sending = false;
-    $("sendBtn").disabled = false;
-    if (xhr.status === 200) {
-      var reply = (xhr.responseText || "").replace(/^\s+|\s+$/g, "");
-      if (reply && reply.indexOf("Free limit") === -1) {
-        reply = reply.replace(/\n+/g, " ");
-        if (reply.length > 300) { reply = reply.substring(0, 300); }
-        setStatus("");
-        addMsg("コンシェルジュ", reply, "concierge");
-        history.push({ role: "assistant", text: reply });
-        speak(reply);
-      } else if (reply && reply.indexOf("Free limit") !== -1) {
+  var body = JSON.stringify({ messages: [{ role: "user", content: buildPrompt(text) }], model: "openai-fast" });
+  aiRetrying = false;
+  var retried = false;
+  function sendReq() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://text.pollinations.ai/", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = retried ? 45000 : 30000;
+    var settled = false;
+    function doneReq() {
+      stopCounter();
+      sending = false;
+      $("sendBtn").disabled = false;
+    }
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4 || settled) { return; }
+      var respBody = xhr.responseText || "";
+      if ((xhr.status === 0 || (xhr.status >= 500 && xhr.status < 600)) && respBody.indexOf("Free limit") === -1 && !retried) {
+        settled = true;
+        retried = true;
+        aiRetrying = true;
+        setStatus("再試行中…");
+        sendReq();
+        return;
+      }
+      settled = true;
+      doneReq();
+      if (xhr.status === 200) {
+        var reply = (xhr.responseText || "").replace(/^\s+|\s+$/g, "");
+        if (reply && reply.indexOf("Free limit") === -1) {
+          reply = reply.replace(/\n+/g, " ");
+          if (reply.length > 300) { reply = reply.substring(0, 300); }
+          setStatus("");
+          addMsg("コンシェルジュ", reply, "concierge");
+          history.push({ role: "assistant", text: reply });
+          speak(reply);
+        } else if (reply && reply.indexOf("Free limit") !== -1) {
+          setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
+        } else {
+          setStatus("AI回線が混み合っています <span class=\"detail\">詳細：HTTP " + xhr.status + "</span>");
+        }
+      } else if (xhr.status === 402) {
         setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
       } else {
         setStatus("AI回線が混み合っています <span class=\"detail\">詳細：HTTP " + xhr.status + "</span>");
       }
-    } else if (xhr.status === 402) {
-      setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
-    } else {
-      setStatus("AI回線が混み合っています <span class=\"detail\">詳細：HTTP " + xhr.status + "</span>");
-    }
-  };
-  xhr.ontimeout = function () {
-    stopCounter();
-    sending = false;
-    $("sendBtn").disabled = false;
-    setStatus("AI回線の応答が時間切れになりました。少し待ってからもう一度どうぞ");
-  };
-  xhr.onerror = function () {
-    stopCounter();
-    sending = false;
-    $("sendBtn").disabled = false;
-    setStatus("AI回線が混み合っています <span class=\"detail\">詳細：HTTP 0</span>");
-  };
-  var body = JSON.stringify({ messages: [{ role: "user", content: buildPrompt(text) }], model: "openai-fast" });
-  xhr.send(body);
+    };
+    xhr.ontimeout = function () {
+      if (settled) { return; }
+      settled = true;
+      if (!retried) { retried = true; aiRetrying = true; setStatus("再試行中…"); sendReq(); return; }
+      doneReq();
+      setStatus("AI回線の応答が時間切れになりました。少し待ってからもう一度どうぞ");
+    };
+    xhr.onerror = function () {
+      if (settled) { return; }
+      settled = true;
+      if (!retried) { retried = true; aiRetrying = true; setStatus("再試行中…"); sendReq(); return; }
+      doneReq();
+      setStatus("AI回線が混み合っています <span class=\"detail\">詳細：HTTP 0</span>");
+    };
+    xhr.send(body);
+  }
+  sendReq();
 }
 
 var diaryIdx = 0;

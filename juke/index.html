@@ -288,6 +288,7 @@ var selectedGenre = "昭和歌謡";
 var voiceOn = true;
 var busy = false;
 var timerId = null;
+var aiRetrying = false;
 var history = [];
 
 var genreWrap = document.getElementById("genreWrap");
@@ -375,7 +376,7 @@ function startTimer() {
   statusEl.innerHTML = "選曲中… 0秒";
   timerId = setInterval(function () {
     sec = sec + 1;
-    statusEl.innerHTML = "選曲中… " + sec + "秒";
+    statusEl.innerHTML = (aiRetrying ? "再試行中… " : "選曲中… ") + sec + "秒";
   }, 1000);
 }
 
@@ -446,69 +447,109 @@ function playSong() {
   playBtn.disabled = true;
   recordCard.style.display = "none";
   spotifyBtn.style.display = "none";
+  aiRetrying = false;
   startTimer();
 
   var prompt = "あなたは昭和のジュークボックスのDJです。「" + selectedGenre + "」のジャンルで、架空の曲を1曲考えて紹介してください。実在の曲名・歌手名は使わないでください。必ず次の形式で書いてください。1行目「曲名：（架空の曲名）」2行目「歌手：（架空の歌手名）（架空）」そのあとに、温かみのあるDJトークを150文字以内で書いてください。余計な説明や見出しは書かないでください。";
-
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://text.pollinations.ai/", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
-
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) {
-      return;
-    }
-    stopTimer();
-    busy = false;
-    playBtn.disabled = false;
-    var status = xhr.status;
-    var text = xhr.responseText || "";
-    if (status === 402 || text.indexOf("Free limit") !== -1) {
-      showError("quota", status);
-      return;
-    }
-    if (status !== 200 || text === "") {
-      showError("busy", status);
-      return;
-    }
-    var parsed = parseReply(text);
-    if (!parsed.title) {
-      parsed.title = "（タイトル不明）";
-    }
-    if (!parsed.artist) {
-      parsed.artist = "（歌手不明）（架空）";
-    }
-    statusEl.innerHTML = "♪ かかっています ♪";
-    songTitleEl.innerHTML = escapeHtml("曲名：" + parsed.title);
-    songArtistEl.innerHTML = escapeHtml("歌手：" + parsed.artist);
-    songGenreEl.innerHTML = escapeHtml("ジャンル：" + selectedGenre);
-    djTalkEl.innerHTML = escapeHtml(parsed.talk);
-    recordCard.style.display = "block";
-    spotifyBtn.style.display = "block";
-    addHistory(parsed.title, selectedGenre);
-    speak(parsed.talk);
-  };
-
-  xhr.ontimeout = function () {
-    stopTimer();
-    busy = false;
-    playBtn.disabled = false;
-    showError("timeout", 0);
-  };
-
-  xhr.onerror = function () {
-    stopTimer();
-    busy = false;
-    playBtn.disabled = false;
-    showError("busy", xhr.status || 0);
-  };
 
   var body = JSON.stringify({
     messages: [{ role: "user", content: prompt }],
     model: "openai-fast"
   });
-  xhr.send(body);
+  var retried = false;
+  function sendReq() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://text.pollinations.ai/", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = retried ? 45000 : 30000;
+    var settled = false;
+
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) {
+        return;
+      }
+      if (settled) {
+        return;
+      }
+      var status = xhr.status;
+      var text = xhr.responseText || "";
+      if ((status === 0 || (status >= 500 && status < 600)) && text.indexOf("Free limit") === -1 && !retried) {
+        settled = true;
+        retried = true;
+        aiRetrying = true;
+        statusEl.innerHTML = "再試行中…";
+        sendReq();
+        return;
+      }
+      settled = true;
+      stopTimer();
+      busy = false;
+      playBtn.disabled = false;
+      if (status === 402 || text.indexOf("Free limit") !== -1) {
+        showError("quota", status);
+        return;
+      }
+      if (status !== 200 || text === "") {
+        showError("busy", status);
+        return;
+      }
+      var parsed = parseReply(text);
+      if (!parsed.title) {
+        parsed.title = "（タイトル不明）";
+      }
+      if (!parsed.artist) {
+        parsed.artist = "（歌手不明）（架空）";
+      }
+      statusEl.innerHTML = "♪ かかっています ♪";
+      songTitleEl.innerHTML = escapeHtml("曲名：" + parsed.title);
+      songArtistEl.innerHTML = escapeHtml("歌手：" + parsed.artist);
+      songGenreEl.innerHTML = escapeHtml("ジャンル：" + selectedGenre);
+      djTalkEl.innerHTML = escapeHtml(parsed.talk);
+      recordCard.style.display = "block";
+      spotifyBtn.style.display = "block";
+      addHistory(parsed.title, selectedGenre);
+      speak(parsed.talk);
+    };
+
+    xhr.ontimeout = function () {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      if (!retried) {
+        retried = true;
+        aiRetrying = true;
+        statusEl.innerHTML = "再試行中…";
+        sendReq();
+        return;
+      }
+      stopTimer();
+      busy = false;
+      playBtn.disabled = false;
+      showError("timeout", 0);
+    };
+
+    xhr.onerror = function () {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      if (!retried) {
+        retried = true;
+        aiRetrying = true;
+        statusEl.innerHTML = "再試行中…";
+        sendReq();
+        return;
+      }
+      stopTimer();
+      busy = false;
+      playBtn.disabled = false;
+      showError("busy", xhr.status || 0);
+    };
+
+    xhr.send(body);
+  }
+  sendReq();
 }
 
 playBtn.onclick = playSong;

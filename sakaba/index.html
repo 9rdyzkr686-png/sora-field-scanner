@@ -233,54 +233,81 @@ function parsePair(text) {
   return null;
 }
 
+function thinkLabel(t) {
+  var th = $("thinking");
+  if (th && th.firstChild && th.firstChild.nodeType === 3) { th.firstChild.nodeValue = t; }
+}
+
 function askAI(userText, showText) {
   if (busy) { return; }
   if (showText) { addMsg("user", "あなた", userText); }
   setBusy(true);
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://text.pollinations.ai/", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) { return; }
-    setBusy(false);
-    var status = xhr.status;
-    var body = xhr.responseText || "";
-    if (status === 402 || body.indexOf("Free limit") >= 0) {
-      addSys("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
-      return;
-    }
-    if (status !== 200) {
-      addSys("AI回線が混み合っています", "詳細：HTTP " + status);
-      return;
-    }
-    var pair = parsePair(body);
-    var mText, tText;
-    if (pair) {
-      mText = pair.master; tText = pair.taro;
-    } else {
-      mText = body.replace(/^\s+|\s+$/g, ""); tText = null;
-    }
-    if (!mText) {
-      addSys("AI回線が混み合っています", "詳細：HTTP " + status);
-      return;
-    }
-    addMsg("master", "マスター", mText);
-    if (tText) { addMsg("taro", "タロさん", tText); }
-    history.push({ user: userText, master: mText, taro: tText || "" });
-    if (history.length > 10) { history.shift(); }
-    speak(mText);
-  };
-  xhr.ontimeout = function () {
-    setBusy(false);
-    addSys("AI回線の応答が時間切れになりました。少し置いてもう一度どうぞ");
-  };
-  xhr.onerror = function () {
-    setBusy(false);
-    addSys("AI回線が混み合っています", "詳細：HTTP 0");
-  };
+  thinkLabel("考え中… ");
   var payload = { messages: [{ role: "user", content: buildPrompt(userText) }], model: "openai-fast" };
-  xhr.send(JSON.stringify(payload));
+  var retried = false;
+  function sendAttempt() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://text.pollinations.ai/", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = retried ? 45000 : 30000;
+    var settled = false;
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4 || settled) { return; }
+      var status = xhr.status;
+      var body = xhr.responseText || "";
+      if (status === 402 || body.indexOf("Free limit") >= 0) {
+        settled = true;
+        setBusy(false);
+        addSys("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
+        return;
+      }
+      if ((status === 0 || (status >= 500 && status < 600)) && !retried) {
+        settled = true;
+        retried = true;
+        thinkLabel("再試行中… ");
+        sendAttempt();
+        return;
+      }
+      settled = true;
+      setBusy(false);
+      if (status !== 200) {
+        addSys("AI回線が混み合っています", "詳細：HTTP " + status);
+        return;
+      }
+      var pair = parsePair(body);
+      var mText, tText;
+      if (pair) {
+        mText = pair.master; tText = pair.taro;
+      } else {
+        mText = body.replace(/^\s+|\s+$/g, ""); tText = null;
+      }
+      if (!mText) {
+        addSys("AI回線が混み合っています", "詳細：HTTP " + status);
+        return;
+      }
+      addMsg("master", "マスター", mText);
+      if (tText) { addMsg("taro", "タロさん", tText); }
+      history.push({ user: userText, master: mText, taro: tText || "" });
+      if (history.length > 10) { history.shift(); }
+      speak(mText);
+    };
+    xhr.ontimeout = function () {
+      if (settled) { return; }
+      settled = true;
+      if (!retried) { retried = true; thinkLabel("再試行中… "); sendAttempt(); return; }
+      setBusy(false);
+      addSys("AI回線の応答が時間切れになりました。少し置いてもう一度どうぞ");
+    };
+    xhr.onerror = function () {
+      if (settled) { return; }
+      settled = true;
+      if (!retried) { retried = true; thinkLabel("再試行中… "); sendAttempt(); return; }
+      setBusy(false);
+      addSys("AI回線が混み合っています", "詳細：HTTP 0");
+    };
+    xhr.send(JSON.stringify(payload));
+  }
+  sendAttempt();
 }
 
 function tapTopic(key) {

@@ -271,6 +271,70 @@ function showError(btn, msg, detail) {
   }
 }
 
+/* AI回線v2：1回目30秒、時間切れ/HTTP 0/5xxなら45秒でもう一度だけ再試行。402・上限は即エラー */
+function sendAI(prompt, onRetry, okFn, errFn) {
+  var payload = JSON.stringify({
+    messages: [{ role: 'user', content: prompt }],
+    model: 'openai-fast'
+  });
+  var attempt = 0;
+  function send() {
+    attempt++;
+    var settled = false;
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://text.pollinations.ai/', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = (attempt === 1) ? 30000 : 45000;
+    function fail(msg, detail) {
+      if (settled) { return; }
+      settled = true;
+      errFn(msg, detail);
+    }
+    function retryOr(msg, detail) {
+      if (settled) { return; }
+      if (attempt === 1) {
+        settled = true;
+        if (onRetry) { onRetry(); }
+        send();
+        return;
+      }
+      fail(msg, detail);
+    }
+    xhr.onload = function() {
+      if (settled) { return; }
+      var body = xhr.responseText || '';
+      if (xhr.status === 402 || body.indexOf('Free limit') !== -1) {
+        fail('本日の無料AI回線は上限に達しました。明日の朝9時に回復します', '');
+        return;
+      }
+      if (xhr.status >= 500 && xhr.status <= 599) {
+        retryOr('AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
+        return;
+      }
+      if (xhr.status !== 200) {
+        fail('AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
+        return;
+      }
+      var text = body.replace(/^\s+|\s+$/g, '');
+      if (!text) {
+        fail('AI回線が混み合っています', '詳細：HTTP 200（空の返事）');
+        return;
+      }
+      if (text.length > 500) { text = text.substring(0, 500); }
+      settled = true;
+      okFn(text);
+    };
+    xhr.onerror = function() {
+      retryOr('AI回線が混み合っています', '詳細：HTTP 0');
+    };
+    xhr.ontimeout = function() {
+      retryOr('AIの返事が時間切れになりました（75秒）。もう一度押してみてください', '');
+    };
+    xhr.send(payload);
+  }
+  send();
+}
+
 function dispense(idx) {
   if (busy) { return; }
   busy = true;
@@ -280,34 +344,15 @@ function dispense(idx) {
   btn.innerHTML = '…';
 
   var sec = 0;
+  var retrying = false;
   setSlot('ガシャン… 0秒', 'waiting');
   stopTimer();
   timerId = setInterval(function() {
     sec++;
-    setSlot('ガシャン… ' + sec + '秒', 'waiting');
+    setSlot('ガシャン… ' + sec + '秒' + (retrying ? '（再試行中）' : ''), 'waiting');
   }, 1000);
 
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://text.pollinations.ai/', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.timeout = 90000;
-
-  xhr.onload = function() {
-    var body = xhr.responseText || '';
-    if (xhr.status === 402 || body.indexOf('Free limit') !== -1) {
-      showError(btn, '本日の無料AI回線は上限に達しました。明日の朝9時に回復します', '');
-      return;
-    }
-    if (xhr.status !== 200) {
-      showError(btn, 'AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
-      return;
-    }
-    var text = body.replace(/^\s+|\s+$/g, '');
-    if (!text) {
-      showError(btn, 'AI回線が混み合っています', '詳細：HTTP 200（空の返事）');
-      return;
-    }
-    if (text.length > 500) { text = text.substring(0, 500); }
+  sendAI(ITEMS[idx].prompt, function() { retrying = true; }, function(text) {
     finish(btn);
     setSlot(text, '');
     dropAnimate();
@@ -315,19 +360,9 @@ function dispense(idx) {
     count++;
     el('countNum').innerHTML = String(count);
     speak(text);
-  };
-  xhr.onerror = function() {
-    showError(btn, 'AI回線が混み合っています', '詳細：HTTP 0');
-  };
-  xhr.ontimeout = function() {
-    showError(btn, 'AIの返事が時間切れになりました（90秒）。もう一度押してみてください', '');
-  };
-
-  var payload = JSON.stringify({
-    messages: [{ role: 'user', content: ITEMS[idx].prompt }],
-    model: 'openai-fast'
+  }, function(msg, detail) {
+    showError(btn, msg, detail);
   });
-  xhr.send(payload);
 }
 
 function seasonInfo() {
@@ -367,53 +402,24 @@ function callClerk() {
   btn.innerHTML = '…';
 
   var sec = 0;
+  var retrying = false;
   setSlot('店員さんを呼んでいます… 0秒', 'waiting');
   stopTimer();
   timerId = setInterval(function() {
     sec++;
-    setSlot('店員さんを呼んでいます… ' + sec + '秒', 'waiting');
+    setSlot('店員さんを呼んでいます… ' + sec + '秒' + (retrying ? '（再試行中）' : ''), 'waiting');
   }, 1000);
 
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://text.pollinations.ai/', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.timeout = 90000;
-
-  xhr.onload = function() {
-    var body = xhr.responseText || '';
-    if (xhr.status === 402 || body.indexOf('Free limit') !== -1) {
-      showError(btn, '本日の無料AI回線は上限に達しました。明日の朝9時に回復します', '');
-      return;
-    }
-    if (xhr.status !== 200) {
-      showError(btn, 'AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
-      return;
-    }
-    var text = body.replace(/^\s+|\s+$/g, '');
-    if (!text) {
-      showError(btn, 'AI回線が混み合っています', '詳細：HTTP 200（空の返事）');
-      return;
-    }
-    if (text.length > 500) { text = text.substring(0, 500); }
+  sendAI('あなたは深夜の自動販売機の店員さんです。売り切れで買えなかったお客さんに、やさしくおわびして、この自販機の別のおすすめ（あたたかい短編・俳句・一言アドバイス・占い・ダックス便りのどれか）をすすめてください。日本語で120文字以内、本文だけを書いてください。マークダウンは使わないでください。', function() { retrying = true; }, function(text) {
     finish(btn);
     restock();
     setSlot(text + '\n（店員さんが「' + NAMES[soldOutIdx] + '」を補充してくれました！）', '');
     dropAnimate();
     clunk();
     speak(text);
-  };
-  xhr.onerror = function() {
-    showError(btn, 'AI回線が混み合っています', '詳細：HTTP 0');
-  };
-  xhr.ontimeout = function() {
-    showError(btn, 'AIの返事が時間切れになりました（90秒）。もう一度押してみてください', '');
-  };
-
-  var payload = JSON.stringify({
-    messages: [{ role: 'user', content: 'あなたは深夜の自動販売機の店員さんです。売り切れで買えなかったお客さんに、やさしくおわびして、この自販機の別のおすすめ（あたたかい短編・俳句・一言アドバイス・占い・ダックス便りのどれか）をすすめてください。日本語で120文字以内、本文だけを書いてください。マークダウンは使わないでください。' }],
-    model: 'openai-fast'
+  }, function(msg, detail) {
+    showError(btn, msg, detail);
   });
-  xhr.send(payload);
 }
 
 function doExchange() {

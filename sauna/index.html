@@ -155,9 +155,10 @@ function callAufguss() {
   label.style.display = "block";
   bar.style.width = "0%";
   var start = new Date().getTime();
+  var retrying = false;
   var tick = setInterval(function() {
     var sec = Math.floor((new Date().getTime() - start) / 1000);
-    setStatus("熱波を準備中… " + sec + "秒");
+    setStatus((retrying ? "再試行中… " : "熱波を準備中… ") + sec + "秒");
     var pct = sec * 4;
     if (pct > 92) { pct = 92; }
     bar.style.width = pct + "%";
@@ -175,46 +176,65 @@ function callAufguss() {
     aiBusy = false;
   }
 
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://text.pollinations.ai/", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState !== 4) { return; }
-    var body = xhr.responseText || "";
-    if (xhr.status === 200 && body.replace(/\s/g, "") !== "") {
-      if (body.indexOf("Free limit") >= 0) {
+  function sendReq() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://text.pollinations.ai/", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = retrying ? 45000 : 30000;
+    var settled = false;
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4) { return; }
+      if (settled) { return; }
+      var body = xhr.responseText || "";
+      if ((xhr.status === 0 || (xhr.status >= 500 && xhr.status < 600)) && body.indexOf("Free limit") < 0 && !retrying) {
+        settled = true;
+        retrying = true;
+        setStatus("再試行中…");
+        sendReq();
+        return;
+      }
+      settled = true;
+      if (xhr.status === 200 && body.replace(/\s/g, "") !== "") {
+        if (body.indexOf("Free limit") >= 0) {
+          document.getElementById("aiText").innerHTML = "熱波師は今日はもう声がかれてしまいました。";
+          setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
+        } else {
+          var t = body.replace(/^\s+|\s+$/g, "");
+          if (t.length > 200) { t = t.substring(0, 200); }
+          document.getElementById("aiText").innerHTML = escapeHtml(t);
+          setStatus("");
+          speak(t);
+        }
+      } else if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
         document.getElementById("aiText").innerHTML = "熱波師は今日はもう声がかれてしまいました。";
         setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
       } else {
-        var t = body.replace(/^\s+|\s+$/g, "");
-        if (t.length > 200) { t = t.substring(0, 200); }
-        document.getElementById("aiText").innerHTML = escapeHtml(t);
-        setStatus("");
-        speak(t);
+        setStatus("AI回線が混み合っています <span class=\"errDetail\">詳細：HTTP " + xhr.status + "</span>");
       }
-    } else if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
-      document.getElementById("aiText").innerHTML = "熱波師は今日はもう声がかれてしまいました。";
-      setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
-    } else {
-      setStatus("AI回線が混み合っています <span class=\"errDetail\">詳細：HTTP " + xhr.status + "</span>");
+      finish();
+    };
+    xhr.ontimeout = function() {
+      if (settled) { return; }
+      settled = true;
+      if (!retrying) { retrying = true; setStatus("再試行中…"); sendReq(); return; }
+      setStatus("AI回線の時間切れです。少し待ってからもう一度どうぞ");
+      finish();
+    };
+    xhr.onerror = function() {
+      if (settled) { return; }
+      settled = true;
+      if (!retrying) { retrying = true; setStatus("再試行中…"); sendReq(); return; }
+      setStatus("AI回線が混み合っています <span class=\"errDetail\">詳細：HTTP 0</span>");
+      finish();
+    };
+    try {
+      xhr.send(JSON.stringify({ messages: [{ role: "user", content: PROMPT }], model: "openai-fast" }));
+    } catch (e) {
+      setStatus("AI回線が混み合っています");
+      finish();
     }
-    finish();
-  };
-  xhr.ontimeout = function() {
-    setStatus("AI回線の時間切れです。少し待ってからもう一度どうぞ");
-    finish();
-  };
-  xhr.onerror = function() {
-    setStatus("AI回線が混み合っています <span class=\"errDetail\">詳細：HTTP 0</span>");
-    finish();
-  };
-  try {
-    xhr.send(JSON.stringify({ messages: [{ role: "user", content: PROMPT }], model: "openai-fast" }));
-  } catch (e) {
-    setStatus("AI回線が混み合っています");
-    finish();
   }
+  sendReq();
 }
 
 function escapeHtml(s) {

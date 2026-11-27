@@ -319,12 +319,14 @@ function render() {
   el("btnClear").disabled = busy;
 }
 
+var aiRetrying = false;
 function startTimer() {
   startTime = new Date().getTime();
+  aiRetrying = false;
   setStatus("書いています… 0秒");
   timerId = setInterval(function () {
     var sec = Math.floor((new Date().getTime() - startTime) / 1000);
-    setStatus("書いています… " + sec + "秒");
+    setStatus("書いています… " + sec + "秒" + (aiRetrying ? "（再試行中）" : ""));
   }, 500);
 }
 
@@ -353,31 +355,56 @@ function callAI(prompt, onOk) {
   busy = true;
   render();
   startTimer();
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://text.pollinations.ai/", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) { return; }
-    if (xhr.status === 200) {
-      var text = "";
-      try { text = xhr.responseText || ""; } catch (e) {}
-      if (text.indexOf("Free limit") >= 0) { aiError(xhr, false); return; }
-      text = text.replace(/^\s+/, "").replace(/\s+$/, "");
-      if (!text) { aiError(xhr, false); return; }
-      stopTimer();
-      busy = false;
-      setStatus("");
-      onOk(text);
-      render();
-    } else {
-      aiError(xhr, false);
-    }
-  };
-  xhr.ontimeout = function () { aiError(xhr, true); };
-  xhr.onerror = function () { aiError(xhr, false); };
   var body = JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" });
-  xhr.send(body);
+  var retried = false;
+  var attempt = 0;
+  function sendHon() {
+    attempt++;
+    var my = attempt;
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://text.pollinations.ai/", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = retried ? 45000 : 30000;
+    xhr.onreadystatechange = function () {
+      if (my !== attempt) { return; }
+      if (xhr.readyState !== 4) { return; }
+      if (xhr.status === 200) {
+        var text = "";
+        try { text = xhr.responseText || ""; } catch (e) {}
+        if (text.indexOf("Free limit") >= 0) { aiError(xhr, false); return; }
+        text = text.replace(/^\s+/, "").replace(/\s+$/, "");
+        if (!text) { aiError(xhr, false); return; }
+        stopTimer();
+        busy = false;
+        setStatus("");
+        onOk(text);
+        render();
+      } else {
+        var b = "";
+        try { b = xhr.responseText || ""; } catch (e) {}
+        var isLimit = (xhr.status === 402 || b.indexOf("Free limit") >= 0);
+        if (!isLimit && !retried && (xhr.status === 0 || xhr.status >= 500)) {
+          retried = true;
+          aiRetrying = true;
+          sendHon();
+          return;
+        }
+        aiError(xhr, false);
+      }
+    };
+    xhr.ontimeout = function () {
+      if (my !== attempt) { return; }
+      if (!retried) { retried = true; aiRetrying = true; sendHon(); return; }
+      aiError(xhr, true);
+    };
+    xhr.onerror = function () {
+      if (my !== attempt) { return; }
+      if (!retried) { retried = true; aiRetrying = true; sendHon(); return; }
+      aiError(xhr, false);
+    };
+    xhr.send(body);
+  }
+  sendHon();
 }
 
 function startStory() {

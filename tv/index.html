@@ -279,6 +279,7 @@ var curCh = 0;
 var lastText = "";
 var secTimer = null;
 var secCount = 0;
+var aiRetrying = false;
 
 function el(id) { return document.getElementById(id); }
 
@@ -291,7 +292,7 @@ function startSec() {
   if (secTimer) { clearInterval(secTimer); }
   secTimer = setInterval(function () {
     secCount++;
-    setStatus("受信中… " + secCount + "秒");
+    setStatus("受信中… " + (aiRetrying ? "（再試行中）" : "") + secCount + "秒");
   }, 1000);
 }
 function stopSec() {
@@ -341,27 +342,54 @@ function speak(text) {
 /* ===== AI通信 ===== */
 /* 低レベル通信：cb(kind, text, httpStatus) kind="ok"/"quota"/"fail"/"timeout" */
 function aiRequest(prompt, cb) {
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://text.pollinations.ai/", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) { return; }
-    var body = xhr.responseText || "";
-    if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
-      cb("quota", "", xhr.status);
-      return;
-    }
-    if (xhr.status === 200 && body) {
-      var t = body.replace(/^\s+|\s+$/g, "");
-      if (t) { cb("ok", t, 200); return; }
-    }
-    cb("fail", "", xhr.status);
-  };
-  xhr.ontimeout = function () { cb("timeout", "", 0); };
-  xhr.onerror = function () { cb("fail", "", 0); };
   var payload = JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" });
-  xhr.send(payload);
+  var attempt = 0;
+  function send() {
+    attempt++;
+    if (attempt === 1) { aiRetrying = false; }
+    var settled = false;
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://text.pollinations.ai/", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = (attempt === 1) ? 30000 : 45000;
+    function done(kind, text, st) {
+      if (settled) { return; }
+      settled = true;
+      aiRetrying = false;
+      cb(kind, text, st);
+    }
+    function retryOr(kind, st) {
+      if (settled) { return; }
+      if (attempt === 1) {
+        settled = true;
+        aiRetrying = true;
+        send();
+        return;
+      }
+      done(kind, "", st);
+    }
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4 || settled) { return; }
+      var body = xhr.responseText || "";
+      if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+        done("quota", "", xhr.status);
+        return;
+      }
+      if (xhr.status === 200 && body) {
+        var tx = body.replace(/^\s+|\s+$/g, "");
+        if (tx) { done("ok", tx, 200); return; }
+      }
+      if (xhr.status === 0 || (xhr.status >= 500 && xhr.status <= 599)) {
+        retryOr("fail", xhr.status);
+        return;
+      }
+      done("fail", "", xhr.status);
+    };
+    xhr.ontimeout = function () { retryOr("timeout", 0); };
+    xhr.onerror = function () { retryOr("fail", 0); };
+    xhr.send(payload);
+  }
+  send();
 }
 
 function aiCall(prompt, onOk) {
@@ -386,7 +414,7 @@ function aiCall(prompt, onOk) {
     }
     setStatus("");
     if (kind === "timeout") {
-      el("progText").textContent = "AIの返事が時間切れになりました（90秒）。もう一度チャンネルを押してみてください。";
+      el("progText").textContent = "AIの返事が時間切れになりました（75秒）。もう一度チャンネルを押してみてください。";
       setDetail("");
     } else {
       el("progText").textContent = "AI回線が混み合っています。少し待ってから、もう一度チャンネルを押してみてください。";

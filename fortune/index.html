@@ -145,17 +145,33 @@ var btn = btnId? document.getElementById(btnId): null;
 if (detailEl) { detailEl.innerHTML = '';}
 if (btn) { btn.disabled = true;}
 var sec = 0;
+var aiRetrying = false;
 statusEl.innerHTML = '考え中… 0秒';
 var timer = setInterval(function () {
 sec++;
-statusEl.innerHTML = '考え中… ' + sec + '秒';
+statusEl.innerHTML = '考え中… ' + sec + '秒' + (aiRetrying ? '（再試行中）' : '');
 }, 1000);
+var body = JSON.stringify({ messages: [{ role: 'user', content: prompt}], model: 'openai-fast'});
+var retried = false;
+var attempt = 0;
+function sendFortune() {
+attempt++;
+var my = attempt;
 var xhr = new XMLHttpRequest();
 xhr.open('POST', 'https://text.pollinations.ai/', true);
 xhr.setRequestHeader('Content-Type', 'application/json');
-xhr.timeout = 90000;
+xhr.timeout = retried ? 45000 : 30000;
 xhr.onreadystatechange = function () {
+if (my !== attempt) { return;}
 if (xhr.readyState!== 4) { return;}
+var rbody = xhr.responseText || '';
+var isLimit = (xhr.status === 402 || rbody.indexOf('Free limit') >= 0);
+if (!isLimit && !retried && (xhr.status === 0 || xhr.status >= 500)) {
+retried = true;
+aiRetrying = true;
+sendFortune();
+return;
+}
 clearInterval(timer);
 if (btn) { btn.disabled = false;}
 if (onDone) { onDone();}
@@ -167,7 +183,7 @@ onOk(text);
 } else {
 statusEl.innerHTML = '本日の無料AI回線は上限に達しました。明日の朝9時に回復します';
 }
-} else if (xhr.status === 402 || (xhr.responseText && xhr.responseText.indexOf('Free limit') >= 0)) {
+} else if (isLimit) {
 statusEl.innerHTML = '本日の無料AI回線は上限に達しました。明日の朝9時に回復します';
 } else {
 statusEl.innerHTML = 'AI回線が混み合っています';
@@ -175,20 +191,35 @@ if (detailEl) { detailEl.innerHTML = '詳細：HTTP ' + xhr.status;}
 }
 };
 xhr.ontimeout = function () {
+if (my !== attempt) { return;}
+if (!retried) {
+retried = true;
+aiRetrying = true;
+sendFortune();
+return;
+}
 clearInterval(timer);
 if (btn) { btn.disabled = false;}
 if (onDone) { onDone();}
 statusEl.innerHTML = '時間切れになりました。もう一度お試しください';
 };
 xhr.onerror = function () {
+if (my !== attempt) { return;}
+if (!retried) {
+retried = true;
+aiRetrying = true;
+sendFortune();
+return;
+}
 clearInterval(timer);
 if (btn) { btn.disabled = false;}
 if (onDone) { onDone();}
 statusEl.innerHTML = 'AI回線が混み合っています';
 if (detailEl) { detailEl.innerHTML = '詳細：HTTP 0';}
 };
-var body = JSON.stringify({ messages: [{ role: 'user', content: prompt}], model: 'openai-fast'});
 xhr.send(body);
+}
+sendFortune();
 }
 
 /* ---- 1. AI占い屋 ---- */

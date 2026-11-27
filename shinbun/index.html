@@ -226,6 +226,7 @@ var POST_KEY = "shinbun6_post_v1";
 var busy = false;
 var printTimer = null;
 var printSec = 0;
+var printRetrying = false;
 
 function el(id) { return document.getElementById(id);}
 
@@ -347,10 +348,11 @@ el("statusDetail").textContent = detail || "";
 
 function startPrintTimer() {
 printSec = 0;
+printRetrying = false;
 el("statusLine").textContent = "印刷中… 0秒";
 printTimer = setInterval(function () {
 printSec++;
-el("statusLine").textContent = "印刷中… " + printSec + "秒";
+el("statusLine").textContent = "印刷中… " + printSec + "秒" + (printRetrying ? "（再試行中）" : "");
 }, 1000);
 }
 
@@ -426,23 +428,36 @@ var prompt = "あなたはユーモア新聞『クー新聞』の編集長です
 + "（締めのウィットのある一言、1行）";
 
 startPrintTimer();
-var xhr = new XMLHttpRequest();
-xhr.open("POST", AI_URL, true);
-xhr.setRequestHeader("Content-Type", "application/json");
-xhr.timeout = 90000;
 var body = JSON.stringify({ messages: [{ role: "user", content: prompt}], model: "openai-fast"});
-xhr.onreadystatechange = function () {
-if (xhr.readyState!== 4) return;
+function finishPrint() {
 stopPrintTimer();
 busy = false;
 el("issueBtn").disabled = false;
 el("gogaiBtn").disabled = false;
+}
+function markRetrying() {
+printRetrying = true;
+el("statusLine").textContent = "印刷中… " + printSec + "秒（再試行中）";
+}
+function sendAttempt(isRetry) {
+var xhr = new XMLHttpRequest();
+xhr.open("POST", AI_URL, true);
+xhr.setRequestHeader("Content-Type", "application/json");
+xhr.timeout = isRetry ? 45000 : 30000;
+var settled = false;
+xhr.onreadystatechange = function () {
+if (xhr.readyState!== 4) return;
+if (settled) return;
 var resp = xhr.responseText || "";
 if (xhr.status === 402 || resp.indexOf("Free limit") >= 0) {
+settled = true;
+finishPrint();
 setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
 return;
 }
 if (xhr.status === 200 && resp.replace(/\s+/g, "")!== "") {
+settled = true;
+finishPrint();
 setStatus("発行しました！", "");
 var parsed = parsePaper(resp);
 lastNormalPaper = parsed;
@@ -450,23 +465,41 @@ showPaper(parsed);
 saveToArchive((edition === "evening")? "夕刊": "通常", resp);
 return;
 }
+if (!isRetry && (xhr.status === 0 || xhr.status >= 500)) {
+settled = true;
+markRetrying();
+sendAttempt(true);
+return;
+}
+settled = true;
+finishPrint();
 setStatus("AI回線が混み合っています。少し待って、もう一度発行してみてください", "詳細：HTTP " + xhr.status);
 };
 xhr.ontimeout = function () {
-stopPrintTimer();
-busy = false;
-el("issueBtn").disabled = false;
-el("gogaiBtn").disabled = false;
+if (settled) return;
+settled = true;
+if (!isRetry) {
+markRetrying();
+sendAttempt(true);
+return;
+}
+finishPrint();
 setStatus("AIの返事が時間切れになりました。もう一度発行してみてください", "詳細：timeout");
 };
 xhr.onerror = function () {
-stopPrintTimer();
-busy = false;
-el("issueBtn").disabled = false;
-el("gogaiBtn").disabled = false;
+if (settled) return;
+settled = true;
+if (!isRetry) {
+markRetrying();
+sendAttempt(true);
+return;
+}
+finishPrint();
 setStatus("AI回線が混み合っています。少し待って、もう一度発行してみてください", "詳細：HTTP " + xhr.status);
 };
 xhr.send(body);
+}
+sendAttempt(false);
 }
 
 function issuePaper() {
@@ -521,45 +554,76 @@ var prompt = "あなたはユーモア新聞『クー新聞』の編集長です
 + "出力形式：1行目に号外の見出し（短く、1行だけ）、2行目以降に本文（250文字以内）。マークダウンや記号の装飾は使わず、プレーンテキストのみで書いてください。";
 
 startPrintTimer();
-var xhr = new XMLHttpRequest();
-xhr.open("POST", AI_URL, true);
-xhr.setRequestHeader("Content-Type", "application/json");
-xhr.timeout = 90000;
 var body = JSON.stringify({ messages: [{ role: "user", content: prompt}], model: "openai-fast"});
-xhr.onreadystatechange = function () {
-if (xhr.readyState!== 4) return;
+function finishPrint() {
 stopPrintTimer();
 busy = false;
 el("issueBtn").disabled = false;
 el("gogaiBtn").disabled = false;
+}
+function markRetrying() {
+printRetrying = true;
+el("statusLine").textContent = "印刷中… " + printSec + "秒（再試行中）";
+}
+function sendAttempt(isRetry) {
+var xhr = new XMLHttpRequest();
+xhr.open("POST", AI_URL, true);
+xhr.setRequestHeader("Content-Type", "application/json");
+xhr.timeout = isRetry ? 45000 : 30000;
+var settled = false;
+xhr.onreadystatechange = function () {
+if (xhr.readyState!== 4) return;
+if (settled) return;
 var resp = xhr.responseText || "";
 if (xhr.status === 402 || resp.indexOf("Free limit") >= 0) {
+settled = true;
+finishPrint();
 setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
 return;
 }
 if (xhr.status === 200 && resp.replace(/\s+/g, "")!== "") {
+settled = true;
+finishPrint();
 setStatus("号外を発行しました！", "");
 showGogai(parseGogai(resp));
 saveToArchive("号外", resp);
 return;
 }
+if (!isRetry && (xhr.status === 0 || xhr.status >= 500)) {
+settled = true;
+markRetrying();
+sendAttempt(true);
+return;
+}
+settled = true;
+finishPrint();
 setStatus("AI回線が混み合っています。少し待って、もう一度試してみてください", "詳細：HTTP " + xhr.status);
 };
 xhr.ontimeout = function () {
-stopPrintTimer();
-busy = false;
-el("issueBtn").disabled = false;
-el("gogaiBtn").disabled = false;
+if (settled) return;
+settled = true;
+if (!isRetry) {
+markRetrying();
+sendAttempt(true);
+return;
+}
+finishPrint();
 setStatus("AIの返事が時間切れになりました。もう一度試してみてください", "詳細：timeout");
 };
 xhr.onerror = function () {
-stopPrintTimer();
-busy = false;
-el("issueBtn").disabled = false;
-el("gogaiBtn").disabled = false;
+if (settled) return;
+settled = true;
+if (!isRetry) {
+markRetrying();
+sendAttempt(true);
+return;
+}
+finishPrint();
 setStatus("AI回線が混み合っています。少し待って、もう一度試してみてください", "詳細：HTTP " + xhr.status);
 };
 xhr.send(body);
+}
+sendAttempt(false);
 }
 
 function issueGogai() {

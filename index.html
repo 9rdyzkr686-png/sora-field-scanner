@@ -353,6 +353,7 @@ background: #fff;
 </div>
 <div class="actrow" style="margin:4px 0 0 0;">
 <button id="aiBtn" type="button">AI回線：OFF</button>
+<button id="aiTestBtn" type="button">回線テスト</button>
 </div>
 <div id="aiNote" style="font-size:12px;color:var(--dim);text-shadow:none;margin-top:2px;">AI回線ONで自由文に本物のAIが返答（1日100回まで・無料）。混雑時は通常回線に戻ります。</div>
 <div style="font-size:12px;color:var(--dim);text-shadow:none;margin-top:4px;">ヒント：「○○って言って」で真似シマス。「『言葉』を覚えて」で言葉ヲ覚エマス。「呼び名は○○にして」で呼ビ方ヲ変エラレマス。「記念日は○月○日にして」で記念日ヲ登録デキマス。「help」と打ツト隠シコマンド一覧ガ見ラレマス。</div>
@@ -953,6 +954,7 @@ var typeSpeed = 30;
 var lastTimeSignalHour = -1;
 var aiMode = false;
 var aiBusy = false;
+var aiTestBusy = false;
 var speakTag = "";
 var resetArmed = false;
 var restoredCount = 0;
@@ -2941,19 +2943,23 @@ var settled = false;
 try {
 xhr.open("POST", "https://text.pollinations.ai/", true);
 xhr.setRequestHeader("Content-Type", "application/json");
-xhr.timeout = 45000;
+xhr.timeout = retried ? 45000 : 30000;
 xhr.onload = function () {
 if (settled || finished) return;
 settled = true;
 var body = "";
 try { body = xhr.responseText || ""; } catch (e) { body = ""; }
 body = body.replace(/^\s+|\s+$/g, "");
-if (body && body.indexOf("Free limit reached") === 0) {
+var st = 0;
+try { st = xhr.status; } catch (e) { st = 0; }
+if (st === 402 || (body && body.indexOf("Free limit") >= 0)) {
 finishFail(true);
-} else if (xhr.status === 200 && body) {
+} else if (st === 200 && body) {
 finishOk(body);
-} else {
+} else if (st === 0 || (st >= 500 && st <= 599)) {
 failOrRetry();
+} else {
+finishFail(false);
 }
 };
 xhr.onerror = function () {
@@ -2969,6 +2975,76 @@ failOrRetry();
 xhr.send(payload);
 } catch (e) {
 failOrRetry();
+}
+}
+attempt();
+}
+
+function aiLineTest() {
+if (aiBusy) { el("evoNote").innerHTML = "AI回線デ通信中デス。終ワッテカラテストシテクダサイ。"; return; }
+if (aiTestBusy) return;
+aiTestBusy = true;
+el("evoNote").innerHTML = "回線テスト中…";
+var payload = JSON.stringify({ messages: [{ role: "user", content: "テストです。『OK』とだけ返事して" }], model: "openai-fast" });
+var t0 = new Date().getTime();
+var retried = false;
+var finished = false;
+function secs() { return Math.round((new Date().getTime() - t0) / 100) / 10; }
+function report(ok, detail) {
+if (finished) return;
+finished = true;
+aiTestBusy = false;
+if (ok) el("evoNote").innerHTML = "回線テスト：成功（" + secs() + "秒）";
+else el("evoNote").innerHTML = "回線テスト：失敗（" + detail + "）";
+}
+function retryOrFail(detail) {
+if (finished) return;
+if (!retried) {
+retried = true;
+el("evoNote").innerHTML = "回線テスト中…（再試行中）";
+setTimeout(attempt, 1500);
+} else {
+report(false, detail);
+}
+}
+function attempt() {
+if (finished) return;
+var xhr = new XMLHttpRequest();
+var settled = false;
+try {
+xhr.open("POST", "https://text.pollinations.ai/", true);
+xhr.setRequestHeader("Content-Type", "application/json");
+xhr.timeout = retried ? 45000 : 30000;
+xhr.onload = function () {
+if (settled || finished) return;
+settled = true;
+var body = "";
+try { body = xhr.responseText || ""; } catch (e) { body = ""; }
+var st = 0;
+try { st = xhr.status; } catch (e) { st = 0; }
+if (st === 402 || (body && body.indexOf("Free limit") >= 0)) {
+report(false, "HTTP " + st);
+} else if (st === 200 && body.replace(/^\s+|\s+$/g, "")) {
+report(true, "");
+} else if (st === 0 || (st >= 500 && st <= 599)) {
+retryOrFail("HTTP " + st);
+} else {
+report(false, "HTTP " + st);
+}
+};
+xhr.onerror = function () {
+if (settled || finished) return;
+settled = true;
+retryOrFail("HTTP 0");
+};
+xhr.ontimeout = function () {
+if (settled || finished) return;
+settled = true;
+retryOrFail("時間切れ");
+};
+xhr.send(payload);
+} catch (e) {
+retryOrFail("HTTP 0");
 }
 }
 attempt();
@@ -3225,6 +3301,7 @@ el("aiBtn").innerHTML = aiMode ? "AI回線：ON" : "AI回線：OFF";
 sndTap();
 addLog("sys", aiMode ? "AI回線ヲ開通シマシタ。自由文ニ本物ノAIガ返答シマス（1日100回マデ）。" : "AI回線ヲ切断シマシタ。通常回線ニ戻リマス。");
 };
+el("aiTestBtn").onclick = function () { sndTap(); aiLineTest(); };
 el("diaryBtn").onclick = function () { sndTap(); doDiary(); };
 el("lullabyBtn").onclick = function () { sndTap(); doLullaby(); };
 el("reportBtn").onclick = function () { sndTap(); doReport(); };

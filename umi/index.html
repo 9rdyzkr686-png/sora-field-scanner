@@ -227,7 +227,7 @@ function toggleSurf() {
 }
 
 /* ---------- 3. 海の便り ---------- */
-var letterBusy = false, letterTimer = null, letterSec = 0;
+var letterBusy = false, letterTimer = null, letterSec = 0, letterRetrying = false;
 
 function setStatus(t) { document.getElementById('aiStatus').innerHTML = t; }
 
@@ -241,55 +241,86 @@ function fetchLetter() {
   var btn = document.getElementById('letterBtn');
   btn.disabled = true;
   letterSec = 0;
+  letterRetrying = false;
   setStatus('便りを待っています… 0秒');
   letterTimer = setInterval(function () {
     letterSec++;
-    setStatus('便りを待っています… ' + letterSec + '秒');
+    setStatus('便りを待っています… ' + letterSec + '秒' + (letterRetrying ? '（再試行中）' : ''));
   }, 1000);
 
   var prompt = 'あなたは海そのもの、または海を見守る灯台守です。読者へ宛てた短い手紙を書いてください。穏やかで静かな文体で、200文字以内の日本語、プレーンテキストのみ（マークダウン記法や見出しは使わない）。今日の海の様子や、読者をねぎらう言葉を込めてください。';
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://text.pollinations.ai/', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.timeout = 90000;
-  xhr.onload = function () {
-    stopLetterTimer();
-    letterBusy = false;
-    btn.disabled = false;
-    var text = '';
-    try { text = xhr.responseText || ''; } catch (e) { text = ''; }
-    if (xhr.status === 402 || text.indexOf('Free limit') >= 0) {
-      setStatus('本日の無料AI回線は上限に達しました。明日の朝9時に回復します');
-      return;
-    }
-    if (xhr.status !== 200) {
-      setStatus('AI回線が混み合っています <span style="font-size:11px;">詳細：HTTP ' + xhr.status + '</span>');
-      return;
-    }
-    text = text.replace(/^\s+|\s+$/g, '');
-    if (!text) {
-      setStatus('AI回線が混み合っています <span style="font-size:11px;">詳細：HTTP ' + xhr.status + '</span>');
-      return;
-    }
-    if (text.length > 220) { text = text.substring(0, 220); }
-    setStatus('');
-    document.getElementById('letterText').innerHTML = escapeHtml(text);
-    document.getElementById('letterCard').style.display = 'block';
-    if (voiceOn && text.length <= 200) { speak(text); }
-  };
-  xhr.onerror = function () {
-    stopLetterTimer();
-    letterBusy = false;
-    btn.disabled = false;
-    setStatus('AI回線が混み合っています <span style="font-size:11px;">詳細：HTTP 0</span>');
-  };
-  xhr.ontimeout = function () {
-    stopLetterTimer();
-    letterBusy = false;
-    btn.disabled = false;
-    setStatus('便りが届く前に時間切れになりました。もう一度お試しください');
-  };
-  xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+  var payload = JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' });
+  var retried = false;
+  var attempt = 0;
+  function sendLetter() {
+    attempt++;
+    var my = attempt;
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://text.pollinations.ai/', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = retried ? 45000 : 30000;
+    xhr.onload = function () {
+      if (my !== attempt) { return; }
+      var text = '';
+      try { text = xhr.responseText || ''; } catch (e) { text = ''; }
+      var isLimit = (xhr.status === 402 || text.indexOf('Free limit') >= 0);
+      if (!isLimit && !retried && (xhr.status === 0 || xhr.status >= 500)) {
+        retried = true;
+        letterRetrying = true;
+        sendLetter();
+        return;
+      }
+      stopLetterTimer();
+      letterBusy = false;
+      btn.disabled = false;
+      if (isLimit) {
+        setStatus('本日の無料AI回線は上限に達しました。明日の朝9時に回復します');
+        return;
+      }
+      if (xhr.status !== 200) {
+        setStatus('AI回線が混み合っています <span style="font-size:11px;">詳細：HTTP ' + xhr.status + '</span>');
+        return;
+      }
+      text = text.replace(/^\s+|\s+$/g, '');
+      if (!text) {
+        setStatus('AI回線が混み合っています <span style="font-size:11px;">詳細：HTTP ' + xhr.status + '</span>');
+        return;
+      }
+      if (text.length > 220) { text = text.substring(0, 220); }
+      setStatus('');
+      document.getElementById('letterText').innerHTML = escapeHtml(text);
+      document.getElementById('letterCard').style.display = 'block';
+      if (voiceOn && text.length <= 200) { speak(text); }
+    };
+    xhr.onerror = function () {
+      if (my !== attempt) { return; }
+      if (!retried) {
+        retried = true;
+        letterRetrying = true;
+        sendLetter();
+        return;
+      }
+      stopLetterTimer();
+      letterBusy = false;
+      btn.disabled = false;
+      setStatus('AI回線が混み合っています <span style="font-size:11px;">詳細：HTTP 0</span>');
+    };
+    xhr.ontimeout = function () {
+      if (my !== attempt) { return; }
+      if (!retried) {
+        retried = true;
+        letterRetrying = true;
+        sendLetter();
+        return;
+      }
+      stopLetterTimer();
+      letterBusy = false;
+      btn.disabled = false;
+      setStatus('便りが届く前に時間切れになりました。もう一度お試しください');
+    };
+    xhr.send(payload);
+  }
+  sendLetter();
 }
 
 function escapeHtml(s) {

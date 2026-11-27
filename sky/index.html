@@ -284,10 +284,11 @@ el("letterBtn").onclick = function () {
   var st = el("letterStatus");
   btn.disabled = true;
   var sec = 0;
+  var retrying = false;
   st.textContent = "考え中… 0秒";
   aiTimer = setInterval(function () {
     sec++;
-    st.textContent = "考え中… " + sec + "秒";
+    st.textContent = (retrying ? "再試行中… " : "考え中… ") + sec + "秒";
   }, 1000);
 
   var prompt = "あなたは空からの手紙の書き手です。";
@@ -298,46 +299,81 @@ el("letterBtn").onclick = function () {
   }
   prompt += "読む人への短い手紙を150文字以内で書いてください。改行なしのプレーンテキストで、手紙の本文だけを返してください。";
 
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://text.pollinations.ai/", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
-
   function finish() {
     if (aiTimer) { clearInterval(aiTimer); aiTimer = null; }
     aiBusy = false;
     btn.disabled = false;
   }
 
-  xhr.onload = function () {
-    finish();
-    var body = xhr.responseText || "";
-    if (xhr.status !== 200 || body.indexOf("Free limit") >= 0) {
-      st.textContent = aiErrorMessage(xhr.status, body);
-      if (xhr.status !== 402 && body.indexOf("Free limit") < 0) {
-        st.textContent += "（詳細：HTTP " + xhr.status + "）";
+  function send() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://text.pollinations.ai/", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = retrying ? 45000 : 30000;
+    var settled = false;
+
+    xhr.onload = function () {
+      if (settled) { return; }
+      var body = xhr.responseText || "";
+      if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+        settled = true;
+        finish();
+        st.textContent = aiErrorMessage(xhr.status, body);
+        return;
       }
-      return;
-    }
-    var text = body.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
-    if (!text) {
-      st.textContent = "便りが届きませんでした。もう一度お試しください";
-      return;
-    }
-    st.textContent = "";
-    el("letterText").textContent = text;
-    el("letterCard").style.display = "block";
-    speak(text);
-  };
-  xhr.onerror = function () {
-    finish();
-    st.textContent = "AI回線が混み合っています（詳細：HTTP 0）";
-  };
-  xhr.ontimeout = function () {
-    finish();
-    st.textContent = "時間切れになりました。もう一度お試しください";
-  };
-  xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+      if (xhr.status === 200) {
+        settled = true;
+        finish();
+        var text = body.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+        if (!text) {
+          st.textContent = "便りが届きませんでした。もう一度お試しください";
+          return;
+        }
+        st.textContent = "";
+        el("letterText").textContent = text;
+        el("letterCard").style.display = "block";
+        speak(text);
+        return;
+      }
+      if ((xhr.status === 0 || xhr.status >= 500) && !retrying) {
+        settled = true;
+        retrying = true;
+        st.textContent = "再試行中… " + sec + "秒";
+        send();
+        return;
+      }
+      settled = true;
+      finish();
+      st.textContent = aiErrorMessage(xhr.status, body);
+      st.textContent += "（詳細：HTTP " + xhr.status + "）";
+    };
+    xhr.onerror = function () {
+      if (settled) { return; }
+      settled = true;
+      if (!retrying) {
+        retrying = true;
+        st.textContent = "再試行中… " + sec + "秒";
+        send();
+        return;
+      }
+      finish();
+      st.textContent = "AI回線が混み合っています（詳細：HTTP 0）";
+    };
+    xhr.ontimeout = function () {
+      if (settled) { return; }
+      settled = true;
+      if (!retrying) {
+        retrying = true;
+        st.textContent = "再試行中… " + sec + "秒";
+        send();
+        return;
+      }
+      finish();
+      st.textContent = "時間切れになりました。もう一度お試しください";
+    };
+    xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+  }
+  send();
 };
 
 /* ---------- 起動 ---------- */

@@ -513,6 +513,7 @@ var aiGreeted = false;
 var aiHistory = [];
 var aiTimer = null;
 var aiSeconds = 0;
+var aiRetrying = false;
 
 function appendAiLine(kind, who, text) {
 var log = el("aiLog");
@@ -540,10 +541,11 @@ log.scrollTop = log.scrollHeight;
 
 function startAiTimer() {
 aiSeconds = 0;
+aiRetrying = false;
 el("aiStatus").innerHTML = "大将が考え中… 0秒";
 aiTimer = setInterval(function () {
 aiSeconds = aiSeconds + 1;
-el("aiStatus").innerHTML = "大将が考え中… " + aiSeconds + "秒";
+el("aiStatus").innerHTML = "大将が考え中… " + aiSeconds + "秒" + (aiRetrying ? "（再試行中）" : "");
 }, 1000);
 }
 
@@ -575,22 +577,34 @@ appendAiLine("user", "小野さん", text);
 aiHistory.push({ r: "u", t: text});
 aiBusy = true;
 startAiTimer();
+var payload = JSON.stringify({ messages: [{ role: "user", content: buildAiPrompt()}], model: "openai-fast"});
+function sendAttempt(isRetry) {
 var xhr = new XMLHttpRequest();
 xhr.open("POST", "https://text.pollinations.ai/", true);
 xhr.setRequestHeader("Content-Type", "application/json");
-xhr.timeout = 90000;
+xhr.timeout = isRetry ? 45000 : 30000;
+var settled = false;
+function markRetrying() {
+aiRetrying = true;
+el("aiStatus").innerHTML = "大将が考え中… " + aiSeconds + "秒（再試行中）";
+}
 xhr.onreadystatechange = function () {
 if (xhr.readyState!== 4) { return;}
-stopAiTimer();
-aiBusy = false;
+if (settled) { return;}
 var body = xhr.responseText || "";
 if (xhr.status === 402 || body.indexOf("Free limit")!== -1) {
+settled = true;
+stopAiTimer();
+aiBusy = false;
 appendAiSys("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", false);
 return;
 }
 if (xhr.status === 200) {
 var reply = body.replace(/^\s+|\s+$/g, "");
 if (reply) {
+settled = true;
+stopAiTimer();
+aiBusy = false;
 if (reply.length > 300) { reply = reply.substring(0, 300);}
 appendAiLine("master", "大将", reply);
 aiHistory.push({ r: "a", t: reply});
@@ -598,28 +612,60 @@ if (reply.indexOf("\n") === -1 && reply.length <= 150) { speak(reply);}
 return;
 }
 }
+if (!isRetry && (xhr.status === 0 || xhr.status >= 500)) {
+settled = true;
+markRetrying();
+sendAttempt(true);
+return;
+}
+settled = true;
+stopAiTimer();
+aiBusy = false;
 appendAiSys("AI回線が混み合っています", false);
 appendAiSys("詳細：HTTP " + xhr.status, true);
 };
 xhr.ontimeout = function () {
+if (settled) { return;}
+settled = true;
+if (!isRetry) {
+markRetrying();
+sendAttempt(true);
+return;
+}
 stopAiTimer();
 aiBusy = false;
 appendAiSys("大将の返事が時間切れになりました。もう一度送ってみてください", false);
 };
 xhr.onerror = function () {
+if (settled) { return;}
+settled = true;
+if (!isRetry) {
+markRetrying();
+sendAttempt(true);
+return;
+}
 stopAiTimer();
 aiBusy = false;
 appendAiSys("AI回線が混み合っています", false);
 appendAiSys("詳細：HTTP 0", true);
 };
 try {
-xhr.send(JSON.stringify({ messages: [{ role: "user", content: buildAiPrompt()}], model: "openai-fast"}));
+xhr.send(payload);
 } catch (e) {
+if (settled) { return;}
+settled = true;
+if (!isRetry) {
+markRetrying();
+sendAttempt(true);
+return;
+}
 stopAiTimer();
 aiBusy = false;
 appendAiSys("AI回線が混み合っています", false);
 appendAiSys("詳細：HTTP 0", true);
 }
+}
+sendAttempt(false);
 }
 
 el("aiToggleBtn").onclick = function () {
@@ -640,13 +686,15 @@ if (e && (e.keyCode === 13 || e.key === "Enter")) { sendAi();}
 var uraBusy = false;
 var uraTimer = null;
 var uraSeconds = 0;
+var uraRetrying = false;
 
 function startUraTimer() {
 uraSeconds = 0;
+uraRetrying = false;
 el("uraStatus").innerHTML = "大将が裏メニューを考え中… 0秒";
 uraTimer = setInterval(function () {
 uraSeconds = uraSeconds + 1;
-el("uraStatus").innerHTML = "大将が裏メニューを考え中… " + uraSeconds + "秒";
+el("uraStatus").innerHTML = "大将が裏メニューを考え中… " + uraSeconds + "秒" + (uraRetrying ? "（再試行中）" : "");
 }, 1000);
 }
 
@@ -692,39 +740,79 @@ if (uraBusy) { return;}
 uraBusy = true;
 startUraTimer();
 var prompt = "あなたは深夜だけ開く小さな食堂の大将です。今日の裏メニューとして、実在しない架空の創作料理を1品考えてください。少し変わっていて、でも食べたくなる一品にしてください。必ず次の3行の形式だけで答えてください。前置きや飾りは禁止です。\n品名：（料理名）\n説明：（40文字以内の一言説明）\n価格：（○○円）";
+var payload = JSON.stringify({ messages: [{ role: "user", content: prompt}], model: "openai-fast"});
+function sendAttempt(isRetry) {
 var xhr = new XMLHttpRequest();
 xhr.open("POST", "https://text.pollinations.ai/", true);
 xhr.setRequestHeader("Content-Type", "application/json");
-xhr.timeout = 90000;
+xhr.timeout = isRetry ? 45000 : 30000;
+var settled = false;
+function markRetrying() {
+uraRetrying = true;
+el("uraStatus").innerHTML = "大将が裏メニューを考え中… " + uraSeconds + "秒（再試行中）";
+}
 xhr.onreadystatechange = function () {
 if (xhr.readyState!== 4) { return;}
+if (settled) { return;}
 var body = xhr.responseText || "";
 if (xhr.status === 402 || body.indexOf("Free limit")!== -1) {
+settled = true;
 uraError("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", null);
 return;
 }
 if (xhr.status === 200) {
 var text = body.replace(/^\s+|\s+$/g, "");
 if (text) {
+settled = true;
 uraBusy = false;
 stopUraTimer();
 showUra(text);
 return;
 }
 }
+if (!isRetry && (xhr.status === 0 || xhr.status >= 500)) {
+settled = true;
+markRetrying();
+sendAttempt(true);
+return;
+}
+settled = true;
 uraError("AI回線が混み合っています", xhr.status);
 };
 xhr.ontimeout = function () {
+if (settled) { return;}
+settled = true;
+if (!isRetry) {
+markRetrying();
+sendAttempt(true);
+return;
+}
 uraError("大将の返事が時間切れになりました。もう一度押してみてください", null);
 };
 xhr.onerror = function () {
+if (settled) { return;}
+settled = true;
+if (!isRetry) {
+markRetrying();
+sendAttempt(true);
+return;
+}
 uraError("AI回線が混み合っています", 0);
 };
 try {
-xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt}], model: "openai-fast"}));
+xhr.send(payload);
 } catch (e) {
+if (settled) { return;}
+settled = true;
+if (!isRetry) {
+markRetrying();
+sendAttempt(true);
+return;
+}
 uraError("AI回線が混み合っています", 0);
 }
+}
+sendAttempt(false);
 };
 
 var DIARY = [

@@ -315,11 +315,14 @@ function aiErrorText(status, body) {
 function callAI(prompt, statusEl, onOk) {
   if (busy) { return; }
   setBusy(true);
+  var retrying = false;
   statusEl.textContent = "考え中… 0秒";
   var start = new Date().getTime();
+  function nowSec() {
+    return Math.floor((new Date().getTime() - start) / 1000);
+  }
   var timer = setInterval(function() {
-    var sec = Math.floor((new Date().getTime() - start) / 1000);
-    statusEl.textContent = "考え中… " + sec + "秒";
+    statusEl.textContent = (retrying ? "再試行中… " : "考え中… ") + nowSec() + "秒";
   }, 500);
   var done = false;
   function finish() {
@@ -328,31 +331,67 @@ function callAI(prompt, statusEl, onOk) {
     clearInterval(timer);
     setBusy(false);
   }
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://text.pollinations.ai/", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState !== 4) { return; }
-    var body = xhr.responseText || "";
-    finish();
-    if (xhr.status === 200 && body && body.indexOf("Free limit") < 0) {
-      statusEl.textContent = "";
-      onOk(body);
-    } else {
+  function send() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://text.pollinations.ai/", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = retrying ? 45000 : 30000;
+    var settled = false;
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4 || settled) { return; }
+      var body = xhr.responseText || "";
+      if (xhr.status === 200 && body && body.indexOf("Free limit") < 0) {
+        settled = true;
+        finish();
+        statusEl.textContent = "";
+        onOk(body);
+        return;
+      }
+      if (xhr.status === 402 || (body && body.indexOf("Free limit") >= 0)) {
+        settled = true;
+        finish();
+        statusEl.textContent = aiErrorText(xhr.status, body);
+        return;
+      }
+      if ((xhr.status === 0 || xhr.status >= 500) && !retrying) {
+        settled = true;
+        retrying = true;
+        statusEl.textContent = "再試行中… " + nowSec() + "秒";
+        send();
+        return;
+      }
+      settled = true;
+      finish();
       statusEl.textContent = aiErrorText(xhr.status, body);
-    }
-  };
-  xhr.ontimeout = function() {
-    finish();
-    statusEl.textContent = "時間切れになりました。もう一度お試しください";
-  };
-  xhr.onerror = function() {
-    finish();
-    statusEl.textContent = aiErrorText(0, "");
-  };
-  var payload = { messages: [{ role: "user", content: prompt }], model: "openai-fast" };
-  xhr.send(JSON.stringify(payload));
+    };
+    xhr.ontimeout = function() {
+      if (settled) { return; }
+      settled = true;
+      if (!retrying) {
+        retrying = true;
+        statusEl.textContent = "再試行中… " + nowSec() + "秒";
+        send();
+        return;
+      }
+      finish();
+      statusEl.textContent = "時間切れになりました。もう一度お試しください";
+    };
+    xhr.onerror = function() {
+      if (settled) { return; }
+      settled = true;
+      if (!retrying) {
+        retrying = true;
+        statusEl.textContent = "再試行中… " + nowSec() + "秒";
+        send();
+        return;
+      }
+      finish();
+      statusEl.textContent = aiErrorText(0, "");
+    };
+    var payload = { messages: [{ role: "user", content: prompt }], model: "openai-fast" };
+    xhr.send(JSON.stringify(payload));
+  }
+  send();
 }
 
 /* ---------- 物語のパース ---------- */

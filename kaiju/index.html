@@ -554,10 +554,11 @@
 
     var status = document.getElementById("nameStatus");
     var seconds = 0;
+    var retrying = false;
     status.textContent = "考え中… 0秒";
     var timer = setInterval(function () {
       seconds++;
-      status.textContent = "考え中… " + seconds + "秒";
+      status.textContent = "考え中… " + seconds + "秒" + (retrying ? "（再試行中）" : "");
     }, 1000);
 
     function finish() {
@@ -573,52 +574,90 @@
       }
     }
 
-    try {
-      var xhr = new XMLHttpRequest();
-      xhr.open("POST", "https://text.pollinations.ai/", true);
-      xhr.setRequestHeader("Content-Type", "application/json");
-      xhr.timeout = 90000;
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState !== 4) { return; }
-        var body = xhr.responseText || "";
-        if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
-          fail("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+    var liveAttempt = 0;
+    function send(attempt) {
+      liveAttempt = attempt;
+      var handled = false;
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "https://text.pollinations.ai/", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.timeout = (attempt === 0) ? 30000 : 45000;
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState !== 4) { return; }
+          if (handled || attempt !== liveAttempt) { return; }
+          var body = xhr.responseText || "";
+          if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+            handled = true;
+            fail("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+            return;
+          }
+          if (attempt === 0 && (xhr.status === 0 || xhr.status >= 500)) {
+            handled = true;
+            retrying = true;
+            status.textContent = "考え中… " + seconds + "秒（再試行中）";
+            send(1);
+            return;
+          }
+          handled = true;
+          if (xhr.status !== 200 || !body.replace(/\s/g, "")) {
+            fail("AI回線が混み合っています", String(xhr.status));
+            return;
+          }
+          finish();
+          status.textContent = "";
+          var lines = body.replace(/^\s+|\s+$/g, "").split("\n");
+          var name = "";
+          var profile = "";
+          var i;
+          var t;
+          for (i = 0; i < lines.length; i++) {
+            t = lines[i].replace(/^\s+|\s+$/g, "");
+            if (!t) { continue; }
+            if (!name) { name = t; }
+            else { profile += (profile ? "\n" : "") + t; }
+          }
+          if (!name) { name = "ナゾノカイジュウ"; }
+          if (!profile) { profile = "プロフィールは観測できませんでした。"; }
+          document.getElementById("aiName").textContent = name;
+          document.getElementById("aiProfile").textContent = profile;
+          document.getElementById("aiCard").style.display = "block";
+        };
+        xhr.ontimeout = function () {
+          if (handled || attempt !== liveAttempt) { return; }
+          handled = true;
+          if (attempt === 0) {
+            retrying = true;
+            status.textContent = "考え中… " + seconds + "秒（再試行中）";
+            send(1);
+            return;
+          }
+          fail("AIの返事が時間切れになりました。もう一度お試しください", "");
+        };
+        xhr.onerror = function () {
+          if (handled || attempt !== liveAttempt) { return; }
+          handled = true;
+          if (attempt === 0) {
+            retrying = true;
+            status.textContent = "考え中… " + seconds + "秒（再試行中）";
+            send(1);
+            return;
+          }
+          fail("AI回線が混み合っています", "0");
+        };
+        var prompt = "架空の怪獣を1体考えてください。1行目に面白い怪獣の名前だけを書き、2行目と3行目に短いプロフィール（特徴や必殺技など）を書いてください。全体で150文字以内にしてください。実在の怪獣の名前は使わないでください。マークダウン記号は使わないでください。";
+        xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+      } catch (error) {
+        if (attempt === 0) {
+          retrying = true;
+          status.textContent = "考え中… " + seconds + "秒（再試行中）";
+          send(1);
           return;
         }
-        if (xhr.status !== 200 || !body.replace(/\s/g, "")) {
-          fail("AI回線が混み合っています", String(xhr.status));
-          return;
-        }
-        finish();
-        status.textContent = "";
-        var lines = body.replace(/^\s+|\s+$/g, "").split("\n");
-        var name = "";
-        var profile = "";
-        var i;
-        var t;
-        for (i = 0; i < lines.length; i++) {
-          t = lines[i].replace(/^\s+|\s+$/g, "");
-          if (!t) { continue; }
-          if (!name) { name = t; }
-          else { profile += (profile ? "\n" : "") + t; }
-        }
-        if (!name) { name = "ナゾノカイジュウ"; }
-        if (!profile) { profile = "プロフィールは観測できませんでした。"; }
-        document.getElementById("aiName").textContent = name;
-        document.getElementById("aiProfile").textContent = profile;
-        document.getElementById("aiCard").style.display = "block";
-      };
-      xhr.ontimeout = function () {
-        fail("AIの返事が時間切れになりました。もう一度お試しください", "");
-      };
-      xhr.onerror = function () {
         fail("AI回線が混み合っています", "0");
-      };
-      var prompt = "架空の怪獣を1体考えてください。1行目に面白い怪獣の名前だけを書き、2行目と3行目に短いプロフィール（特徴や必殺技など）を書いてください。全体で150文字以内にしてください。実在の怪獣の名前は使わないでください。マークダウン記号は使わないでください。";
-      xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
-    } catch (error) {
-      fail("AI回線が混み合っています", "0");
+      }
     }
+    send(0);
   };
 
   /* ■ 鳴き声ジェネレーター（WebAudio合成） */

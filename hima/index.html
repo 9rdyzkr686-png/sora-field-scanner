@@ -1423,10 +1423,11 @@ function makeGreeting() {
   grBusy = true;
   el('grBtn').disabled = true;
   var sec = 0;
+  var retrying = false;
   el('grStatus').innerHTML = '考え中… 0秒';
   var timer = setInterval(function () {
     sec++;
-    el('grStatus').innerHTML = '考え中… ' + sec + '秒';
+    el('grStatus').innerHTML = '考え中… ' + sec + '秒' + (retrying ? '（再試行中）' : '');
   }, 1000);
   var finished = false;
   function done() {
@@ -1438,38 +1439,71 @@ function makeGreeting() {
     return false;
   }
   var prompt = '次の条件で、季節の挨拶文を1つ書いてください。種類：' + grKind + '。相手：' + grPartner + '。220文字以内で、読みやすいところで改行し、マークダウン記号は使わず、挨拶文の本文だけを書いてください。';
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://text.pollinations.ai/', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.timeout = 90000;
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) { return; }
-    var body = xhr.responseText || '';
-    var status = xhr.status;
-    if (done()) { return; }
-    if (status === 402 || body.indexOf('Free limit') >= 0) {
-      grError('本日の無料AI回線は上限に達しました。明日の朝9時に回復します', status);
-      return;
-    }
-    if (status !== 200 || !body.replace(/\s/g, '')) {
-      grError('AI回線が混み合っています', status);
-      return;
-    }
-    var txt = body.replace(/^\s+|\s+$/g, '');
-    el('grText').style.display = 'block';
-    el('grText').innerHTML = esc(txt);
-    el('grCopy').style.display = '';
-    el('grStatus').innerHTML = 'できました（' + esc(grKind) + '／' + esc(grPartner) + 'あて）';
-  };
-  xhr.ontimeout = function () {
-    if (done()) { return; }
-    grError('時間切れになりました。もう一度お試しください', null);
-  };
-  xhr.onerror = function () {
-    if (done()) { return; }
-    grError('AI回線が混み合っています', 0);
-  };
-  xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+  var liveAttempt = 0;
+  function send(attempt) {
+    liveAttempt = attempt;
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://text.pollinations.ai/', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = (attempt === 0) ? 30000 : 45000;
+    var handled = false;
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) { return; }
+      if (handled || attempt !== liveAttempt) { return; }
+      var body = xhr.responseText || '';
+      var status = xhr.status;
+      if (status === 402 || body.indexOf('Free limit') >= 0) {
+        handled = true;
+        if (done()) { return; }
+        grError('本日の無料AI回線は上限に達しました。明日の朝9時に回復します', status);
+        return;
+      }
+      if (attempt === 0 && (status === 0 || status >= 500)) {
+        handled = true;
+        retrying = true;
+        el('grStatus').innerHTML = '考え中… ' + sec + '秒（再試行中）';
+        send(1);
+        return;
+      }
+      handled = true;
+      if (done()) { return; }
+      if (status !== 200 || !body.replace(/\s/g, '')) {
+        grError('AI回線が混み合っています', status);
+        return;
+      }
+      var txt = body.replace(/^\s+|\s+$/g, '');
+      el('grText').style.display = 'block';
+      el('grText').innerHTML = esc(txt);
+      el('grCopy').style.display = '';
+      el('grStatus').innerHTML = 'できました（' + esc(grKind) + '／' + esc(grPartner) + 'あて）';
+    };
+    xhr.ontimeout = function () {
+      if (handled || attempt !== liveAttempt) { return; }
+      handled = true;
+      if (attempt === 0) {
+        retrying = true;
+        el('grStatus').innerHTML = '考え中… ' + sec + '秒（再試行中）';
+        send(1);
+        return;
+      }
+      if (done()) { return; }
+      grError('時間切れになりました。もう一度お試しください', null);
+    };
+    xhr.onerror = function () {
+      if (handled || attempt !== liveAttempt) { return; }
+      handled = true;
+      if (attempt === 0) {
+        retrying = true;
+        el('grStatus').innerHTML = '考え中… ' + sec + '秒（再試行中）';
+        send(1);
+        return;
+      }
+      if (done()) { return; }
+      grError('AI回線が混み合っています', 0);
+    };
+    xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+  }
+  send(0);
 }
 function copyGreeting() {
   var node = el('grText');
@@ -1622,10 +1656,11 @@ function srMake() {
   srBusy = true;
   el('srAiBtn').disabled = true;
   var sec = 0;
+  var retrying = false;
   el('srStatus').innerHTML = '考え中… 0秒';
   var timer = setInterval(function () {
     sec++;
-    el('srStatus').innerHTML = '考え中… ' + sec + '秒';
+    el('srStatus').innerHTML = '考え中… ' + sec + '秒' + (retrying ? '（再試行中）' : '');
   }, 1000);
   var finished = false;
   function done() {
@@ -1637,37 +1672,70 @@ function srMake() {
     return false;
   }
   var prompt = 'ダックスフンドを題材にして、五・七・五の面白い川柳を1つ作ってください。そのあと改行して、一言コメントを1行添えてください。全体で120文字以内。マークダウン記号は使わないでください。';
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://text.pollinations.ai/', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.timeout = 90000;
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) { return; }
-    var body = xhr.responseText || '';
-    var status = xhr.status;
-    if (done()) { return; }
-    if (status === 402 || body.indexOf('Free limit') >= 0) {
-      srError('本日の無料AI回線は上限に達しました。明日の朝9時に回復します', status);
-      return;
-    }
-    if (status !== 200 || !body.replace(/\s/g, '')) {
-      srError('AI回線が混み合っています', status);
-      return;
-    }
-    var txt = body.replace(/^\s+|\s+$/g, '');
-    el('srText').style.display = 'block';
-    el('srText').textContent = txt;
-    el('srStatus').innerHTML = 'AIの川柳ができました';
-  };
-  xhr.ontimeout = function () {
-    if (done()) { return; }
-    srError('時間切れになりました。もう一度お試しください', null);
-  };
-  xhr.onerror = function () {
-    if (done()) { return; }
-    srError('AI回線が混み合っています', 0);
-  };
-  xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+  var liveAttempt = 0;
+  function send(attempt) {
+    liveAttempt = attempt;
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://text.pollinations.ai/', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = (attempt === 0) ? 30000 : 45000;
+    var handled = false;
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) { return; }
+      if (handled || attempt !== liveAttempt) { return; }
+      var body = xhr.responseText || '';
+      var status = xhr.status;
+      if (status === 402 || body.indexOf('Free limit') >= 0) {
+        handled = true;
+        if (done()) { return; }
+        srError('本日の無料AI回線は上限に達しました。明日の朝9時に回復します', status);
+        return;
+      }
+      if (attempt === 0 && (status === 0 || status >= 500)) {
+        handled = true;
+        retrying = true;
+        el('srStatus').innerHTML = '考え中… ' + sec + '秒（再試行中）';
+        send(1);
+        return;
+      }
+      handled = true;
+      if (done()) { return; }
+      if (status !== 200 || !body.replace(/\s/g, '')) {
+        srError('AI回線が混み合っています', status);
+        return;
+      }
+      var txt = body.replace(/^\s+|\s+$/g, '');
+      el('srText').style.display = 'block';
+      el('srText').textContent = txt;
+      el('srStatus').innerHTML = 'AIの川柳ができました';
+    };
+    xhr.ontimeout = function () {
+      if (handled || attempt !== liveAttempt) { return; }
+      handled = true;
+      if (attempt === 0) {
+        retrying = true;
+        el('srStatus').innerHTML = '考え中… ' + sec + '秒（再試行中）';
+        send(1);
+        return;
+      }
+      if (done()) { return; }
+      srError('時間切れになりました。もう一度お試しください', null);
+    };
+    xhr.onerror = function () {
+      if (handled || attempt !== liveAttempt) { return; }
+      handled = true;
+      if (attempt === 0) {
+        retrying = true;
+        el('srStatus').innerHTML = '考え中… ' + sec + '秒（再試行中）';
+        send(1);
+        return;
+      }
+      if (done()) { return; }
+      srError('AI回線が混み合っています', 0);
+    };
+    xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+  }
+  send(0);
 }
 function srSample() {
   var n = srSampleIdx % SR_SAMPLES.length;

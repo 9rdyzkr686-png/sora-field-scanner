@@ -203,50 +203,79 @@ function testAI() {
   var n = 1;
   var start = new Date().getTime();
   setRes(n, "res-run", "診断中…");
-  setDet(n, "AI回線へ送信中…");
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://text.pollinations.ai/", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 30000;
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) { return; }
-    var ms = new Date().getTime() - start;
-    setMs(1, ms);
-    var body = xhr.responseText || "";
-    if (xhr.status === 402 || body.indexOf("Free limit") >= 0 || body.indexOf("FREE_LIMIT") >= 0) {
-      setRes(1, "res-ng", "NG（上限）");
-      setDet(1, "1日の無料枠（100回）を使い切りました。翌朝9時に回復します。詳細：HTTP " + xhr.status);
-      finishOne(1, false);
-    } else if (xhr.status === 200 && body.replace(/\s/g, "").length > 0) {
-      setRes(1, "res-ok", "OK");
-      setDet(1, "応答あり（" + body.length + "文字）。詳細：HTTP 200");
-      finishOne(1, true);
-    } else if (xhr.status === 200) {
-      setRes(1, "res-ng", "NG");
-      setDet(1, "応答が空でした。詳細：HTTP 200");
-      finishOne(1, false);
-    } else {
-      setRes(1, "res-ng", "NG");
-      setDet(1, "詳細：HTTP " + xhr.status);
-      finishOne(1, false);
-    }
-  };
-  xhr.ontimeout = function () {
-    var ms = new Date().getTime() - start;
-    setMs(1, ms);
-    setRes(1, "res-ng", "NG");
-    setDet(1, "時間切れ（30秒）。回線が混み合っている可能性があります");
-    finishOne(1, false);
-  };
-  xhr.onerror = function () {
-    var ms = new Date().getTime() - start;
-    setMs(1, ms);
-    setRes(1, "res-ng", "NG");
-    setDet(1, "通信エラー（HTTP 0）。ネット接続を確認してください");
-    finishOne(1, false);
-  };
+  setDet(n, "AI回線へ送信中…（初回30秒＋自動リトライ1回）");
   var payload = JSON.stringify({ messages: [{ role: "user", content: "テスト" }], model: "openai-fast" });
-  xhr.send(payload);
+  var retried = false;
+  var attempt = 0;
+  function sendTest() {
+    attempt++;
+    var my = attempt;
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://text.pollinations.ai/", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = retried ? 45000 : 30000;
+    xhr.onreadystatechange = function () {
+      if (my !== attempt) { return; }
+      if (xhr.readyState !== 4) { return; }
+      var body = xhr.responseText || "";
+      var isLimit = (xhr.status === 402 || body.indexOf("Free limit") >= 0 || body.indexOf("FREE_LIMIT") >= 0);
+      if (!isLimit && !retried && (xhr.status === 0 || xhr.status >= 500)) {
+        retried = true;
+        setDet(1, "AI回線へ再試行中…（自動リトライ1回目）");
+        sendTest();
+        return;
+      }
+      var ms = new Date().getTime() - start;
+      setMs(1, ms);
+      if (isLimit) {
+        setRes(1, "res-ng", "NG（上限）");
+        setDet(1, "1日の無料枠（100回）を使い切りました。翌朝9時に回復します。詳細：HTTP " + xhr.status);
+        finishOne(1, false);
+      } else if (xhr.status === 200 && body.replace(/\s/g, "").length > 0) {
+        setRes(1, "res-ok", "OK");
+        setDet(1, "応答あり（" + body.length + "文字）。詳細：HTTP 200");
+        finishOne(1, true);
+      } else if (xhr.status === 200) {
+        setRes(1, "res-ng", "NG");
+        setDet(1, "応答が空でした。詳細：HTTP 200");
+        finishOne(1, false);
+      } else {
+        setRes(1, "res-ng", "NG");
+        setDet(1, "詳細：HTTP " + xhr.status);
+        finishOne(1, false);
+      }
+    };
+    xhr.ontimeout = function () {
+      if (my !== attempt) { return; }
+      if (!retried) {
+        retried = true;
+        setDet(1, "AI回線へ再試行中…（自動リトライ1回目）");
+        sendTest();
+        return;
+      }
+      var ms = new Date().getTime() - start;
+      setMs(1, ms);
+      setRes(1, "res-ng", "NG");
+      setDet(1, "時間切れ（初回30秒＋自動リトライ45秒でも応答なし）。回線が混み合っている可能性があります");
+      finishOne(1, false);
+    };
+    xhr.onerror = function () {
+      if (my !== attempt) { return; }
+      if (!retried) {
+        retried = true;
+        setDet(1, "AI回線へ再試行中…（自動リトライ1回目）");
+        sendTest();
+        return;
+      }
+      var ms = new Date().getTime() - start;
+      setMs(1, ms);
+      setRes(1, "res-ng", "NG");
+      setDet(1, "通信エラー（HTTP 0）。ネット接続を確認してください");
+      finishOne(1, false);
+    };
+    xhr.send(payload);
+  }
+  sendTest();
 }
 
 function testNews() {

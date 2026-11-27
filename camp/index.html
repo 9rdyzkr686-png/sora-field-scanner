@@ -409,18 +409,14 @@ document.getElementById('storyBtn').onclick = function() {
   btn.disabled = true;
   detailEl.innerHTML = '';
   var start = new Date().getTime();
+  var retrying = false;
   statusEl.innerHTML = '考え中… 0秒';
   var counter = setInterval(function() {
     var sec = Math.floor((new Date().getTime() - start) / 1000);
-    statusEl.innerHTML = '考え中… ' + sec + '秒';
+    statusEl.innerHTML = (retrying ? '再試行中… ' : '考え中… ') + sec + '秒';
   }, 500);
 
   var prompt = 'あなたは焚き火のそばで静かに語る語り手です。星空、火の温もり、懐かしい記憶、静かな夜の気持ちなどをテーマに、焚き火を囲む一人が聴くための、穏やかで短い独り言のような語りを日本語で書いてください。条件：200文字以内、1〜3文、プレーンテキストのみ（マークダウン・記号装飾・タイトル禁止）、静かで温かい文体。';
-
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://text.pollinations.ai/', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.timeout = 90000;
 
   function finish() {
     clearInterval(counter);
@@ -428,40 +424,80 @@ document.getElementById('storyBtn').onclick = function() {
     btn.disabled = false;
   }
 
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState !== 4) return;
-    finish();
-    var body = xhr.responseText || '';
-    if (xhr.status === 200 && body) {
-      var reply = body.replace(/^\s+|\s+$/g, '');
-      if (reply.indexOf('Free limit') >= 0) {
-        statusEl.innerHTML = '';
-        textEl.innerHTML = '本日の無料AI回線は上限に達しました。明日の朝9時に回復します';
+  function sendReq() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://text.pollinations.ai/', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = retrying ? 45000 : 30000;
+    var settled = false;
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== 4) return;
+      if (settled) return;
+      var body = xhr.responseText || '';
+      if ((xhr.status === 0 || (xhr.status >= 500 && xhr.status < 600)) && body.indexOf('Free limit') < 0 && !retrying) {
+        settled = true;
+        retrying = true;
+        statusEl.innerHTML = '再試行中…';
+        sendReq();
         return;
       }
-      statusEl.innerHTML = '焚き火のそばで、どうぞ。';
-      textEl.innerHTML = reply.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      speak(reply);
-    } else {
-      statusEl.innerHTML = '';
-      textEl.innerHTML = aiErrorMessage(xhr.status, body);
-      if (xhr.status && xhr.status !== 402) {
-        detailEl.innerHTML = '詳細：HTTP ' + xhr.status;
+      settled = true;
+      if (xhr.status === 0) {
+        finish();
+        statusEl.innerHTML = '';
+        textEl.innerHTML = 'AI回線が混み合っています';
+        detailEl.innerHTML = '詳細：HTTP 0';
+        return;
       }
-    }
-  };
-  xhr.ontimeout = function() {
-    finish();
-    statusEl.innerHTML = '';
-    textEl.innerHTML = 'AI回線が時間切れになりました。少し待ってからもう一度押してみてください';
-  };
-  xhr.onerror = function() {
-    finish();
-    statusEl.innerHTML = '';
-    textEl.innerHTML = 'AI回線が混み合っています';
-    detailEl.innerHTML = '詳細：HTTP 0';
-  };
-  xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+      finish();
+      if (xhr.status === 200 && body) {
+        var reply = body.replace(/^\s+|\s+$/g, '');
+        if (reply.indexOf('Free limit') >= 0) {
+          statusEl.innerHTML = '';
+          textEl.innerHTML = '本日の無料AI回線は上限に達しました。明日の朝9時に回復します';
+          return;
+        }
+        statusEl.innerHTML = '焚き火のそばで、どうぞ。';
+        textEl.innerHTML = reply.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        speak(reply);
+      } else {
+        statusEl.innerHTML = '';
+        textEl.innerHTML = aiErrorMessage(xhr.status, body);
+        if (xhr.status && xhr.status !== 402) {
+          detailEl.innerHTML = '詳細：HTTP ' + xhr.status;
+        }
+      }
+    };
+    xhr.ontimeout = function() {
+      if (settled) return;
+      settled = true;
+      if (!retrying) {
+        retrying = true;
+        statusEl.innerHTML = '再試行中…';
+        sendReq();
+        return;
+      }
+      finish();
+      statusEl.innerHTML = '';
+      textEl.innerHTML = 'AI回線が時間切れになりました。少し待ってからもう一度押してみてください';
+    };
+    xhr.onerror = function() {
+      if (settled) return;
+      settled = true;
+      if (!retrying) {
+        retrying = true;
+        statusEl.innerHTML = '再試行中…';
+        sendReq();
+        return;
+      }
+      finish();
+      statusEl.innerHTML = '';
+      textEl.innerHTML = 'AI回線が混み合っています';
+      detailEl.innerHTML = '詳細：HTTP 0';
+    };
+    xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+  }
+  sendReq();
 };
 </script>
 </body>

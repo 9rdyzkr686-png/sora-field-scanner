@@ -255,35 +255,66 @@ callAI(hint, wxForPrompt);
 function callAI(hint, wxForPrompt) {
 var prompt = "あなたは旅のしおり係です。" + selDest + "への" + selDays + "の旅、ペースは「" + selPace + "」です。" + wxForPrompt + "。この天気もふまえて、旅のしおりを作ってください。ルール：1行目は必ず『要約：』で始まる一文（40字以内）で、旅の魅力を伝えてください。そのあとの見出しで、" + selDest + "の実在する有名な場所を3〜5か所入れた行程を書き、最後におすすめの名物グルメを1つ紹介してください。全体600字以内、マークダウンなし、プレーンテキストで書いてください。";
 var sec = 0;
+var aiRetrying = false;
 setStatus("✍ 作成中… 0秒");
 timerId = setInterval(function() {
 sec++;
-setStatus("✍ 作成中… " + sec + "秒");
+setStatus("✍ 作成中… " + sec + "秒" + (aiRetrying ? "（再試行中）" : ""));
 }, 1000);
+var payload = JSON.stringify({ messages: [{ role: "user", content: prompt}], model: "openai-fast"});
+var retried = false;
+var attempt = 0;
+function sendTabi() {
+attempt++;
+var my = attempt;
 var xhr = new XMLHttpRequest();
 xhr.open("POST", "https://text.pollinations.ai/", true);
 xhr.setRequestHeader("Content-Type", "application/json");
-xhr.timeout = 90000;
+xhr.timeout = retried ? 45000 : 30000;
 xhr.onload = function() {
-clearInterval(timerId);
+if (my !== attempt) { return;}
 var body = xhr.responseText || "";
+var isLimit = (xhr.status === 402 || body.indexOf("Free limit") >= 0);
+if (!isLimit && !retried && (xhr.status === 0 || xhr.status >= 500)) {
+retried = true;
+aiRetrying = true;
+sendTabi();
+return;
+}
+clearInterval(timerId);
 if (xhr.status === 200 && body && body.indexOf("Free limit") < 0) {
 showShiori(hint, body.replace(/^\s+|\s+$/g, ""));
-} else if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+} else if (isLimit) {
 finishWith("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
 } else {
 finishWith("AI回線が混み合っています<br><span style='font-size:12px;'>詳細：HTTP " + xhr.status + "</span>");
 }
 };
 xhr.onerror = function() {
+if (my !== attempt) { return;}
+if (!retried) {
+retried = true;
+aiRetrying = true;
+sendTabi();
+return;
+}
 clearInterval(timerId);
 finishWith("AI回線が混み合っています<br><span style='font-size:12px;'>詳細：HTTP 0</span>");
 };
 xhr.ontimeout = function() {
+if (my !== attempt) { return;}
+if (!retried) {
+retried = true;
+aiRetrying = true;
+sendTabi();
+return;
+}
 clearInterval(timerId);
 finishWith("AIの返事が時間切れになりました。もう一度お試しください");
 };
-xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt}], model: "openai-fast"}));
+xhr.send(payload);
+}
+sendTabi();
 }
 
 function finishWith(msg) {

@@ -573,9 +573,9 @@ function genAiTalk(topic) {
   aiBusy = true;
   stopSpeech();
   var status = el("aiStatus");
-  var sec = 0, finished = false;
+  var sec = 0, finished = false, retrying = false;
   status.textContent = "AIが台本を書いています… 0秒";
-  var timer = setInterval(function () { sec++; status.textContent = "AIが台本を書いています… " + sec + "秒"; }, 1000);
+  var timer = setInterval(function () { sec++; status.textContent = "AIが台本を書いています… " + sec + "秒" + (retrying ? "（再試行中）" : ""); }, 1000);
   function fail(msg) {
     if (finished) return;
     finished = true;
@@ -584,31 +584,66 @@ function genAiTalk(topic) {
     status.textContent = msg;
   }
   var prompt = "あなたは日本のラジオ番組のパーソナリティです。テーマは「" + topic + "」です。リスナーに語りかけるトークの台本を書いてください。条件：約400文字、改行なし、箇条書きなし、マークダウン記号なし、普通の文章だけにしてください。最初は挨拶から始めてください。";
-  var x = new XMLHttpRequest();
-  x.open("POST", "https://text.pollinations.ai/", true);
-  x.setRequestHeader("Content-Type", "application/json");
-  x.timeout = 90000;
-  x.onreadystatechange = function () {
-    if (x.readyState !== 4 || finished) return;
-    var body = x.responseText || "";
-    if (x.status === 402 || body.indexOf("Free limit") >= 0) { fail("本日の無料AI回線は上限に達しました。明日の朝9時に回復します。"); return; }
-    if (x.status !== 200) { fail("AI回線が混み合っています。少し待って、もう一度お試しください。（詳細：HTTP " + x.status + "）"); return; }
-    var lines = splitScript(body);
-    if (!lines.length) { fail("台本が空でした。もう一度お試しください。"); return; }
-    finished = true;
-    clearInterval(timer);
-    aiBusy = false;
-    playlist = ["それでは、AIパーソナリティのトークをお聞きください。テーマは「" + topic + "」です。"];
-    for (var i = 0; i < lines.length; i++) playlist.push(lines[i]);
-    playlist.push("以上、AIパーソナリティチャンネルでした。");
-    idx = 0;
-    status.textContent = "台本ができました（" + lines.length + "行）。読み上げます。";
-    updateDisplay();
-    speakCurrent();
-  };
-  x.ontimeout = function () { fail("AI回線の応答が時間切れになりました。もう一度お試しください。"); };
-  x.onerror = function () { fail("AI回線が混み合っています。少し待って、もう一度お試しください。（詳細：HTTP 0）"); };
-  x.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+  var liveAttempt = 0;
+  function send(attempt) {
+    liveAttempt = attempt;
+    var x = new XMLHttpRequest();
+    x.open("POST", "https://text.pollinations.ai/", true);
+    x.setRequestHeader("Content-Type", "application/json");
+    x.timeout = (attempt === 0) ? 30000 : 45000;
+    var handled = false;
+    x.onreadystatechange = function () {
+      if (x.readyState !== 4 || finished) return;
+      if (handled || attempt !== liveAttempt) return;
+      var body = x.responseText || "";
+      if (x.status === 402 || body.indexOf("Free limit") >= 0) { handled = true; fail("本日の無料AI回線は上限に達しました。明日の朝9時に回復します。"); return; }
+      if (attempt === 0 && (x.status === 0 || x.status >= 500)) {
+        handled = true;
+        retrying = true;
+        status.textContent = "AIが台本を書いています… " + sec + "秒（再試行中）";
+        send(1);
+        return;
+      }
+      handled = true;
+      if (x.status !== 200) { fail("AI回線が混み合っています。少し待って、もう一度お試しください。（詳細：HTTP " + x.status + "）"); return; }
+      var lines = splitScript(body);
+      if (!lines.length) { fail("台本が空でした。もう一度お試しください。"); return; }
+      finished = true;
+      clearInterval(timer);
+      aiBusy = false;
+      playlist = ["それでは、AIパーソナリティのトークをお聞きください。テーマは「" + topic + "」です。"];
+      for (var i = 0; i < lines.length; i++) playlist.push(lines[i]);
+      playlist.push("以上、AIパーソナリティチャンネルでした。");
+      idx = 0;
+      status.textContent = "台本ができました（" + lines.length + "行）。読み上げます。";
+      updateDisplay();
+      speakCurrent();
+    };
+    x.ontimeout = function () {
+      if (handled || attempt !== liveAttempt) return;
+      handled = true;
+      if (attempt === 0) {
+        retrying = true;
+        status.textContent = "AIが台本を書いています… " + sec + "秒（再試行中）";
+        send(1);
+        return;
+      }
+      fail("AI回線の応答が時間切れになりました。もう一度お試しください。");
+    };
+    x.onerror = function () {
+      if (handled || attempt !== liveAttempt) return;
+      handled = true;
+      if (attempt === 0) {
+        retrying = true;
+        status.textContent = "AIが台本を書いています… " + sec + "秒（再試行中）";
+        send(1);
+        return;
+      }
+      fail("AI回線が混み合っています。少し待って、もう一度お試しください。（詳細：HTTP 0）");
+    };
+    x.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+  }
+  send(0);
 }
 el("aiTopicZatsu").onclick = function () { genAiTalk("雑学"); };
 el("aiTopicOmoide").onclick = function () { genAiTalk("思い出話"); };

@@ -1190,11 +1190,12 @@ function callAiStory() {
   var statusEl = el("aiStoryStatus");
   btn.disabled = true;
   var sec = 0;
+  var retrying = false;
   statusEl.className = "status";
   statusEl.textContent = "考え中… 0秒";
   var timer = setInterval(function () {
     sec++;
-    statusEl.textContent = "考え中… " + sec + "秒";
+    statusEl.textContent = "考え中… " + sec + "秒" + (retrying ? "（再試行中）" : "");
   }, 1000);
   function finish() {
     clearInterval(timer);
@@ -1202,44 +1203,85 @@ function callAiStory() {
     btn.disabled = false;
   }
   var prompt = "あなたは都市伝説の語り手です。誰も聞いたことのない完全オリジナルの都市伝説を1つ、日本語で書いてください。条件：300文字以内、地の文のみで1つの物語にすること、マークダウンや箇条書きは使わないこと、実在の人物・団体・事件とは無関係の創作にすること、怖いけれど娯楽として楽しめる内容にすること、最後は少しぞっとする余韻で終えること。";
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://text.pollinations.ai/", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) { return; }
-    finish();
-    var body = xhr.responseText || "";
-    if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+  var liveAttempt = 0;
+  function send(attempt) {
+    liveAttempt = attempt;
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://text.pollinations.ai/", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = (attempt === 0) ? 30000 : 45000;
+    var handled = false;
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4) { return; }
+      if (handled || attempt !== liveAttempt) { return; }
+      var body = xhr.responseText || "";
+      if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+        handled = true;
+        finish();
+        statusEl.className = "status err";
+        statusEl.textContent = "本日の無料AI回線は上限に達しました。明日の朝9時に回復します";
+        return;
+      }
+      if (attempt === 0 && (xhr.status === 0 || xhr.status >= 500)) {
+        handled = true;
+        retrying = true;
+        statusEl.textContent = "考え中… " + sec + "秒（再試行中）";
+        send(1);
+        return;
+      }
+      handled = true;
+      finish();
+      var text = body.replace(/^\s+|\s+$/g, "");
+      if (xhr.status === 200 && text.length > 0) {
+        el("aiStoryText").textContent = text;
+        el("aiStoryCard").style.display = "block";
+        statusEl.className = "status";
+        statusEl.textContent = "新しい伝説が届きました";
+      } else {
+        aiErrorMsg(statusEl, "AI回線が混み合っています", xhr.status);
+      }
+    };
+    xhr.ontimeout = function () {
+      if (handled || attempt !== liveAttempt) { return; }
+      handled = true;
+      if (attempt === 0) {
+        retrying = true;
+        statusEl.textContent = "考え中… " + sec + "秒（再試行中）";
+        send(1);
+        return;
+      }
+      finish();
       statusEl.className = "status err";
-      statusEl.textContent = "本日の無料AI回線は上限に達しました。明日の朝9時に回復します";
-      return;
+      statusEl.textContent = "AI回線の応答が時間切れになりました。もう一度お試しください。";
+    };
+    xhr.onerror = function () {
+      if (handled || attempt !== liveAttempt) { return; }
+      handled = true;
+      if (attempt === 0) {
+        retrying = true;
+        statusEl.textContent = "考え中… " + sec + "秒（再試行中）";
+        send(1);
+        return;
+      }
+      finish();
+      aiErrorMsg(statusEl, "AI回線が混み合っています", 0);
+    };
+    try {
+      xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+    } catch (e) {
+      if (handled || attempt !== liveAttempt) { return; }
+      handled = true;
+      if (attempt === 0) {
+        retrying = true;
+        statusEl.textContent = "考え中… " + sec + "秒（再試行中）";
+        send(1);
+        return;
+      }
+      finish();
+      aiErrorMsg(statusEl, "AI回線が混み合っています", 0);
     }
-    var text = body.replace(/^\s+|\s+$/g, "");
-    if (xhr.status === 200 && text.length > 0) {
-      el("aiStoryText").textContent = text;
-      el("aiStoryCard").style.display = "block";
-      statusEl.className = "status";
-      statusEl.textContent = "新しい伝説が届きました";
-    } else {
-      aiErrorMsg(statusEl, "AI回線が混み合っています", xhr.status);
-    }
-  };
-  xhr.ontimeout = function () {
-    finish();
-    statusEl.className = "status err";
-    statusEl.textContent = "AI回線の応答が時間切れになりました。もう一度お試しください。";
-  };
-  xhr.onerror = function () {
-    finish();
-    aiErrorMsg(statusEl, "AI回線が混み合っています", 0);
-  };
-  try {
-    xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
-  } catch (e) {
-    finish();
-    aiErrorMsg(statusEl, "AI回線が混み合っています", 0);
   }
+  send(0);
 }
 
 /* ===== 今夜の一話 ===== */

@@ -265,7 +265,7 @@ document.getElementById("guideBtn").onclick = function () {
   var prompt = "あなたは森の自然ガイドです。テーマ「" + topic + "」について、静かで落ち着いた口調で、森を歩く人に語りかけるように220文字以内で解説してください。日本の森の話にしてください。マークダウンや記号は使わず、普通の文章で書いてください。";
   var sec = 0;
   status.textContent = "考え中… 0秒";
-  var timer = setInterval(function () { sec++; status.textContent = "考え中… " + sec + "秒"; }, 1000);
+  var timer = setInterval(function () { sec++; status.textContent = (retrying ? "再試行中… " : "考え中… ") + sec + "秒"; }, 1000);
   var done = false;
   function finish(msg) {
     if (done) return;
@@ -276,28 +276,62 @@ document.getElementById("guideBtn").onclick = function () {
     status.textContent = "";
     out.textContent = msg;
   }
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://text.pollinations.ai/", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) return;
-    var body = xhr.responseText || "";
-    if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
-      finish("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
-      return;
-    }
-    if (xhr.status === 200) {
-      var txt = body.replace(/^\s+|\s+$/g, "");
-      if (txt) { finish(txt); speak(txt); }
-      else { finish("AI回線が混み合っています（詳細：HTTP 200）"); }
-      return;
-    }
-    finish("AI回線が混み合っています（詳細：HTTP " + xhr.status + "）");
-  };
-  xhr.ontimeout = function () { finish("AI回線の応答が時間切れになりました。もう一度お試しください"); };
-  xhr.onerror = function () { finish("AI回線が混み合っています（詳細：HTTP 0）"); };
-  xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+  var retrying = false;
+  function sendReq() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://text.pollinations.ai/", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = retrying ? 45000 : 30000;
+    var settled = false;
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4 || settled) return;
+      var body = xhr.responseText || "";
+      if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+        settled = true;
+        finish("本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
+        return;
+      }
+      if ((xhr.status === 0 || (xhr.status >= 500 && xhr.status < 600)) && !retrying) {
+        settled = true;
+        retrying = true;
+        status.textContent = "再試行中… " + sec + "秒";
+        sendReq();
+        return;
+      }
+      settled = true;
+      if (xhr.status === 200) {
+        var txt = body.replace(/^\s+|\s+$/g, "");
+        if (txt) { finish(txt); speak(txt); }
+        else { finish("AI回線が混み合っています（詳細：HTTP 200）"); }
+        return;
+      }
+      finish("AI回線が混み合っています（詳細：HTTP " + xhr.status + "）");
+    };
+    xhr.ontimeout = function () {
+      if (settled) return;
+      settled = true;
+      if (!retrying) {
+        retrying = true;
+        status.textContent = "再試行中… " + sec + "秒";
+        sendReq();
+        return;
+      }
+      finish("AI回線の応答が時間切れになりました。もう一度お試しください");
+    };
+    xhr.onerror = function () {
+      if (settled) return;
+      settled = true;
+      if (!retrying) {
+        retrying = true;
+        status.textContent = "再試行中… " + sec + "秒";
+        sendReq();
+        return;
+      }
+      finish("AI回線が混み合っています（詳細：HTTP 0）");
+    };
+    xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+  }
+  sendReq();
 };
 </script>
 </body>

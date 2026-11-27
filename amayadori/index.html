@@ -447,18 +447,15 @@ poemBtn.onclick = function () {
   poemBusy = true;
   poemBtn.innerHTML = '考え中…';
   var sec = 0;
+  var retrying = false;
   poemStatus.innerHTML = '考え中… 0秒';
   if (poemTimer) { clearInterval(poemTimer); }
   poemTimer = setInterval(function () {
     sec = sec + 1;
-    poemStatus.innerHTML = '考え中… ' + sec + '秒';
+    poemStatus.innerHTML = (retrying ? '再試行中… ' : '考え中… ') + sec + '秒';
   }, 1000);
 
   var prompt = '雨をテーマに、短い詩か俳句のような短い作品を、120文字以内でひとつだけ書いてください。タイトルや説明は付けず、作品の本文だけを返してください。静かで優しい雰囲気でお願いします。';
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://text.pollinations.ai/', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.timeout = 90000;
 
   function finish() {
     if (poemTimer) { clearInterval(poemTimer); poemTimer = null; }
@@ -466,40 +463,73 @@ poemBtn.onclick = function () {
     poemBtn.innerHTML = '詩をもらう';
   }
 
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) { return; }
-    finish();
-    if (xhr.status === 200) {
-      var body = xhr.responseText || '';
-      if (body.indexOf('Free limit') !== -1) {
+  function sendReq() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://text.pollinations.ai/', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = retrying ? 45000 : 30000;
+    var settled = false;
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState !== 4 || settled) { return; }
+      var rbody = xhr.responseText || '';
+      if ((xhr.status === 0 || (xhr.status >= 500 && xhr.status < 600)) && rbody.indexOf('Free limit') === -1 && !retrying) {
+        settled = true;
+        retrying = true;
+        poemStatus.innerHTML = '再試行中… ' + sec + '秒';
+        sendReq();
+        return;
+      }
+      settled = true;
+      finish();
+      if (xhr.status === 200) {
+        var body = xhr.responseText || '';
+        if (body.indexOf('Free limit') !== -1) {
+          poemError('本日の無料AI回線は上限に達しました。明日の朝9時に回復します', '');
+          return;
+        }
+        var text = body.replace(/^\s+|\s+$/g, '');
+        if (!text) {
+          poemError('AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
+          return;
+        }
+        if (text.length > 300) { text = text.substring(0, 300); }
+        poemCard.innerHTML = '';
+        poemCard.appendChild(document.createTextNode(text));
+        poemStatus.innerHTML = '詩が届きました。';
+        if (voiceOn) { speak(text); }
+      } else if (xhr.status === 402) {
         poemError('本日の無料AI回線は上限に達しました。明日の朝9時に回復します', '');
-        return;
-      }
-      var text = body.replace(/^\s+|\s+$/g, '');
-      if (!text) {
+      } else {
         poemError('AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
+      }
+    };
+    xhr.ontimeout = function () {
+      if (settled) { return; }
+      settled = true;
+      if (!retrying) {
+        retrying = true;
+        poemStatus.innerHTML = '再試行中… ' + sec + '秒';
+        sendReq();
         return;
       }
-      if (text.length > 300) { text = text.substring(0, 300); }
-      poemCard.innerHTML = '';
-      poemCard.appendChild(document.createTextNode(text));
-      poemStatus.innerHTML = '詩が届きました。';
-      if (voiceOn) { speak(text); }
-    } else if (xhr.status === 402) {
-      poemError('本日の無料AI回線は上限に達しました。明日の朝9時に回復します', '');
-    } else {
-      poemError('AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
-    }
-  };
-  xhr.ontimeout = function () {
-    finish();
-    poemError('AI回線の時間切れです。少し待ってからもう一度どうぞ', '');
-  };
-  xhr.onerror = function () {
-    finish();
-    poemError('AI回線が混み合っています', '詳細：HTTP 0');
-  };
-  xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+      finish();
+      poemError('AI回線の時間切れです。少し待ってからもう一度どうぞ', '');
+    };
+    xhr.onerror = function () {
+      if (settled) { return; }
+      settled = true;
+      if (!retrying) {
+        retrying = true;
+        poemStatus.innerHTML = '再試行中… ' + sec + '秒';
+        sendReq();
+        return;
+      }
+      finish();
+      poemError('AI回線が混み合っています', '詳細：HTTP 0');
+    };
+    xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+  }
+  sendReq();
 };
 </script>
 </body>

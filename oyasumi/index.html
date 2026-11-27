@@ -175,6 +175,7 @@ var theme = "ダックスの夢";
 var waiting = false;
 var waitSec = 0;
 var waitTimer = null;
+var waitRetry = false;
 var dimTimer = null;
 var dimLevel = 0;
 
@@ -215,10 +216,11 @@ function setStatus(msg, detail) {
 function startWait() {
   waiting = true;
   waitSec = 0;
+  waitRetry = false;
   setStatus("物語を準備中… 0秒", "");
   waitTimer = setInterval(function () {
     waitSec++;
-    setStatus("物語を準備中… " + waitSec + "秒", "");
+    setStatus("物語を準備中… " + waitSec + "秒" + (waitRetry ? "（再試行中）" : ""), "");
   }, 1000);
 }
 
@@ -301,50 +303,83 @@ document.getElementById("storyBtn").onclick = function () {
   document.getElementById("storyBtn").disabled = true;
   startWait();
   var prompt = "あなたはおやすみ物語の語り手です。テーマ「" + theme + "」で、眠る前に聞く短くてやさしい物語を、静かで穏やかな口調で書いてください。条件：日本語の地の文のみ、350文字以内、マークダウン記号や箇条書きは使わない、最後は必ず「おやすみなさい。」で終える。";
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://text.pollinations.ai/", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) { return; }
-    stopWait();
-    document.getElementById("storyBtn").disabled = false;
-    var body = xhr.responseText || "";
-    if (xhr.status === 402 || body.indexOf("Free limit") !== -1) {
-      setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
-      return;
-    }
-    if (xhr.status !== 200) {
-      setStatus("AI回線が混み合っています", "詳細：HTTP " + xhr.status);
-      return;
-    }
-    var res = null;
-    try { res = JSON.parse(body); } catch (e) {}
-    var story = cleanReply(extractText(res));
-    if (!story) {
-      setStatus("AI回線が混み合っています", "詳細：HTTP " + xhr.status);
-      return;
-    }
-    if (story.length > 500) { story = story.substring(0, 500); }
-    var box = document.getElementById("storyBox");
-    box.style.display = "block";
-    box.innerHTML = "";
-    box.appendChild(document.createTextNode(story));
-    setStatus("物語がはじまります。画面はゆっくり暗くなります。", "");
-    speakStory(story);
-    startDim();
-  };
-  xhr.ontimeout = function () {
-    stopWait();
-    document.getElementById("storyBtn").disabled = false;
-    setStatus("時間がかかりすぎたため、物語を用意できませんでした。少し待ってから、もう一度お試しください", "");
-  };
-  xhr.onerror = function () {
-    stopWait();
-    document.getElementById("storyBtn").disabled = false;
-    setStatus("AI回線が混み合っています", "詳細：HTTP 0");
-  };
-  xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+  var payload = JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" });
+  var retried = false;
+  var attempt = 0;
+  function sendStory() {
+    attempt++;
+    var my = attempt;
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://text.pollinations.ai/", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = retried ? 45000 : 30000;
+    xhr.onreadystatechange = function () {
+      if (my !== attempt) { return; }
+      if (xhr.readyState !== 4) { return; }
+      var body = xhr.responseText || "";
+      if (xhr.status === 402 || body.indexOf("Free limit") !== -1) {
+        stopWait();
+        document.getElementById("storyBtn").disabled = false;
+        setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+        return;
+      }
+      if (xhr.status !== 200) {
+        if (!retried && (xhr.status === 0 || xhr.status >= 500)) {
+          retried = true;
+          waitRetry = true;
+          sendStory();
+          return;
+        }
+        stopWait();
+        document.getElementById("storyBtn").disabled = false;
+        setStatus("AI回線が混み合っています", "詳細：HTTP " + xhr.status);
+        return;
+      }
+      stopWait();
+      document.getElementById("storyBtn").disabled = false;
+      var res = null;
+      try { res = JSON.parse(body); } catch (e) {}
+      var story = cleanReply(extractText(res));
+      if (!story) {
+        setStatus("AI回線が混み合っています", "詳細：HTTP " + xhr.status);
+        return;
+      }
+      if (story.length > 500) { story = story.substring(0, 500); }
+      var box = document.getElementById("storyBox");
+      box.style.display = "block";
+      box.innerHTML = "";
+      box.appendChild(document.createTextNode(story));
+      setStatus("物語がはじまります。画面はゆっくり暗くなります。", "");
+      speakStory(story);
+      startDim();
+    };
+    xhr.ontimeout = function () {
+      if (my !== attempt) { return; }
+      if (!retried) {
+        retried = true;
+        waitRetry = true;
+        sendStory();
+        return;
+      }
+      stopWait();
+      document.getElementById("storyBtn").disabled = false;
+      setStatus("時間がかかりすぎたため、物語を用意できませんでした。少し待ってから、もう一度お試しください", "");
+    };
+    xhr.onerror = function () {
+      if (my !== attempt) { return; }
+      if (!retried) {
+        retried = true;
+        waitRetry = true;
+        sendStory();
+        return;
+      }
+      stopWait();
+      document.getElementById("storyBtn").disabled = false;
+      setStatus("AI回線が混み合っています", "詳細：HTTP 0");
+    };
+    xhr.send(payload);
+  }
+  sendStory();
 };
 
 /* ---- 雨音（WebAudioで生成） ---- */

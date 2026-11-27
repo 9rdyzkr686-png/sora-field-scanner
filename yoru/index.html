@@ -253,12 +253,14 @@ if (chunks.length >= 5) { break;}
 return chunks;
 }
 
+var waitRetrying = false;
 function startWait() {
 waitSec = 0;
+waitRetrying = false;
 setStatus('準備中… 0秒');
 waitTimer = setInterval(function () {
 waitSec++;
-setStatus('準備中… ' + waitSec + '秒');
+setStatus('準備中… ' + waitSec + '秒' + (waitRetrying ? '（再試行中）' : ''));
 }, 1000);
 }
 
@@ -270,14 +272,28 @@ function startWalk() {
 if (walking) { return;}
 el('btnStart').disabled = true;
 startWait();
+var payload = JSON.stringify({ messages: [{ role: 'user', content: buildPrompt()}], model: 'openai-fast'});
+var retried = false;
+var attempt = 0;
+function sendWalk() {
+attempt++;
+var my = attempt;
 var xhr = new XMLHttpRequest();
 xhr.open('POST', 'https://text.pollinations.ai/', true);
 xhr.setRequestHeader('Content-Type', 'application/json');
-xhr.timeout = 90000;
+xhr.timeout = retried ? 45000 : 30000;
 xhr.onload = function () {
-stopWait();
+if (my !== attempt) { return;}
 var body = xhr.responseText || '';
-if (xhr.status === 402 || body.indexOf('Free limit') >= 0) {
+var isLimit = (xhr.status === 402 || body.indexOf('Free limit') >= 0);
+if (!isLimit && !retried && (xhr.status === 0 || xhr.status >= 500)) {
+retried = true;
+waitRetrying = true;
+sendWalk();
+return;
+}
+stopWait();
+if (isLimit) {
 setStatus('本日の無料AI回線は上限に達しました。明日の朝9時に回復します');
 el('btnStart').disabled = false;
 return;
@@ -297,17 +313,32 @@ scenes = parsed;
 beginScenes();
 };
 xhr.ontimeout = function () {
+if (my !== attempt) { return;}
+if (!retried) {
+retried = true;
+waitRetrying = true;
+sendWalk();
+return;
+}
 stopWait();
 setStatus('AI回線の応答が時間切れになりました。もう一度お試しください');
 el('btnStart').disabled = false;
 };
 xhr.onerror = function () {
+if (my !== attempt) { return;}
+if (!retried) {
+retried = true;
+waitRetrying = true;
+sendWalk();
+return;
+}
 stopWait();
 setStatus('AI回線が混み合っています<span class="detail">詳細：HTTP 0</span>');
 el('btnStart').disabled = false;
 };
-var payload = JSON.stringify({ messages: [{ role: 'user', content: buildPrompt()}], model: 'openai-fast'});
 xhr.send(payload);
+}
+sendWalk();
 }
 
 function distText() {

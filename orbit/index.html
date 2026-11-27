@@ -1082,14 +1082,23 @@ function planetAsk(dateStr, sunset, moonName) {
   if (sunset) { facts += "今夜の日没は" + sunset + "ごろです。"; }
   if (moonName) { facts += "今夜の月は「" + moonName + "」です。"; }
   var prompt = "あなたはプラネタリウムの案内役です。次の情報をもとに、今夜の星空の見どころを紹介する案内文を、星空案内の優しい口調で書いてください。250文字以内。マークダウンなし、プレーンテキストのみ。情報にない数値や時刻は断定しないでください。【情報】" + facts;
+  planetSend(prompt, 0);
+}
+
+function planetSend(prompt, attempt) {
   var xhr = new XMLHttpRequest();
   xhr.open("POST", "https://text.pollinations.ai/", true);
   xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
+  xhr.timeout = (attempt === 0) ? 30000 : 45000;
   xhr.onload = function () {
     var body = xhr.responseText || "";
     if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
       planetError("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+      return;
+    }
+    if (attempt === 0 && (xhr.status === 0 || xhr.status >= 500)) {
+      el("planetMsg").innerHTML = "再試行中…";
+      planetSend(prompt, 1);
       return;
     }
     if (xhr.status !== 200 || body.replace(/\s/g, "") === "") {
@@ -1099,9 +1108,19 @@ function planetAsk(dateStr, sunset, moonName) {
     planetShow(body.replace(/\s+$/, ""));
   };
   xhr.ontimeout = function () {
+    if (attempt === 0) {
+      el("planetMsg").innerHTML = "再試行中…";
+      planetSend(prompt, 1);
+      return;
+    }
     planetError("AIの返事が時間切れになりました。もう一度押してみてください", "");
   };
   xhr.onerror = function () {
+    if (attempt === 0) {
+      el("planetMsg").innerHTML = "再試行中…";
+      planetSend(prompt, 1);
+      return;
+    }
     planetError("AI回線が混み合っています", "詳細：HTTP " + xhr.status);
   };
   xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
@@ -1350,14 +1369,23 @@ function pcAsk(dateStr, sunset, moonName) {
   if (sunset) { facts += "今夜の日没は" + sunset + "ごろです。"; }
   if (moonName) { facts += "今夜の月は「" + moonName + "」です。"; }
   var prompt = "あなたはプラネタリウムの案内役です。次の情報をもとに、今夜の惑星の見どころを案内する文章を、優しい口調で書いてください。どの惑星がいつ頃どの方角に見えるか、見えにくい惑星はその理由も添えてください。250文字以内。マークダウンなし、プレーンテキストのみ。情報にない数値や時刻は断定しないでください。【情報】" + facts;
+  pcSend(prompt, 0);
+}
+
+function pcSend(prompt, attempt) {
   var xhr = new XMLHttpRequest();
   xhr.open("POST", "https://text.pollinations.ai/", true);
   xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
+  xhr.timeout = (attempt === 0) ? 30000 : 45000;
   xhr.onload = function () {
     var body = xhr.responseText || "";
     if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
       pcError("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+      return;
+    }
+    if (attempt === 0 && (xhr.status === 0 || xhr.status >= 500)) {
+      el("planetCardsMsg").innerHTML = "再試行中…";
+      pcSend(prompt, 1);
       return;
     }
     if (xhr.status !== 200 || body.replace(/\s/g, "") === "") {
@@ -1367,9 +1395,19 @@ function pcAsk(dateStr, sunset, moonName) {
     pcShow(body.replace(/\s+$/, ""));
   };
   xhr.ontimeout = function () {
+    if (attempt === 0) {
+      el("planetCardsMsg").innerHTML = "再試行中…";
+      pcSend(prompt, 1);
+      return;
+    }
     pcError("AIの返事が時間切れになりました。もう一度押してみてください", "");
   };
   xhr.onerror = function () {
+    if (attempt === 0) {
+      el("planetCardsMsg").innerHTML = "再試行中…";
+      pcSend(prompt, 1);
+      return;
+    }
     pcError("AI回線が混み合っています", "詳細：HTTP " + xhr.status);
   };
   xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));

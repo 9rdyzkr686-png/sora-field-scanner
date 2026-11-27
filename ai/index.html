@@ -185,6 +185,7 @@
   <button type="button" id="telegramBtn">電文風コピー</button>
   <button type="button" id="favBtn">★お気に入り</button>
   <button type="button" id="kuuMsgBtn">KUU-01へ伝言</button>
+  <button type="button" id="lineTestBtn">回線テスト</button>
   <button type="button" id="clearBtn">会話を消す</button>
 </div>
 <div id="statusLine"></div>
@@ -222,7 +223,7 @@ var API_BASE = "https://text.pollinations.ai/";
 var GREETING = "こんにちは、小野さん。AI-6です。何でも聞いてください。";
 var FAIL_MSG = "AI回線が混み合っています。少し待って、もう一度送ってみてください。";
 var QUOTA_MSG = "本日の無料AI回線は上限に達しました。明日の朝9時に回復します";
-var TIMEOUT_MSG = "AIの返事が時間切れになりました（90秒）。もう一度送ってみてください";
+var TIMEOUT_MSG = "AIの返事が時間切れになりました（75秒）。もう一度送ってみてください";
 
 var MODES = {
   normal:  { label: "ふつう",       inst: "あなたは親切なAIアシスタントです。丁寧で簡潔に答えてください。" },
@@ -281,6 +282,7 @@ var voiceOnlyBtn = document.getElementById("voiceOnlyBtn");
 var voicePanel = document.getElementById("voicePanel");
 var voiceStatusEl = document.getElementById("voiceStatus");
 var multiBtn = document.getElementById("multiBtn");
+var lineTestBtn = document.getElementById("lineTestBtn");
 var favListEl = document.getElementById("favList");
 
 function updateBodyClass() {
@@ -597,7 +599,8 @@ function sendMessage(text) {
     lastKind = kind;
     if (typeof status === "number") lastStatus = status;
     if (kind === "quota") { finalFail(QUOTA_MSG, ""); return; }
-    if (!retried) {
+    var retryable = (kind === "timeout") || lastStatus === 0 || (lastStatus >= 500 && lastStatus <= 599);
+    if (!retried && retryable) {
       retried = true;
       retrying = true;
       thinkMsg.innerHTML = "考え中… " + elapsed + "秒（再試行中）";
@@ -632,7 +635,7 @@ function sendMessage(text) {
       var xhr = new XMLHttpRequest();
       xhr.open("POST", API_BASE, true);
       xhr.setRequestHeader("Content-Type", "application/json");
-      xhr.timeout = 90000;
+      xhr.timeout = retried ? 45000 : 30000;
       xhr.onreadystatechange = function () {
         if (xhr.readyState !== 4) return;
         if (done) return;
@@ -682,7 +685,8 @@ function multiAttempt(prompt, thinkMsg, cb) {
       cb("quota", "");
       return;
     }
-    if (!retried) {
+    var retryable = (kind === "timeout") || lastStatus === 0 || (lastStatus >= 500 && lastStatus <= 599);
+    if (!retried && retryable) {
       retried = true;
       thinkMsg.innerHTML = "考え中…（再試行中）";
       setTimeout(function () { if (!done) attempt(); }, 2000);
@@ -697,7 +701,7 @@ function multiAttempt(prompt, thinkMsg, cb) {
       var xhr = new XMLHttpRequest();
       xhr.open("POST", API_BASE, true);
       xhr.setRequestHeader("Content-Type", "application/json");
-      xhr.timeout = 90000;
+      xhr.timeout = retried ? 45000 : 30000;
       xhr.onreadystatechange = function () {
         if (xhr.readyState !== 4) return;
         if (done) return;
@@ -795,7 +799,75 @@ function sendMulti() {
   step();
 }
 
+/* ---- 回線テスト（AI回線v2と同じ経路で小さく疎通確認） ---- */
+var lineTestBusy = false;
+function lineTest() {
+  if (lineTestBusy) return;
+  lineTestBusy = true;
+  setStatus("回線テスト中…");
+  var t0 = new Date().getTime();
+  var retried = false;
+  var finished = false;
+  function secs() { return Math.round((new Date().getTime() - t0) / 100) / 10; }
+  function report(ok, detail) {
+    if (finished) return;
+    finished = true;
+    lineTestBusy = false;
+    recordStat(ok, Math.round((new Date().getTime() - t0) / 1000));
+    if (ok) setStatus("回線テスト：成功（" + secs() + "秒）");
+    else setStatus("回線テスト：失敗（" + detail + "）");
+  }
+  function retryOrFail(detail) {
+    if (finished) return;
+    if (!retried) {
+      retried = true;
+      setStatus("回線テスト中…（再試行中）");
+      setTimeout(attempt, 1500);
+    } else {
+      report(false, detail);
+    }
+  }
+  function attempt() {
+    if (finished) return;
+    try {
+      var xhr = new XMLHttpRequest();
+      var settled = false;
+      xhr.open("POST", API_BASE, true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.timeout = retried ? 45000 : 30000;
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        if (settled || finished) return;
+        settled = true;
+        var st = 0;
+        try { st = xhr.status; } catch (e) { st = 0; }
+        var raw = "";
+        try { raw = xhr.responseText || ""; } catch (e) { raw = ""; }
+        if (st === 402 || raw.indexOf("Free limit") >= 0) { report(false, "HTTP " + st); return; }
+        if (st === 200 && raw.replace(/^\s+|\s+$/g, "")) { report(true, ""); return; }
+        if (st === 0 || (st >= 500 && st <= 599)) { retryOrFail("HTTP " + st); return; }
+        report(false, "HTTP " + st);
+      };
+      xhr.ontimeout = function () {
+        if (settled || finished) return;
+        settled = true;
+        retryOrFail("時間切れ");
+      };
+      xhr.onerror = function () {
+        if (settled || finished) return;
+        settled = true;
+        retryOrFail("HTTP 0");
+      };
+      xhr.send(JSON.stringify({ messages: [{ role: "user", content: "テストです。『OK』とだけ返事して" }], model: "openai-fast" }));
+    } catch (e) {
+      retryOrFail("HTTP 0");
+    }
+  }
+  attempt();
+}
+
 multiBtn.onclick = function () { sendMulti(); };
+lineTestBtn.onclick = function () { lineTest(); };
 
 /* ---- 音声だけモード ---- */
 voiceOnlyBtn.onclick = function () {

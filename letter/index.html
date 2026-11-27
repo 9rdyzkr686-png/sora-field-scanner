@@ -291,18 +291,14 @@ function callAI() {
   aiBusy = true;
   el("aiBtn").disabled = true;
   var sec = 0;
+  var retrying = false;
   setStatus("便りを待っています… 0秒", "");
   var timer = setInterval(function () {
     sec++;
-    setStatus("便りを待っています… " + sec + "秒", "");
+    setStatus((retrying ? "再試行中… " : "便りを待っています… ") + sec + "秒", "");
   }, 1000);
 
   var prompt = "あなたは「手紙の木」に届く不思議な手紙の書き手です。実在しない差出人を一人考え、その人からの温かい手紙を書いてください。形式は厳密に：1行目は『差出人：○○』（○○は差出人の名前や肩書き）、2行目以降が手紙の本文です。本文は3〜5文、全体で250文字以内。読む人がほっとする内容にしてください。マークダウン記号は使わないでください。";
-
-  var xhr = new XMLHttpRequest();
-  xhr.open("POST", "https://text.pollinations.ai/", true);
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.timeout = 90000;
 
   function finish() {
     clearInterval(timer);
@@ -310,44 +306,82 @@ function callAI() {
     el("aiBtn").disabled = false;
   }
 
-  xhr.onload = function () {
-    finish();
-    var body = xhr.responseText || "";
-    if (xhr.status === 402 || body.indexOf("Free limit") !== -1) {
-      setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
-      return;
-    }
-    if (xhr.status !== 200 || !body.replace(/\s/g, "")) {
-      setStatus("AI回線が混み合っています", "詳細：HTTP " + xhr.status);
-      return;
-    }
-    var lines = body.replace(/\r/g, "").split("\n");
-    var from = "名もなき旅人";
-    var textLines = [];
-    var i, ln;
-    for (i = 0; i < lines.length; i++) {
-      ln = lines[i].replace(/^\s+|\s+$/g, "");
-      if (i === 0 && ln.indexOf("差出人") === 0) {
-        var nm = ln.replace(/^差出人[:：]\s*/, "").replace(/^[「『]/, "").replace(/[」』]$/, "");
-        if (nm) { from = nm; }
-        continue;
+  function send() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "https://text.pollinations.ai/", true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.timeout = retrying ? 45000 : 30000;
+    var settled = false;
+
+    xhr.onload = function () {
+      if (settled) { return; }
+      var body = xhr.responseText || "";
+      if (xhr.status === 402 || body.indexOf("Free limit") !== -1) {
+        settled = true;
+        finish();
+        setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+        return;
       }
-      if (ln) { textLines.push(ln); }
-    }
-    var text = textLines.join("\n");
-    if (!text) { text = body.replace(/^\s+|\s+$/g, ""); }
-    setStatus("新しい便りが届きました", "");
-    addRead({ from: from, text: text, ai: true });
-  };
-  xhr.onerror = function () {
-    finish();
-    setStatus("AI回線が混み合っています", "詳細：HTTP 0");
-  };
-  xhr.ontimeout = function () {
-    finish();
-    setStatus("時間がかかりすぎたため、便りは届きませんでした。もう一度お試しください", "");
-  };
-  xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+      if (xhr.status === 200 && body.replace(/\s/g, "")) {
+        settled = true;
+        finish();
+        var lines = body.replace(/\r/g, "").split("\n");
+        var from = "名もなき旅人";
+        var textLines = [];
+        var i, ln;
+        for (i = 0; i < lines.length; i++) {
+          ln = lines[i].replace(/^\s+|\s+$/g, "");
+          if (i === 0 && ln.indexOf("差出人") === 0) {
+            var nm = ln.replace(/^差出人[:：]\s*/, "").replace(/^[「『]/, "").replace(/[」』]$/, "");
+            if (nm) { from = nm; }
+            continue;
+          }
+          if (ln) { textLines.push(ln); }
+        }
+        var text = textLines.join("\n");
+        if (!text) { text = body.replace(/^\s+|\s+$/g, ""); }
+        setStatus("新しい便りが届きました", "");
+        addRead({ from: from, text: text, ai: true });
+        return;
+      }
+      if ((xhr.status === 0 || xhr.status >= 500) && !retrying) {
+        settled = true;
+        retrying = true;
+        setStatus("再試行中… " + sec + "秒", "");
+        send();
+        return;
+      }
+      settled = true;
+      finish();
+      setStatus("AI回線が混み合っています", "詳細：HTTP " + xhr.status);
+    };
+    xhr.onerror = function () {
+      if (settled) { return; }
+      settled = true;
+      if (!retrying) {
+        retrying = true;
+        setStatus("再試行中… " + sec + "秒", "");
+        send();
+        return;
+      }
+      finish();
+      setStatus("AI回線が混み合っています", "詳細：HTTP 0");
+    };
+    xhr.ontimeout = function () {
+      if (settled) { return; }
+      settled = true;
+      if (!retrying) {
+        retrying = true;
+        setStatus("再試行中… " + sec + "秒", "");
+        send();
+        return;
+      }
+      finish();
+      setStatus("時間がかかりすぎたため、便りは届きませんでした。もう一度お試しください", "");
+    };
+    xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+  }
+  send();
 }
 
 function stopSpeak() {

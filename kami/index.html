@@ -305,12 +305,14 @@ nextBtn.onclick = function () {
   if (cur < 3) showScene(cur + 1);
 };
 
+var aiRetrying = false;
 function startTimer() {
   var t0 = new Date().getTime();
+  aiRetrying = false;
   setStatus('考え中… 0秒');
   timerId = setInterval(function () {
     var sec = Math.floor((new Date().getTime() - t0) / 1000);
-    setStatus('考え中… ' + sec + '秒');
+    setStatus('考え中… ' + sec + '秒' + (aiRetrying ? '（再試行中）' : ''));
   }, 500);
 }
 function stopTimer() {
@@ -330,39 +332,69 @@ startBtn.onclick = function () {
     + 'やさしい日本語で書くこと。場面番号やタイトルは書かないこと。お話の文章だけを書いてください。';
 
   startTimer();
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://text.pollinations.ai/', true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.timeout = 90000;
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== 4) return;
-    stopTimer();
-    busy = false;
-    startBtn.disabled = false;
-    var body = xhr.responseText || '';
-    if (xhr.status === 200 && body && body.indexOf('Free limit') === -1) {
-      scenes = parseScenes(body);
-      setStatus('紙芝居のはじまり、はじまり！');
-      showScene(0);
-    } else if (xhr.status === 402 || body.indexOf('Free limit') !== -1) {
-      setStatus('本日の無料AI回線は上限に達しました。明日の朝9時に回復します');
-    } else {
-      setStatus('AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
-    }
-  };
-  xhr.ontimeout = function () {
-    stopTimer();
-    busy = false;
-    startBtn.disabled = false;
-    setStatus('AI回線の時間切れです。もう一度お試しください');
-  };
-  xhr.onerror = function () {
-    stopTimer();
-    busy = false;
-    startBtn.disabled = false;
-    setStatus('AI回線が混み合っています', '詳細：HTTP 0');
-  };
-  xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+  var payload = JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' });
+  var retried = false;
+  var attempt = 0;
+  function sendKami() {
+    attempt++;
+    var my = attempt;
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://text.pollinations.ai/', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = retried ? 45000 : 30000;
+    xhr.onreadystatechange = function () {
+      if (my !== attempt) return;
+      if (xhr.readyState !== 4) return;
+      var body = xhr.responseText || '';
+      var isLimit = (xhr.status === 402 || body.indexOf('Free limit') !== -1);
+      if (!isLimit && !retried && (xhr.status === 0 || xhr.status >= 500)) {
+        retried = true;
+        aiRetrying = true;
+        sendKami();
+        return;
+      }
+      stopTimer();
+      busy = false;
+      startBtn.disabled = false;
+      if (xhr.status === 200 && body && body.indexOf('Free limit') === -1) {
+        scenes = parseScenes(body);
+        setStatus('紙芝居のはじまり、はじまり！');
+        showScene(0);
+      } else if (isLimit) {
+        setStatus('本日の無料AI回線は上限に達しました。明日の朝9時に回復します');
+      } else {
+        setStatus('AI回線が混み合っています', '詳細：HTTP ' + xhr.status);
+      }
+    };
+    xhr.ontimeout = function () {
+      if (my !== attempt) return;
+      if (!retried) {
+        retried = true;
+        aiRetrying = true;
+        sendKami();
+        return;
+      }
+      stopTimer();
+      busy = false;
+      startBtn.disabled = false;
+      setStatus('AI回線の時間切れです。もう一度お試しください');
+    };
+    xhr.onerror = function () {
+      if (my !== attempt) return;
+      if (!retried) {
+        retried = true;
+        aiRetrying = true;
+        sendKami();
+        return;
+      }
+      stopTimer();
+      busy = false;
+      startBtn.disabled = false;
+      setStatus('AI回線が混み合っています', '詳細：HTTP 0');
+    };
+    xhr.send(payload);
+  }
+  sendKami();
 };
 </script>
 </body>
