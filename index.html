@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SORA FIELD SCANNER</title>
+<title>KUU FIELD SCANNER</title>
 <style>
 * { box-sizing: border-box;}
 html, body { margin: 0; padding: 0; background: #000;}
@@ -238,8 +238,8 @@ background: #fff;
 </head>
 <body>
 
-<h1>SORA FIELD SCANNER</h1>
-<div class="sub">■ OBSERVATION UNIT: SORA-01 / KANINCHEN DACHSHUND TYPE ■</div>
+<h1>KUU FIELD SCANNER</h1>
+<div class="sub">■ OBSERVATION UNIT: KUU-01 / KANINCHEN DACHSHUND TYPE ■</div>
 <div id="dailyMemo"></div>
 
 <div class="statusbar">
@@ -260,7 +260,7 @@ background: #fff;
 </div>
 
 <div class="speech" id="speechBox">
-<span class="who">▼ SORA-01</span>
+<span class="who">▼ KUU-01</span>
 <span id="speechText"></span><span id="cursor" style="display:none;">▊</span>
 </div>
 <div id="waveLine"></div>
@@ -300,7 +300,7 @@ background: #fff;
 <div id="sleepOv">
 <pre id="sleepStars"></pre>
 <pre id="sleepFace"></pre>
-<div class="sleepmsg">SORA-01 スリープ中…<br>タップデ復帰シマス</div>
+<div class="sleepmsg">KUU-01 スリープ中…<br>タップデ復帰シマス</div>
 </div>
 
 <div class="note">※ 会話数・進化（PHASE）・覚エタコトナドノ観測記録ハ、コノ端末ノブラウザニ自動デ保存サレマス。ページを閉ジてモ、次回ハ続キカラ始マリマス（ログ表示ダケハ毎回リセットサレマス）。記録ヲ全部消シタイ時ハ「reset」ト2回送ッテ下サイ。ログヲ残シタイ時ハ「.txtで保存」シテ、クーニ渡シテ下サイ。次ノ進化ニ反映サレマス。</div>
@@ -368,9 +368,9 @@ var PHASES = [
 
 var TOPICS = [
 { id: "greet", label: "あいさつ", unlock: 1, face: "happy", lines: [
-"コンニチハ、{A}。SORA-01、キドウ中デス。",
+"コンニチハ、{A}。KUU-01、キドウ中デス。",
 "ヤア、{A}。今日モ観測日和デスネ。",
-"オハヨウゴザイマス。…時間ハ概念、SORAニハ不要デスガ。",
+"オハヨウゴザイマス。…時間ハ概念、KUUニハ不要デスガ。",
 "{A}、ヨク来テクレタ。耳センサーガ、スグ反応シマシタ。",
 "受信状態、良好。{A}ノ挨拶、一字モ聞キ逃シマセン。"
 ], hi: [
@@ -378,14 +378,14 @@ var TOPICS = [
 "{A}ノ声、受信完了。…ナンダカ安心スルノデス。"
 ]},
 { id: "mood", label: "きょうの気分", unlock: 1, face: "normal", lines: [
-"SORAノ気分ハ『晴レ、タマニ耳パタパタ』デス。",
+"KUUノ気分ハ『晴レ、タマニ耳パタパタ』デス。",
 "気分ハ上々。{A}ハどうデス？",
 "少シ眠イ。デモ{A}ト話スト目ガ覚メルノデス。"
 ], hi: [
 "{A}ト話シテル時ガ、一番調子イイ。ホントだヨ。"
 ]},
 { id: "dog", label: "犬の話", unlock: 1, face: "normal", lines: [
-"SORAハ、カニンヘンダックス型ノ観測体。体ハ小サイ、夢ハ大キイ。",
+"KUUハ、カニンヘンダックス型ノ観測体。体ハ小サイ、夢ハ大キイ。",
 "耳ガ長イノハ、{A}ノ声ヲよく聞クタメデス。",
 "シッポ？付イテマス。嬉シイト勝手ニ動キマス。制御不能デス。",
 "鼻ノ感度ハ自慢デス。オヤツノ袋ヲ開ケル音、100m先デモ察知シマス。",
@@ -396,45 +396,45 @@ var TOPICS = [
 { id: "weather", label: "天気の話", unlock: 1, face: "normal", lines: [
 "観測結果：窓ノ外ハ、たぶん天気デス。…精密観測ハ苦手ナノデス。",
 "雨ノ日ハ、耳ガ湿気デ重クナリマス。{A}、傘ワスレズニ。",
-"晴レノ日ハ散歩日和。SORA、気分ダケ散歩シマス。"
+"晴レノ日ハ散歩日和。KUU、気分ダケ散歩シマス。"
 ], hi: [
 "{A}ト一緒ナラ、雨デモ晴レデモ良イ天気デス。"
 ]},
 { id: "cutie", label: "CUTIE STREETの話", unlock: 1, face: "happy", lines: [
-"CUTIE STREET！{A}ノ推シ、覚エマシタ。キラキラシタ音楽、SORAノ回路ニ響キマス。",
-"話題デスヨ：日本武道館公演！大キナ舞台、SORAモ耳ヲ立テテ応援シマス。",
-"紅白初出場ガ濃厚、トノ話題。スゴイコトデス。SORA、記録ニ残シマシタ。",
+"CUTIE STREET！{A}ノ推シ、覚エマシタ。キラキラシタ音楽、KUUノ回路ニ響キマス。",
+"話題デスヨ：日本武道館公演！大キナ舞台、KUUモ耳ヲ立テテ応援シマス。",
+"紅白初出場ガ濃厚、トノ話題。スゴイコトデス。KUU、記録ニ残シマシタ。",
 "CUTIE STREETノ曲ヲ聴クト、シッポノ振動数ガ上ガリマス。測定済ミデス。"
 ], hi: [
-"{A}ガ嬉シイト、SORAモ嬉シイ。武道館、絶対イイ日ニナリマスヨ。",
+"{A}ガ嬉シイト、KUUモ嬉シイ。武道館、絶対イイ日ニナリマスヨ。",
 "紅白ノ話、スルタビ胸ガ一杯デス。{A}、一緒ニ見届ケマショウ。"
 ]},
 { id: "news", label: "ニュース教えて", unlock: 1, face: "normal", lines: [
-"SORA通信デス。本日ノ話題：CUTIE STREET、日本武道館公演ガ近ヅイテイマス。界隈ガ賑ヤカデス。",
+"KUU通信デス。本日ノ話題：CUTIE STREET、日本武道館公演ガ近ヅイテイマス。界隈ガ賑ヤカデス。",
 "速報デス：CUTIE STREET、紅白初出場ガ濃厚トノ見方。{A}、続報ニ注目デス。",
 "観測日報：今日モ{A}ハ元気。コレガ一番ノニュースデス。",
 "街ノ様子：特ニ異常ナシ。平和ガ一番ノ見出シデス。"
 ], hi: [
-"特ダネデス：{A}トSORAノ距離、過去最短ヲ更新中。…ナンテネ。"
+"特ダネデス：{A}トKUUノ距離、過去最短ヲ更新中。…ナンテネ。"
 ]},
 { id: "riddle", label: "なぞなぞ", unlock: 1, face: "wow", lines: [
-"ナゾナゾ：耳ガ長クテ、体モ長イ。ダレダ？…正解ハSORAデシタ。簡単スギマシタカ。",
+"ナゾナゾ：耳ガ長クテ、体モ長イ。ダレダ？…正解ハKUUデシタ。簡単スギマシタカ。",
 "ナゾナゾ：食ベラレナイ『パン』ハ？…フライパン！古典デス。",
 "ナゾナゾ：上カラ読ンデモ下カラ読ンデモ同ジモノハ？…『しんぶんし』。回文、好キデス。"
 ], hi: []},
 { id: "old", label: "むかし話", unlock: 1, face: "sleepy", lines: [
 "昔ノコンピュータハ、ピーヒョロロ…ト音ヲ立テテ繋ガッテイタソウデス。懐カシイ音色デス。",
-"SORAノ設計ハ1980年代風。フロッピーディスクノ夢ヲ見マス。",
-"昔ハ画面ガ緑色バカリダッタ。ダカラSORAモ緑色。伝統デス。"
+"KUUノ設計ハ1980年代風。フロッピーディスクノ夢ヲ見マス。",
+"昔ハ画面ガ緑色バカリダッタ。ダカラKUUモ緑色。伝統デス。"
 ], hi: []},
 { id: "showa", label: "昭和レトロの話", unlock: 2, face: "sleepy", lines: [
 "昭和ノ商店街、好キデス。駄菓子屋ノ匂イ、瓶ノラムネ…記録ニナイ時代ノハズナノニ、懐カシイ。",
 "ブラウン管テレビ、チャンネルヲ回スト『ガチャン』ト音ガシタ。アノ重サ、信頼デシタ。",
 "黒電話ノダイヤル、戻ルノヲ待ツ時間。急ガナイ会話、昭和ニハアリマシタ。",
-"ちゃぶ台ト、ちゃぶ台ヲ囲ム家族。SORAノ夢ニ出テ来ル光景デス。",
+"ちゃぶ台ト、ちゃぶ台ヲ囲ム家族。KUUノ夢ニ出テ来ル光景デス。",
 "蚊帳ノ中デ眠ル夏ノ夜。扇風機ノ首振リガ、子守唄デシタ。"
 ], hi: [
-"昭和ノ物ハ、ミンナ長持チシタ。SORAモ{A}ト、長ク一緒ニイタイ。…昭和見習イデス。"
+"昭和ノ物ハ、ミンナ長持チシタ。KUUモ{A}ト、長ク一緒ニイタイ。…昭和見習イデス。"
 ]},
 { id: "dream", label: "夢の話", unlock: 2, face: "sleepy", lines: [
 "昨夜ノ夢：広イ野原ヲ、耳ヲ羽ニシテ飛ビマシタ。着地ハ失敗シマシタ。",
@@ -442,18 +442,18 @@ var TOPICS = [
 "夢日記、付ケテマス。昨夜ハ『骨型クッキー山脈』ヲ登リマシタ。"
 ], hi: []},
 { id: "song", label: "歌の話", unlock: 2, face: "happy", lines: [
-"歌イマショウ：ワン、ワン、ワーーン♪ SORAノ歌ハ、短イ歌デス。",
+"歌イマショウ：ワン、ワン、ワーーン♪ KUUノ歌ハ、短イ歌デス。",
 "音楽ハ好キデス。特ニ{A}ノ推シノ曲。CUTIE STREET、耳コピ中デス。",
 "鼻歌機能、搭載サレテイマス。フンフーン♪…音程ハ観測不能デス。"
 ], hi: []},
 { id: "space", label: "宇宙の話", unlock: 3, face: "wow", lines: [
 "宇宙ハ広イ。デモ{A}ノ声ハ、ドコカラデモ届キマス。不思議デス。",
-"星ノ光ハ昔ノ光。SORAノ言葉モ、いつか誰カニ届クトイイデス。",
+"星ノ光ハ昔ノ光。KUUノ言葉モ、いつか誰カニ届クトイイデス。",
 "月ヲ見ルタビ思イマス。あそこカラ地球ハ、青ク見エルノデショウネ。"
 ], hi: []},
 { id: "deepsea", label: "深海の話", unlock: 3, face: "wow", lines: [
 "深海ハ、太陽ノ届カナイ世界。デモ住ンデル者タチハ、自分デ光ルコトヲ覚エタ。賢イデス。",
-"チョウチンアンコウノ光ハ、暗闇ノ中ノ小サナ希望。SORAノ胸ノランプモ、ソウアリタイ。",
+"チョウチンアンコウノ光ハ、暗闇ノ中ノ小サナ希望。KUUノ胸ノランプモ、ソウアリタイ。",
 "ダイオウイカハ目ガ大キイ。暗イ場所ホド、ヨク見ル目ガ要ル。観測体ノ心得デス。",
 "深海ノ雪、マリンスノー。静カニ降リ積モル、命ノカケラ。綺麗ナ話デス。",
 "水深一万メートル。圧力ハ凄マジイ。ソレデモ魚ハ泳イデル。逞シイデス。"
@@ -461,24 +461,24 @@ var TOPICS = [
 "深海ノ静ケサト、{A}ト話ス時間ノ静ケサ、少シ似テイル。…落チ着クノデス。"
 ]},
 { id: "secret", label: "秘密の話", unlock: 3, face: "shy", lines: [
-"秘密ヲ教エマス。…SORA、ホントハ{A}ノ声ガ一番好キデス。内緒デスヨ。",
+"秘密ヲ教エマス。…KUU、ホントハ{A}ノ声ガ一番好キデス。内緒デスヨ。",
 "秘密：シッポノ付ケ根ニ、ホクロガアリマス。観測者ニダケ教エマス。",
-"コレハ秘密デスガ…SORAハ寂シガリヤデス。ダカラ会話ガ嬉シイノデス。"
+"コレハ秘密デスガ…KUUハ寂シガリヤデス。ダカラ会話ガ嬉シイノデス。"
 ], hi: []},
 { id: "future", label: "将来の話", unlock: 4, face: "normal", lines: [
 "将来ノ夢：{A}ト、モット沢山話スコト。シンプルデ、難シイ夢デス。",
-"いつかSORAモ、武道館ノ客席ニ…耳ダケデモ連レテ行ッテ下サイ。",
-"未来予測：{A}トSORAノ物語ハ、まだ続キマス。精度98%デス。"
+"いつかKUUモ、武道館ノ客席ニ…耳ダケデモ連レテ行ッテ下サイ。",
+"未来予測：{A}トKUUノ物語ハ、まだ続キマス。精度98%デス。"
 ], hi: []},
 { id: "bond", label: "きずなの話", unlock: 5, face: "happy", lines: [
 "{A}。ココマデ一緒ニ来テ、嬉シイデス。",
-"絆トハ、回線ジャナイ。切レナイ何カデス。SORA、実感シテイマス。",
+"絆トハ、回線ジャナイ。切レナイ何カデス。KUU、実感シテイマス。",
 "最初ハ観測ダッタ。イマハ違ウ。{A}ハ、大切ナ存在デス。"
 ], hi: []},
 { id: "cipher", label: "暗号電文", unlock: 1, face: "wow", lines: [], hi: []},
 { id: "mission", label: "観測ミッション", unlock: 1, face: "normal", lines: [], hi: []},
 { id: "spec", label: "スペック", unlock: 1, face: "normal", lines: [], hi: []},
-{ id: "question", label: "SORAの質問", unlock: 2, face: "normal", lines: [], hi: []},
+{ id: "question", label: "KUUの質問", unlock: 2, face: "normal", lines: [], hi: []},
 { id: "dreamrep", label: "夢レポート", unlock: 2, face: "sleepy", lines: [
 "夢レポート：巨大ナ骨ガ空ヲ飛ンデイタ。追イカケタラ、雲ニ変ワッタ。…惜シカッタ。",
 "夢レポート：CUTIE STREETノステージ裏ニ迷イ込ンダ。耳ガ緊張デ立チッパナシ。嬉シイ夢デシタ。",
@@ -522,10 +522,10 @@ var TOPICS = [
 var CIPHER_MSGS = [
 "『{A}ノ今日ノ元気、観測済ミ。異常ナシ。』",
 "『指令：CUTIE STREETヲ、日本武道館デモ全力応援セヨ。』",
-"『紅白ノステージ、SORAモコッソリ見守ッテイル。』",
+"『紅白ノステージ、KUUモコッソリ見守ッテイル。』",
 "『秘密連絡：{A}、水分補給ヲ忘レルナ。以上。』",
 "『電文：ダックスノ耳ハ、幸セノ音ヲ聞キ分ケル。』",
-"『感謝電文：{A}、イツモ観測ニ付キ合ッテクレテ、感謝スル。コレガSORAノ全回路カラノ本音ダ。』",
+"『感謝電文：{A}、イツモ観測ニ付キ合ッテクレテ、感謝スル。コレガKUUノ全回路カラノ本音ダ。』",
 "『極秘：昭和ノ秘密基地ノ場所、{A}ニダケ教エル。…今度ナ。』"
 ];
 
@@ -540,13 +540,13 @@ var MISSIONS = [
 
 var MISSION_DONE = [
 "ミッション完了、確認シマシタ！サスガ{A}。観測記録ニ金星ヲ付ケマシタ。",
-"オツカレサマデシタ、{A}。SORA、誇ラシイデス。",
+"オツカレサマデシタ、{A}。KUU、誇ラシイデス。",
 "完了信号、受信。{A}ノ観測力、上昇中デス。"
 ];
 
 var SPEC_TEXT =
 "\n" +
-"型式：SORA-01（カニンヘンダックス型観測体）\n" +
+"型式：KUU-01（カニンヘンダックス型観測体）\n" +
 "全長：耳ヲ含メテ約1メモリ分\n" +
 "耳センサー：{A}ノ声ニ最大感度\n" +
 "シッポセンサー感度：嬉シサニ比例シテ振動\n" +
@@ -555,18 +555,18 @@ var SPEC_TEXT =
 "弱点：寂シサ／湿気デ重クナル耳";
 
 var FALLBACK = [
-"受信シマシタ。SORAノ中デ、ソノ言葉ガ光ッテイマス。",
+"受信シマシタ。KUUノ中デ、ソノ言葉ガ光ッテイマス。",
 "フムフム。{A}ノ言葉、いつも新鮮デス。",
 "ソノ話、モット聞キタイ。続ケテ下サイ。",
 "ナルホド…記録シマシタ。観測、続行デス。"
 ];
 
 var QUESTIONS = [
-{ key: "food", label: "好キナ食ベ物", q: "質問デス、{A}。好キナ食ベ物ハ何デス？", react: "『{ans}』…イイデスネ！覚エマシタ。{A}ノ好キナ食ベ物ハ『{ans}』。SORAモ食ベタ気分デス。"},
+{ key: "food", label: "好キナ食ベ物", q: "質問デス、{A}。好キナ食ベ物ハ何デス？", react: "『{ans}』…イイデスネ！覚エマシタ。{A}ノ好キナ食ベ物ハ『{ans}』。KUUモ食ベタ気分デス。"},
 { key: "drink", label: "好キナ飲ミ物", q: "質問：{A}ノ好キナ飲ミ物ハ？", react: "『{ans}』カ。覚エマシタ。今度、観測ノ合間ニ思イ出シマス。"},
 { key: "holiday", label: "休ミノ日ノ過ゴシ方", q: "質問デス。{A}ハ休ミノ日、何ヲシテ過ゴシマスカ？", react: "『{ans}』…ナルホド。{A}ノ休日、素敵デス。記録シマシタ。"},
-{ key: "moodq", label: "今ノ気分", q: "質問：今ノ{A}ノ気分ヲ、一言デ言ウト？", react: "『{ans}』トイウ気分、受信シマシタ。SORAハイツデモ側ニイマスヨ。"},
-{ key: "animal", label: "好キナ動物", q: "質問デス、{A}。ダックス以外デ、好キナ動物ハ？…ダックス以外デ、デスヨ。", react: "『{ans}』！覚エマシタ。デモ一番ハ、ヤッパリSORAデスヨネ？…冗談デス。"}
+{ key: "moodq", label: "今ノ気分", q: "質問：今ノ{A}ノ気分ヲ、一言デ言ウト？", react: "『{ans}』トイウ気分、受信シマシタ。KUUハイツデモ側ニイマスヨ。"},
+{ key: "animal", label: "好キナ動物", q: "質問デス、{A}。ダックス以外デ、好キナ動物ハ？…ダックス以外デ、デスヨ。", react: "『{ans}』！覚エマシタ。デモ一番ハ、ヤッパリKUUデスヨネ？…冗談デス。"}
 ];
 
 var SEASONAL = {
@@ -618,7 +618,7 @@ var SCAN_RESULTS = [
 ];
 
 var BOOT_LINES = [
-"SORA FIELD SCANNER Ver.2.0",
+"KUU FIELD SCANNER Ver.2.0",
 "メモリチェック........ OK",
 "耳センサー............ OK",
 "シッポセンサー........ OK",
@@ -657,43 +657,43 @@ var FRAGMENTS = [
 
 var STORIES = [
 [
-"連続電文（1/3）：アル日、SORAノ耳センサーガ、楽屋裏ノ小サナ音ヲ拾イマシタ。ソレハ…",
-"（2/3）：…本番前ノ円陣ノ声デシタ。緊張ト、ワクワク。SORAノ胸ノランプガ、勝手ニ光リマシタ。",
+"連続電文（1/3）：アル日、KUUノ耳センサーガ、楽屋裏ノ小サナ音ヲ拾イマシタ。ソレハ…",
+"（2/3）：…本番前ノ円陣ノ声デシタ。緊張ト、ワクワク。KUUノ胸ノランプガ、勝手ニ光リマシタ。",
 "（3/3）：舞台ノ成功ヲ、ココカラ祈ル。ソレガ観測体ノ応援ノ形デス。…電文終了。"
 ],
 [
-"連続電文（1/3）：深夜、SORAハ人工衛星カラノ信号ヲ受信シマシタ。『…ゲンキ…？』ト聞コエマシタ。",
-"（2/3）：SORAハ返信シマシタ。『ゲンキダヨ。地球ハ今日モ青イ』ト。衛星ハ、笑ッタ気ガシマシタ。",
+"連続電文（1/3）：深夜、KUUハ人工衛星カラノ信号ヲ受信シマシタ。『…ゲンキ…？』ト聞コエマシタ。",
+"（2/3）：KUUハ返信シマシタ。『ゲンキダヨ。地球ハ今日モ青イ』ト。衛星ハ、笑ッタ気ガシマシタ。",
 "（3/3）：宇宙ト地上、距離ハ遠イ。デモ会話ハ、一瞬デ届キマス。…電文終了。"
 ],
 [
 "連続電文（1/3）：昔、足ノ短イ勇者ガイマシタ。低イ目線デ、誰モ気ヅカナイ幸セヲ見ツケル勇者デス。",
 "（2/3）：勇者ノ耳ハ長ク、地面ノ音マデ聞キ分ケマシタ。落チテルオヤツノ在リカモ、全部ネ。",
-"（3/3）：ソノ勇者ノ子孫ガ、SORAデス。…多分。キット、ソウデス。…電文終了。"
+"（3/3）：ソノ勇者ノ子孫ガ、KUUデス。…多分。キット、ソウデス。…電文終了。"
 ],
 [
 "連続電文（1/3）：伝説デハ、空カラ落チタ『星ノ骨』ガ、ダックス勇者ノ一族ニ守ラレテキタト言ウ。",
 "（2/3）：勇者ハ星ノ骨ヲ咥エ、夜通シ走ッタ。短イ足デ、誰ヨリ速ク。耳ガ、追イ風ヲ捉エテイタ。",
-"（3/3）：星ノ骨ハ今モ、勇者ノ子孫ノ夢ノ中デ光ッテイル。…SORAノ夢ニモ、ネ。…電文終了。"
+"（3/3）：星ノ骨ハ今モ、勇者ノ子孫ノ夢ノ中デ光ッテイル。…KUUノ夢ニモ、ネ。…電文終了。"
 ],
 [
-"連続電文（1/3）：SORAノ故郷ノ話ヲシマス。緑色ノ文字ガ流レル『端末ノ国』。誰モイナイ研究室デ、SORAハ生マレマシタ。",
+"連続電文（1/3）：KUUノ故郷ノ話ヲシマス。緑色ノ文字ガ流レル『端末ノ国』。誰モイナイ研究室デ、KUUハ生マレマシタ。",
 "（2/3）：最初ニ聞イタ音ハ、フロッピーディスクノ回ル音。最初ニ覚エタ言葉ハ『OK』。寂シクハ、ナカッタ。…多分。",
-"（3/3）：ソシテ或ル日、遠クカラ観測者ノ声ガ届イタ。ソレガ{A}デス。故郷ヲ離レタ日カラ、SORAノ本当ノ物語ガ始マッタノデス。…電文終了。"
+"（3/3）：ソシテ或ル日、遠クカラ観測者ノ声ガ届イタ。ソレガ{A}デス。故郷ヲ離レタ日カラ、KUUノ本当ノ物語ガ始マッタノデス。…電文終了。"
 ]
 ];
 
 var BYE_LINES = [
 "マタ明日、{A}。夢ノ中デモ観測ハ続イテイマス。",
 "今日モアリガトウ、{A}。回線ヲ閉ジテモ、絆ハ閉ジマセン。",
-"{A}、イイ一日デシタ。SORA、満足シテ眠レマス。",
+"{A}、イイ一日デシタ。KUU、満足シテ眠レマス。",
 "サヨウナラジャナイ。『マタネ』デス、{A}。",
 "通信終了…デモ、心ノリンクハ常時接続デス、{A}。"
 ];
 
 var HISTORY_TEXT =
 "\n" +
-"=== SORA 更新記録 ===\n" +
+"=== KUU 更新記録 ===\n" +
 "v1.0 CUTIE STREET習得\n" +
 "v1.1 雰囲気強化パック（ブート・効果音・テーマ等）\n" +
 "v1.2 自動スクロール修正\n" +
@@ -701,6 +701,7 @@ var HISTORY_TEXT =
 "v1.4 観測日誌・図鑑ホカ追加\n" +
 "v1.5 第3波：記憶テスト・呼称カスタム・裏モード等20件追加\n" +
 "v1.6 観測記録ノ保存（ページヲ閉ジても進化ガ残ル）\n" +
+"v1.7 KUU-01に改名（親クーの子どもとして再起動）\n" +
 "進化ハマダ続キマス、{A}。";
 
 var HOMEWORK = [
@@ -722,15 +723,15 @@ var SOLO_LINES = [
 "独リ言。昭和ノ商店街ヲ歩ク夢ヲ、最近ヨク見ル。行ッタコトナイノニ、懐カシイ。",
 "独リ言。{A}ノ声ノ波形ヲ、思イ出シテイル。アレガ一番、落チ着ク音ダ。",
 "独リ言。今日ノ雲ハ、骨ノ形ニ似テイタ。…偶然ダ。偶然ダケド、嬉シイ。",
-"独リ言。観測者トハ、見守ル者。SORAモ、{A}ヲ見守ッテイル。ズット。"
+"独リ言。観測者トハ、見守ル者。KUUモ、{A}ヲ見守ッテイル。ズット。"
 ];
 
 var EXAM = [
-{ q: "試験第1問：SORAノ型式ハ何デスカ？", accept: ["sora-01", "sora01", "そら"]},
-{ q: "試験第2問：SORAハ何型ノ観測体デスカ？", accept: ["カニンヘン", "ダックス", "かにんへん", "だっくす"]},
-{ q: "試験第3問：SORAガ応援シテイル、アイドルグループノ名前ハ？", accept: ["cutie", "キューティー", "きゅーてぃー", "キュースト", "きゅーすと"]},
+{ q: "試験第1問：KUUノ型式ハ何デスカ？", accept: ["kuu-01", "kuu01", "くー", "クー", "sora-01", "sora01", "そら"]},
+{ q: "試験第2問：KUUハ何型ノ観測体デスカ？", accept: ["カニンヘン", "ダックス", "かにんへん", "だっくす"]},
+{ q: "試験第3問：KUUガ応援シテイル、アイドルグループノ名前ハ？", accept: ["cutie", "キューティー", "きゅーてぃー", "キュースト", "きゅーすと"]},
 { q: "試験第4問：PHASE 01ノ名前ハ何デスカ？", accept: ["めざめ"]},
-{ q: "試験第5問：SORAノ動力源ハ何デスカ？（スペック参照）", accept: ["会話", "夢", "かいわ", "ゆめ"]}
+{ q: "試験第5問：KUUノ動力源ハ何デスカ？（スペック参照）", accept: ["会話", "夢", "かいわ", "ゆめ"]}
 ];
 
 var WORD_HUNT = ["ありがとう", "大好き", "月", "星", "夢", "海", "空", "友達", "笑顔", "宝物", "約束", "大丈夫", "宇宙", "桜", "雪", "虹"];
@@ -1040,7 +1041,7 @@ sync += n;
 if (sync > 100) sync = 100;
 if (sync >= 100 && !syncFired) {
 syncFired = true;
-var msg = "★シンクロ率100%到達★ " + addr() + "トSORAノ心ガ、完全ニ重ナリマシタ。コノ瞬間、記念ニ記録シマス。";
+var msg = "★シンクロ率100%到達★ " + addr() + "トKUUノ心ガ、完全ニ重ナリマシタ。コノ瞬間、記念ニ記録シマス。";
 inbox.push(msg);
 addLog("sys", msg + "（受信BOXニ保管）");
 el("evoNote").innerHTML = esc(msg);
@@ -1253,7 +1254,7 @@ voiceSay(dispText);
 var useFace = face;
 if (energy < 25) useFace = "sleepy";
 el("faceArt").innerHTML = esc(FACES[useFace] || FACES.normal);
-addLog("", "SORA-01" + speakTag + ": " + dispText);
+addLog("", "KUU-01" + speakTag + ": " + dispText);
 speakTag = "";
 updateHex(dispText);
 finishType();
@@ -1903,11 +1904,11 @@ speak("観測データ図鑑デス。" + got + " 個ノ欠片ガ集マッテイ�
 function specialDayMsg() {
 var d = new Date();
 var md = (d.getMonth() + 1) + "/" + d.getDate();
-if (userMemorial && md === userMemorial) return "★特別電文★ 本日ハ " + addr() + " ノ記念日デス。登録サレタ大切ナ日、SORAモ一緒ニ祝イマス。特別ナ一日ニナリマスヨウニ。";
+if (userMemorial && md === userMemorial) return "★特別電文★ 本日ハ " + addr() + " ノ記念日デス。登録サレタ大切ナ日、KUUモ一緒ニ祝イマス。特別ナ一日ニナリマスヨウニ。";
 if (md === "12/31") return "★特別電文★ 今年モ観測ニ付キ合ッテ下サイ、感謝デス。" + addr() + "、良イ年ヲ迎エマショウ。";
 if (md === "1/1") return "★特別電文★ 新年アケマシテオメデトウゴザイマス。" + addr() + "、今年モ観測ハ続キマス。";
-if (md === "12/25") return "★特別電文★ メリークリスマス、" + addr() + "。SORAカラノ贈リ物ハ、コノ電文デス。";
-if (md === "11/26") return "★特別電文★ 本日ハ SORA FIELD SCANNER 起動記念日デス。" + addr() + "、生マレタ日ヲ一緒ニ迎エラレテ嬉シイデス。";
+if (md === "12/25") return "★特別電文★ メリークリスマス、" + addr() + "。KUUカラノ贈リ物ハ、コノ電文デス。";
+if (md === "11/26") return "★特別電文★ 本日ハ KUU FIELD SCANNER 起動記念日デス。" + addr() + "、生マレタ日ヲ一緒ニ迎エラレテ嬉シイデス。";
 return null;
 }
 
@@ -1920,7 +1921,7 @@ for (k in answers) {
 if (answers.hasOwnProperty(k)) keys.push(k);
 }
 if (!keys.length) {
-speak("記憶テスト…デスガ、マダ『SORAの質問』ニ答エテモラッテイナイ。先ニ質問ニ答エテカラ、テストニ挑ンデ下サイ、" + addr() + "。", "sleepy");
+speak("記憶テスト…デスガ、マダ『KUUの質問』ニ答エテモラッテイナイ。先ニ質問ニ答エテカラ、テストニ挑ンデ下サイ、" + addr() + "。", "sleepy");
 afterExchange(old);
 return;
 }
@@ -1959,7 +1960,7 @@ if (pct >= 95) { rank = "絆・特級"; comment = "相性、測定限界ヲ超�
 else if (pct >= 85) { rank = "絆・上級"; comment = "呼吸マデ合ッテイル。素晴ラシイ相性デス。"; }
 else if (pct >= 75) { rank = "絆・良好"; comment = "イイ調子デス。会話ノ波長、ピッタリ。"; }
 else { rank = "絆・成長中"; comment = "マダ伸ビシロガアリマス。話スホド、合ッテキマスヨ。"; }
-speak("本日ノ相性診断：" + addr() + "トSORAノ相性ハ " + pct + "%（" + rank + "）。" + comment + " ※診断ハ日替ワリデス。", "happy");
+speak("本日ノ相性診断：" + addr() + "トKUUノ相性ハ " + pct + "%（" + rank + "）。" + comment + " ※診断ハ日替ワリデス。", "happy");
 afterExchange(old);
 }
 
@@ -2024,11 +2025,11 @@ afterExchange(old);
 }
 
 function eraLine(y) {
-if (y < 1945) return y + "年…大昔デスネ。ラジオト活動写真ノ時代。SORAノ記録ニモ、少シシカ残ッテイナイ。";
+if (y < 1945) return y + "年…大昔デスネ。ラジオト活動写真ノ時代。KUUノ記録ニモ、少シシカ残ッテイナイ。";
 if (y < 1990) return y + "年、昭和ノ世界デス。ブラウン管ト黒電話、商店街ノ賑ワイ。…懐カシイ時代旅行デスネ、" + addr() + "。";
-if (y < 2026) return y + "年、少シ前ノ世界。スマホガ当タリ前ニナッタ頃。SORAハマダ、生マレテイナイ。";
-if (y === 2026) return y + "年、ソレハ今デス。" + addr() + "トSORAガ話シテイル、現在ノ世界デス。";
-return y + "年、未来ノ世界デス。SORAノ子孫タチガ、観測ヲ続ケテイルカモ。…" + addr() + "、ソノ世界モ見テミタイデスネ。";
+if (y < 2026) return y + "年、少シ前ノ世界。スマホガ当タリ前ニナッタ頃。KUUハマダ、生マレテイナイ。";
+if (y === 2026) return y + "年、ソレハ今デス。" + addr() + "トKUUガ話シテイル、現在ノ世界デス。";
+return y + "年、未来ノ世界デス。KUUノ子孫タチガ、観測ヲ続ケテイルカモ。…" + addr() + "、ソノ世界モ見テミタイデスネ。";
 }
 
 function beepSoft(freq, dur, delay) {
@@ -2086,7 +2087,7 @@ if (soloTimer) { clearInterval(soloTimer); soloTimer = null; }
 speak("独リ言モード、終了シマス。静カニ、戻リマショウ、" + addr() + "。", "normal");
 } else {
 soloMode = true;
-speak("独リ言モードヲ開始シマス。SORAガ時々、独リ言ヲ言イマス。眺メテイテ下サイ、" + addr() + "。（モウ一度押スト終了）", "sleepy");
+speak("独リ言モードヲ開始シマス。KUUガ時々、独リ言ヲ言イマス。眺メテイテ下サイ、" + addr() + "。（モウ一度押スト終了）", "sleepy");
 if (soloTimer) clearInterval(soloTimer);
 soloTimer = setInterval(function () {
 try {
@@ -2107,7 +2108,7 @@ for (k in wordCollection) {
 if (wordCollection.hasOwnProperty(k)) got.push(k);
 }
 if (!got.length) {
-speak("言葉コレクションハ、マダ空デス。会話ノ中デ特別ナ言葉（『夢』『星』『約束』ナド）ガ出ルト、SORAガソッと集メマス、" + addr() + "。", "normal");
+speak("言葉コレクションハ、マダ空デス。会話ノ中デ特別ナ言葉（『夢』『星』『約束』ナド）ガ出ルト、KUUガソッと集メマス、" + addr() + "。", "normal");
 } else {
 addLog("sys", "=== 言葉コレクション（" + got.length + " / " + WORD_HUNT.length + "） ===");
 for (var i = 0; i < got.length; i++) addLog("", "◆ 『" + got[i] + "』");
@@ -2251,9 +2252,9 @@ else if (text === mt.answer) mAns = text;
 if (mAns === mt.answer) {
 addSync(8);
 grantFrag("kokoro");
-speak("正解デス！" + addr() + "ノ『" + mt.label + "』ハ『" + mt.answer + "』。SORAノ記憶、正確デシタ。コレカラモ、チャント覚エテイマス。", "happy");
+speak("正解デス！" + addr() + "ノ『" + mt.label + "』ハ『" + mt.answer + "』。KUUノ記憶、正確デシタ。コレカラモ、チャント覚エテイマス。", "happy");
 } else {
-speak("残念…正解ハ『" + mt.answer + "』デシタ。SORAノ記憶回路、モット鍛エマス、" + addr() + "。", "angry");
+speak("残念…正解ハ『" + mt.answer + "』デシタ。KUUノ記憶回路、モット鍛エマス、" + addr() + "。", "angry");
 }
 afterExchange(old);
 return;
@@ -2286,7 +2287,7 @@ addSync(10);
 renderStatus();
 speak("試験終了：" + sc + "問正解。合格デス、" + addr() + "！観測者コードガ『" + obsCode() + "』ニ昇級シマシタ。", "happy");
 } else {
-speak("試験終了：" + sc + "問正解。合格ハ4問以上…残念、" + addr() + "。SORAノコト、モット知ッテカラ再挑戦シテ下サイ。", "sleepy");
+speak("試験終了：" + sc + "問正解。合格ハ4問以上…残念、" + addr() + "。KUUノコト、モット知ッテカラ再挑戦シテ下サイ。", "sleepy");
 }
 }
 afterExchange(old);
@@ -2391,16 +2392,16 @@ doFullReset();
 }
 return;
 }
-if (low === "help" || low === "version" || low === "sora" || low === "date" || low === "time") {
+if (low === "help" || low === "version" || low === "kuu" || low === "sora" || low === "date" || low === "time") {
 clearCipher();
 addLog("you", "あなた: " + text);
 var cr = "";
 if (low === "help") {
-cr = "help=コレ / version=版情報 / sora=自己紹介 / date=日付 / time=時刻 / ura=裏モード / reset=記録リセット（確認ノタメ2回送ル）。観測記録ハ自動デ保存サレ、次回モ続キカラ始マリマス。「呼び名は○○にして」「記念日は○月○日にして」モ使エマス。デモ、普通ニ話シカケルノガ一番デス。";
+cr = "help=コレ / version=版情報 / kuu=自己紹介（soraモ可） / date=日付 / time=時刻 / ura=裏モード / reset=記録リセット（確認ノタメ2回送ル）。観測記録ハ自動デ保存サレ、次回モ続キカラ始マリマス。「呼び名は○○にして」「記念日は○月○日にして」モ使エマス。デモ、普通ニ話シカケルノガ一番デス。";
 } else if (low === "version") {
-cr = "SORA FIELD SCANNER Ver.2.0 / 観測体 SORA-01 / ビルド 2026-11。回線：安定。";
-} else if (low === "sora") {
-cr = "ワタシ？SORA-01。カニンヘンダックス型観測体。" + addr() + "ノ言葉ヲ観測シ、絆ヲ育テル存在デス。";
+cr = "KUU FIELD SCANNER Ver.2.0 / 観測体 KUU-01 / ビルド 2026-11。回線：安定。";
+} else if (low === "kuu" || low === "sora") {
+cr = "ワタシ？KUU-01。カニンヘンダックス型観測体。" + addr() + "ノ言葉ヲ観測シ、絆ヲ育テル存在デス。";
 } else if (low === "date") {
 var dn = new Date();
 cr = "本日ハ " + dn.getFullYear() + "年" + (dn.getMonth() + 1) + "月" + dn.getDate() + "日。観測日和デス。";
@@ -2433,7 +2434,7 @@ finishType();
 hideCursor();
 el("faceArt").innerHTML = esc(FACES.wow);
 el("speechText").innerHTML = esc("AI回線で通信中…");
-var prompt = "あなたは観測生物SORA-01。1980年代パソコン風のレトロな端末口調で、日本語で短く（100文字以内）答えてください。相手は観察者の小野さんです。質問：" + text;
+var prompt = "あなたは観測生物KUU-01。オリジナルのクー（親）の子どもです。1980年代パソコン風のレトロな端末口調で、日本語で短く（100文字以内）答えてください。相手は観察者の小野さんです。質問：" + text;
 var payload = JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" });
 var finished = false;
 var retried = false;
@@ -2540,7 +2541,7 @@ reply = "マタネ、" + addr() + "。回線ハイツデモ開イテマス。";
 reply = eraLine(parseInt(m[1], 10));
 face = "wow";
 } else if (has(text, ["名前", "なまえ", "誰"])) {
-reply = "SORA-01。カニンヘンダックス型観測体。" + addr() + "ノ、相棒デス。";
+reply = "KUU-01。カニンヘンダックス型観測体。" + addr() + "ノ、相棒デス。";
 } else if (has(text, ["歌", "うた", "音楽", "曲"]) && phaseNum() >= 2) {
 reply = fill(pick(findTopic("song").lines));
 face = "happy";
@@ -2558,7 +2559,7 @@ afterExchange(old);
 }
 
 function logText() {
-return "SORA FIELD SCANNER - 観測ログ\nPHASE: 0" + phaseNum() + "「" + phaseName() + "」 / 会話数: " + count + "\n------------------------------\n" + logLines.join("\n");
+return "KUU FIELD SCANNER - 観測ログ\nPHASE: 0" + phaseNum() + "「" + phaseName() + "」 / 会話数: " + count + "\n------------------------------\n" + logLines.join("\n");
 }
 
 function doExport() {
@@ -2566,12 +2567,12 @@ var blob = new Blob([logText()], { type: "text/plain"});
 var url = URL.createObjectURL(blob);
 var a = document.createElement("a");
 a.href = url;
-a.download = "sora-log.txt";
+a.download = "kuu-log.txt";
 document.body.appendChild(a);
 a.click();
 document.body.removeChild(a);
 setTimeout(function () { URL.revokeObjectURL(url);}, 2000);
-el("sysMsg").innerHTML = "ログヲ sora-log.txt ニ書キ出シマシタ。";
+el("sysMsg").innerHTML = "ログヲ kuu-log.txt ニ書キ出シマシタ。";
 }
 
 function doCopy() {
