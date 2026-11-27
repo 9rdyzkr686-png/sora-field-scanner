@@ -375,6 +375,19 @@ function renderTide() {
   if (nextLow) {
     html += '<div class="tideline">次の干潮 ' + fmtClock(nextLow.t) + '（' + fmtRemain(nextLow.t.getTime() - now.getTime()) + '）<span class="tidehgt"> 潮位 ' + nextLow.h + 'cm</span></div>';
   }
+  /* その次：次の潮のさらに次のイベント（今日の最後の次は明日の最初のイベント） */
+  var upcoming = [];
+  for (i = 0; i < tideEvents.length && upcoming.length < 2; i++) {
+    ev = tideEvents[i];
+    if (ev.t.getTime() < now.getTime() - 60000) { continue; }
+    upcoming.push(ev);
+  }
+  if (upcoming.length >= 2) {
+    var afterNext = upcoming[1];
+    var tomLabel = '';
+    if (tideTomorrowDate && afterNext.t.getTime() >= tideTomorrowDate.getTime()) { tomLabel = '翌日 '; }
+    html += '<div class="tideline" style="font-size:19px;">その次：' + tomLabel + (afterNext.kind === 'high' ? '満潮' : '干潮') + ' ' + afterNext.t.getHours() + '時' + pad2(afterNext.t.getMinutes()) + '分</div>';
+  }
   html += '<div class="wavetime">気象庁の推算潮位（東京）／ ' + now.getHours() + '時' + pad2(now.getMinutes()) + '分 現在</div>';
   html += tideChartHtml(tideHourly, '今日', now.getHours());
   body.innerHTML = html;

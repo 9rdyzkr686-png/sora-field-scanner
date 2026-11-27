@@ -352,6 +352,7 @@
   <h2>■ 定番アーカイブ</h2>
   <p class="readprogress" id="readProgress">読了 0/28話（0%）</p>
   <div class="readbar"><div class="readbar-fill" id="readBarFill"></div></div>
+  <p class="readprogress" id="catReadProgress" style="font-size:14px;">カテゴリ別読了： ―</p>
   <button id="randomBtn" type="button" style="width:100%;margin-bottom:12px;">🎲 ランダムで読む（未読を優先）</button>
   <button id="paperBtn" type="button" style="width:100%;margin-bottom:12px;">新聞モードで読む</button>
   <div class="paperhead" id="paperHead">伝 説 新 聞 ― 号 外 ―</div>
@@ -861,6 +862,22 @@ function renderArchive() {
   var rpPct = rpTotal > 0 ? Math.round(rpRead * 100 / rpTotal) : 0;
   el("readProgress").textContent = "読了 " + rpRead + "/" + rpTotal + "話（" + rpPct + "%）";
   el("readBarFill").style.width = rpPct + "%";
+  var catNames = [];
+  var catTotals = {};
+  var catReads = {};
+  var catI;
+  var catName;
+  for (catI = 0; catI < LEGENDS.length; catI++) {
+    catName = LEGENDS[catI].cat;
+    if (!catTotals[catName]) { catTotals[catName] = 0; catReads[catName] = 0; catNames.push(catName); }
+    catTotals[catName]++;
+    if (marksData.read.indexOf(catI) >= 0) { catReads[catName]++; }
+  }
+  var catParts = [];
+  for (catI = 0; catI < catNames.length; catI++) {
+    catParts.push(catNames[catI] + " " + catReads[catNames[catI]] + "/" + catTotals[catNames[catI]]);
+  }
+  el("catReadProgress").textContent = "カテゴリ別読了： " + catParts.join(" ・ ");
   var box = el("archiveBox");
   box.innerHTML = "";
   var i;

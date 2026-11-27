@@ -267,6 +267,9 @@
 <div class="panel" id="sentLogPanel">
   <div class="panel-title">MESSAGE LOG / 伝言の履歴</div>
   <div id="sentLogList"></div>
+  <div class="utilrow">
+    <button type="button" id="sentLogCopyBtn">履歴を全文コピー</button>
+  </div>
   <div class="sentnote">※ KUU-01に届く伝言は最新の1件だけです。新しい伝言を置くと、前の伝言は上書きされます。KUU-01は、KUU FIELD SCANNERを次に開いた時に最新の伝言を受け取ります。ここには送った伝言の控えが残ります。</div>
 </div>
 
@@ -1398,6 +1401,22 @@ function renderSentLog() {
     sentLogListEl.appendChild(item);
   }
 }
+
+document.getElementById("sentLogCopyBtn").onclick = function () {
+  var log = loadSentLog();
+  if (log.length === 0) {
+    setStatus("伝言の履歴は空です。");
+    return;
+  }
+  var lines = [];
+  lines.push("【AI-6 KUU-01への伝言履歴】全" + log.length + "件");
+  var i;
+  for (i = log.length - 1; i >= 0; i--) {
+    var oneLine = (log[i].text || "").replace(/\r\n/g, " ").replace(/[\r\n]/g, " ");
+    lines.push((log[i].date || "") + " " + oneLine);
+  }
+  copyTextCommon(lines.join("\n"), "伝言履歴を全文コピーしました。");
+};
 
 /* ---- お気に入りパネル ---- */
 var favPanel = document.getElementById("favPanel");

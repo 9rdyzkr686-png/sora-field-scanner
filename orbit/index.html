@@ -96,6 +96,9 @@ canvas { display: block; width: 100%; background: #000a10; border: 1px solid #0e
 .pg-item:last-child { border-bottom: none; }
 .pg-guide { font-size: 14px; color: #7fb8a8; line-height: 1.6; }
 #moonMapCanvas { height: auto; }
+.mc-nav { overflow: hidden; margin-bottom: 6px; }
+.mc-nav button { float: left; width: 32%; margin: 0 2% 0 0; font-size: 16px; }
+.mc-nav button.last { margin-right: 0; }
 button {
   display: block; width: 100%; min-height: 48px; margin: 4px 0 10px 0;
   background: #03251d; color: #33ff66; border: 1px solid #33ff66;
@@ -253,6 +256,12 @@ button:active { background: #33ff66; color: #000; }
 
 <div class="panel">
   <div class="panel-title">MOON CALENDAR <span class="jp">満月・新月カレンダー（計算値）</span></div>
+  <div class="k" id="moonCalMonth" style="font-size:14px; margin-bottom:4px;">---</div>
+  <div class="mc-nav">
+    <button type="button" id="moonCalPrev">◀ 前月</button>
+    <button type="button" id="moonCalThis">今月</button>
+    <button type="button" class="last" id="moonCalNext">次月 ▶</button>
+  </div>
   <div class="row">
     <div class="cell"><div class="k">満月 FULL MOON</div><div id="fullList" style="font-size:15px; line-height:1.7;">---</div></div>
     <div class="cell"><div class="k">新月 NEW MOON</div><div id="newList" style="font-size:15px; line-height:1.7;">---</div></div>
@@ -1697,18 +1706,23 @@ function moonAgeAt(ms) {
   return age;
 }
 
+var moonCalView = null; /* 満月・新月カレンダーの表示月 {y, m}（セッション内のみ） */
+
 function renderMoonCal() {
   var synodic = 29.530588853;
-  var start = new Date();
-  start.setHours(12, 0, 0, 0);
-  var prev = moonAgeAt(start.getTime());
+  var now = new Date();
+  if (!moonCalView) { moonCalView = { y: now.getFullYear(), m: now.getMonth() }; }
+  var y = moonCalView.y;
+  var m = moonCalView.m;
+  var daysInMonth = new Date(y, m + 1, 0).getDate();
+  var prev = moonAgeAt(new Date(y, m, 0, 12).getTime());
   var fulls = [], news = [];
   var i, d, age;
-  for (i = 1; i <= 220 && (fulls.length < 6 || news.length < 6); i++) {
-    d = new Date(start.getTime() + i * 86400000);
+  for (i = 1; i <= daysInMonth; i++) {
+    d = new Date(y, m, i, 12);
     age = moonAgeAt(d.getTime());
-    if (age < prev && news.length < 6) { news.push(d); }
-    if (prev < synodic / 2 && age >= synodic / 2 && fulls.length < 6) { fulls.push(d); }
+    if (age < prev) { news.push(d); }
+    if (prev < synodic / 2 && age >= synodic / 2) { fulls.push(d); }
     prev = age;
   }
   var wd = ["日", "月", "火", "水", "木", "金", "土"];
@@ -1718,9 +1732,32 @@ function renderMoonCal() {
   var fh = "", nh = "", j;
   for (j = 0; j < fulls.length; j++) { fh += fmt(fulls[j]) + "<br>"; }
   for (j = 0; j < news.length; j++) { nh += fmt(news[j]) + "<br>"; }
-  el("fullList").innerHTML = fh || "---";
-  el("newList").innerHTML = nh || "---";
+  el("moonCalMonth").innerHTML = y + "年" + (m + 1) + "月" +
+    (y === now.getFullYear() && m === now.getMonth() ? "（今月）" : "");
+  el("fullList").innerHTML = fh || "この月はなし";
+  el("newList").innerHTML = nh || "この月はなし";
 }
+
+function moonCalMove(delta) {
+  var now = new Date();
+  if (!moonCalView) { moonCalView = { y: now.getFullYear(), m: now.getMonth() }; }
+  var y = moonCalView.y;
+  var m = moonCalView.m + delta;
+  while (m < 0) { m += 12; y--; }
+  while (m > 11) { m -= 12; y++; }
+  moonCalView = { y: y, m: m };
+  renderMoonCal();
+}
+
+function moonCalToday() {
+  var now = new Date();
+  moonCalView = { y: now.getFullYear(), m: now.getMonth() };
+  renderMoonCal();
+}
+
+el("moonCalPrev").addEventListener("click", function () { moonCalMove(-1); });
+el("moonCalThis").addEventListener("click", function () { moonCalToday(); });
+el("moonCalNext").addEventListener("click", function () { moonCalMove(1); });
 
 /* ---------- SPACE QUOTES ---------- */
 var QUOTES = [

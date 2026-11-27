@@ -147,6 +147,13 @@ h1 {
   word-break: break-all;
 }
 .hitem:last-child { border-bottom: none; }
+.hcmp {
+  font-size: 14px;
+  color: #ffcc33;
+  padding: 7px 0;
+  border-bottom: 1px solid #0d3319;
+  word-break: break-all;
+}
 .hok { color: #33ff66; font-weight: bold; }
 .hng { color: #ff4444; font-weight: bold; }
 </style>
@@ -299,6 +306,31 @@ function histAdd(n, ok) {
   } catch (e) {}
   renderHist();
 }
+/* (445) 前回との比較：直近2回の診断（同じ t のグループ）を項目名で突き合わせる */
+function histCompareLine(a) {
+  var runs = [], seen = {}, i, e;
+  for (i = 0; i < a.length; i++) {
+    e = a[i];
+    if (!seen[e.t]) { seen[e.t] = true; runs.push(e.t); }
+    if (runs.length >= 2) { break; }
+  }
+  if (runs.length < 2) { return ""; }
+  var cur = {}, prev = {}, name;
+  for (i = 0; i < a.length; i++) {
+    e = a[i];
+    if (e.t === runs[0]) { cur[e.name] = !!e.ok; }
+    else if (e.t === runs[1]) { prev[e.name] = !!e.ok; }
+  }
+  var imp = 0, wors = 0, same = 0;
+  for (name in cur) {
+    if (Object.prototype.hasOwnProperty.call(cur, name) && Object.prototype.hasOwnProperty.call(prev, name)) {
+      if (cur[name] && !prev[name]) { imp++; }
+      else if (!cur[name] && prev[name]) { wors++; }
+      else { same++; }
+    }
+  }
+  return "前回と比べて：改善 " + imp + "件 ・ 悪化 " + wors + "件 ・ 変化なし " + same + "件";
+}
 function renderHist() {
   var box = $("histList");
   if (!box) { return; }
@@ -308,6 +340,8 @@ function renderHist() {
     return;
   }
   var html = "", i;
+  var cmp = histCompareLine(a);
+  if (cmp) { html += '<div class="hcmp">' + escHist(cmp) + "</div>"; }
   for (i = 0; i < a.length; i++) {
     var e = a[i];
     html += '<div class="hitem">' + escHist(e.t) + " " + escHist(e.name) + " "

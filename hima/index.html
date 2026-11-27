@@ -420,7 +420,7 @@
 <div class="card">
   <h2>■ 保存した川柳</h2>
   <div id="srFavList"></div>
-  <button id="srFavCopyBtn" type="button">全文コピー</button>
+  <button id="srFavCopyBtn" type="button">お気に入りをコピー</button>
   <div class="stat" id="srFavCopyStatus"></div>
 </div>
 
@@ -2123,10 +2123,12 @@ function srFavCopy() {
     el('srFavCopyStatus').textContent = '保存した川柳がありません。';
     return;
   }
-  var out = '';
+  var out = '【HIMA-6 川柳お気に入り】全' + list.length + '件\n\n';
   var i;
   for (i = 0; i < list.length; i++) {
-    out += list[i].text + '\n（' + (list[i].date || '') + '）\n\n';
+    out += list[i].text + '\n';
+    if (list[i].date) { out += '（' + list[i].date + '）\n'; }
+    out += '\n';
   }
   var ta = document.createElement('textarea');
   ta.value = out;
@@ -2137,7 +2139,7 @@ function srFavCopy() {
   var ok = false;
   try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
   document.body.removeChild(ta);
-  el('srFavCopyStatus').textContent = ok ? '全文をコピーしました。' : 'コピーできませんでした。文章を長押ししてコピーしてください。';
+  el('srFavCopyStatus').textContent = ok ? 'お気に入りをコピーしました（全' + list.length + '件）。' : 'コピーできませんでした。文章を長押ししてコピーしてください。';
 }
 function initWave165() {
   initZukan();

@@ -3309,7 +3309,14 @@ else s.innerHTML = "伝言ハアリマセン。";
 function renderMissionLog() {
 var box = el("missionLogBox");
 if (!box) return;
-var html = "達成 " + missionsDone + "件";
+var nowM = new Date();
+var monthCount = 0;
+var mi2;
+for (mi2 = 0; mi2 < missionLog.length; mi2++) {
+var mparts = (missionLog[mi2].d || "").split("/");
+if (mparts.length >= 2 && parseInt(mparts[0], 10) === nowM.getFullYear() && parseInt(mparts[1], 10) === (nowM.getMonth() + 1)) monthCount++;
+}
+var html = "達成 " + missionsDone + "件（今月 " + monthCount + "件）";
 if (!missionLog.length) {
 box.innerHTML = esc(html + "（記録：マダアリマセン。ミッションヲ完了スルト、ココニ残リマス）");
 return;
