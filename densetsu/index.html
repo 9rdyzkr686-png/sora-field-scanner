@@ -225,6 +225,13 @@
     border-top: 1px dashed #3a2a5e;
     padding-top: 10px;
   }
+  .markbtn { min-height: 48px; padding: 10px 14px; font-size: 15px; margin: 8px 6px 0 0; }
+  .markbtn.on { background: #5b2a86; color: #ffffff; border-color: #c9a0ff; }
+  .readmark { color: #9a8f6a; font-size: 13px; border: 1px solid #6a6248; padding: 1px 6px; margin-left: 8px; }
+  .readbtn { width: 100%; margin-top: 8px; min-height: 48px; }
+  .ailabel { font-weight: bold; color: #ff8fa0; font-size: 17px; border: 2px solid #b03040; padding: 10px 12px; background: #140a12; margin-bottom: 12px; }
+  #stopBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; display: none; background: rgba(10,6,24,0.94); padding: 8px; border-top: 1px solid #5b2a86; }
+  #stopBarBtn { width: 100%; min-height: 52px; color: #ff8fa0; border-color: #b03040; }
 </style>
 </head>
 <body>
@@ -271,6 +278,20 @@
 </section>
 
 <section>
+  <h2>■ もっと見出し</h2>
+  <h3>◆ ホラー映画の新着</h3>
+  <p class="status" id="horrorStatus">まだ読み込んでいません</p>
+  <ul class="news" id="horrorList"></ul>
+  <button class="retrybtn" id="retryHorror" type="button">再試行する</button>
+  <button id="loadHorrorBtn" type="button" style="width:100%;">ホラー映画の新着を読み込む</button>
+  <h3>◆ 世界の不思議ニュース</h3>
+  <p class="status" id="wonderStatus">まだ読み込んでいません</p>
+  <ul class="news" id="wonderList"></ul>
+  <button class="retrybtn" id="retryWonder" type="button">再試行する</button>
+  <button id="loadWonderBtn" type="button" style="width:100%;">世界の不思議ニュースを読み込む</button>
+</section>
+
+<section>
   <h2>■ 今日の都市伝説</h2>
   <div class="today-card">
     <p class="today-name" id="todayName"></p>
@@ -298,11 +319,23 @@
   <div class="paperhead" id="paperHead">伝 説 新 聞 ― 号 外 ―</div>
   <p class="filterlabel">分類で絞り込む</p>
   <div class="chips" id="filterBox"></div>
+  <div class="chips" id="favBox"><button class="chip" id="favFilterBtn" type="button">★お気に入りだけ</button></div>
   <p class="filterlabel">地域で絞り込む（舞台・発祥とされる地域）</p>
   <div class="chips" id="regionBox"></div>
   <p class="filterlabel">年代で絞り込む（噂が広まった時代）</p>
   <div class="chips" id="eraBox"></div>
   <div id="archiveBox"></div>
+</section>
+
+<section>
+  <h2>■ AI創作都市伝説</h2>
+  <p class="intro">AIがその場で書き下ろす、完全新作の都市伝説です。ボタンを押すたびに、新しい話が生まれます。</p>
+  <p class="ailabel">これはAIの創作物語です（実話ではありません）</p>
+  <div class="today-card" id="aiStoryCard" style="display:none;">
+    <p class="today-text" id="aiStoryText"></p>
+  </div>
+  <p class="status" id="aiStoryStatus"></p>
+  <button id="aiStoryBtn" type="button" style="width:100%;">AIに新しい都市伝説を書いてもらう</button>
 </section>
 
 <section>
@@ -406,8 +439,10 @@
 
 <footer>
   <p>掲載している伝説は、語り継がれてきた物語を娯楽として紹介するものです。実在の人物・場所とは関係ありません。夜中に一人で読みすぎないようご注意ください。</p>
-  <p>データ出典：Bing News、YouTube（rss2json 経由）</p>
+  <p>データ出典：Bing News、Google News、YouTube（rss2json 経由）</p>
 </footer>
+
+<div id="stopBar"><button id="stopBarBtn" type="button">■ 読み上げを止める</button></div>
 
 <script>
 var LEGENDS = [
@@ -660,6 +695,7 @@ function renderArchive() {
       if (currentCat !== "すべて" && L.cat !== currentCat) { return; }
       if (currentRegion !== "すべて" && L.region !== currentRegion) { return; }
       if (currentEra !== "すべて" && L.era !== currentEra) { return; }
+      if (favOnly && marksData.fav.indexOf(idx) < 0) { return; }
       count++;
       var card = document.createElement("div");
       card.className = "card";
@@ -668,6 +704,12 @@ function renderArchive() {
       var name = document.createElement("p");
       name.className = "card-name";
       name.textContent = L.name;
+      if (marksData.read.indexOf(idx) >= 0) {
+        var rmark = document.createElement("span");
+        rmark.className = "readmark";
+        rmark.textContent = "読了";
+        name.appendChild(rmark);
+      }
       card.appendChild(name);
 
       var meta = document.createElement("p");
@@ -729,6 +771,36 @@ function renderArchive() {
       };
       card.appendChild(speakBtn);
 
+      var readBtn = document.createElement("button");
+      readBtn.type = "button";
+      readBtn.className = "readbtn";
+      readBtn.textContent = "🔊 読む";
+      readBtn.onclick = function () {
+        readLegend(idx, readBtn);
+      };
+      card.appendChild(readBtn);
+
+      var markRow = document.createElement("div");
+      var readMarkBtn = document.createElement("button");
+      readMarkBtn.type = "button";
+      readMarkBtn.className = "markbtn" + (marksData.read.indexOf(idx) >= 0 ? " on" : "");
+      readMarkBtn.textContent = marksData.read.indexOf(idx) >= 0 ? "✓ 読んだ" : "読んだ";
+      readMarkBtn.onclick = function () {
+        toggleMark("read", idx);
+        renderArchive();
+      };
+      markRow.appendChild(readMarkBtn);
+      var favMarkBtn = document.createElement("button");
+      favMarkBtn.type = "button";
+      favMarkBtn.className = "markbtn" + (marksData.fav.indexOf(idx) >= 0 ? " on" : "");
+      favMarkBtn.textContent = marksData.fav.indexOf(idx) >= 0 ? "★ お気に入り" : "☆ お気に入り";
+      favMarkBtn.onclick = function () {
+        toggleMark("fav", idx);
+        renderArchive();
+      };
+      markRow.appendChild(favMarkBtn);
+      card.appendChild(markRow);
+
       var vlabel = document.createElement("p");
       vlabel.className = "votelabel";
       vlabel.textContent = "怖さの読者投票（ごっこ）";
@@ -778,6 +850,9 @@ function openCard(idx) {
   currentCat = "すべて";
   currentRegion = "すべて";
   currentEra = "すべて";
+  favOnly = false;
+  var ffb = el("favFilterBtn");
+  if (ffb) { ffb.className = "chip"; }
   buildChips();
   renderArchive();
   var card = el("card" + idx);
@@ -897,6 +972,12 @@ function stopSpeak() {
     speakBtnMap[speakingKey].textContent = "▶ 声で聞く（ロボット声）";
   }
   speakingKey = null;
+  if (readBtnNow) {
+    readBtnNow.textContent = "🔊 読む";
+    readBtnNow = null;
+  }
+  var sb = document.getElementById("stopBar");
+  if (sb) { sb.style.display = "none"; }
 }
 
 function toggleSpeak(key, text, btn) {
@@ -963,6 +1044,139 @@ function voteFor(idx, kind) {
   votesData.counts[idx] = c;
   votesData.mine[idx] = kind;
   saveVotes();
+}
+
+/* ===== 読了・お気に入り（localStorageに保存） ===== */
+var marksData = { read: [], fav: [] };
+var favOnly = false;
+
+function loadMarks() {
+  var s = lsGet("densetsu6_marks_v1");
+  if (s) {
+    try {
+      var v = JSON.parse(s);
+      if (v && v.read && v.fav) { marksData = v; }
+    } catch (e) {}
+  }
+}
+function saveMarks() { lsSet("densetsu6_marks_v1", JSON.stringify(marksData)); }
+
+function toggleMark(kind, idx) {
+  var arr = marksData[kind];
+  var p = arr.indexOf(idx);
+  if (p >= 0) { arr.splice(p, 1); } else { arr.push(idx); }
+  saveMarks();
+}
+
+/* ===== 怪談読み上げ（🔊 読む＋全体の止めるバー） ===== */
+var readBtnNow = null;
+
+function readLegend(idx, btn) {
+  if (!("speechSynthesis" in window) || !window.SpeechSynthesisUtterance) {
+    btn.textContent = "この端末では音声が使えません";
+    return;
+  }
+  if (readBtnNow === btn) { stopSpeak(); return; }
+  stopSpeak();
+  var L = LEGENDS[idx];
+  try {
+    var u = new window.SpeechSynthesisUtterance(L.name + "。 " + String(L.detail).split("\n").join(" "));
+    u.lang = "ja-JP";
+    u.pitch = 0.4;
+    u.rate = 0.95;
+    readBtnNow = btn;
+    btn.textContent = "🔊 読んでいます…（タップで停止）";
+    el("stopBar").style.display = "block";
+    u.onend = function () {
+      if (readBtnNow === btn) {
+        btn.textContent = "🔊 読む";
+        readBtnNow = null;
+        el("stopBar").style.display = "none";
+      }
+    };
+    u.onerror = u.onend;
+    window.speechSynthesis.speak(u);
+  } catch (e) {
+    btn.textContent = "音声の再生に失敗しました";
+    readBtnNow = null;
+    el("stopBar").style.display = "none";
+  }
+}
+
+/* ===== AI創作都市伝説 ===== */
+var FEED_HORROR = "https://news.google.com/rss/search?q=%E3%83%9B%E3%83%A9%E3%83%BC%E6%98%A0%E7%94%BB&hl=ja&gl=JP&ceid=JP:ja";
+var FEED_WONDER = "https://news.google.com/rss/search?q=UFO%20OR%20%E6%9C%AA%E7%A2%BA%E8%AA%8D%E7%94%9F%E7%89%A9%20OR%20%E4%B8%96%E7%95%8C%E3%81%AE%E4%B8%8D%E6%80%9D%E8%AD%B0&hl=ja&gl=JP&ceid=JP:ja";
+
+var aiBusy = false;
+
+function aiErrorMsg(statusEl, msg, code) {
+  statusEl.className = "status err";
+  statusEl.innerHTML = "";
+  statusEl.appendChild(document.createTextNode(msg));
+  var sm = document.createElement("span");
+  sm.style.display = "block";
+  sm.style.fontSize = "12px";
+  sm.textContent = "詳細：HTTP " + code;
+  statusEl.appendChild(sm);
+}
+
+function callAiStory() {
+  if (aiBusy) { return; }
+  aiBusy = true;
+  var btn = el("aiStoryBtn");
+  var statusEl = el("aiStoryStatus");
+  btn.disabled = true;
+  var sec = 0;
+  statusEl.className = "status";
+  statusEl.textContent = "考え中… 0秒";
+  var timer = setInterval(function () {
+    sec++;
+    statusEl.textContent = "考え中… " + sec + "秒";
+  }, 1000);
+  function finish() {
+    clearInterval(timer);
+    aiBusy = false;
+    btn.disabled = false;
+  }
+  var prompt = "あなたは都市伝説の語り手です。誰も聞いたことのない完全オリジナルの都市伝説を1つ、日本語で書いてください。条件：300文字以内、地の文のみで1つの物語にすること、マークダウンや箇条書きは使わないこと、実在の人物・団体・事件とは無関係の創作にすること、怖いけれど娯楽として楽しめる内容にすること、最後は少しぞっとする余韻で終えること。";
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    finish();
+    var body = xhr.responseText || "";
+    if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+      statusEl.className = "status err";
+      statusEl.textContent = "本日の無料AI回線は上限に達しました。明日の朝9時に回復します";
+      return;
+    }
+    var text = body.replace(/^\s+|\s+$/g, "");
+    if (xhr.status === 200 && text.length > 0) {
+      el("aiStoryText").textContent = text;
+      el("aiStoryCard").style.display = "block";
+      statusEl.className = "status";
+      statusEl.textContent = "新しい伝説が届きました";
+    } else {
+      aiErrorMsg(statusEl, "AI回線が混み合っています", xhr.status);
+    }
+  };
+  xhr.ontimeout = function () {
+    finish();
+    statusEl.className = "status err";
+    statusEl.textContent = "AI回線の応答が時間切れになりました。もう一度お試しください。";
+  };
+  xhr.onerror = function () {
+    finish();
+    aiErrorMsg(statusEl, "AI回線が混み合っています", 0);
+  };
+  try {
+    xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+  } catch (e) {
+    finish();
+    aiErrorMsg(statusEl, "AI回線が混み合っています", 0);
+  }
 }
 
 /* ===== 今夜の一話 ===== */
@@ -1597,6 +1811,7 @@ function initMap() {
 function init() {
   initHeader();
   loadVotes();
+  loadMarks();
   initToday();
   initNight();
   buildChips();
@@ -1650,6 +1865,25 @@ function init() {
   };
   el("retryYtD").onclick = function () {
     loadFeed(FEED_YT_D, "ytDList", "ytDStatus", "retryYtD", 3, "TOLAND VLOG");
+  };
+  el("favFilterBtn").onclick = function () {
+    favOnly = !favOnly;
+    el("favFilterBtn").className = "chip" + (favOnly ? " on" : "");
+    renderArchive();
+  };
+  el("aiStoryBtn").onclick = callAiStory;
+  el("stopBarBtn").onclick = function () { stopSpeak(); };
+  el("loadHorrorBtn").onclick = function () {
+    loadFeed(FEED_HORROR, "horrorList", "horrorStatus", "retryHorror", 3, "ホラー映画の新着");
+  };
+  el("retryHorror").onclick = function () {
+    loadFeed(FEED_HORROR, "horrorList", "horrorStatus", "retryHorror", 3, "ホラー映画の新着");
+  };
+  el("loadWonderBtn").onclick = function () {
+    loadFeed(FEED_WONDER, "wonderList", "wonderStatus", "retryWonder", 3, "世界の不思議ニュース");
+  };
+  el("retryWonder").onclick = function () {
+    loadFeed(FEED_WONDER, "wonderList", "wonderStatus", "retryWonder", 3, "世界の不思議ニュース");
   };
   loadAllFeeds();
 }

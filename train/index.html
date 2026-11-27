@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>TRAIN-6 夜行列車</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { background:#05081a; }
+  body {
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+    color:#e8e4d8;
+    background:linear-gradient(180deg,#05081a 0%,#0a1030 55%,#131a3d 100%);
+    min-height:100vh;
+    padding:14px 14px 30px;
+    max-width:640px;
+    margin:0 auto;
+  }
+  a.backlink {
+    display:inline-block; min-height:48px; line-height:48px;
+    color:#ffd9a0; text-decoration:none; font-size:15px; padding:0 6px;
+  }
+  .topbar { overflow:hidden; }
+  .topbar .voice { float:right; }
+  button {
+    font-family:inherit; cursor:pointer; border:none; border-radius:12px;
+    min-height:48px; font-size:16px; padding:10px 16px;
+  }
+  .toggleBtn {
+    background:#1b2450; color:#cfd6f5; border:1px solid #3a4680;
+    min-height:48px; font-size:14px; padding:8px 12px;
+  }
+  .toggleBtn.on { background:#5a3d16; color:#ffd9a0; border-color:#c98f3d; }
+  h1 {
+    text-align:center; font-size:27px; letter-spacing:4px; color:#ffe9c4;
+    margin:8px 0 2px; text-shadow:0 0 14px rgba(255,190,90,0.45);
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif; font-weight:normal;
+  }
+  .subtitle { text-align:center; font-size:13px; color:#9aa5d6; margin-bottom:14px; letter-spacing:2px; }
+  /* 車窓 */
+  .windowFrame {
+    background:linear-gradient(180deg,#2a2118,#171208);
+    border:3px solid #6b5322; border-radius:22px;
+    padding:10px; margin-bottom:14px;
+    box-shadow:0 0 26px rgba(255,180,80,0.14), inset 0 0 12px rgba(0,0,0,0.7);
+  }
+  .windowView {
+    position:relative; height:150px; border-radius:14px; overflow:hidden;
+    background:linear-gradient(180deg,#0a1233 0%,#16235c 55%,#1d2c63 78%,#0c142e 100%);
+  }
+  .moon {
+    position:absolute; top:16px; right:22px; width:34px; height:34px; border-radius:50%;
+    background:#fdf3d0; box-shadow:0 0 18px 5px rgba(253,240,190,0.5);
+  }
+  .star { position:absolute; background:#fff; border-radius:50%; opacity:0.8; }
+  .hills {
+    position:absolute; left:0; right:0; bottom:0; height:44px;
+    background:#060a1c;
+    border-radius:100% 100% 0 0 / 60px 60px 0 0;
+  }
+  .hills2 {
+    position:absolute; left:-30px; right:-60px; bottom:0; height:26px;
+    background:#04060f; border-radius:100% 100% 0 0 / 44px 44px 0 0;
+  }
+  .windowLight {
+    position:absolute; left:0; right:0; bottom:0; height:10px;
+    background:linear-gradient(90deg,rgba(255,190,90,0.0),rgba(255,190,90,0.35),rgba(255,190,90,0.0));
+  }
+  .controls { text-align:center; margin-bottom:12px; }
+  .controls button { margin:0 4px; }
+  .rideBtn {
+    background:linear-gradient(180deg,#c98f3d,#9c6a24); color:#fff8ea;
+    font-size:19px; min-height:56px; padding:12px 30px; letter-spacing:2px;
+    box-shadow:0 4px 14px rgba(201,143,61,0.35);
+  }
+  .rideBtn:disabled { opacity:0.45; }
+  .status { text-align:center; font-size:14px; color:#ffb27a; min-height:20px; margin:6px 0; }
+  .announce {
+    background:rgba(255,217,160,0.10); border:1px solid #6b5322; border-radius:12px;
+    padding:10px 12px; font-size:14px; color:#ffd9a0; line-height:1.6; margin-bottom:10px;
+    display:none;
+  }
+  .announce .label { font-size:12px; color:#c98f3d; letter-spacing:2px; display:block; margin-bottom:3px; }
+  .sceneCard {
+    background:rgba(10,16,48,0.75); border:1px solid #3a4680; border-radius:14px;
+    padding:16px 14px; margin-bottom:12px;
+  }
+  .progress { font-size:14px; color:#9aa5d6; letter-spacing:1px; margin-bottom:8px; min-height:18px; }
+  .progress .stname { color:#ffe9c4; font-size:16px; }
+  .sceneText { font-size:18px; line-height:1.85; color:#f2ecdc; min-height:66px;
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif; }
+  .nextBtn {
+    display:block; width:100%; background:#1b2450; color:#cfd6f5; border:1px solid #3a4680;
+    font-size:18px; min-height:56px; letter-spacing:2px;
+  }
+  .nextBtn:disabled { opacity:0.4; }
+  .bentoArea { margin-top:18px; }
+  .bentoBtn {
+    display:block; width:100%; background:linear-gradient(180deg,#7a4a21,#5d3715);
+    color:#ffe9c4; font-size:18px; min-height:56px; letter-spacing:2px;
+    border:1px solid #c98f3d;
+  }
+  .bentoBtn:disabled { opacity:0.45; }
+  .bentoCard {
+    display:none; margin-top:12px; background:#f6ecd7; color:#3a2a16; border-radius:12px;
+    padding:14px; border:2px dashed #b03024; position:relative;
+  }
+  .bentoCard .tag {
+    display:inline-block; background:#b03024; color:#fff; font-size:12px;
+    padding:3px 10px; border-radius:8px; letter-spacing:2px; margin-bottom:8px;
+  }
+  .bentoText { font-size:17px; line-height:1.8; }
+  .note { text-align:center; font-size:12px; color:#7783b5; margin-top:20px; line-height:1.7; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="backlink" href="../portal/">← 全サイト一覧へ</a>
+  <span class="voice"><button class="toggleBtn on" id="voiceBtn" type="button">ボイス：ON</button></span>
+</div>
+
+<h1>TRAIN-6 夜行列車</h1>
+<div class="subtitle">― ほしぞら号 ―</div>
+
+<div class="windowFrame">
+  <div class="windowView" id="windowView">
+    <div class="moon"></div>
+    <div class="hills"></div>
+    <div class="hills2"></div>
+    <div class="windowLight"></div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="toggleBtn" id="soundBtn" type="button">列車の音：OFF</button>
+</div>
+
+<div class="controls">
+  <button class="rideBtn" id="rideBtn" type="button">乗車する</button>
+</div>
+<div class="status" id="rideStatus"></div>
+
+<div class="announce" id="announceBox"><span class="label">車掌アナウンス</span><span id="announceText"></span></div>
+
+<div class="sceneCard">
+  <div class="progress" id="progress"></div>
+  <div class="sceneText" id="sceneText">「乗車する」を押すと、夜行列車の旅が始まります。車窓の外は、静かな夜です。</div>
+</div>
+<button class="nextBtn" id="nextBtn" type="button" disabled>次の駅へ</button>
+
+<div class="bentoArea">
+  <button class="bentoBtn" id="bentoBtn" type="button">駅弁タイム</button>
+  <div class="status" id="bentoStatus"></div>
+  <div class="bentoCard" id="bentoCard">
+    <span class="tag">架空の駅弁</span>
+    <div class="bentoText" id="bentoText"></div>
+  </div>
+</div>
+
+<div class="note">物語と駅弁はAIが作る創作です<br>駅名はすべて架空のものです</div>
+
+<script>
+function el(id) { return document.getElementById(id); }
+
+var STATIONS = ["夜霧駅", "星見ヶ丘駅", "月影駅", "眠り谷駅", "夜明駅"];
+var ANNOUNCE = [
+  "まもなく発車いたします。夜行列車『ほしぞら号』をご利用いただき、ありがとうございます。",
+  "車窓の外には、暗い田園地帯が広がっております。どうぞ静かな夜の旅をお楽しみください。",
+  "ただいま、小さな駅を通過いたしました。次の駅まで、しばらくかかります。",
+  "食堂車はこの時間も開いております。寝台のお客様は、どうぞごゆっくりお休みください。",
+  "まもなく夜明けです。終点に近づいてまいりました。お忘れ物のないよう、ご注意ください。"
+];
+
+var voiceOn = true;
+var busy = false;
+var scenes = [];
+var sceneIdx = -1;
+
+/* ---------- 星空 ---------- */
+(function makeStars() {
+  var view = el("windowView");
+  var i, s, x, y, sz;
+  for (i = 0; i < 26; i++) {
+    s = document.createElement("span");
+    s.className = "star";
+    x = Math.floor(Math.random() * 92) + 2;
+    y = Math.floor(Math.random() * 55) + 3;
+    sz = (Math.random() < 0.3) ? 3 : 2;
+    s.style.left = x + "%";
+    s.style.top = y + "%";
+    s.style.width = sz + "px";
+    s.style.height = sz + "px";
+    view.appendChild(s);
+  }
+})();
+
+/* ---------- ボイス ---------- */
+function speak(text) {
+  if (!voiceOn) { return; }
+  if (!("speechSynthesis" in window)) { return; }
+  try {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 0.8;
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function stopSpeak() {
+  if ("speechSynthesis" in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+}
+el("voiceBtn").onclick = function() {
+  voiceOn = !voiceOn;
+  this.textContent = voiceOn ? "ボイス：ON" : "ボイス：OFF";
+  if (voiceOn) { this.className = "toggleBtn on"; } else { this.className = "toggleBtn"; stopSpeak(); }
+};
+
+/* ---------- 列車の音（ガタンゴトン＋低い走行音） ---------- */
+var actx = null;
+var soundOn = false;
+var rumbleNodes = null;
+var clackTimer = null;
+
+function makeNoiseBuffer(ctx, seconds) {
+  var len = Math.floor(ctx.sampleRate * seconds);
+  var buf = ctx.createBuffer(1, len, ctx.sampleRate);
+  var data = buf.getChannelData(0);
+  var i;
+  for (i = 0; i < len; i++) { data[i] = Math.random() * 2 - 1; }
+  return buf;
+}
+var sharedNoiseBuf = null;
+
+function playClick(when, freq, vol) {
+  var src = actx.createBufferSource();
+  src.buffer = sharedNoiseBuf;
+  var bp = actx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = freq;
+  bp.Q.value = 1.2;
+  var g = actx.createGain();
+  g.gain.setValueAtTime(vol, when);
+  g.gain.exponentialRampToValueAtTime(0.001, when + 0.07);
+  src.connect(bp); bp.connect(g); g.connect(actx.destination);
+  src.start(when, Math.random() * 1.5, 0.09);
+  src.stop(when + 0.1);
+}
+function clackPattern() {
+  if (!actx) { return; }
+  var t = actx.currentTime + 0.03;
+  playClick(t, 900, 0.20);        /* ガタン */
+  playClick(t + 0.13, 700, 0.16); /* ゴトン */
+}
+function startSound() {
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) { return; }
+  if (!actx) { actx = new AC(); }
+  if (actx.state === "suspended") { actx.resume(); }
+  sharedNoiseBuf = makeNoiseBuffer(actx, 2);
+  /* 低い走行音 */
+  var src = actx.createBufferSource();
+  src.buffer = sharedNoiseBuf;
+  src.loop = true;
+  var lp = actx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = 180;
+  var g = actx.createGain();
+  g.gain.value = 0.045;
+  src.connect(lp); lp.connect(g); g.connect(actx.destination);
+  src.start();
+  rumbleNodes = { src: src, gain: g };
+  clackPattern();
+  clackTimer = setInterval(clackPattern, 550);
+  soundOn = true;
+}
+function stopSound() {
+  if (clackTimer) { clearInterval(clackTimer); clackTimer = null; }
+  if (rumbleNodes) {
+    try { rumbleNodes.src.stop(); } catch (e) {}
+    try { rumbleNodes.src.disconnect(); } catch (e) {}
+    rumbleNodes = null;
+  }
+  if (actx) { try { actx.close(); } catch (e) {} actx = null; }
+  soundOn = false;
+}
+el("soundBtn").onclick = function() {
+  if (soundOn) {
+    stopSound();
+    this.textContent = "列車の音：OFF";
+    this.className = "toggleBtn";
+  } else {
+    startSound();
+    this.textContent = "列車の音：ON";
+    this.className = "toggleBtn on";
+  }
+};
+
+/* ---------- AI transport ---------- */
+function setBusy(b) {
+  busy = b;
+  el("rideBtn").disabled = b;
+  el("bentoBtn").disabled = b;
+  el("nextBtn").disabled = b || sceneIdx < 0 || sceneIdx >= scenes.length - 1;
+}
+function aiErrorText(status, body) {
+  if (status === 402 || (body && body.indexOf("Free limit") >= 0)) {
+    return "本日の無料AI回線は上限に達しました。明日の朝9時に回復します";
+  }
+  return "AI回線が混み合っています（詳細：HTTP " + status + "）";
+}
+function callAI(prompt, statusEl, onOk) {
+  if (busy) { return; }
+  setBusy(true);
+  statusEl.textContent = "考え中… 0秒";
+  var start = new Date().getTime();
+  var timer = setInterval(function() {
+    var sec = Math.floor((new Date().getTime() - start) / 1000);
+    statusEl.textContent = "考え中… " + sec + "秒";
+  }, 500);
+  var done = false;
+  function finish() {
+    if (done) { return; }
+    done = true;
+    clearInterval(timer);
+    setBusy(false);
+  }
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) { return; }
+    var body = xhr.responseText || "";
+    finish();
+    if (xhr.status === 200 && body && body.indexOf("Free limit") < 0) {
+      statusEl.textContent = "";
+      onOk(body);
+    } else {
+      statusEl.textContent = aiErrorText(xhr.status, body);
+    }
+  };
+  xhr.ontimeout = function() {
+    finish();
+    statusEl.textContent = "時間切れになりました。もう一度お試しください";
+  };
+  xhr.onerror = function() {
+    finish();
+    statusEl.textContent = aiErrorText(0, "");
+  };
+  var payload = { messages: [{ role: "user", content: prompt }], model: "openai-fast" };
+  xhr.send(JSON.stringify(payload));
+}
+
+/* ---------- 物語のパース ---------- */
+function parseScenes(text) {
+  var lines = text.replace(/\r/g, "").split("\n");
+  var parts = [];
+  var cur = "";
+  var i, ln;
+  for (i = 0; i < lines.length; i++) {
+    ln = lines[i];
+    if (ln.replace(/\s/g, "") === "===") {
+      parts.push(cur);
+      cur = "";
+    } else {
+      cur += ln + "\n";
+    }
+  }
+  parts.push(cur);
+  var out = [];
+  for (i = 0; i < parts.length; i++) {
+    var p = parts[i].replace(/^\s+|\s+$/g, "").replace(/\n+/g, "");
+    if (p) { out.push(p); }
+  }
+  if (out.length >= 2) {
+    while (out.length > 5) { out[4] = out[4] + out.pop(); }
+    return out;
+  }
+  /* フォールバック：。で分割して5場面にまとめる */
+  var flat = text.replace(/\r/g, "").replace(/\n/g, "").replace(/===/g, "");
+  var sents = flat.split("。");
+  var clean = [];
+  for (i = 0; i < sents.length; i++) {
+    var s = sents[i].replace(/^\s+|\s+$/g, "");
+    if (s) { clean.push(s + "。"); }
+  }
+  if (!clean.length) { return [flat]; }
+  var groups = [];
+  var per = Math.ceil(clean.length / 5);
+  for (i = 0; i < clean.length; i += per) {
+    groups.push(clean.slice(i, i + per).join(""));
+  }
+  return groups;
+}
+
+/* ---------- 旅の表示 ---------- */
+function showScene(idx) {
+  sceneIdx = idx;
+  var stName = STATIONS[idx] || ("第" + (idx + 1) + "駅");
+  el("progress").innerHTML = "";
+  var span1 = document.createElement("span");
+  span1.textContent = (idx + 1) + "駅目 / " + scenes.length + "　";
+  var span2 = document.createElement("span");
+  span2.className = "stname";
+  span2.textContent = stName;
+  el("progress").appendChild(span1);
+  el("progress").appendChild(span2);
+  el("announceText").textContent = ANNOUNCE[idx] || ANNOUNCE[ANNOUNCE.length - 1];
+  el("announceBox").style.display = "block";
+  el("sceneText").textContent = scenes[idx];
+  var nb = el("nextBtn");
+  if (idx >= scenes.length - 1) {
+    nb.disabled = true;
+    nb.textContent = "終点に到着しました";
+  } else {
+    nb.disabled = busy;
+    nb.textContent = "次の駅へ";
+  }
+  speak(scenes[idx]);
+}
+el("nextBtn").onclick = function() {
+  if (sceneIdx >= 0 && sceneIdx < scenes.length - 1) {
+    showScene(sceneIdx + 1);
+  }
+};
+
+el("rideBtn").onclick = function() {
+  var prompt = "夜行列車の短い旅の物語を書いてください。必ず5つの場面に分け、場面の区切りには「===」だけの行を入れてください。各場面は2〜3文、90文字以内にしてください。場面の順番は、1：発車、2：暗い田舎の景色、3：小さな駅を通過、4：食堂車と寝台、5：夜明けが近い、です。静かで穏やかな文体で、マークダウンは使わないでください。";
+  callAI(prompt, el("rideStatus"), function(body) {
+    scenes = parseScenes(body);
+    if (!scenes.length) {
+      el("rideStatus").textContent = "物語が届きませんでした。もう一度お試しください";
+      return;
+    }
+    showScene(0);
+  });
+};
+
+/* ---------- 駅弁 ---------- */
+el("bentoBtn").onclick = function() {
+  var prompt = "架空の駅弁を1つ考えてください。駅弁の名前、中身のおかず、売り文句を合わせて130文字以内で、親しみやすい文体で書いてください。実在の駅弁ではなく創作にしてください。マークダウンは使わないでください。";
+  callAI(prompt, el("bentoStatus"), function(body) {
+    var text = body.replace(/^\s+|\s+$/g, "").replace(/\n+/g, " ");
+    el("bentoText").textContent = text;
+    el("bentoCard").style.display = "block";
+  });
+};
+</script>
+</body>
+</html>

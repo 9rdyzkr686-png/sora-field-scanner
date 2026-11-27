@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOONBASE-6 月面基地</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#17181c;
+    background-image:radial-gradient(circle at 85% 8%, #26272e 0, #17181c 55%);
+    color:#e8e6df;
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif;
+    font-size:16px; line-height:1.55; padding:12px 12px 36px;
+  }
+  a.back {
+    display:block; min-height:48px; line-height:48px;
+    color:#f0b64a; text-decoration:none; font-size:16px;
+  }
+  h1 {
+    font-size:25px; letter-spacing:2px; color:#f5f2e9;
+    border-bottom:2px solid #f0b64a; padding-bottom:8px; margin-bottom:4px;
+  }
+  h1 .sub { font-size:14px; color:#b9b4a6; letter-spacing:1px; }
+  h2 {
+    font-size:18px; color:#f0b64a; letter-spacing:1px;
+    margin:22px 0 8px; border-left:6px solid #f0b64a; padding-left:8px;
+  }
+  .card {
+    background:#222329; border:1px solid #3a3b42; border-radius:10px;
+    padding:12px; margin-bottom:10px;
+  }
+  .row { display:block; margin:4px 0; }
+  .label { color:#b9b4a6; font-size:14px; }
+  .big { font-size:24px; color:#f5f2e9; }
+  .amber { color:#f0b64a; }
+  .barWrap {
+    background:#101116; border:1px solid #3a3b42; border-radius:6px;
+    height:22px; overflow:hidden; margin:6px 0 2px;
+  }
+  .barFill {
+    background:#f0b64a; height:100%; width:0%;
+  }
+  .note { font-size:13px; color:#8f8b80; }
+  button {
+    display:block; width:100%; min-height:56px;
+    background:#f0b64a; color:#1c1503; border:none; border-radius:10px;
+    font-size:18px; font-weight:bold; padding:12px; margin:10px 0;
+  }
+  button:disabled { background:#55534c; color:#a09c90; }
+  .toggleBtn {
+    display:inline-block; width:auto; min-height:48px; min-width:130px;
+    background:#2c2d33; color:#e8e6df; border:1px solid #f0b64a;
+    font-size:16px; font-weight:normal; padding:10px 14px; margin:6px 0;
+  }
+  #logStatus { color:#b9b4a6; min-height:24px; margin:6px 0; }
+  .logEntry {
+    background:#1b1c20; border-left:5px solid #f0b64a; border-radius:6px;
+    padding:10px; margin:8px 0;
+  }
+  .logEntry .when { color:#f0b64a; font-weight:bold; }
+  .summaryLine { color:#f5f2e9; font-size:17px; margin:8px 0; }
+  .crewName { font-size:18px; color:#f5f2e9; }
+  .crewRole { color:#f0b64a; font-size:14px; }
+  .newsItem { margin:8px 0; }
+  .newsItem a { color:#e8e6df; text-decoration:none; font-size:17px; }
+  .newsDate { color:#8f8b80; font-size:13px; }
+  #newsStatus { color:#b9b4a6; min-height:22px; }
+  .errDetail { font-size:13px; color:#8f8b80; }
+  .moonDisc {
+    width:74px; height:74px; border-radius:50%;
+    background:#e9e5d8; float:right; margin:2px 0 6px 10px;
+    box-shadow:0 0 18px rgba(240,182,74,.35);
+  }
+  .clear { clear:both; }
+</style>
+</head>
+<body>
+
+<a class="back" href="../portal/">← 全サイト一覧へ</a>
+
+<h1>🌕 MOONBASE-6 <span class="sub">月面基地コンソール</span></h1>
+<div class="note">こちら月面基地。基地AI「ルナ」がご案内します。</div>
+<button type="button" class="toggleBtn" id="voiceBtn">ボイス：ON</button>
+
+<h2>■ 基地ステータス</h2>
+<div class="card">
+  <div class="moonDisc"></div>
+  <span class="row"><span class="label">今夜の月：</span><span class="big" id="moonName">計算中…</span></span>
+  <span class="row"><span class="label">月齢：</span><span id="moonAge">―</span></span>
+  <span class="row"><span class="label">基地内時計：</span><span id="baseClock">―</span></span>
+  <div class="clear"></div>
+  <span class="label">太陽光発電（演出：月の明るさから計算）</span>
+  <div class="barWrap"><div class="barFill" id="solarBar"></div></div>
+  <span class="row"><span class="amber" id="solarPct">―</span> <span class="note">※発電量は月の照度からの演出表示です</span></span>
+</div>
+
+<h2>■ 基地の一日（AI実況）</h2>
+<div class="card">
+  <div class="note">基地AI「ルナ」が、今日の基地の様子を実況します（創作の基地日誌です）。</div>
+  <button type="button" id="logBtn">📡 今日の基地日誌を受信する</button>
+  <div id="logStatus"></div>
+  <div id="logSummary" class="summaryLine"></div>
+  <div id="logList"></div>
+</div>
+
+<h2>■ 乗組員</h2>
+<div class="card">
+  <div class="crewName">サクラ船長</div>
+  <div class="crewRole">司令官</div>
+  <div>冷静で頼れる基地のリーダー。甘いものと地球の歌に目がない。</div>
+</div>
+<div class="card">
+  <div class="crewName">ユウタ技師</div>
+  <div class="crewRole">整備・ロボット担当</div>
+  <div>機械いじりが大好き。マスコットロボ「ムギ」の生みの親。</div>
+</div>
+<div class="card">
+  <div class="crewName">ミオ研究員</div>
+  <div class="crewRole">月面観測・実験担当</div>
+  <div>月の石と星空の研究者。夜ふかし気味で、地球のニュースを欠かさない。</div>
+</div>
+<div class="card">
+  <div class="crewName">ムギ</div>
+  <div class="crewRole">マスコットロボ（ダックスフンド型）</div>
+  <div>基地内をちょこちょこ歩く癒やし担当。充電中は耳が垂れる。</div>
+</div>
+
+<h2>■ 地球からのニュース（本物）</h2>
+<div class="card">
+  <div id="newsStatus">受信中…</div>
+  <div id="newsList"></div>
+  <div class="note" id="newsTime"></div>
+</div>
+
+<div class="note" style="margin-top:18px;">MOONBASE-6 月面基地 ― 月齢は端末内で計算、ニュースは地球（rss2json経由）から受信しています</div>
+
+<script>
+function el(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/* ===== 月の計算（端末内・通信なし） ===== */
+var SYNODIC = 29.530588853;
+var REF_NEW = Date.UTC(2000, 0, 6, 18, 14) / 86400000; /* 基準新月（日数） */
+
+function moonInfo(date) {
+  var days = date.getTime() / 86400000;
+  var age = (days - REF_NEW) % SYNODIC;
+  if (age < 0) age += SYNODIC;
+  var illum = (1 - Math.cos(2 * Math.PI * age / SYNODIC)) / 2;
+  var name;
+  if (age < 1.0) name = "新月";
+  else if (age < 6.4) name = "三日月";
+  else if (age < 8.4) name = "上弦の月";
+  else if (age < 13.8) name = "十三夜の月";
+  else if (age < 16.8) name = "満月";
+  else if (age < 21.5) name = "居待月";
+  else if (age < 23.5) name = "下弦の月";
+  else if (age < 28.5) name = "有明月";
+  else name = "新月";
+  return { age: age, illum: illum, name: name };
+}
+
+function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+function updateStatus() {
+  var now = new Date();
+  var mi = moonInfo(now);
+  el("moonName").innerHTML = esc(mi.name);
+  el("moonAge").innerHTML = "約" + mi.age.toFixed(1) + "日 ／ 明るさ 約" + Math.round(mi.illum * 100) + "％";
+  var pct = Math.round(mi.illum * 100);
+  el("solarBar").style.width = pct + "%";
+  el("solarPct").innerHTML = "発電 " + pct + "％";
+  el("baseClock").innerHTML = now.getFullYear() + "/" + (now.getMonth() + 1) + "/" + now.getDate() +
+    " " + pad2(now.getHours()) + ":" + pad2(now.getMinutes()) + ":" + pad2(now.getSeconds()) + "（地球時間）";
+}
+updateStatus();
+setInterval(updateStatus, 1000);
+
+/* ===== ボイス ===== */
+var voiceOn = true;
+el("voiceBtn").onclick = function() {
+  voiceOn = !voiceOn;
+  el("voiceBtn").innerHTML = voiceOn ? "ボイス：ON" : "ボイス：OFF";
+  if (!voiceOn && window.speechSynthesis) speechSynthesis.cancel();
+};
+function speak(text) {
+  if (!voiceOn || !window.speechSynthesis) return;
+  try {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP"; u.pitch = 0.85; u.rate = 0.95;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+/* ===== AI実況（基地の一日） ===== */
+var aiBusy = false;
+var aiTimer = null;
+
+function aiErrorMessage(status, bodyText, isTimeout) {
+  if (isTimeout) return "受信が時間切れになりました。電波の届くところでもう一度お試しください。";
+  if (status === 402 || (bodyText && bodyText.indexOf("Free limit") >= 0)) {
+    return "本日の無料AI回線は上限に達しました。明日の朝9時に回復します。";
+  }
+  var msg = "AI回線が混み合っています。少し待ってもう一度お試しください。";
+  msg += '<br><span class="errDetail">詳細：HTTP ' + status + "</span>";
+  return msg;
+}
+
+function renderLog(text) {
+  var lines = String(text).replace(/\r/g, "").split("\n");
+  var summary = "";
+  var entries = [];
+  var i, line, trimmed;
+  for (i = 0; i < lines.length; i++) {
+    trimmed = lines[i].replace(/^\s+|\s+$/g, "");
+    if (!trimmed) continue;
+    if (trimmed.indexOf("要約：") === 0) summary = trimmed.substring(3);
+    else if (trimmed.indexOf("朝：") === 0) entries.push({ w: "朝", t: trimmed.substring(2) });
+    else if (trimmed.indexOf("昼：") === 0) entries.push({ w: "昼", t: trimmed.substring(2) });
+    else if (trimmed.indexOf("夜：") === 0) entries.push({ w: "夜", t: trimmed.substring(2) });
+  }
+  if (summary) {
+    el("logSummary").innerHTML = "ルナ： " + esc(summary);
+    if (summary.length <= 120) speak(summary);
+  } else {
+    el("logSummary").innerHTML = "";
+  }
+  if (entries.length === 0) {
+    el("logList").innerHTML = '<div class="logEntry">' + esc(text) + "</div>";
+    return;
+  }
+  var html = "";
+  for (i = 0; i < entries.length; i++) {
+    html += '<div class="logEntry"><span class="when">' + esc(entries[i].w) + "：</span>" + esc(entries[i].t) + "</div>";
+  }
+  el("logList").innerHTML = html;
+}
+
+el("logBtn").onclick = function() {
+  if (aiBusy) return;
+  aiBusy = true;
+  el("logBtn").disabled = true;
+  var sec = 0;
+  el("logStatus").innerHTML = "ルナと交信中… 受信中… 0秒";
+  aiTimer = setInterval(function() {
+    sec++;
+    el("logStatus").innerHTML = "ルナと交信中… 受信中… " + sec + "秒";
+  }, 1000);
+
+  var mi = moonInfo(new Date());
+  var prompt = "あなたは月面基地のAI「ルナ」です。今日の基地の一日を実況する日誌を書いてください。" +
+    "今夜の月は「" + mi.name + "」（月齢約" + mi.age.toFixed(1) + "日）です。" +
+    "乗組員はサクラ船長、ユウタ技師、ミオ研究員、そしてダックスフンド型マスコットロボ「ムギ」です。" +
+    "必ず次の形式で、合計4行だけを書いてください。" +
+    "1行目：要約：（今日の基地の様子を一言で、120文字以内）" +
+    "2行目：朝：（基地の朝の出来事、実験・朝食・ムギの様子など、80文字以内）" +
+    "3行目：昼：（基地の昼の出来事、80文字以内）" +
+    "4行目：夜：（基地の夜の出来事、80文字以内）" +
+    "マークダウンや飾りは使わず、プレーンテキストで書いてください。";
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    clearInterval(aiTimer);
+    aiBusy = false;
+    el("logBtn").disabled = false;
+    if (xhr.status === 200 && xhr.responseText && xhr.responseText.replace(/\s/g, "").length > 0 &&
+        xhr.responseText.indexOf("Free limit") < 0) {
+      el("logStatus").innerHTML = "受信完了（" + sec + "秒）";
+      renderLog(xhr.responseText);
+    } else {
+      el("logStatus").innerHTML = aiErrorMessage(xhr.status, xhr.responseText, false);
+    }
+  };
+  xhr.ontimeout = function() {
+    clearInterval(aiTimer);
+    aiBusy = false;
+    el("logBtn").disabled = false;
+    el("logStatus").innerHTML = aiErrorMessage(0, "", true);
+  };
+  xhr.onerror = function() {
+    clearInterval(aiTimer);
+    aiBusy = false;
+    el("logBtn").disabled = false;
+    el("logStatus").innerHTML = aiErrorMessage(0, "", false);
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+};
+
+/* ===== 地球からのニュース（CUTIE STREET・本物） ===== */
+function fmtDate(s) {
+  var d = new Date(s);
+  if (isNaN(d.getTime())) return "";
+  return (d.getMonth() + 1) + "/" + d.getDate() + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+}
+
+function loadNews() {
+  el("newsStatus").innerHTML = "地球から受信中…";
+  var feed = "https://news.google.com/rss/search?q=%22CUTIE%20STREET%22&hl=ja&gl=JP&ceid=JP:ja";
+  var url = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(feed);
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", url, true);
+  xhr.timeout = 30000;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (data && data.items && data.items.length > 0) {
+          var html = "";
+          var n = Math.min(2, data.items.length);
+          for (var i = 0; i < n; i++) {
+            var it = data.items[i];
+            html += '<div class="newsItem"><a href="' + esc(it.link) + '">' + esc(it.title) + "</a>" +
+              '<div class="newsDate">' + esc(fmtDate(it.pubDate)) + "</div></div>";
+          }
+          el("newsList").innerHTML = html;
+          el("newsStatus").innerHTML = "";
+          var now = new Date();
+          el("newsTime").innerHTML = "取得： " + pad2(now.getHours()) + ":" + pad2(now.getMinutes()) + "（Google News／rss2json経由）";
+          return;
+        }
+      } catch (e) {}
+    }
+    el("newsStatus").innerHTML = "地球からの電波が弱く、ニュースを受信できませんでした。";
+    el("newsList").innerHTML = "";
+  };
+  xhr.ontimeout = function() {
+    el("newsStatus").innerHTML = "地球からの電波が弱く、ニュースを受信できませんでした。";
+  };
+  xhr.onerror = function() {
+    el("newsStatus").innerHTML = "地球からの電波が弱く、ニュースを受信できませんでした。";
+  };
+  xhr.send();
+}
+loadNews();
+</script>
+</body>
+</html>

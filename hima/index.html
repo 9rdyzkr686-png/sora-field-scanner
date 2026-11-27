@@ -94,6 +94,10 @@
   }
   #mdText { white-space: pre-wrap; }
   .bottle { border: 1px dashed #00e5ff; border-radius: 8px; padding: 10px; margin-top: 8px; white-space: pre-wrap; }
+  button.chip.sel { background: #0d4d24; border-color: #ffb000; color: #ffb000; }
+  .mark-item { border: 1px dashed #1d7a3f; border-radius: 6px; padding: 8px; margin: 0 0 8px 0; white-space: pre-wrap; }
+  .mark-kind { color: #00e5ff; font-size: 14px; }
+  .greet-out { white-space: pre-wrap; border: 1px dashed #ffb000; border-radius: 8px; padding: 10px; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -115,6 +119,13 @@
   <h2>■ 宇宙ニュース</h2>
   <div id="spaceNews">取得中…</div>
   <button id="spaceRetry" type="button">↻ 再試行</button>
+</div>
+
+<div class="card">
+  <h2>■ ダックスニュース</h2>
+  <div id="daxNewsBody">まだ読み込んでいません。「読み込む」を押すと、ダックスフンドの最新ニュース3件を取得します。</div>
+  <div class="stat" id="daxNewsStatus"></div>
+  <button id="daxNewsBtn" type="button">読み込む</button>
 </div>
 
 <div class="card">
@@ -187,6 +198,12 @@
   <input type="text" class="wide" id="ikInput" value="">
   <button id="ikBtn" type="button">発表する</button>
   <div id="ikMsg">お題に一言どうぞ。ここに表示されるだけの、ゆるいごっこ遊びです。</div>
+</div>
+
+<div class="card">
+  <h2>■ ★ ブックマーク</h2>
+  <div class="stat" id="markMsg">読み物コーナーの各読み物にある「★ 保存」で、気に入った読み物をここに残せます（この端末の中だけに保存されます）。</div>
+  <div id="markList"></div>
 </div>
 
 <div class="card">
@@ -326,6 +343,30 @@
   <button id="bzAgain" type="button">もう1通流す</button>
   <div id="bzSea">まだ海は静かです。ボトルを流してみましょう。</div>
   <div class="stat" id="bzStat">流したボトル 0 ／ 届いた返事 0</div>
+</div>
+
+<div class="card">
+  <h2>■ 季節の挨拶文（AI）</h2>
+  <h3>◆ 種類</h3>
+  <div id="grKindRow">
+    <button type="button" class="chip gr-kind sel">年賀</button><button type="button" class="chip gr-kind">暑中見舞い</button><button type="button" class="chip gr-kind">残暑見舞い</button><button type="button" class="chip gr-kind">お礼</button><button type="button" class="chip gr-kind">近況報告</button>
+  </div>
+  <h3>◆ 相手</h3>
+  <div id="grPartnerRow">
+    <button type="button" class="chip gr-partner sel">友人</button><button type="button" class="chip gr-partner">親戚</button><button type="button" class="chip gr-partner">お世話になった人</button>
+  </div>
+  <button id="grBtn" type="button">挨拶文を作る</button>
+  <div class="stat" id="grStatus"></div>
+  <div class="greet-out" id="grText" style="display:none"></div>
+  <button id="grCopy" type="button" style="display:none">全文コピー</button>
+</div>
+
+<div class="card">
+  <h2>■ 円相場とビットコイン</h2>
+  <div>ドル円：<span class="big" id="mkUsd">―</span></div>
+  <div>ビットコイン：<span class="big" id="mkBtc">―</span></div>
+  <div class="stat" id="mkStatus">まだ取得していません。「相場を取得」を押すと今の値を取得します。</div>
+  <button id="mkBtn" type="button">相場を取得</button>
 </div>
 
 <div class="card">
@@ -1122,6 +1163,318 @@ function initWave3() {
   initBottle();
 }
 initWave3();
+</script>
+<script>
+/* ---------- 追加機能（ブックマーク／ダックスニュース／挨拶文AI／相場） ---------- */
+function todayStr() {
+  var n = new Date();
+  return n.getFullYear() + '/' + (n.getMonth() + 1) + '/' + n.getDate();
+}
+function timeStr() {
+  var n = new Date();
+  var m = n.getMinutes(); if (m < 10) { m = '0' + m; }
+  return n.getHours() + ':' + m;
+}
+function commaNum(x) {
+  var s = String(x), out = '', c = 0, i;
+  for (i = s.length - 1; i >= 0; i--) {
+    out = s.charAt(i) + out; c++;
+    if (c % 3 === 0 && i > 0) { out = ',' + out; }
+  }
+  return out;
+}
+
+/* (46) 読み物ブックマーク */
+var MARK_KEY = 'hima6_marks_v1';
+function loadMarks() {
+  try {
+    var s = localStorage.getItem(MARK_KEY);
+    if (s) { var a = JSON.parse(s); if (a && typeof a.length === 'number') { return a; } }
+  } catch (e) {}
+  return [];
+}
+function storeMarks(a) {
+  try { localStorage.setItem(MARK_KEY, JSON.stringify(a)); } catch (e) {}
+}
+function renderMarks() {
+  var a = loadMarks(), box = el('markList'), html = '', i, it;
+  if (a.length === 0) {
+    box.innerHTML = '<div class="stat">（まだ保存した読み物はありません）</div>';
+    return;
+  }
+  for (i = 0; i < a.length; i++) {
+    it = a[i];
+    html += '<div class="mark-item"><span class="mark-kind">【' + esc(it.kind) + '】 ' + esc(it.date) + '</span><br>' + esc(it.text) + '<br><button type="button" class="mark-del" data-i="' + i + '">削除</button></div>';
+  }
+  box.innerHTML = html;
+  var dels = box.getElementsByClassName('mark-del'), j;
+  for (j = 0; j < dels.length; j++) {
+    dels[j].onclick = function () {
+      var idx = parseInt(this.getAttribute('data-i'), 10);
+      var arr = loadMarks();
+      arr.splice(idx, 1);
+      storeMarks(arr);
+      renderMarks();
+      el('markMsg').innerHTML = '削除しました。';
+    };
+  }
+}
+function captureText(id) {
+  var node = el(id), txt = '';
+  if (node) { txt = node.textContent || node.innerText || ''; }
+  txt = txt.replace(/^\s+|\s+$/g, '');
+  if (id === 'riddleText') {
+    var r = RIDDLES[riddleIdx % RIDDLES.length];
+    txt = r.q + '\n答え：' + r.a;
+  }
+  if (id === 'nvText') {
+    var tt = el('nvTitle');
+    var title = tt ? (tt.textContent || tt.innerText || '') : '';
+    txt = title + '\n' + txt;
+  }
+  return txt;
+}
+var MARK_TARGETS = [
+  { id: 'hitokoto', kind: '本日の一言' },
+  { id: 'daxText', kind: 'ダックス小ネタ' },
+  { id: 'spaceText', kind: '宇宙の雑学' },
+  { id: 'riddleText', kind: 'なぞなぞ' },
+  { id: 'jokeText', kind: 'ダジャレ' },
+  { id: 'cutieText', kind: 'CUTIE STREET豆知識' },
+  { id: 'nvText', kind: '連載小説' },
+  { id: 'quoteText', kind: '今日の名言' },
+  { id: 'dayText', kind: '今日は何の日' },
+  { id: 'playText', kind: '懐かしの遊び紹介' },
+  { id: 'gameColText', kind: '懐かしゲーム紹介' },
+  { id: 'aaText', kind: 'アスキーアート' },
+  { id: 'komaText', kind: '四コマ劇場' },
+  { id: 'senryuText', kind: 'ダックス川柳' },
+  { id: 'charText', kind: 'キャラ占い' }
+];
+function initMarks() {
+  var i, t, node, btn;
+  for (i = 0; i < MARK_TARGETS.length; i++) {
+    t = MARK_TARGETS[i];
+    node = el(t.id);
+    if (!node || !node.parentNode) { continue; }
+    btn = document.createElement('button');
+    btn.type = 'button';
+    btn.innerHTML = '★ 保存';
+    btn.setAttribute('data-kind', t.kind);
+    btn.setAttribute('data-tid', t.id);
+    btn.onclick = function () {
+      var kind = this.getAttribute('data-kind');
+      var txt = captureText(this.getAttribute('data-tid'));
+      if (!txt || txt === '読み込み中…') {
+        el('markMsg').innerHTML = 'まだ読み込めていません。少し待ってから保存してください。';
+        return;
+      }
+      var arr = loadMarks(), k, dup = false;
+      for (k = 0; k < arr.length; k++) {
+        if (arr[k].kind === kind && arr[k].text === txt) { dup = true; break; }
+      }
+      if (dup) { el('markMsg').innerHTML = 'その読み物はすでに保存されています。'; return; }
+      arr.unshift({ kind: kind, text: txt, date: todayStr() });
+      storeMarks(arr);
+      renderMarks();
+      el('markMsg').innerHTML = '「' + esc(kind) + '」を保存しました。ブックマークにあります。';
+    };
+    node.parentNode.insertBefore(btn, node.nextSibling);
+  }
+  renderMarks();
+}
+
+/* (47) ダックスニュース */
+var DAX_NEWS_RSS = 'https://news.google.com/rss/search?q=' + encodeURIComponent('ダックスフンド') + '&hl=ja&gl=JP&ceid=JP:ja';
+function loadDaxNews() {
+  var body = el('daxNewsBody'), st = el('daxNewsStatus');
+  body.innerHTML = '取得中…';
+  st.innerHTML = '';
+  var api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(DAX_NEWS_RSS);
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', api, true);
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    var data = null;
+    if (xhr.status === 200) {
+      try { data = JSON.parse(xhr.responseText); } catch (e) { data = null; }
+    }
+    if (!data || !data.items || data.items.length === 0) {
+      body.innerHTML = '<span class="fail">取得できませんでした。「読み込む」でもう一度お試しください。</span>';
+      st.innerHTML = '取得失敗（' + timeStr() + '）';
+      return;
+    }
+    var html = '', i, it, n = Math.min(3, data.items.length);
+    for (i = 0; i < n; i++) {
+      it = data.items[i];
+      html += '<div class="news-item"><a href="' + esc(it.link) + '">' + esc(it.title) + '</a><br><span class="news-date">' + esc(it.pubDate || '') + '</span></div>';
+    }
+    body.innerHTML = html;
+    st.innerHTML = '取得：' + timeStr() + '（Google News／rss2json経由）';
+    el('daxNewsBtn').innerHTML = '↻ 更新';
+  };
+  xhr.onerror = function () {
+    body.innerHTML = '<span class="fail">取得できませんでした。「読み込む」でもう一度お試しください。</span>';
+    st.innerHTML = '取得失敗（通信エラー）';
+  };
+  xhr.send(null);
+}
+
+/* (48) 季節の挨拶文AI */
+var grKind = '年賀', grPartner = '友人', grBusy = false;
+function initChips(cls, setFn) {
+  var nodes = document.getElementsByClassName(cls), i;
+  for (i = 0; i < nodes.length; i++) {
+    nodes[i].onclick = function () {
+      var sib = document.getElementsByClassName(cls), j;
+      for (j = 0; j < sib.length; j++) { sib[j].className = sib[j].className.replace(' sel', ''); }
+      this.className = this.className + ' sel';
+      setFn(this.textContent || this.innerText);
+    };
+  }
+}
+function grError(msg, detail) {
+  var h = esc(msg);
+  if (detail !== null && detail !== undefined) {
+    h += ' <span style="font-size:13px">詳細：HTTP ' + detail + '</span>';
+  }
+  el('grStatus').innerHTML = h;
+}
+function makeGreeting() {
+  if (grBusy) { return; }
+  grBusy = true;
+  el('grBtn').disabled = true;
+  var sec = 0;
+  el('grStatus').innerHTML = '考え中… 0秒';
+  var timer = setInterval(function () {
+    sec++;
+    el('grStatus').innerHTML = '考え中… ' + sec + '秒';
+  }, 1000);
+  var finished = false;
+  function done() {
+    if (finished) { return true; }
+    finished = true;
+    grBusy = false;
+    el('grBtn').disabled = false;
+    clearInterval(timer);
+    return false;
+  }
+  var prompt = '次の条件で、季節の挨拶文を1つ書いてください。種類：' + grKind + '。相手：' + grPartner + '。220文字以内で、読みやすいところで改行し、マークダウン記号は使わず、挨拶文の本文だけを書いてください。';
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://text.pollinations.ai/', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.timeout = 90000;
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4) { return; }
+    var body = xhr.responseText || '';
+    var status = xhr.status;
+    if (done()) { return; }
+    if (status === 402 || body.indexOf('Free limit') >= 0) {
+      grError('本日の無料AI回線は上限に達しました。明日の朝9時に回復します', status);
+      return;
+    }
+    if (status !== 200 || !body.replace(/\s/g, '')) {
+      grError('AI回線が混み合っています', status);
+      return;
+    }
+    var txt = body.replace(/^\s+|\s+$/g, '');
+    el('grText').style.display = 'block';
+    el('grText').innerHTML = esc(txt);
+    el('grCopy').style.display = '';
+    el('grStatus').innerHTML = 'できました（' + esc(grKind) + '／' + esc(grPartner) + 'あて）';
+  };
+  xhr.ontimeout = function () {
+    if (done()) { return; }
+    grError('時間切れになりました。もう一度お試しください', null);
+  };
+  xhr.onerror = function () {
+    if (done()) { return; }
+    grError('AI回線が混み合っています', 0);
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: 'user', content: prompt }], model: 'openai-fast' }));
+}
+function copyGreeting() {
+  var node = el('grText');
+  var txt = node.textContent || node.innerText || '';
+  var ta = document.createElement('textarea');
+  ta.value = txt;
+  ta.style.position = 'absolute';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  el('grStatus').innerHTML = ok ? '全文をコピーしました。' : 'コピーできませんでした。文章を長押ししてコピーしてください。';
+}
+
+/* (144) 円相場とビットコイン */
+var mkUsdState = '', mkBtcState = '';
+function mkRenderStatus() {
+  el('mkStatus').innerHTML = 'ドル円：' + mkUsdState + ' ／ ビットコイン：' + mkBtcState;
+}
+function loadMarket() {
+  mkUsdState = '取得中…';
+  mkBtcState = '取得中…';
+  mkRenderStatus();
+  var x1 = new XMLHttpRequest();
+  x1.open('GET', 'https://open.er-api.com/v6/latest/USD', true);
+  x1.onreadystatechange = function () {
+    if (x1.readyState !== 4) { return; }
+    var d = null;
+    if (x1.status === 200) {
+      try { d = JSON.parse(x1.responseText); } catch (e) { d = null; }
+    }
+    if (d && d.rates && d.rates.JPY) {
+      el('mkUsd').innerHTML = '1ドル = ' + (Math.round(d.rates.JPY * 100) / 100) + '円';
+      mkUsdState = '取得 ' + timeStr() + '（open.er-api）';
+    } else {
+      el('mkUsd').innerHTML = '取得失敗';
+      mkUsdState = '取得失敗';
+    }
+    mkRenderStatus();
+  };
+  x1.onerror = function () {
+    el('mkUsd').innerHTML = '取得失敗';
+    mkUsdState = '取得失敗';
+    mkRenderStatus();
+  };
+  x1.send(null);
+  var x2 = new XMLHttpRequest();
+  x2.open('GET', 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=jpy', true);
+  x2.onreadystatechange = function () {
+    if (x2.readyState !== 4) { return; }
+    var d = null;
+    if (x2.status === 200) {
+      try { d = JSON.parse(x2.responseText); } catch (e) { d = null; }
+    }
+    if (d && d.bitcoin && d.bitcoin.jpy) {
+      el('mkBtc').innerHTML = '1BTC = ' + commaNum(Math.round(d.bitcoin.jpy)) + '円';
+      mkBtcState = '取得 ' + timeStr() + '（CoinGecko）';
+    } else {
+      el('mkBtc').innerHTML = '取得失敗';
+      mkBtcState = '取得失敗';
+    }
+    mkRenderStatus();
+  };
+  x2.onerror = function () {
+    el('mkBtc').innerHTML = '取得失敗';
+    mkBtcState = '取得失敗';
+    mkRenderStatus();
+  };
+  x2.send(null);
+}
+
+function initWave4() {
+  initMarks();
+  el('daxNewsBtn').onclick = loadDaxNews;
+  initChips('gr-kind', function (v) { grKind = v; });
+  initChips('gr-partner', function (v) { grPartner = v; });
+  el('grBtn').onclick = makeGreeting;
+  el('grCopy').onclick = copyGreeting;
+  el('mkBtn').onclick = loadMarket;
+}
+initWave4();
 </script>
 </body>
 </html>

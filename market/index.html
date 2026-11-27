@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MARKET-6 夜市</title>
+<style>
+* { box-sizing: border-box; }
+body { margin:0; padding:0 10px 30px; background:#170d08; color:#f5e6d0;
+  font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif; }
+a.back { display:inline-block; min-height:48px; line-height:48px; padding:0 14px;
+  color:#ffd9a0; text-decoration:none; font-size:16px; border:1px solid #6b4423;
+  border-radius:10px; background:#241408; margin-top:10px; }
+#voiceBtn { float:right; margin-top:10px; min-height:48px; padding:0 14px;
+  font-size:15px; color:#ffe9c4; background:#3a2410; border:1px solid #a06a2c;
+  border-radius:10px; }
+h1 { text-align:center; font-size:27px; margin:14px 0 2px; color:#ffcf7d;
+  letter-spacing:2px; }
+.lanterns { text-align:center; font-size:15px; letter-spacing:6px; margin:2px 0 6px; }
+.lanterns .r { color:#ff6b5e; } .lanterns .y { color:#ffd76e; } .lanterns .g { color:#9fe08a; }
+.sub { text-align:center; font-size:14px; color:#d9b98c; margin:4px 0 14px; line-height:1.6; }
+.stall { background:#241408; border:1px solid #6b4423; border-radius:14px;
+  padding:0 12px 14px; margin-bottom:18px; overflow:hidden; }
+.awning { height:16px; margin:0 -12px 10px; }
+.a0 { background:repeating-linear-gradient(90deg,#c0392b 0 26px,#f3e2c7 26px 52px); }
+.a1 { background:repeating-linear-gradient(90deg,#5b4a8a 0 26px,#e8ddc0 26px 52px); }
+.a2 { background:repeating-linear-gradient(90deg,#20605a 0 26px,#f3e2c7 26px 52px); }
+.stallHead { display:block; margin-bottom:6px; }
+.stallName { font-size:21px; font-weight:bold; color:#ffcf7d; }
+.keeper { display:block; font-size:13px; color:#c9a06a; margin-top:2px; }
+.itemRow { background:#170d08; border:1px dashed #a06a2c; border-radius:10px;
+  padding:10px 12px; margin:8px 0; }
+.itemName { display:block; font-size:18px; font-weight:bold; }
+.price { display:block; font-size:17px; color:#ffd76e; margin-top:3px; }
+.bonusTag { display:block; font-size:14px; color:#9fe08a; margin-top:3px; }
+.react { background:#2e1a0c; border-left:4px solid #ff9d5c; border-radius:6px;
+  padding:10px 12px; font-size:16px; line-height:1.6; min-height:52px; margin:8px 0; }
+.react .who { color:#ff9d5c; font-size:13px; display:block; }
+.chips { display:block; }
+.chip { display:block; width:100%; min-height:50px; margin:7px 0; font-size:16px;
+  color:#ffe9c4; background:#4a2c12; border:1px solid #a06a2c; border-radius:12px; }
+.chip:disabled { opacity:0.4; }
+.buyBtn { display:none; width:100%; min-height:56px; margin:9px 0 4px; font-size:19px;
+  font-weight:bold; color:#241203; background:#ffd76e; border:none; border-radius:12px; }
+.chatBox { border-top:1px solid #6b4423; margin-top:12px; padding-top:10px; }
+.chatTitle { font-size:14px; color:#c9a06a; margin-bottom:6px; }
+.chatLog { display:block; }
+.bubble { border-radius:12px; padding:8px 11px; margin:6px 0; font-size:15px;
+  line-height:1.6; max-width:92%; }
+.bUser { background:#4a2c12; margin-left:auto; text-align:left; }
+.bKeeper { background:#33241a; border:1px solid #6b4423; }
+.bKeeper .who { color:#ffcf7d; font-size:12px; display:block; }
+.chatStatus { font-size:13px; color:#d9b98c; min-height:18px; margin:4px 0; }
+.chatRow { display:block; }
+.chatInput { width:68%; min-height:50px; font-size:16px; padding:0 10px;
+  border-radius:10px; border:1px solid #a06a2c; background:#170d08; color:#f5e6d0;
+  vertical-align:top; }
+.chatSend { width:29%; min-height:50px; font-size:16px; margin-left:2%;
+  color:#ffe9c4; background:#7a3b12; border:1px solid #c97b2d; border-radius:10px;
+  vertical-align:top; }
+.chatSend:disabled { opacity:0.5; }
+.boughtBox { background:#1f1206; border:1px solid #6b4423; border-radius:14px;
+  padding:12px 14px; }
+.boughtBox h2 { font-size:18px; color:#ffcf7d; margin:2px 0 8px; }
+.boughtItem { font-size:15px; line-height:1.7; border-bottom:1px dashed #6b4423;
+  padding:5px 0; }
+.boughtItem .yen { color:#ffd76e; }
+.empty { font-size:14px; color:#c9a06a; }
+footer { text-align:center; font-size:12px; color:#a3805a; margin-top:16px; line-height:1.7; }
+</style>
+</head>
+<body>
+<a class="back" href="../portal/">← 全サイト一覧へ</a>
+<button id="voiceBtn" type="button">ボイス：ON</button>
+<h1>🏮 MARKET-6 夜市</h1>
+<div class="lanterns"><span class="r">●</span><span class="y">●</span><span class="g">●</span><span class="r">●</span><span class="y">●</span><span class="g">●</span></div>
+<p class="sub">3つの屋台で値切り交渉！<br>うまくいけば安く買えたり、おまけがついたり。<br>店主とのおしゃべりもできます。</p>
+
+<div id="stallsRoot"></div>
+
+<div class="boughtBox">
+  <h2>🛍 買ったもの（<span id="boughtCount">0</span>）</h2>
+  <div id="boughtList"><p class="empty" id="boughtEmpty">まだ何も買っていません</p></div>
+</div>
+
+<footer>値段と交渉は、このページの中だけのお遊びです<br>占いは娯楽です</footer>
+
+<script>
+var voiceOn = true;
+var bought = [];
+
+var STALLS = [
+  {
+    name: "たこ焼き屋",
+    keeper: "たこ焼き屋のおっちゃん",
+    awning: "a0",
+    halfRate: 0.5,
+    persona: "あなたは夜市のたこ焼き屋の陽気な店主です。明るい関西風の口調で、100文字以内で短く返事をしてください。",
+    items: [
+      { name: "たこ焼き（8個）", price: 800, bonus: "たこ焼き2個おまけ" },
+      { name: "明太マヨたこ焼き（8個）", price: 900, bonus: "たこせん1枚" },
+      { name: "たこ焼き（12個）", price: 1100, bonus: "たこ焼き2個おまけ" },
+      { name: "ネギ盛りたこ焼き（8個）", price: 950, bonus: "たこせん1枚" }
+    ],
+    lines: {
+      greet: ["いらっしゃい！焼きたてやで！値切りも相談のるで〜", "まいど！ええ匂いしてるやろ？"],
+      smallOk: ["しゃーないなぁ、ほなその値段でええわ！", "まいど！今日は勉強させてもらうわ！"],
+      halfOk: ["半額！？…まあ、今日は特別やで！", "うわっ、思い切ったな…よっしゃ、半額でいこ！"],
+      halfNg: ["半額はあかん！たこ代にもならへんわ！", "それは無理や〜、粉もんにもプライドあるねん"],
+      omakeOk: ["おまけやな、任しとき！こっそりつけとくで！", "よっしゃ、おまけサービスや！"],
+      omakeNg: ["おまけは勘弁してや〜、もうギリギリやねん", "今日はおまけ分まで余ってへんねん、すまんな"],
+      refuse: ["半額はもうアカンて！さっきも言うたやろ！", "半額の話は打ち止めや！他の手で来てみい"],
+      bought: ["まいどあり！熱いうちに食べてや！", "毎度！また寄ってや〜"]
+    }
+  },
+  {
+    name: "骨董屋",
+    keeper: "骨董屋の老人",
+    awning: "a1",
+    halfRate: 0.3,
+    persona: "あなたは夜市の骨董屋の狡猾な老人店主です。含み笑いのある渋い口調で、100文字以内で短く返事をしてください。品物の言い伝えを少し匂わせてください。",
+    items: [
+      { name: "骨董の置物", price: 5000, bonus: "古い小銭" },
+      { name: "謎の古壺", price: 12000, bonus: "古い小銭" },
+      { name: "ゼンマイ古時計", price: 8000, bonus: "骨董風のしおり" },
+      { name: "招き猫の置物", price: 6500, bonus: "古い小銭" }
+    ],
+    lines: {
+      greet: ["ふふふ…いい目をしておるのう。値切りも、まあ聞いてやろう", "よく来たのう。これは掘り出し物じゃぞ"],
+      smallOk: ["…ふむ、その値段で手を打とう", "ふふ、まあ今日はツイておるようじゃな"],
+      halfOk: ["半額じゃと！？…まあ、縁があったということじゃな", "むむ…半額か。仕方ない、持っていきなされ"],
+      halfNg: ["ならんならん！これは掘り出し物じゃぞ", "半額では売れんのう。目利きなら分かるはずじゃ"],
+      omakeOk: ["ふふ、おまけにこれを持っていきなされ", "よかろう、おまけをつけてやるわい"],
+      omakeNg: ["おまけなどありゃせん。これ以上は無理じゃ", "ふふ、おまけを出すほど安い店ではないのじゃ"],
+      refuse: ["半額の話はもう終わりじゃ。しつこいのう", "半額半額うるさいのう…もうその手は通じんぞ"],
+      bought: ["ふふふ、大事にしておくれやす", "いい買い物をしたのう。大切になされよ"]
+    }
+  },
+  {
+    name: "占い屋",
+    keeper: "占い屋の占い師",
+    awning: "a2",
+    halfRate: 0.5,
+    persona: "あなたは夜市の占い屋の神秘的な占い師です。静かで不思議な口調で、100文字以内で短く返事をしてください。占いは娯楽として語ってください。",
+    items: [
+      { name: "手相占い", price: 1000, bonus: "小さなお守り" },
+      { name: "タロット風占い", price: 1500, bonus: "小さなお守り" },
+      { name: "水晶占い", price: 2000, bonus: "星のしおり" }
+    ],
+    lines: {
+      greet: ["…ようこそ。あなたの未来、少し見えています", "星が騒いでいますね…何かお探しですか"],
+      smallOk: ["星の巡りが良いようです。その値段で占いましょう", "…ふふ、運命が頷いています。その値段でどうぞ"],
+      halfOk: ["半額…運命の導きでしょうか。受け入れましょう", "星が許すようです。半額で占いましょう"],
+      halfNg: ["未来は安売りできません…", "その願いは、星に届きませんでした…"],
+      omakeOk: ["おまけに、小さな加護をつけましょう", "星のおまけです。受け取ってください…"],
+      omakeNg: ["おまけは星が許しません…", "今日の星回りでは、おまけは出せません…"],
+      refuse: ["半額の星は、もう沈みました…", "何度も同じ願いは、星が聞き流します…"],
+      bought: ["良い未来が待っていますように…", "あなたの道に、星の加護を…"]
+    }
+  }
+];
+
+var state = [];
+var refs = [];
+
+function el(id) { return document.getElementById(id); }
+
+function daySeed() {
+  var d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+function seededRand(seed) {
+  var x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+function pickLine(arr, seed) {
+  var i = Math.floor(seededRand(seed) * arr.length);
+  if (i >= arr.length) i = arr.length - 1;
+  return arr[i];
+}
+
+function speak(text) {
+  if (!voiceOn) return;
+  if (!text || text.length > 120) return;
+  try {
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 0.7;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+function buildStalls() {
+  var root = el("stallsRoot");
+  var html = "";
+  for (var i = 0; i < STALLS.length; i++) {
+    html += '<div class="stall">'
+      + '<div class="awning ' + STALLS[i].awning + '"></div>'
+      + '<span class="stallHead"><span class="stallName">' + STALLS[i].name + '</span>'
+      + '<span class="keeper">店主：' + STALLS[i].keeper + '</span></span>'
+      + '<div class="itemRow"><span class="itemName" id="itemName' + i + '"></span>'
+      + '<span class="price" id="price' + i + '"></span>'
+      + '<span class="bonusTag" id="bonus' + i + '"></span></div>'
+      + '<div class="react"><span class="who">' + STALLS[i].keeper + '</span><span id="react' + i + '"></span></div>'
+      + '<div class="chips">'
+      + '<button class="chip" id="chipS' + i + '" type="button">💬 もうちょっと安くして</button>'
+      + '<button class="chip" id="chipH' + i + '" type="button">✂️ 半額にして</button>'
+      + '<button class="chip" id="chipO' + i + '" type="button">🎁 おまけつけて</button>'
+      + '</div>'
+      + '<button class="buyBtn" id="buy' + i + '" type="button"></button>'
+      + '<div class="chatBox"><div class="chatTitle">店主と話す</div>'
+      + '<div class="chatLog" id="chatLog' + i + '"></div>'
+      + '<div class="chatStatus" id="chatStatus' + i + '"></div>'
+      + '<span class="chatRow"><input class="chatInput" id="chatInput' + i + '" type="text" placeholder="店主に話しかける">'
+      + '<button class="chatSend" id="chatSend' + i + '" type="button">話す</button></span>'
+      + '</div></div>';
+  }
+  root.innerHTML = html;
+
+  for (var j = 0; j < STALLS.length; j++) {
+    state.push({
+      varIdx: 0,
+      price: STALLS[j].items[0].price,
+      attempt: 0,
+      halfStreak: 0,
+      locked: false,
+      bonus: null,
+      hist: [],
+      busy: false
+    });
+    refs.push({
+      item: el("itemName" + j),
+      price: el("price" + j),
+      bonus: el("bonus" + j),
+      react: el("react" + j),
+      buy: el("buy" + j),
+      chipS: el("chipS" + j),
+      chipH: el("chipH" + j),
+      chipO: el("chipO" + j),
+      log: el("chatLog" + j),
+      input: el("chatInput" + j),
+      send: el("chatSend" + j),
+      status: el("chatStatus" + j)
+    });
+    bindStall(j);
+    resetStall(j, true);
+  }
+}
+
+function bindStall(i) {
+  (function (idx) {
+    refs[idx].chipS.onclick = function () { negotiate(idx, "small"); };
+    refs[idx].chipH.onclick = function () { negotiate(idx, "half"); };
+    refs[idx].chipO.onclick = function () { negotiate(idx, "omake"); };
+    refs[idx].buy.onclick = function () { buyItem(idx); };
+    refs[idx].send.onclick = function () { sendChat(idx); };
+  })(i);
+}
+
+function currentItem(i) { return STALLS[i].items[state[i].varIdx]; }
+
+function renderStall(i) {
+  var st = state[i];
+  var item = currentItem(i);
+  refs[i].item.textContent = item.name;
+  if (st.price === item.price) {
+    refs[i].price.textContent = "定価 " + item.price + "円";
+  } else {
+    refs[i].price.textContent = st.price + "円（定価 " + item.price + "円）";
+  }
+  refs[i].bonus.textContent = st.bonus ? "おまけ：" + st.bonus : "";
+  var dis = st.locked;
+  refs[i].chipS.disabled = dis;
+  refs[i].chipH.disabled = dis;
+  refs[i].chipO.disabled = dis;
+  if (st.locked) {
+    refs[i].buy.style.display = "block";
+    refs[i].buy.textContent = st.price + "円で買う";
+  } else {
+    refs[i].buy.style.display = "none";
+  }
+}
+
+function setReact(i, line) {
+  refs[i].react.textContent = line;
+}
+
+function negotiate(i, type) {
+  var st = state[i];
+  var stall = STALLS[i];
+  if (st.locked) return;
+
+  if (type === "half" && st.halfStreak >= 2) {
+    setReact(i, pickLine(stall.lines.refuse, daySeed() + i * 31 + st.attempt));
+    return;
+  }
+
+  st.attempt++;
+  var typeCode = (type === "small") ? 1 : (type === "half") ? 2 : 3;
+  var seed = daySeed() * 7919 + i * 104729 + st.attempt * 97 + typeCode * 13;
+  var r = seededRand(seed);
+  var item = currentItem(i);
+  var lineSeed = daySeed() + i * 57 + st.attempt * 7 + typeCode;
+
+  if (type === "small") {
+    if (r < 0.95) {
+      st.price = Math.round(item.price * 0.8 / 10) * 10;
+      st.locked = true;
+      st.halfStreak = 0;
+      setReact(i, pickLine(stall.lines.smallOk, lineSeed));
+    } else {
+      setReact(i, pickLine(stall.lines.halfNg, lineSeed));
+    }
+  } else if (type === "half") {
+    if (r < stall.halfRate) {
+      st.price = Math.round(item.price / 2 / 10) * 10;
+      st.locked = true;
+      st.halfStreak = 0;
+      setReact(i, pickLine(stall.lines.halfOk, lineSeed));
+    } else {
+      st.halfStreak++;
+      setReact(i, pickLine(stall.lines.halfNg, lineSeed));
+    }
+  } else {
+    if (r < 0.7) {
+      st.bonus = item.bonus;
+      st.locked = true;
+      st.halfStreak = 0;
+      setReact(i, pickLine(stall.lines.omakeOk, lineSeed));
+    } else {
+      setReact(i, pickLine(stall.lines.omakeNg, lineSeed));
+    }
+  }
+  renderStall(i);
+}
+
+function buyItem(i) {
+  var st = state[i];
+  var stall = STALLS[i];
+  var item = currentItem(i);
+  bought.push({ name: item.name, stall: stall.name, price: st.price, bonus: st.bonus });
+  renderBought();
+  var line = pickLine(stall.lines.bought, daySeed() + i * 13 + st.attempt * 3);
+  resetStall(i, false);
+  setReact(i, line + " ――次の品が並びました");
+}
+
+function resetStall(i, first) {
+  var st = state[i];
+  if (!first) {
+    st.varIdx = (st.varIdx + 1) % STALLS[i].items.length;
+  }
+  st.price = currentItem(i).price;
+  st.attempt = 0;
+  st.halfStreak = 0;
+  st.locked = false;
+  st.bonus = null;
+  renderStall(i);
+  if (first) {
+    setReact(i, pickLine(STALLS[i].lines.greet, daySeed() + i * 101));
+  }
+}
+
+function renderBought() {
+  var list = el("boughtList");
+  el("boughtCount").textContent = bought.length;
+  if (bought.length === 0) {
+    list.innerHTML = '<p class="empty" id="boughtEmpty">まだ何も買っていません</p>';
+    return;
+  }
+  var html = "";
+  for (var i = 0; i < bought.length; i++) {
+    html += '<div class="boughtItem">' + bought[i].stall + "： " + bought[i].name
+      + ' <span class="yen">' + bought[i].price + "円</span>"
+      + (bought[i].bonus ? "（おまけ：" + bought[i].bonus + "）" : "")
+      + "</div>";
+  }
+  list.innerHTML = html;
+}
+
+function addBubble(i, who, text, isUser) {
+  var d = document.createElement("div");
+  d.className = "bubble " + (isUser ? "bUser" : "bKeeper");
+  if (!isUser) {
+    var w = document.createElement("span");
+    w.className = "who";
+    w.textContent = who;
+    d.appendChild(w);
+  }
+  var t = document.createElement("span");
+  t.textContent = text;
+  d.appendChild(t);
+  refs[i].log.appendChild(d);
+}
+
+function sendChat(i) {
+  var st = state[i];
+  if (st.busy) return;
+  var text = refs[i].input.value.replace(/^\s+|\s+$/g, "");
+  if (!text) return;
+  refs[i].input.value = "";
+  addBubble(i, "", text, true);
+  st.hist.push({ who: "客", text: text });
+  st.busy = true;
+  refs[i].send.disabled = true;
+
+  var prompt = STALLS[i].persona + "\n";
+  var start = st.hist.length - 5;
+  if (start < 0) start = 0;
+  if (st.hist.length > 1) {
+    prompt += "これまでの会話：\n";
+    for (var k = start; k < st.hist.length - 1; k++) {
+      prompt += st.hist[k].who + "：" + st.hist[k].text + "\n";
+    }
+  }
+  prompt += "客：" + text + "\n店主として返事をしてください。";
+
+  callAI(prompt, refs[i].status, function (ok, res) {
+    st.busy = false;
+    refs[i].send.disabled = false;
+    if (ok) {
+      addBubble(i, STALLS[i].keeper, res, false);
+      st.hist.push({ who: "店主", text: res });
+      speak(res);
+    } else {
+      refs[i].status.textContent = res;
+    }
+  });
+}
+
+function callAI(prompt, statusEl, cb) {
+  var sec = 0;
+  statusEl.textContent = "考え中… 0秒";
+  var timer = setInterval(function () {
+    sec++;
+    statusEl.textContent = "考え中… " + sec + "秒";
+  }, 1000);
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  xhr.onload = function () {
+    clearInterval(timer);
+    var body = xhr.responseText || "";
+    if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+      statusEl.textContent = "";
+      cb(false, "本日の無料AI回線は上限に達しました。明日の朝9時に回復します");
+      return;
+    }
+    if (xhr.status === 200 && body.replace(/\s+/g, "") !== "") {
+      statusEl.textContent = "";
+      cb(true, body.replace(/\s*\n\s*/g, " ").replace(/^\s+|\s+$/g, ""));
+      return;
+    }
+    statusEl.textContent = "";
+    cb(false, "AI回線が混み合っています（詳細：HTTP " + xhr.status + "）");
+  };
+  xhr.ontimeout = function () {
+    clearInterval(timer);
+    statusEl.textContent = "";
+    cb(false, "AI回線の応答が時間切れになりました。もう一度お試しください");
+  };
+  xhr.onerror = function () {
+    clearInterval(timer);
+    statusEl.textContent = "";
+    cb(false, "AI回線が混み合っています（詳細：HTTP 0）");
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+}
+
+el("voiceBtn").onclick = function () {
+  voiceOn = !voiceOn;
+  el("voiceBtn").textContent = voiceOn ? "ボイス：ON" : "ボイス：OFF";
+  if (!voiceOn) {
+    try { speechSynthesis.cancel(); } catch (e) {}
+  }
+};
+
+buildStalls();
+</script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>AQUA-6 小さな水族館</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { background:#02182e; color:#dff3ff; font-family:-apple-system,"Hiragino Kaku Gothic ProN",sans-serif; padding:10px; max-width:640px; margin:0 auto; }
+a.back { display:block; min-height:48px; line-height:48px; color:#9fd8ff; font-size:17px; text-decoration:none; }
+h1 { font-size:24px; text-align:center; color:#bfeaff; letter-spacing:2px; margin:2px 0 2px; }
+.sub { text-align:center; font-size:14px; color:#7fb8d8; margin-bottom:10px; }
+.toprow { overflow:hidden; margin-bottom:10px; }
+.voiceBtn { float:right; min-height:48px; min-width:130px; font-size:16px; background:#0a3a5c; color:#dff3ff; border:2px solid #2e7cb6; border-radius:10px; padding:10px; }
+#tank { position:relative; height:260px; border-radius:14px; overflow:hidden;
+  background:linear-gradient(to bottom,#0d5a8a 0%,#083d66 55%,#052a4a 100%);
+  border:3px solid #2e7cb6; box-shadow:inset 0 0 40px rgba(0,0,0,0.45); }
+.sand { position:absolute; left:0; right:0; bottom:0; height:18px; background:#c2a878; border-radius:50% 50% 0 0 / 100% 100% 0 0; opacity:0.85; }
+.weed { position:absolute; bottom:14px; width:8px; border-radius:6px; background:#2e9e6b; opacity:0.8; }
+.fish { position:absolute; }
+.fishBody { position:relative; border-radius:50%; }
+.fishEye { position:absolute; top:32%; width:14%; height:22%; background:#06283f; border-radius:50%; }
+.fishTail { position:absolute; top:50%; width:0; height:0; }
+.bubble { position:absolute; border-radius:50%; border:2px solid rgba(220,245,255,0.75); background:rgba(220,245,255,0.18); }
+.food { position:absolute; width:9px; height:9px; border-radius:50%; background:#f2c14e; }
+.btn { display:block; width:100%; min-height:56px; font-size:19px; font-weight:bold; border-radius:12px; border:none; margin:12px 0 6px; padding:12px; }
+#feedBtn { background:#e8912d; color:#fff; }
+#feedBtn:active { background:#c96f14; }
+.counter { text-align:center; font-size:16px; color:#ffd9a0; min-height:22px; }
+h2 { font-size:19px; color:#bfeaff; margin:16px 0 8px; border-left:6px solid #2e7cb6; padding-left:8px; }
+.chips { overflow:hidden; }
+.chip { float:left; min-height:48px; font-size:16px; margin:0 8px 8px 0; padding:10px 14px; border-radius:24px; border:2px solid #2e7cb6; background:#0a3a5c; color:#dff3ff; }
+.chip.sel { background:#2e7cb6; color:#fff; font-weight:bold; }
+#askBtn { background:#2e9e6b; color:#fff; }
+#askBtn:disabled { background:#3a5a4c; color:#bcd; }
+#keeperStatus { font-size:15px; color:#9fd8ff; min-height:20px; margin:4px 0; }
+#keeperText { background:#06283f; border:2px solid #2e7cb6; border-radius:12px; padding:14px; font-size:17px; line-height:1.7; min-height:60px; white-space:pre-wrap; }
+.detail { font-size:12px; color:#7fb8d8; }
+.foot { text-align:center; font-size:12px; color:#5f96b5; margin:16px 0 6px; }
+</style>
+</head>
+<body>
+<a class="back" href="../portal/">← 全サイト一覧へ</a>
+<h1>🐠 AQUA-6 小さな水族館</h1>
+<div class="sub">のんびり泳ぐ魚たちを眺める水槽です</div>
+<div class="toprow">
+  <button class="voiceBtn" id="voiceBtn" type="button">ボイス：ON</button>
+</div>
+
+<div id="tank">
+  <div class="weed" style="left:6%; height:52px;"></div>
+  <div class="weed" style="left:88%; height:70px;"></div>
+  <div class="weed" style="left:45%; height:38px;"></div>
+  <div class="sand"></div>
+</div>
+
+<button class="btn" id="feedBtn" type="button">🍤 餌やり</button>
+<div class="counter" id="feedCount">餌やり 0回</div>
+
+<h2>🎤 飼育員さんに聞く</h2>
+<div class="chips" id="topicChips">
+  <button class="chip sel" type="button" data-topic="魚の話">🐟 魚の話</button>
+  <button class="chip" type="button" data-topic="海の生き物">🐙 海の生き物</button>
+  <button class="chip" type="button" data-topic="水族館の裏側">🔧 水族館の裏側</button>
+</div>
+<button class="btn" id="askBtn" type="button">飼育員さんに聞く</button>
+<div id="keeperStatus"></div>
+<div id="keeperText">話題を選んでボタンを押すと、飼育員さんが水族館の小さな秘密を教えてくれます。</div>
+
+<div class="foot">AQUA-6 は小野さん専用の小さな水族館です</div>
+
+<script>
+function el(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/* ---------- 音声 ---------- */
+var voiceOn = true;
+function speak(text) {
+  if (!voiceOn) return;
+  if (!("speechSynthesis" in window)) return;
+  try {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 0.85;
+    u.rate = 1.0;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+el("voiceBtn").onclick = function() {
+  voiceOn = !voiceOn;
+  el("voiceBtn").innerHTML = voiceOn ? "ボイス：ON" : "ボイス：OFF";
+  if (!voiceOn && "speechSynthesis" in window) {
+    try { speechSynthesis.cancel(); } catch (e) {}
+  }
+};
+
+/* ---------- 水槽と魚 ---------- */
+var tank = el("tank");
+var FISH_DEFS = [
+  { w: 64, h: 34, color: "#ff8c42", y: 0.18, speed: 0.55 },
+  { w: 48, h: 26, color: "#ffd23f", y: 0.42, speed: 0.8 },
+  { w: 78, h: 40, color: "#ff5d8f", y: 0.62, speed: 0.42 },
+  { w: 40, h: 22, color: "#6ee7ff", y: 0.30, speed: 1.0 },
+  { w: 56, h: 30, color: "#9dff57", y: 0.78, speed: 0.65 }
+];
+var fishes = [];
+var speedBoostUntil = 0;
+
+function makeFish(def, idx) {
+  var wrap = document.createElement("div");
+  wrap.className = "fish";
+  wrap.style.width = def.w + "px";
+  wrap.style.height = def.h + "px";
+  var body = document.createElement("div");
+  body.className = "fishBody";
+  body.style.width = "78%";
+  body.style.height = "100%";
+  body.style.background = def.color;
+  body.style.left = "11%";
+  var eye = document.createElement("div");
+  eye.className = "fishEye";
+  eye.style.right = "14%";
+  body.appendChild(eye);
+  var tail = document.createElement("div");
+  tail.className = "fishTail";
+  var th = Math.round(def.h * 0.55);
+  tail.style.left = "-2px";
+  tail.style.marginTop = "-" + th + "px";
+  tail.style.borderTop = th + "px solid transparent";
+  tail.style.borderBottom = th + "px solid transparent";
+  tail.style.borderRight = Math.round(def.w * 0.28) + "px solid " + def.color;
+  wrap.appendChild(tail);
+  wrap.appendChild(body);
+  tank.appendChild(wrap);
+  var f = {
+    el: wrap, w: def.w, h: def.h,
+    x: 20 + idx * 55, baseY: def.y, dir: (idx % 2 === 0) ? 1 : -1,
+    speed: def.speed, phase: idx * 1.7
+  };
+  fishes.push(f);
+}
+var i;
+for (i = 0; i < FISH_DEFS.length; i++) makeFish(FISH_DEFS[i], i);
+
+var bubbles = [];
+function spawnBubble() {
+  var b = document.createElement("div");
+  b.className = "bubble";
+  var s = 6 + Math.floor(Math.random() * 10);
+  b.style.width = s + "px";
+  b.style.height = s + "px";
+  var bub = { el: b, x: Math.random() * 92 + 2, y: 248, s: s, sp: 0.5 + Math.random() * 0.7 };
+  b.style.left = bub.x + "%";
+  b.style.top = bub.y + "px";
+  tank.appendChild(b);
+  bubbles.push(bub);
+}
+
+var tick = 0;
+function animate() {
+  tick++;
+  var W = tank.clientWidth;
+  var H = 260;
+  var boost = (new Date().getTime() < speedBoostUntil) ? 2.4 : 1.0;
+  var j, f;
+  for (j = 0; j < fishes.length; j++) {
+    f = fishes[j];
+    f.x += f.dir * f.speed * boost;
+    var maxX = W - f.w - 4;
+    if (maxX < 4) maxX = 4;
+    if (f.x >= maxX) { f.x = maxX; f.dir = -1; }
+    if (f.x <= 2) { f.x = 2; f.dir = 1; }
+    var y = f.baseY * (H - 50) + Math.sin(tick * 0.05 + f.phase) * 7;
+    f.el.style.left = f.x + "px";
+    f.el.style.top = y + "px";
+    var tf = (f.dir === 1) ? "scaleX(1)" : "scaleX(-1)";
+    f.el.style.transform = tf;
+    f.el.style.webkitTransform = tf;
+  }
+  if (tick % 16 === 0 && bubbles.length < 9) spawnBubble();
+  for (j = bubbles.length - 1; j >= 0; j--) {
+    var bu = bubbles[j];
+    bu.y -= bu.sp;
+    bu.el.style.top = bu.y + "px";
+    if (bu.y < -18) {
+      tank.removeChild(bu.el);
+      bubbles.splice(j, 1);
+    }
+  }
+  for (j = foods.length - 1; j >= 0; j--) {
+    var fd = foods[j];
+    fd.y += fd.sp;
+    fd.el.style.top = fd.y + "px";
+    if (fd.y > 165) {
+      tank.removeChild(fd.el);
+      foods.splice(j, 1);
+    }
+  }
+}
+setInterval(animate, 50);
+
+/* ---------- 餌やり ---------- */
+var foods = [];
+var feedTimes = 0;
+el("feedBtn").onclick = function() {
+  feedTimes++;
+  el("feedCount").innerHTML = "餌やり " + feedTimes + "回";
+  speedBoostUntil = new Date().getTime() + 3000;
+  var k;
+  for (k = 0; k < 8; k++) {
+    var d = document.createElement("div");
+    d.className = "food";
+    var fx = 5 + Math.random() * 88;
+    d.style.left = fx + "%";
+    d.style.top = "4px";
+    tank.appendChild(d);
+    foods.push({ el: d, y: 4, sp: 0.8 + Math.random() * 0.9 });
+  }
+};
+
+/* ---------- 飼育員さん（AI） ---------- */
+var topic = "魚の話";
+var chipBox = el("topicChips");
+var chipBtns = chipBox.getElementsByTagName("button");
+var c;
+for (c = 0; c < chipBtns.length; c++) {
+  chipBtns[c].onclick = function() {
+    var m;
+    for (m = 0; m < chipBtns.length; m++) chipBtns[m].className = "chip";
+    this.className = "chip sel";
+    topic = this.getAttribute("data-topic");
+  };
+}
+
+var aiBusy = false;
+el("askBtn").onclick = function() {
+  if (aiBusy) return;
+  aiBusy = true;
+  var btn = el("askBtn");
+  btn.disabled = true;
+  var status = el("keeperStatus");
+  var sec = 0;
+  status.innerHTML = "考え中… 0秒";
+  var timer = setInterval(function() {
+    sec++;
+    status.innerHTML = "考え中… " + sec + "秒";
+  }, 1000);
+  var prompt = "あなたは水族館の飼育員です。「" + topic + "」について、来館者がほっこりするような小さな豆知識や裏話を1つ、200文字以内の日本語の平文で教えてください。マークダウンや記号の装飾は使わないでください。";
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    clearInterval(timer);
+    aiBusy = false;
+    btn.disabled = false;
+    var body = xhr.responseText || "";
+    if (xhr.status === 402 || body.indexOf("Free limit") >= 0) {
+      status.innerHTML = "本日の無料AI回線は上限に達しました。明日の朝9時に回復します";
+      return;
+    }
+    if (xhr.status === 200 && body.replace(/\s/g, "") !== "") {
+      var text = body.replace(/^\s+|\s+$/g, "");
+      status.innerHTML = "";
+      el("keeperText").innerHTML = esc(text);
+      speak(text);
+    } else {
+      status.innerHTML = "AI回線が混み合っています <span class=\"detail\">詳細：HTTP " + xhr.status + "</span>";
+    }
+  };
+  xhr.ontimeout = function() {
+    clearInterval(timer);
+    aiBusy = false;
+    btn.disabled = false;
+    status.innerHTML = "AI回線の応答に時間がかかっています。少し待ってからもう一度お試しください";
+  };
+  xhr.onerror = function() {
+    clearInterval(timer);
+    aiBusy = false;
+    btn.disabled = false;
+    status.innerHTML = "AI回線が混み合っています <span class=\"detail\">詳細：HTTP 0</span>";
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SORA-6 空の窓</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0 12px 28px;
+    background: #101c2c; color: #eaf4fb;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    font-size: 16px; line-height: 1.6;
+  }
+  a.backlink {
+    display: block; min-height: 48px; line-height: 48px;
+    color: #9fd3f5; text-decoration: none; font-size: 16px;
+  }
+  header.top { display: table; width: 100%; margin-top: 2px; }
+  header.top .ttl { display: table-cell; vertical-align: middle; }
+  header.top .vwrap { display: table-cell; vertical-align: middle; text-align: right; width: 130px; }
+  h1 { font-size: 24px; margin: 0; letter-spacing: 2px; }
+  .sub { color: #a9c6da; font-size: 14px; margin: 2px 0 10px; }
+  button {
+    font-family: inherit; cursor: pointer; border: none; border-radius: 10px;
+    min-height: 48px; font-size: 16px;
+  }
+  #voiceBtn { background: #274b66; color: #dff1fd; padding: 0 14px; min-width: 118px; }
+  #skyBand {
+    border-radius: 16px; min-height: 128px; margin: 8px 0 14px;
+    padding: 16px; color: #ffffff; position: relative; overflow: hidden;
+    background: #3a7bd5;
+  }
+  #skyBand .phase { font-size: 20px; font-weight: bold; text-shadow: 0 1px 4px rgba(0,0,0,0.45); }
+  #skyTime { font-size: 30px; font-weight: bold; text-shadow: 0 1px 4px rgba(0,0,0,0.45); margin-top: 2px; }
+  #skyBand .note { font-size: 13px; opacity: 0.92; text-shadow: 0 1px 3px rgba(0,0,0,0.45); }
+  .card {
+    background: #1a2f47; border: 1px solid #2c4a68; border-radius: 14px;
+    padding: 14px 16px; margin: 0 0 14px;
+  }
+  h2 { font-size: 18px; margin: 0 0 8px; color: #bfe3fa; }
+  #wxMain { font-size: 22px; font-weight: bold; }
+  #wxTime, #wxNote { color: #a9c6da; font-size: 14px; }
+  #wxNote { margin-top: 4px; }
+  .cloud { border-top: 1px solid #2c4a68; padding: 10px 0 2px; }
+  .cloud:first-of-type { border-top: none; }
+  .cloud .nm { font-size: 18px; font-weight: bold; color: #ffe9a8; }
+  .cloud .ds { margin: 2px 0; }
+  .cloud .sg { color: #a9c6da; font-size: 14px; }
+  .cloud .sg b { color: #9fd3f5; font-weight: bold; }
+  #letterBtn {
+    display: block; width: 100%; min-height: 56px;
+    background: #e8907c; color: #2b1408; font-size: 18px; font-weight: bold;
+    border-radius: 12px;
+  }
+  #letterBtn:disabled { opacity: 0.55; }
+  #letterStatus { color: #a9c6da; font-size: 14px; min-height: 22px; margin: 8px 0 0; }
+  #letterCard {
+    display: none; margin-top: 10px; background: #fdf6e3; color: #3a3125;
+    border-radius: 10px; padding: 16px; font-size: 18px; line-height: 1.8;
+  }
+  .foot { color: #7e9db5; font-size: 13px; text-align: center; margin-top: 18px; }
+</style>
+</head>
+<body>
+<a class="backlink" href="../portal/">← 全サイト一覧へ</a>
+
+<header class="top">
+  <div class="ttl">
+    <h1>🪟 SORA-6 空の窓</h1>
+  </div>
+  <div class="vwrap">
+    <button id="voiceBtn" type="button">ボイス：ON</button>
+  </div>
+</header>
+<div class="sub">ふじみ野の空を、ただ眺めるための窓です</div>
+
+<div id="skyBand">
+  <div class="phase" id="skyPhase">空を読み込み中…</div>
+  <div id="skyTime">--:--</div>
+  <div class="note">端末の時刻で空の色が変わります</div>
+</div>
+
+<div class="card">
+  <h2>☀ いまの空（ふじみ野）</h2>
+  <div id="wxMain">取得中…</div>
+  <div id="wxTime"></div>
+  <div id="wxNote"></div>
+</div>
+
+<div class="card">
+  <h2>✉ 空の便り</h2>
+  <button id="letterBtn" type="button">便りを受け取る</button>
+  <div id="letterStatus"></div>
+  <div id="letterCard"><span id="letterText"></span></div>
+</div>
+
+<div class="card">
+  <h2>☁ 雲の図鑑</h2>
+
+  <div class="cloud">
+    <div class="nm">巻雲（けんうん）</div>
+    <div class="ds">空のいちばん高いところにできる、薄く白い筋のような雲。</div>
+    <div class="sg"><b>天気のサイン：</b>天気が変わる前ぶれのことがあります。</div>
+  </div>
+  <div class="cloud">
+    <div class="nm">巻積雲（けんせきうん）</div>
+    <div class="ds">小さな白い粒が並ぶ雲。「うろこ雲」「いわし雲」とも呼ばれます。</div>
+    <div class="sg"><b>天気のサイン：</b>秋の空の代表。数日以内に天気が下り坂になることも。</div>
+  </div>
+  <div class="cloud">
+    <div class="nm">高積雲（こうせきうん）</div>
+    <div class="ds">中くらいの高さに浮かぶ、羊の群れのような雲（ひつじ雲）。</div>
+    <div class="sg"><b>天気のサイン：</b>大きくは崩れませんが、厚くなると雨の前ぶれ。</div>
+  </div>
+  <div class="cloud">
+    <div class="nm">層積雲（そうせきうん）</div>
+    <div class="ds">灰色の大きな雲の塊が、空一面に広がる雲。</div>
+    <div class="sg"><b>天気のサイン：</b>曇り空の日。雨が降っても弱いことが多いです。</div>
+  </div>
+  <div class="cloud">
+    <div class="nm">積雲（せきうん）</div>
+    <div class="ds">青空に浮かぶ、もくもくした白い雲（わた雲）。入道雲の子どもです。</div>
+    <div class="sg"><b>天気のサイン：</b>晴れのサイン。育ちすぎると夕立に注意。</div>
+  </div>
+  <div class="cloud">
+    <div class="nm">積乱雲（せきらんうん）</div>
+    <div class="ds">空高くそびえる入道雲。雷や激しい雨を連れてきます。</div>
+    <div class="sg"><b>天気のサイン：</b>雷雨・突風・ひょうのサイン。近づいたら屋内へ。</div>
+  </div>
+  <div class="cloud">
+    <div class="nm">層雲（そううん）</div>
+    <div class="ds">空の低いところに広がる、霧のような灰色の雲。</div>
+    <div class="sg"><b>天気のサイン：</b>どんよりした曇りの日。山では霧になります。</div>
+  </div>
+  <div class="cloud">
+    <div class="nm">雨雲（乱層雲）</div>
+    <div class="ds">空全体を暗く覆い、静かに雨を降らせる雲。</div>
+    <div class="sg"><b>天気のサイン：</b>しとしとと長く降る雨のサイン。</div>
+  </div>
+  <div class="cloud">
+    <div class="nm">霧（きり）</div>
+    <div class="ds">地面の近くにできる雲。遠くの景色が見えにくくなります。</div>
+    <div class="sg"><b>天気のサイン：</b>朝の冷え込みのサイン。お出かけの運転は注意。</div>
+  </div>
+  <div class="cloud">
+    <div class="nm">飛行機雲</div>
+    <div class="ds">飛行機の通り道にできる、人工の細長い雲。</div>
+    <div class="sg"><b>天気のサイン：</b>長く残ると下り坂、すぐ消えると晴れが続く目安。</div>
+  </div>
+</div>
+
+<div class="foot">SORA-6 空の窓 ／ 天気は Open-Meteo の実データです</div>
+
+<script>
+function el(id) { return document.getElementById(id); }
+
+var voiceOn = true;
+var wxLabel = "";
+var wxBusy = false;
+var aiBusy = false;
+var aiTimer = null;
+
+/* ---------- 空のグラデーション（時刻連動） ---------- */
+function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+function paintSky() {
+  var now = new Date();
+  var h = now.getHours();
+  var band = el("skyBand");
+  var phase = "";
+  var grad = "";
+  if (h >= 5 && h < 8) {
+    phase = "あさの空";
+    grad = "linear-gradient(180deg, #2e4a7a 0%, #e8907c 62%, #f7c98b 100%)";
+  } else if (h >= 8 && h < 16) {
+    phase = "ひるの空";
+    grad = "linear-gradient(180deg, #3a7bd5 0%, #7ec8f7 60%, #cfeefb 100%)";
+  } else if (h >= 16 && h < 19) {
+    phase = "ゆうがたの空";
+    grad = "linear-gradient(180deg, #3b2f63 0%, #b84a6b 58%, #f79d65 100%)";
+  } else {
+    phase = "よるの空";
+    grad = "linear-gradient(180deg, #050914 0%, #12233f 62%, #1d3557 100%)";
+  }
+  band.style.background = grad;
+  el("skyPhase").textContent = phase;
+  el("skyTime").textContent = pad2(h) + ":" + pad2(now.getMinutes());
+}
+
+/* ---------- いまの空（Open-Meteo） ---------- */
+function wxName(code) {
+  var m = {
+    0: "晴れ", 1: "ほぼ晴れ", 2: "晴れ時々くもり", 3: "くもり",
+    45: "霧", 48: "霧", 51: "霧雨", 53: "霧雨", 55: "霧雨",
+    56: "着氷性の霧雨", 57: "着氷性の霧雨",
+    61: "弱い雨", 63: "雨", 65: "強い雨", 66: "着氷性の雨", 67: "着氷性の雨",
+    71: "弱い雪", 73: "雪", 75: "強い雪", 77: "霧雪",
+    80: "にわか雨", 81: "にわか雨", 82: "激しいにわか雨",
+    85: "にわか雪", 86: "にわか雪",
+    95: "雷雨", 96: "雷雨（ひょう）", 99: "雷雨（ひょう）"
+  };
+  return m[code] || "くもり";
+}
+
+function loadWeather() {
+  if (wxBusy) { return; }
+  wxBusy = true;
+  var url = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197"
+    + "&current=temperature_2m,weather_code,wind_speed_10m&timezone=Asia%2FTokyo";
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", url, true);
+  xhr.timeout = 20000;
+  xhr.onload = function () {
+    wxBusy = false;
+    if (xhr.status !== 200) {
+      el("wxMain").textContent = "空の様子は分かりませんでした";
+      el("wxTime").textContent = "";
+      return;
+    }
+    var data;
+    try { data = JSON.parse(xhr.responseText); } catch (e) {
+      el("wxMain").textContent = "空の様子は分かりませんでした";
+      return;
+    }
+    if (!data || !data.current) {
+      el("wxMain").textContent = "空の様子は分かりませんでした";
+      return;
+    }
+    var c = data.current;
+    wxLabel = wxName(c.weather_code);
+    var temp = Math.round(c.temperature_2m * 10) / 10;
+    var wind = Math.round(c.wind_speed_10m * 10) / 10;
+    el("wxMain").textContent = wxLabel + "　" + temp + "℃";
+    var t = new Date();
+    el("wxTime").textContent = "風速 " + wind + " m/s";
+    el("wxNote").textContent = "取得： " + pad2(t.getHours()) + ":" + pad2(t.getMinutes()) + "（Open-Meteo）";
+  };
+  xhr.onerror = function () {
+    wxBusy = false;
+    el("wxMain").textContent = "空の様子は分かりませんでした";
+  };
+  xhr.ontimeout = function () {
+    wxBusy = false;
+    el("wxMain").textContent = "空の様子は分かりませんでした（時間切れ）";
+  };
+  xhr.send(null);
+}
+
+/* ---------- 音声 ---------- */
+function speak(text) {
+  if (!voiceOn) { return; }
+  if (!("speechSynthesis" in window)) { return; }
+  try {
+    window.speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP";
+    u.pitch = 0.9;
+    u.rate = 0.98;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+el("voiceBtn").onclick = function () {
+  voiceOn = !voiceOn;
+  el("voiceBtn").textContent = voiceOn ? "ボイス：ON" : "ボイス：OFF";
+  if (!voiceOn && ("speechSynthesis" in window)) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+};
+
+/* ---------- 空の便り（AI） ---------- */
+function aiErrorMessage(status, body) {
+  if (status === 402 || (body && body.indexOf("Free limit") >= 0)) {
+    return "本日の無料AI回線は上限に達しました。明日の朝9時に回復します";
+  }
+  return "AI回線が混み合っています";
+}
+
+el("letterBtn").onclick = function () {
+  if (aiBusy) { return; }
+  aiBusy = true;
+  var btn = el("letterBtn");
+  var st = el("letterStatus");
+  btn.disabled = true;
+  var sec = 0;
+  st.textContent = "考え中… 0秒";
+  aiTimer = setInterval(function () {
+    sec++;
+    st.textContent = "考え中… " + sec + "秒";
+  }, 1000);
+
+  var prompt = "あなたは空からの手紙の書き手です。";
+  if (wxLabel) {
+    prompt += "いま、埼玉県ふじみ野市の空は「" + wxLabel + "」です。その空の様子に触れて、";
+  } else {
+    prompt += "埼玉県ふじみ野市の空から、";
+  }
+  prompt += "読む人への短い手紙を150文字以内で書いてください。改行なしのプレーンテキストで、手紙の本文だけを返してください。";
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+
+  function finish() {
+    if (aiTimer) { clearInterval(aiTimer); aiTimer = null; }
+    aiBusy = false;
+    btn.disabled = false;
+  }
+
+  xhr.onload = function () {
+    finish();
+    var body = xhr.responseText || "";
+    if (xhr.status !== 200 || body.indexOf("Free limit") >= 0) {
+      st.textContent = aiErrorMessage(xhr.status, body);
+      if (xhr.status !== 402 && body.indexOf("Free limit") < 0) {
+        st.textContent += "（詳細：HTTP " + xhr.status + "）";
+      }
+      return;
+    }
+    var text = body.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+    if (!text) {
+      st.textContent = "便りが届きませんでした。もう一度お試しください";
+      return;
+    }
+    st.textContent = "";
+    el("letterText").textContent = text;
+    el("letterCard").style.display = "block";
+    speak(text);
+  };
+  xhr.onerror = function () {
+    finish();
+    st.textContent = "AI回線が混み合っています（詳細：HTTP 0）";
+  };
+  xhr.ontimeout = function () {
+    finish();
+    st.textContent = "時間切れになりました。もう一度お試しください";
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+};
+
+/* ---------- 起動 ---------- */
+paintSky();
+setInterval(paintSky, 60000);
+loadWeather();
+</script>
+</body>
+</html>

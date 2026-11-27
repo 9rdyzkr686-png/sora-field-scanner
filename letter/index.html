@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LETTER-6 手紙の木</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+    background: linear-gradient(180deg, #f9efdb 0%, #f3e2c2 55%, #ecd9b4 100%);
+    color: #4a3826;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 12px 14px 28px; }
+  .topbar { overflow: hidden; margin-bottom: 6px; }
+  .backlink {
+    float: left; display: block; min-height: 48px; line-height: 48px;
+    padding: 0 14px; background: #fff8ea; border: 2px solid #b98d5f;
+    border-radius: 24px; color: #7a4b21; text-decoration: none; font-size: 15px;
+  }
+  .voicebtn {
+    float: right; min-height: 48px; min-width: 110px; padding: 0 12px;
+    background: #8a5a33; color: #fff6e3; border: none; border-radius: 24px;
+    font-size: 15px;
+  }
+  h1 {
+    clear: both; text-align: center; font-size: 27px; margin: 10px 0 2px;
+    color: #6d4423; letter-spacing: 2px;
+  }
+  .subtitle { text-align: center; font-size: 14px; color: #8a6a45; margin: 0 0 8px; }
+
+  /* ===== 木 ===== */
+  .tree-wrap {
+    position: relative; height: 272px; margin: 4px auto 4px; max-width: 420px;
+  }
+  .trunk {
+    position: absolute; left: 50%; bottom: 0; width: 30px; height: 118px;
+    margin-left: -15px;
+    background: linear-gradient(90deg, #7a4b26 0%, #9c6636 45%, #6d3f1e 100%);
+    border-radius: 12px 12px 6px 6px;
+  }
+  .trunk:before {
+    content: ""; position: absolute; left: -16px; top: 22px; width: 22px; height: 9px;
+    background: #7a4b26; border-radius: 6px; transform: rotate(-32deg);
+  }
+  .trunk:after {
+    content: ""; position: absolute; right: -16px; top: 30px; width: 22px; height: 9px;
+    background: #6d3f1e; border-radius: 6px; transform: rotate(32deg);
+  }
+  .ground {
+    position: absolute; left: 50%; bottom: -2px; width: 240px; height: 20px;
+    margin-left: -120px; background: #a8bf7a; border-radius: 50%;
+  }
+  .leaf {
+    position: absolute; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #9cc46a 0%, #6fa244 55%, #557f31 100%);
+  }
+  .leaf1 { width: 176px; height: 176px; left: 50%; top: 0; margin-left: -88px; }
+  .leaf2 { width: 132px; height: 132px; left: 6%; top: 44px; }
+  .leaf3 { width: 132px; height: 132px; right: 6%; top: 44px; }
+  .fruit {
+    position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px;
+    border-radius: 50%; border: 2px solid #e8d9b0;
+    background: radial-gradient(circle, #d84f35 0 4px, #fff6e0 5px 100%);
+    box-shadow: 0 0 9px 2px rgba(255, 190, 90, 0.85);
+  }
+  .fruit.read {
+    background: radial-gradient(circle, #b9a888 0 4px, #e5dcc4 5px 100%);
+    box-shadow: none; opacity: 0.45;
+  }
+  .tree-note { text-align: center; font-size: 13px; color: #8a6a45; margin: 2px 0 10px; }
+
+  /* ===== ボタン ===== */
+  .bigbtn {
+    display: block; width: 100%; min-height: 56px; margin: 8px 0;
+    border: none; border-radius: 14px; font-size: 18px; color: #fff8ea;
+    background: linear-gradient(180deg, #b06f36, #8a5225);
+    box-shadow: 0 3px 0 #6d3f1e;
+  }
+  .bigbtn:active { transform: translateY(2px); box-shadow: 0 1px 0 #6d3f1e; }
+  .bigbtn.sub { background: linear-gradient(180deg, #7d9b4e, #5c7a36); box-shadow: 0 3px 0 #47602a; }
+  .bigbtn:disabled { opacity: 0.55; }
+  .status { min-height: 22px; text-align: center; font-size: 14px; color: #7a5a35; margin: 4px 0; }
+  .status .detail { display: block; font-size: 12px; color: #a08b6d; margin-top: 2px; }
+
+  /* ===== 手紙カード ===== */
+  .card {
+    display: none; position: relative; margin: 14px 0; padding: 20px 18px 16px;
+    background: #fffdf4; border: 1px solid #e0cba0; border-radius: 6px;
+    box-shadow: 0 4px 14px rgba(109, 68, 35, 0.18);
+  }
+  .card.open { display: block; }
+  .stamp {
+    position: absolute; top: 10px; right: 12px; width: 46px; height: 54px;
+    border: 2px dashed #c39a63; border-radius: 4px; color: #b3814a;
+    font-size: 11px; text-align: center; line-height: 1.3; padding-top: 9px;
+    transform: rotate(4deg); background: #fdf3da;
+  }
+  .from { font-size: 17px; font-weight: bold; color: #6d4423; margin: 0 46px 10px 0; }
+  .from .aitag {
+    display: inline-block; font-size: 12px; font-weight: normal; color: #fff;
+    background: #7d9b4e; border-radius: 8px; padding: 1px 8px; margin-left: 6px;
+    vertical-align: middle;
+  }
+  .body { font-size: 16px; line-height: 1.9; white-space: pre-wrap; margin: 0 0 14px; }
+  .readbtn {
+    min-height: 48px; padding: 0 22px; border-radius: 24px; border: 2px solid #b98d5f;
+    background: #fff8ea; color: #7a4b21; font-size: 16px;
+  }
+
+  /* ===== 読んだ手紙 ===== */
+  h2 { font-size: 18px; color: #6d4423; margin: 20px 0 8px; border-bottom: 2px dotted #c9a86f; padding-bottom: 4px; }
+  .readitem {
+    display: block; width: 100%; min-height: 48px; margin: 6px 0; text-align: left;
+    padding: 10px 14px; font-size: 16px; color: #5a4028;
+    background: #fff8ea; border: 1px solid #d9bd8d; border-radius: 10px;
+  }
+  .readitem .aitag {
+    display: inline-block; font-size: 12px; color: #fff; background: #7d9b4e;
+    border-radius: 8px; padding: 1px 8px; margin-left: 6px;
+  }
+  .empty { font-size: 14px; color: #a08b6d; margin: 6px 0; }
+  .footer { text-align: center; font-size: 13px; color: #a08b6d; margin-top: 26px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="backlink" href="../portal/">← 全サイト一覧へ</a>
+    <button class="voicebtn" id="voiceBtn" type="button">ボイス ON</button>
+  </div>
+
+  <h1>LETTER-6 手紙の木</h1>
+  <p class="subtitle">木の実を取ると、手紙が届きます</p>
+
+  <div class="tree-wrap" id="treeWrap">
+    <div class="ground"></div>
+    <div class="trunk"></div>
+    <div class="leaf leaf2"></div>
+    <div class="leaf leaf3"></div>
+    <div class="leaf leaf1"></div>
+    <div id="fruits"></div>
+  </div>
+  <p class="tree-note" id="treeNote"></p>
+
+  <button class="bigbtn" id="takeBtn" type="button">木から手紙を取る</button>
+  <button class="bigbtn sub" id="aiBtn" type="button">新しい便りを待つ（AI）</button>
+  <p class="status" id="status"></p>
+
+  <div class="card" id="letterCard">
+    <div class="stamp">手紙<br>の木<br>郵便</div>
+    <p class="from" id="letterFrom"></p>
+    <p class="body" id="letterBody"></p>
+    <button class="readbtn" id="readBtn" type="button">読む</button>
+  </div>
+
+  <h2>読んだ手紙</h2>
+  <div id="readList"></div>
+  <p class="empty" id="emptyNote">まだ手紙を読んでいません。</p>
+
+  <p class="footer">手紙は作り話の読み物です</p>
+</div>
+
+<script>
+var LETTERS = [
+  { from: "旅するダックス", text: "こんにちは。ぼくは旅するダックスです。今朝は川辺の町で、焼きたてのパンの匂いに誘われて目が覚めました。旅の途中で出会う人はみんな優しくて、昨日はおばあさんがミルクを分けてくれました。あなたの毎日にも、小さな優しさが届きますように。次は海の見える町から手紙を書きます。" },
+  { from: "灯台守", text: "拝啓。私は小さな岬の灯台守です。毎晩、船の安全を祈って灯りをともしています。今夜は月が明るくて、海が銀色に光っています。遠くにいるあなたも、どうか無事でいてください。迷いそうな夜は、この灯りを思い出してください。" },
+  { from: "月の住人", text: "こんばんは、地球のみなさん。月から見ると、あなたの町の灯りはとても小さくて、とても温かいです。今夜は少し冷えるそうですから、温かい飲み物を用意して空を見上げてください。同じ月を見ていられたら、それだけでもう友だちです。" },
+  { from: "未来のあなた", text: "元気ですか。私は少し先の未来から書いています。大丈夫、あなたはちゃんとやっています。今の心配ごとは、振り返ると笑い話になっているものが多いですよ。今日は好きなものを食べて、早めに寝てください。それが未来への一番の近道です。" },
+  { from: "駅員さん", text: "いらっしゃいませ。終電を見送った駅員です。今日もたくさんの人が、この駅から家へ帰っていきました。あなたの今日も、おつかれさまでした。改札はいつでも開いています。明日もいい旅になりますように。" },
+  { from: "海辺の郵便屋", text: "潮風と一緒に、この手紙をお届けします。私の担当地区では、今日も波の音が聞こえています。郵便受けを開ける瞬間のわくわくが、私は大好きです。この手紙が、あなたの郵便受けにも小さな波を届けられますように。" },
+  { from: "森のきこり", text: "山小屋から書いています。朝の森は静かで、鳥の声だけが響いていました。薪割りの合間に飲むお茶が、何よりのごちそうです。忙しい日々でしょうが、時には深呼吸をして、木の香りを思い出してください。" },
+  { from: "時計台の修理屋", text: "町の時計台のてっぺんから失礼します。古い時計は、人を急がせたりしません。ただ、コチコチと今を刻むだけです。あなたの時間も、あなたの速さで大丈夫。焦る日は、この時計の音を思い出してくださいね。" },
+  { from: "夜行列車の車掌", text: "車掌室より。夜行列車は今、星の海のような平野を走っています。眠れないお客さまには、温かいお茶をお配りしました。あなたの夢行きの切符は、いつでもこの列車で使えます。よい夢を。おやすみなさい。" },
+  { from: "古書店の店主", text: "店の奥の小さな机から書いています。今日、古い絵本の中から四つ葉の押し花が出てきました。昔の持ち主の、幸運のおすそ分けです。この手紙を読んだあなたにも、きっと良いことがありますよ。" },
+  { from: "山の天気屋", text: "山の上の観測小屋から、明日の空模様をお知らせします。明日は心が晴れるでしょう。ところにより、嬉しい知らせが降るかもしれません。傘は要りませんが、笑顔の準備をお願いします。" },
+  { from: "となりの星の子", text: "はじめまして。となりの星から来た子です。あなたの星の夜空がきれいだと聞いて、遊びに来ました。今度、流れ星が見えたら、それは私のあいさつです。願いごとは、声に出すと叶いやすいですよ。" }
+];
+
+var FRUIT_POS = [
+  [50, 34], [37, 58], [63, 58], [27, 84], [73, 84], [45, 92],
+  [57, 94], [50, 120], [34, 118], [66, 118], [42, 146], [58, 146]
+];
+
+var nextIdx = 0;
+var readFlags = [];
+var readEntries = [];
+var entrySeq = 0;
+var currentText = "";
+var voiceOn = true;
+var aiBusy = false;
+
+function el(id) { return document.getElementById(id); }
+
+function renderFruits() {
+  var box = el("fruits");
+  box.innerHTML = "";
+  var i, d;
+  for (i = 0; i < LETTERS.length; i++) {
+    d = document.createElement("div");
+    d.className = "fruit" + (readFlags[i] ? " read" : "");
+    d.style.left = FRUIT_POS[i][0] + "%";
+    d.style.top = FRUIT_POS[i][1] + "px";
+    box.appendChild(d);
+  }
+  var left = LETTERS.length - nextIdx;
+  el("treeNote").textContent = left > 0 ? ("木の実はあと " + left + " 個です") : "木の実は全部取りました";
+}
+
+function renderReadList() {
+  var box = el("readList");
+  box.innerHTML = "";
+  el("emptyNote").style.display = readEntries.length ? "none" : "block";
+  var i, b, e;
+  for (i = 0; i < readEntries.length; i++) {
+    e = readEntries[i];
+    b = document.createElement("button");
+    b.type = "button";
+    b.className = "readitem";
+    b.setAttribute("data-seq", e.seq);
+    b.innerHTML = "";
+    b.appendChild(document.createTextNode(e.from));
+    if (e.ai) {
+      var s = document.createElement("span");
+      s.className = "aitag";
+      s.textContent = "AI";
+      b.appendChild(s);
+    }
+    b.onclick = (function (entry) {
+      return function () { showLetter(entry); };
+    })(e);
+    box.appendChild(b);
+  }
+}
+
+function showLetter(entry) {
+  currentText = entry.text;
+  var f = el("letterFrom");
+  f.innerHTML = "";
+  f.appendChild(document.createTextNode("差出人：" + entry.from));
+  if (entry.ai) {
+    var s = document.createElement("span");
+    s.className = "aitag";
+    s.textContent = "AIの便り";
+    f.appendChild(s);
+  }
+  el("letterBody").textContent = entry.text;
+  el("letterCard").className = "card open";
+  el("letterCard").scrollIntoView();
+}
+
+function addRead(entry) {
+  entry.seq = entrySeq;
+  entrySeq++;
+  readEntries.push(entry);
+  renderReadList();
+  showLetter(entry);
+}
+
+function takeLetter() {
+  stopSpeak();
+  if (nextIdx >= LETTERS.length) {
+    el("status").textContent = "木の手紙は全部読みました。新しい便り（AI）を待ってみてください。";
+    return;
+  }
+  var idx = nextIdx;
+  nextIdx++;
+  readFlags[idx] = true;
+  renderFruits();
+  addRead({ from: LETTERS[idx].from, text: LETTERS[idx].text, ai: false });
+  el("status").textContent = "";
+}
+
+function setStatus(main, detail) {
+  var s = el("status");
+  s.innerHTML = "";
+  s.appendChild(document.createTextNode(main));
+  if (detail) {
+    var d = document.createElement("span");
+    d.className = "detail";
+    d.textContent = detail;
+    s.appendChild(d);
+  }
+}
+
+function callAI() {
+  if (aiBusy) { return; }
+  stopSpeak();
+  aiBusy = true;
+  el("aiBtn").disabled = true;
+  var sec = 0;
+  setStatus("便りを待っています… 0秒", "");
+  var timer = setInterval(function () {
+    sec++;
+    setStatus("便りを待っています… " + sec + "秒", "");
+  }, 1000);
+
+  var prompt = "あなたは「手紙の木」に届く不思議な手紙の書き手です。実在しない差出人を一人考え、その人からの温かい手紙を書いてください。形式は厳密に：1行目は『差出人：○○』（○○は差出人の名前や肩書き）、2行目以降が手紙の本文です。本文は3〜5文、全体で250文字以内。読む人がほっとする内容にしてください。マークダウン記号は使わないでください。";
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "https://text.pollinations.ai/", true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.timeout = 90000;
+
+  function finish() {
+    clearInterval(timer);
+    aiBusy = false;
+    el("aiBtn").disabled = false;
+  }
+
+  xhr.onload = function () {
+    finish();
+    var body = xhr.responseText || "";
+    if (xhr.status === 402 || body.indexOf("Free limit") !== -1) {
+      setStatus("本日の無料AI回線は上限に達しました。明日の朝9時に回復します", "");
+      return;
+    }
+    if (xhr.status !== 200 || !body.replace(/\s/g, "")) {
+      setStatus("AI回線が混み合っています", "詳細：HTTP " + xhr.status);
+      return;
+    }
+    var lines = body.replace(/\r/g, "").split("\n");
+    var from = "名もなき旅人";
+    var textLines = [];
+    var i, ln;
+    for (i = 0; i < lines.length; i++) {
+      ln = lines[i].replace(/^\s+|\s+$/g, "");
+      if (i === 0 && ln.indexOf("差出人") === 0) {
+        var nm = ln.replace(/^差出人[:：]\s*/, "").replace(/^[「『]/, "").replace(/[」』]$/, "");
+        if (nm) { from = nm; }
+        continue;
+      }
+      if (ln) { textLines.push(ln); }
+    }
+    var text = textLines.join("\n");
+    if (!text) { text = body.replace(/^\s+|\s+$/g, ""); }
+    setStatus("新しい便りが届きました", "");
+    addRead({ from: from, text: text, ai: true });
+  };
+  xhr.onerror = function () {
+    finish();
+    setStatus("AI回線が混み合っています", "詳細：HTTP 0");
+  };
+  xhr.ontimeout = function () {
+    finish();
+    setStatus("時間がかかりすぎたため、便りは届きませんでした。もう一度お試しください", "");
+  };
+  xhr.send(JSON.stringify({ messages: [{ role: "user", content: prompt }], model: "openai-fast" }));
+}
+
+function stopSpeak() {
+  if ("speechSynthesis" in window) { window.speechSynthesis.cancel(); }
+}
+
+function speakCurrent() {
+  if (!voiceOn) {
+    setStatus("ボイスがOFFです。右上のボタンでONにしてください", "");
+    return;
+  }
+  if (!currentText) { return; }
+  if (!("speechSynthesis" in window)) {
+    setStatus("この端末では読み上げが使えません", "");
+    return;
+  }
+  stopSpeak();
+  var u = new SpeechSynthesisUtterance(currentText);
+  u.lang = "ja-JP";
+  window.speechSynthesis.speak(u);
+}
+
+function toggleVoice() {
+  voiceOn = !voiceOn;
+  el("voiceBtn").textContent = voiceOn ? "ボイス ON" : "ボイス OFF";
+  if (!voiceOn) { stopSpeak(); }
+}
+
+function init() {
+  var i;
+  for (i = 0; i < LETTERS.length; i++) { readFlags[i] = false; }
+  renderFruits();
+  renderReadList();
+  el("takeBtn").onclick = takeLetter;
+  el("aiBtn").onclick = callAI;
+  el("readBtn").onclick = speakCurrent;
+  el("voiceBtn").onclick = toggleVoice;
+}
+
+init();
+</script>
+</body>
+</html>
