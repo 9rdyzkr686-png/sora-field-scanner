@@ -218,6 +218,8 @@ background: #1a1a1a; color: #faf6ec; border: none; cursor: pointer;
 <div class="gogai-headline" id="gogaiHeadline"></div>
 <div class="gogai-body" id="gogaiText"></div>
 <div class="gogai-note">この号外はAIが書いた創作です。本当のニュースではありません</div>
+<button class="copy-btn" id="gogaiCopyBtn" type="button">全文コピー</button>
+<div class="copy-note" id="gogaiCopyNote"></div>
 </div>
 <button class="back-btn hidden" id="backBtn" type="button">朝刊に戻る</button>
 
@@ -255,6 +257,9 @@ var dateText = "";
 var weatherText = "";
 var paperData = null;
 var edition = "morning";
+var paperEdition = "morning";
+var gogaiData = null;
+var gogaiDate = "";
 var lastNormalPaper = null;
 var showingGogai = false;
 var anyPaperShown = false;
@@ -598,6 +603,7 @@ finishPrint();
 setStatus("発行しました！", "");
 var parsed = parsePaper(resp);
 lastNormalPaper = parsed;
+paperEdition = edition;
 showPaper(parsed);
 saveToArchive((edition === "evening")? "夕刊": "通常", resp);
 return;
@@ -672,13 +678,16 @@ body: t.substring(nl + 1).replace(/^\s+|\s+$/g, "")
 return { headline: "", body: t};
 }
 
-function showGogai(g) {
+function showGogai(g, dstr) {
 showingGogai = true;
 anyPaperShown = true;
+gogaiData = g;
+gogaiDate = dstr || dateText;
 el("paperBody").className = "hidden";
 el("gogaiHeadline").textContent = g.headline || "号外";
 el("gogaiText").textContent = g.body || "";
 el("gogaiBody").className = "";
+el("gogaiCopyNote").textContent = "";
 el("backBtn").className = "back-btn";
 refreshPostBox();
 }
@@ -829,11 +838,12 @@ var a = loadArchive();
 var item = a[idx];
 if (!item) return;
 if (item.kind === "号外") {
-showGogai(parseGogai(item.text));
+showGogai(parseGogai(item.text), item.date);
 setStatus("過去の号外を表示しています", "");
 } else {
 var p = parsePaper(item.text);
 lastNormalPaper = p;
+paperEdition = (item.kind === "夕刊")? "evening": "morning";
 showPaper(p);
 setStatus("過去の新聞を表示しています", "");
 }
@@ -863,9 +873,9 @@ el("postBox").className = "post-box hidden";
 }
 
 function copyAll() {
-if (!paperData) return;
+if (!paperData) { el("copyNote").textContent = "まだ新聞が発行されていません。先に発行してください"; return;}
 var lines = [];
-lines.push("クー新聞　" + dateText + "　第" + issueNo + "号");
+lines.push("クー新聞　" + ((paperEdition === "evening")? "夕刊": "朝刊") + "　" + dateText + "　第" + issueNo + "号");
 lines.push("（この新聞の記事はAIが書いた創作です。本当のニュースではありません）");
 lines.push("");
 if (weatherText) { lines.push("" + weatherText); lines.push("");}
@@ -891,8 +901,30 @@ document.body.removeChild(ta);
 el("copyNote").textContent = ok? "コピーしました": "コピーできませんでした";
 }
 
+function copyGogai() {
+if (!gogaiData) { el("gogaiCopyNote").textContent = "まだ号外が出ていません。先に号外を出してください"; return;}
+var lines = [];
+lines.push("クー新聞　号外　" + gogaiDate);
+lines.push("（この号外はAIが書いた創作です。本当のニュースではありません）");
+lines.push("");
+if (gogaiData.headline) lines.push(gogaiData.headline);
+lines.push(gogaiData.body || "");
+var text = lines.join("\n");
+var ta = document.createElement("textarea");
+ta.value = text;
+ta.style.position = "absolute";
+ta.style.left = "-9999px";
+document.body.appendChild(ta);
+ta.select();
+var ok = false;
+try { ok = document.execCommand("copy");} catch (e) { ok = false;}
+document.body.removeChild(ta);
+el("gogaiCopyNote").textContent = ok? "コピーしました": "コピーできませんでした";
+}
+
 el("issueBtn").addEventListener("click", issuePaper, false);
 el("copyBtn").addEventListener("click", copyAll, false);
+el("gogaiCopyBtn").addEventListener("click", copyGogai, false);
 el("gogaiBtn").addEventListener("click", issueGogai, false);
 el("backBtn").addEventListener("click", backToNormal, false);
 el("edMorningBtn").addEventListener("click", function () { setEdition("morning");}, false);

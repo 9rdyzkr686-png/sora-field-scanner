@@ -233,6 +233,12 @@
   <div class="status" id="storyStatus"></div>
   <div class="story" id="storyBox"></div>
   <p class="note">物語が始まると、画面は約60秒かけてゆっくり暗くなります。読み上げを止めたいときは、右下の「止める」ボタンを押してください。</p>
+  <button class="ghostbtn" id="storyFavBtn" style="display:none;">この物語をお気に入りに保存</button>
+  <div class="status" id="storyFavStatus"></div>
+
+  <h2>お気に入りの物語</h2>
+  <p class="note">気に入った物語をこの端末の中に保存しておけます（最大20件）。一覧から選ぶと、もう一度表示できます。</p>
+  <div id="storyFavList"></div>
 
   <h2>雨音</h2>
   <button class="togglebtn" id="rainBtn">☔ 雨音をながす</button>
@@ -266,6 +272,7 @@ var waitTimer = null;
 var waitRetry = false;
 var dimTimer = null;
 var dimLevel = 0;
+var currentStoryText = "";
 
 function nightGreeting() {
   var h = new Date().getHours();
@@ -382,6 +389,18 @@ function cleanReply(s) {
   return s;
 }
 
+function showStory(story) {
+  var box = document.getElementById("storyBox");
+  box.style.display = "block";
+  box.innerHTML = "";
+  box.appendChild(document.createTextNode(story));
+  currentStoryText = story;
+  document.getElementById("storyFavBtn").style.display = "block";
+  setStatus("物語がはじまります。画面はゆっくり暗くなります。", "");
+  speakStory(story);
+  startDim();
+}
+
 document.getElementById("storyBtn").onclick = function () {
   if (waiting) { return; }
   stopDim();
@@ -433,13 +452,7 @@ document.getElementById("storyBtn").onclick = function () {
         return;
       }
       if (story.length > 500) { story = story.substring(0, 500); }
-      var box = document.getElementById("storyBox");
-      box.style.display = "block";
-      box.innerHTML = "";
-      box.appendChild(document.createTextNode(story));
-      setStatus("物語がはじまります。画面はゆっくり暗くなります。", "");
-      speakStory(story);
-      startDim();
+      showStory(story);
     };
     xhr.ontimeout = function () {
       if (my !== attempt) { return; }
@@ -668,7 +681,114 @@ document.getElementById("dreamCopyBtn").onclick = function () {
   dreamSetStatus(ok ? "全文をコピーしました。" : "コピーできませんでした。");
 };
 
+/* ---- おやすみ物語のお気に入り ---- */
+var FAV_KEY = "oyasumi6_stories_v1";
+
+function favLoad() {
+  try {
+    var raw = window.localStorage.getItem(FAV_KEY);
+    if (!raw) { return []; }
+    var arr = JSON.parse(raw);
+    if (arr && arr.length !== undefined) { return arr; }
+  } catch (e) {}
+  return [];
+}
+
+function favStore(arr) {
+  try { window.localStorage.setItem(FAV_KEY, JSON.stringify(arr)); } catch (e) {}
+}
+
+function favSetStatus(msg) {
+  document.getElementById("storyFavStatus").innerHTML = msg;
+}
+
+function favLabel(entry) {
+  var t = entry.title || "";
+  if (!t) {
+    var text = String(entry.text || "");
+    t = text.substring(0, 20);
+    if (text.length > 20) { t += "…"; }
+  }
+  return t;
+}
+
+function renderFavStories() {
+  var arr = favLoad();
+  var box = document.getElementById("storyFavList");
+  box.innerHTML = "";
+  if (arr.length === 0) {
+    var emp = document.createElement("div");
+    emp.className = "dreamEmpty";
+    emp.appendChild(document.createTextNode("まだお気に入りの物語はありません。"));
+    box.appendChild(emp);
+    return;
+  }
+  var n = Math.min(arr.length, 10);
+  for (var i = 0; i < n; i++) {
+    (function (entry, idx) {
+      var div = document.createElement("div");
+      div.className = "dreamEntry";
+      div.style.cursor = "pointer";
+      var head = document.createElement("div");
+      head.className = "dreamHead";
+      var ds = document.createElement("span");
+      ds.className = "dreamDate";
+      ds.appendChild(document.createTextNode(dreamDateLabel(entry.date)));
+      head.appendChild(ds);
+      var body = document.createElement("div");
+      body.className = "dreamBody";
+      body.appendChild(document.createTextNode(favLabel(entry)));
+      var read = document.createElement("button");
+      read.className = "delbtn";
+      read.appendChild(document.createTextNode("この物語を読む"));
+      read.onclick = function (e) {
+        if (e && e.stopPropagation) { e.stopPropagation(); }
+        stopDim();
+        showStory(entry.text || "");
+        favSetStatus("お気に入りの物語を表示しています。");
+      };
+      var del = document.createElement("button");
+      del.className = "delbtn";
+      del.appendChild(document.createTextNode("削除"));
+      del.onclick = function (e) {
+        if (e && e.stopPropagation) { e.stopPropagation(); }
+        var cur = favLoad();
+        cur.splice(idx, 1);
+        favStore(cur);
+        favSetStatus("物語を削除しました。");
+        renderFavStories();
+      };
+      div.onclick = function () {
+        stopDim();
+        showStory(entry.text || "");
+        favSetStatus("お気に入りの物語を表示しています。");
+      };
+      div.appendChild(head);
+      div.appendChild(body);
+      div.appendChild(read);
+      div.appendChild(del);
+      box.appendChild(div);
+    })(arr[i], i);
+  }
+}
+
+document.getElementById("storyFavBtn").onclick = function () {
+  if (!currentStoryText) {
+    favSetStatus("まだ物語がありません。まず物語をはじめてください。");
+    return;
+  }
+  var arr = favLoad();
+  var firstLine = currentStoryText.substring(0, 20);
+  if (currentStoryText.length > 20) { firstLine += "…"; }
+  arr.unshift({ title: firstLine, text: currentStoryText, date: dreamTodayStr() });
+  while (arr.length > 20) { arr.pop(); }
+  favStore(arr);
+  favSetStatus("お気に入りに保存しました。");
+  renderFavStories();
+};
+
 renderDreams();
+renderFavStories();
 </script>
 </body>
 </html>

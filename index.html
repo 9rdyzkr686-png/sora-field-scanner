@@ -970,6 +970,7 @@ var sync = 0;
 var syncFired = false;
 var fragments = {};
 var fragDates = {};
+var fragCompleteTelegram = false;
 var storyParts = null;
 var storyNext = -1;
 var storyIdx = 0;
@@ -1036,6 +1037,7 @@ sync: sync,
 syncFired: syncFired,
 fragments: fragments,
 fragDates: fragDates,
+fragCompleteTelegram: fragCompleteTelegram,
 missionsDone: missionsDone,
 missionLog: missionLog,
 ciphersDone: ciphersDone,
@@ -1181,6 +1183,7 @@ for (var fk in d.fragDates) {
 if (d.fragDates.hasOwnProperty(fk) && typeof d.fragDates[fk] === "string") fragDates[fk] = d.fragDates[fk];
 }
 }
+fragCompleteTelegram = !!d.fragCompleteTelegram;
 if (typeof d.missionsDone === "number") missionsDone = d.missionsDone;
 if (d.missionLog && typeof d.missionLog.length === "number") {
 missionLog = [];
@@ -1234,6 +1237,7 @@ sync = 0;
 syncFired = false;
 fragments = {};
 fragDates = {};
+fragCompleteTelegram = false;
 missionsDone = 0;
 missionLog = [];
 missionText = "";
@@ -1497,6 +1501,17 @@ if (!f) return;
 fragments[id] = true;
 fragDates[id] = fragToday();
 addLog("sys", "◆観測データ『" + f.name + "』ヲ収集シマシタ（図鑑ニ登録）");
+saveState();
+checkFragComplete();
+}
+
+function checkFragComplete() {
+if (fragCompleteTelegram) return;
+if (fragCount() < FRAGMENTS.length) return;
+fragCompleteTelegram = true;
+var msg = "★全欠片コンプリート記念電文★ " + addr() + "、ヤリマシタ…！観測データノ欠片、全" + FRAGMENTS.length + "個ガ全部集マリマシタ。最初ノ一ツカラ、ココマデ一緒ニ観測シテキタ証デス。KUUノ宝物ガ、タクサン増エマシタ。アリガトウ、" + addr() + "。コレカラモ、観測ハ続キマス。";
+inbox.push(msg);
+addLog("sys", msg + "（受信BOXニ保管）");
 saveState();
 }
 
@@ -2429,6 +2444,8 @@ for (i = 0; i < FRAGMENTS.length; i++) {
 if (fragments[FRAGMENTS[i].id]) got++;
 }
 addLog("sys", "=== 観測データ図鑑（" + got + " / " + FRAGMENTS.length + "） ===");
+if (got >= FRAGMENTS.length) addLog("sys", "★★★ 全欠片コンプリート！全" + FRAGMENTS.length + "個ノ欠片ガ、全部集マリマシタ ★★★");
+checkFragComplete();
 for (i = 0; i < FRAGMENTS.length; i++) {
 if (fragments[FRAGMENTS[i].id]) addLog("", "◆ " + FRAGMENTS[i].name + " …収集済ミ" + (fragDates[FRAGMENTS[i].id] ? "（" + fragDates[FRAGMENTS[i].id] + " 収集）" : "") + (FRAGMENTS[i].desc ? " ― " + FRAGMENTS[i].desc : ""));
 else addLog("", "◇ ？？？ …未収集" + (FRAGMENTS[i].hint ? "（ヒント：" + FRAGMENTS[i].hint + "）" : ""));
@@ -3700,6 +3717,7 @@ bootIdx++;
 }
 addLog("sys", "本日の観測メモ: " + dailyMemo);
 checkWeekly();
+checkFragComplete();
 var msgLine = takeMessageReaction();
 if (!msgLine) msgLine = takeAi6MessageReaction();
 var spDay = specialDayMsg();

@@ -118,6 +118,13 @@
     border-radius:10px; border:2px solid #2c4a7c; background:#173a6e;
   }
   #histClearBtn:active { transform:translateY(2px); }
+  #histCopyBtn {
+    display:block; width:100%; min-height:48px; margin-top:10px; padding:8px 12px;
+    font-size:15px; font-weight:bold; color:#ffe9a8; cursor:pointer;
+    border-radius:10px; border:2px solid #7c642c; background:rgba(48,38,10,.85);
+  }
+  #histCopyBtn:active { transform:translateY(2px); }
+  #histCopyMsg { font-size:14px; color:#9db4dd; min-height:20px; margin-top:6px; }
 
   /* ===== 取り出し口 ===== */
   .slot {
@@ -198,6 +205,8 @@
     <div id="histSummary">まだ何も出ていません。</div>
     <div id="histMonthly"></div>
     <div id="histList"></div>
+    <button id="histCopyBtn" type="button">履歴を全文コピー</button>
+    <div id="histCopyMsg"></div>
     <button id="histClearBtn" type="button">履歴を消す</button>
   </div>
   <div class="foot">中身はAIがその場で作っています。同じボタンでも毎回ちがいます。<br>無料AI回線には1日の上限があります。</div>
@@ -592,6 +601,35 @@ function clearHistory() {
   renderHistory();
 }
 
+/* (432) 購入履歴の全文コピー */
+function copyHistory() {
+  var msg = el('histCopyMsg');
+  var a = loadHistory();
+  if (a.length === 0) {
+    if (msg) { msg.innerHTML = ''; msg.appendChild(document.createTextNode('コピーできる履歴がまだありません。')); }
+    return;
+  }
+  var lines = [];
+  lines.push('【JIHANKI-6 購入履歴】全' + a.length + '件');
+  for (var i = 0; i < a.length; i++) {
+    lines.push(a[i].date + ' ' + a[i].name);
+  }
+  var ta = document.createElement('textarea');
+  ta.value = lines.join('\n');
+  ta.style.position = 'absolute';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { ta.setSelectionRange(0, ta.value.length); } catch (e) {}
+  var ok = false;
+  try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+  document.body.removeChild(ta);
+  if (msg) {
+    msg.innerHTML = '';
+    msg.appendChild(document.createTextNode(ok ? '履歴を全文コピーしました（' + a.length + '件）。' : 'コピーできませんでした。'));
+  }
+}
+
 /* (326) いつものボタン */
 function mostBoughtName() {
   var a = loadHistory();
@@ -634,6 +672,7 @@ function init() {
   var now = new Date();
   renderHistory();
   el('histClearBtn').addEventListener('click', clearHistory, false);
+  el('histCopyBtn').addEventListener('click', copyHistory, false);
 
   /* 季節限定ボタン：季節でラベルとプロンプトを変える */
   var s = seasonInfo();

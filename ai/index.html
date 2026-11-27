@@ -127,6 +127,12 @@
     border-color:#7a5fd0; color:#c8fbff; background:#0a0a26; box-shadow:0 3px 0 #372a66;
   }
   body.sora .speakbtn { border-color:#33ff66; color:#33ff66; background:#000; box-shadow:none; }
+  .copybtn {
+    min-height:48px; padding:4px 12px; font-size:14px;
+    vertical-align:top; margin-left:6px;
+    border-color:#7a5fd0; color:#ffe9a8; background:#0a0a26; box-shadow:0 3px 0 #372a66;
+  }
+  body.sora .copybtn { border-color:#33ff66; color:#33ff66; background:#000; box-shadow:none; }
   .favitem { border:1px dashed #7a5fd0; padding:8px; margin-bottom:8px; }
   .favtext { font-size:15px; line-height:1.6; white-space:pre-wrap; word-break:break-word; }
   .favmeta { font-size:12px; color:#a9bde0; margin-top:4px; }
@@ -561,6 +567,16 @@ function attachSpeakBtn(msgEl, text) {
   msgEl.parentNode.appendChild(b);
 }
 
+function attachCopyBtn(msgEl, text) {
+  if (!msgEl || !msgEl.parentNode) return;
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "copybtn";
+  b.innerHTML = "📋 コピー";
+  b.onclick = function () { copyTextCommon(text, "回答をコピーしました。"); };
+  msgEl.parentNode.appendChild(b);
+}
+
 function renderFavs() {
   favListEl.innerHTML = "";
   if (favs.length === 0) {
@@ -748,6 +764,7 @@ function sendMessage(text) {
     speak(reply);
     attachFavBtn(thinkMsg, reply);
     attachSpeakBtn(thinkMsg, reply);
+    attachCopyBtn(thinkMsg, reply);
   }
   function attempt() {
     try {
@@ -902,6 +919,7 @@ function sendMulti() {
         saveChat();
         attachFavBtn(thinkMsg, payload);
         attachSpeakBtn(thinkMsg, payload);
+        attachCopyBtn(thinkMsg, payload);
         idx++;
         step();
       } else if (kind === "quota") {
@@ -1549,6 +1567,7 @@ if (chatMsgs.length > 0) {
       var restoredMsg = addAiRow(chatMsgs[rIdx].t);
       attachFavBtn(restoredMsg, chatMsgs[rIdx].t);
       attachSpeakBtn(restoredMsg, chatMsgs[rIdx].t);
+      attachCopyBtn(restoredMsg, chatMsgs[rIdx].t);
       if (pendingU !== null) {
         history.push({ u: pendingU, a: chatMsgs[rIdx].t });
         pendingU = null;

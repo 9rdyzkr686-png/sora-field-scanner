@@ -308,6 +308,7 @@
     <div>お風呂に入った日を記録しましょう。日付をタップすると、記録をつけたり消したりできます（あとから付け足すこともできます）。記録はこの端末の中だけに保存されます。</div>
     <button type="button" class="bigbtn" id="bathTodayBtn" style="margin-top:10px;">♨ 今日入った</button>
     <div class="bathsum" id="bathSum"></div>
+    <div class="bathsum" id="bathYearSum"></div>
     <div class="bathgoal">
       <label for="bathGoalSel">🎯 今月の目標</label>
       <select id="bathGoalSel">
@@ -970,13 +971,31 @@ function renderBathCal() {
   var monthCount = 0;
   var curMonthCount = 0;
   var total = 0;
+  /* 年間まとめは表示中の月ではなく、実際の今年で数える */
+  var yearPrefix = now.getFullYear() + "-";
+  var yearCount = 0;
+  var yearMonths = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   for (var k in data) {
     if (data[k]) {
       total++;
       if (k.indexOf(prefix) === 0) monthCount++;
       if (k.indexOf(curPrefix) === 0) curMonthCount++;
+      if (k.indexOf(yearPrefix) === 0) {
+        yearCount++;
+        var ymIdx = parseInt(k.substring(5, 7), 10);
+        if (ymIdx >= 1 && ymIdx <= 12) yearMonths[ymIdx - 1]++;
+      }
     }
   }
+  var yearText = "今年の入浴：" + yearCount + "日";
+  if (yearCount > 0) {
+    var bestMonth = 0;
+    for (var mi = 1; mi < 12; mi++) {
+      if (yearMonths[mi] > yearMonths[bestMonth]) bestMonth = mi;
+    }
+    yearText += " ・ いちばん入った月：" + (bestMonth + 1) + "月（" + yearMonths[bestMonth] + "日）";
+  }
+  el("bathYearSum").innerHTML = yearText;
   var isCurMonth = (y === now.getFullYear() && m === now.getMonth());
   var sumLabel;
   if (isCurMonth) {

@@ -207,6 +207,7 @@ margin-top: 10px;
 <button class="bigBtn" id="btnGoodSave">保存する</button>
 <div id="goodStatus"></div>
 <div id="goodList"></div>
+<button class="ghostBtn" id="btnGoodCopy">全文コピー</button>
 </div>
 
 <div class="foot">YORU-6 深夜の散歩 ／ 歩数は空想の記録です</div>
@@ -660,7 +661,37 @@ el('goodStatus').textContent = '保存しました。今日もいい日でした
 renderGood();
 }
 
+function copyGood() {
+var arr = goodLoad();
+if (arr.length === 0) {
+el('goodStatus').textContent = 'コピーする記録がまだありません。';
+return;
+}
+var NL = String.fromCharCode(10);
+var out = ['【YORU-6 今日のよかったこと】全' + arr.length + '件'];
+for (var i = 0; i < arr.length; i++) {
+var block = [goodDateLabel(arr[i].date)];
+for (var j = 0; j < arr[i].lines.length; j++) {
+block.push('・' + arr[i].lines[j]);
+}
+out.push(block.join(NL));
+}
+var ta = document.createElement('textarea');
+ta.value = out.join(NL + NL);
+ta.style.position = 'fixed';
+ta.style.top = '0';
+ta.style.opacity = '0.01';
+document.body.appendChild(ta);
+ta.select();
+try { ta.setSelectionRange(0, ta.value.length);} catch (e) {}
+var ok = false;
+try { ok = document.execCommand('copy');} catch (e) {}
+document.body.removeChild(ta);
+el('goodStatus').textContent = ok ? '全文をコピーしました。' : 'コピーできませんでした。';
+}
+
 el('btnGoodSave').onclick = saveGood;
+el('btnGoodCopy').onclick = copyGood;
 renderGood();
 </script>
 </body>

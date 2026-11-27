@@ -264,6 +264,8 @@ h1 {
 </div>
 <div id="searchCount"></div>
 
+<button class="subBtn" id="btnCopyBook" onclick="copyBook()">本を全文コピー</button>
+
 <div class="book" id="bookArea">
   <p id="bookTitle"></p>
   <div id="bookGenre"></div>
@@ -529,6 +531,34 @@ function readLatest() {
     speechSynthesis.speak(u);
   } catch (e) {
     setStatus("この端末では読み上げが使えませんでした");
+  }
+}
+
+function copyBook() {
+  if (!chapters || chapters.length === 0) {
+    setStatus("まだ章がありません。物語ができてからコピーできます");
+    return;
+  }
+  var text = "【" + (title || "無題") + "】（" + genre + "）\n";
+  for (var i = 0; i < chapters.length; i++) {
+    text += "\n第" + (i + 1) + "章\n" + chapters[i] + "\n";
+  }
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.left = "-9999px";
+  ta.style.top = "0";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  ta.setSelectionRange(0, text.length);
+  var ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  if (ok) {
+    setStatus("本を全文コピーしました（全" + chapters.length + "章）");
+  } else {
+    setStatus("コピーできませんでした。もう一度お試しください");
   }
 }
 

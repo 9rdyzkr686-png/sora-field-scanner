@@ -697,10 +697,10 @@ function renderPrices() {
 function copyPrices() {
   var list = loadPrices();
   if (list.length === 0) { el("pfStatus").textContent = "コピーする記録がありません"; return; }
-  var lines = ["【MARKET-6 価格メモ】"];
+  var lines = ["【MARKET-6 価格メモ】全" + list.length + "件"];
   for (var i = 0; i < list.length; i++) {
     var e = list[i];
-    lines.push(e.name + " " + e.price + "円" + (e.store ? "（" + e.store + "）" : "") + " " + (e.date || ""));
+    lines.push(e.name + " " + e.price + "円" + (e.store ? "（" + e.store + "）" : ""));
   }
   var ta = document.createElement("textarea");
   ta.value = lines.join("\n");
