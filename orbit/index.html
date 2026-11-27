@@ -121,6 +121,22 @@ button:active { background: #33ff66; color: #000; }
 <button id="refreshBtn">↻ 更新 REFRESH</button>
 
 <div class="panel">
+  <div class="panel-title">TODAY'S SPACE <span class="jp">今日の宇宙まとめ</span></div>
+  <div class="row">
+    <div class="cell"><div class="k">ISS 現在位置</div><div class="v" style="font-size:16px;" id="sumIss">取得中…</div></div>
+    <div class="cell"><div class="k">月齢・月相 MOON</div><div class="v" style="font-size:16px;" id="sumMoon">取得中…</div></div>
+  </div>
+  <div class="row">
+    <div class="cell"><div class="k">日の入り SUNSET（ふじみ野）</div><div class="v" id="sumSunset">取得中…</div></div>
+    <div class="cell"><div class="k">宇宙天気 KP</div><div class="v" id="sumKp">取得中…</div></div>
+  </div>
+  <div class="row">
+    <div class="cell" style="float:none; width:100%;"><div class="k">次の流星群 NEXT METEOR</div><div class="v" style="font-size:16px;" id="sumMeteor">取得中…</div></div>
+  </div>
+  <div class="note">※ 各パネルの表示値を集約しています。詳しくは下のパネルへ。</div>
+</div>
+
+<div class="panel">
   <div class="panel-title">ISS TRACKING <span class="jp">国際宇宙ステーション追跡</span></div>
   <canvas id="mapCanvas" width="640" height="320"></canvas>
   <div class="row">
@@ -771,6 +787,64 @@ function renderMeteor() {
   }
   if (html === "") { html = '<div class="event-item">表示できる流星群がありません。</div>'; }
   el("meteorList").innerHTML = html;
+}
+
+/* ---------- TODAY'S SPACE SUMMARY ---------- */
+/* 既存パネルの表示値（DOM）を読み取って集約する。新規取得はしない。
+   流星群だけは METEOR CALENDAR と同じ METEOR_SHOWERS データから計算する。 */
+function renderSummary() {
+  var lat = el("issLat").textContent || "";
+  var lon = el("issLon").textContent || "";
+  if (lat !== "" && lat !== "---" && lon !== "" && lon !== "---") {
+    el("sumIss").textContent = "緯度 " + lat + " / 経度 " + lon;
+  } else {
+    el("sumIss").textContent = "取得中…";
+  }
+  var age = (el("moonAge").textContent || "").replace(/\s+/g, "");
+  var mname = el("moonName").textContent || "";
+  if (mname !== "" && mname !== "---" && age !== "" && age !== "---") {
+    el("sumMoon").textContent = "月齢 " + age + " ・ " + mname;
+  } else {
+    el("sumMoon").textContent = "取得中…";
+  }
+  var ss = el("sunsetT").textContent || "";
+  if (ss !== "" && ss !== "--:--") {
+    el("sumSunset").textContent = ss;
+  } else {
+    el("sumSunset").textContent = "取得中…";
+  }
+  var kp = (el("kpNow").textContent || "").replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+  if (kp !== "" && kp !== "---") {
+    el("sumKp").textContent = "Kp " + kp;
+  } else {
+    el("sumKp").textContent = "取得中…";
+  }
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var best = null;
+  var i, dt, diff;
+  for (i = 0; i < METEOR_SHOWERS.length; i++) {
+    dt = new Date(today.getFullYear(), METEOR_SHOWERS[i].m - 1, METEOR_SHOWERS[i].d);
+    diff = Math.round((dt.getTime() - today.getTime()) / 86400000);
+    if (diff < -3) {
+      dt = new Date(today.getFullYear() + 1, METEOR_SHOWERS[i].m - 1, METEOR_SHOWERS[i].d);
+      diff = Math.round((dt.getTime() - today.getTime()) / 86400000);
+    }
+    if (diff >= -3 && (best === null || diff < best.diff)) {
+      best = { s: METEOR_SHOWERS[i], diff: diff };
+    }
+  }
+  if (best !== null) {
+    if (best.diff < 0) {
+      el("sumMeteor").textContent = best.s.name + "（期間中）";
+    } else if (best.diff === 0) {
+      el("sumMeteor").textContent = best.s.name + "（本日ピーク）";
+    } else {
+      el("sumMeteor").textContent = best.s.name + "（あと" + best.diff + "日）";
+    }
+  } else {
+    el("sumMeteor").textContent = "—";
+  }
 }
 
 /* ---------- SPACE NEWS ---------- */
@@ -1639,6 +1713,8 @@ drawMoonMap();
 renderPlanets();
 renderEvents();
 renderMeteor();
+renderSummary();
+setInterval(renderSummary, 5000);
 renderSeasons();
 renderMilkyWay();
 renderSun();

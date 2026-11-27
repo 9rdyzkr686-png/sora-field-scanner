@@ -150,6 +150,20 @@
   }
   .links a:active { background: #2a1a4d; }
   .filterlabel { color: #c9a0ff; font-size: 14px; margin: 10px 0 4px 0; }
+  .searchrow { margin-bottom: 8px; }
+  .searchinput {
+    font-family: inherit;
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
+    background: #171029;
+    color: #b9f4cd;
+    border: 1px solid #5b2a86;
+    padding: 12px;
+    min-height: 48px;
+    margin-bottom: 8px;
+  }
+  .searchrow button { margin-right: 8px; }
   .night-card {
     border: 2px solid #7a1030;
     background: #160510;
@@ -331,6 +345,12 @@
   <div class="chips" id="regionBox"></div>
   <p class="filterlabel">年代で絞り込む（噂が広まった時代）</p>
   <div class="chips" id="eraBox"></div>
+  <p class="filterlabel">キーワードで検索（タイトル・本文から探します）</p>
+  <div class="searchrow">
+    <input class="searchinput" id="searchInput" type="text" placeholder="例：鏡、トイレ、駅、電話">
+    <button type="button" id="searchBtn">検索</button><button type="button" id="searchClearBtn">クリア</button>
+  </div>
+  <p class="status" id="searchCount"></p>
   <div id="archiveBox"></div>
 </section>
 
@@ -692,6 +712,7 @@ var ERAS = ["すべて", "昭和", "平成", "令和"];
 var currentRegion = "すべて";
 var currentEra = "すべて";
 var readFilter = "すべて";
+var searchQuery = "";
 
 function el(id) { return document.getElementById(id); }
 
@@ -787,6 +808,23 @@ function buildChips() {
   buildReadChips();
 }
 
+function legendMatches(L, q) {
+  var hay = L.name + "\n" + L.summary + "\n" + L.detail + "\n" + L.cat + "\n" + (L.region || "") + "\n" + (L.era || "");
+  return hay.indexOf(q) >= 0;
+}
+
+function doLegendSearch() {
+  var v = el("searchInput").value || "";
+  searchQuery = v.replace(/^\s+|\s+$/g, "");
+  renderArchive();
+}
+
+function clearLegendSearch() {
+  el("searchInput").value = "";
+  searchQuery = "";
+  renderArchive();
+}
+
 function renderArchive() {
   buildReadChips();
   var box = el("archiveBox");
@@ -798,6 +836,7 @@ function renderArchive() {
       if (currentCat !== "すべて" && L.cat !== currentCat) { return; }
       if (currentRegion !== "すべて" && L.region !== currentRegion) { return; }
       if (currentEra !== "すべて" && L.era !== currentEra) { return; }
+      if (searchQuery && !legendMatches(L, searchQuery)) { return; }
       if (favOnly && marksData.fav.indexOf(idx) < 0) { return; }
       if (readFilter === "未読" && marksData.read.indexOf(idx) >= 0) { return; }
       if (readFilter === "読了" && marksData.read.indexOf(idx) < 0) { return; }
@@ -949,6 +988,14 @@ function renderArchive() {
     p.textContent = "この条件の伝説はまだ収蔵されていません。";
     box.appendChild(p);
   }
+  var scEl = el("searchCount");
+  if (scEl) {
+    if (searchQuery) {
+      scEl.textContent = "キーワード「" + searchQuery + "」の検索結果：" + count + "件";
+    } else {
+      scEl.textContent = "";
+    }
+  }
 }
 
 function openCard(idx) {
@@ -957,6 +1004,9 @@ function openCard(idx) {
   currentEra = "すべて";
   favOnly = false;
   readFilter = "すべて";
+  searchQuery = "";
+  var searchInputEl = el("searchInput");
+  if (searchInputEl) { searchInputEl.value = ""; }
   buildChips();
   renderArchive();
   var card = el("card" + idx);
@@ -2069,6 +2119,11 @@ function init() {
   initMap();
   el("randomBtn").onclick = randomStory;
   el("paperBtn").onclick = togglePaper;
+  el("searchBtn").onclick = doLegendSearch;
+  el("searchClearBtn").onclick = clearLegendSearch;
+  el("searchInput").onkeydown = function (e) {
+    if (e && e.keyCode === 13) { doLegendSearch(); }
+  };
   el("todaySpeakBtn").onclick = function () {
     var L = LEGENDS[todayIdx];
     toggleSpeak("today", L.name + "。 " + String(L.detail).split("\n").join(" "), el("todaySpeakBtn"));

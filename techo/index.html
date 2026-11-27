@@ -226,6 +226,7 @@ select{width:100%;font-size:17px;padding:10px;border:1px solid #c9b98f;border-ra
 
   <div class="card" id="tbThanksSec">
     <h3>お礼メモ（お礼を返すのを忘れないために）</h3>
+    <div id="tbThanksSummary" style="font-weight:bold;color:#8a5a1d;margin-bottom:8px;"></div>
     <div class="row">
       <input type="text" id="tbThanksInput" placeholder="例：田中さんに旅行のお土産のお礼">
       <button class="btn" style="flex:none;" onclick="tbAddThanks()">追加</button>
@@ -939,7 +940,31 @@ function tbLoadRaw(key){
 
 /* ---------- (146) お礼メモ ---------- */
 var tbThanks = tbLoad("techo6_thanks_v1", []);
+function tbRenderThanksSummary(){
+  var el = tbEl("tbThanksSummary");
+  if (!el) return;
+  var now = new Date();
+  var thisKey = now.getFullYear() + "-" + tbPad2(now.getMonth() + 1);
+  var thisCount = 0, counts = {}, i, ym;
+  for (i = 0; i < tbThanks.length; i++){
+    if (tbThanks[i].date){
+      ym = String(tbThanks[i].date).substring(0, 7);
+      counts[ym] = (counts[ym] || 0) + 1;
+      if (ym === thisKey) thisCount++;
+    }
+  }
+  var parts = [];
+  for (i = 0; i < 6; i++){
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    var k = d.getFullYear() + "-" + tbPad2(d.getMonth() + 1);
+    var label = (d.getFullYear() !== now.getFullYear() ? d.getFullYear() + "年" : "") + (d.getMonth() + 1) + "月";
+    parts.push(label + "：" + (counts[k] || 0) + "件");
+  }
+  el.innerHTML = "今月" + thisCount + "件・通算" + tbThanks.length + "件"
+    + '<div style="font-weight:normal;font-size:14px;margin-top:2px;">' + parts.join(" ／ ") + '</div>';
+}
 function tbRenderThanks(){
+  tbRenderThanksSummary();
   var html = "", i;
   for (i = 0; i < tbThanks.length; i++){
     var e = tbThanks[i];

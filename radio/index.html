@@ -101,6 +101,7 @@
     <button type="button" class="cbtn" id="stopBtn">■ 停止</button>
   </div>
   <button type="button" class="toggle" id="loopBtn">🔁 ループ再生：OFF</button>
+  <button type="button" class="toggle" id="shuffleBtn">🔀 シャッフル再生：OFF</button>
   <button type="button" class="toggle" id="refetchBtn">↻ ニュース再取得</button>
   <div class="note" id="fetchNote"></div>
 
@@ -267,6 +268,7 @@ var paused = false;
 var gen = 0;
 var pitchVal = 0.3;
 var loopOn = false;
+var shuffleOn = false;
 
 function el(id) { return document.getElementById(id); }
 
@@ -468,6 +470,16 @@ function stopSpeech() {
   paused = false;
 }
 
+/* 次に読む項目の番号。シャッフルON時は今と違う項目をランダムに選ぶ */
+function pickNextIdx() {
+  if (shuffleOn && playlist.length > 1) {
+    var n = idx;
+    while (n === idx) { n = Math.floor(Math.random() * playlist.length); }
+    return n;
+  }
+  return idx + 1;
+}
+
 function speakCurrent() {
   if (!window.speechSynthesis) {
     el("nowText").textContent = "この端末では音声読み上げに対応していません。";
@@ -486,7 +498,7 @@ function speakCurrent() {
     if (myGen !== gen) return;
     setTimeout(function () {
       if (myGen !== gen) return;
-      idx++;
+      idx = pickNextIdx();
       if (idx >= playlist.length && !loopOn) { speaking = false; paused = false; idx = playlist.length - 1; updateDisplay(); return; }
       if (idx >= playlist.length) idx = 0;
       updateDisplay();
@@ -617,6 +629,26 @@ el("loopBtn").onclick = function () {
   this.className = "toggle" + (loopOn ? " sel" : "");
   this.textContent = "🔁 ループ再生：" + (loopOn ? "ON" : "OFF");
 };
+/* ---------- シャッフル再生 ---------- */
+var SHUFFLE_KEY = "radio6_shuffle_v1";
+function loadShuffle() {
+  try { shuffleOn = localStorage.getItem(SHUFFLE_KEY) === "1"; } catch (e) {}
+}
+function saveShuffle() {
+  try { localStorage.setItem(SHUFFLE_KEY, shuffleOn ? "1" : "0"); } catch (e) {}
+}
+function paintShuffleBtn() {
+  var b = el("shuffleBtn");
+  b.className = "toggle" + (shuffleOn ? " sel" : "");
+  b.textContent = "🔀 シャッフル再生：" + (shuffleOn ? "ON" : "OFF");
+}
+el("shuffleBtn").onclick = function () {
+  shuffleOn = !shuffleOn;
+  saveShuffle();
+  paintShuffleBtn();
+};
+loadShuffle();
+paintShuffleBtn();
 el("refetchBtn").onclick = function () {
   el("fetchNote").textContent = "ニュースを取得中…";
   var remain = 2, anyFail = false;

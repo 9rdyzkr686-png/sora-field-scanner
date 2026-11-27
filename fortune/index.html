@@ -40,6 +40,7 @@ label { display:block; font-size:15px; color:#e8a0bf; margin:6px 0;}
 .cardbtn small { display:block; font-size:13px; margin-top:6px;}
 .cardbtn:disabled { opacity:0.45;}
 .omikuji-rank { font-size:34px; text-align:center; color:#ffd93d; text-shadow:0 0 10px #ff8c3a;}
+.swatch { display:inline-block; width:22px; height:22px; border-radius:6px; vertical-align:-5px; margin:0 2px;}
 .hist { background:#241631; border:2px solid #6b4a8f; border-radius:14px; padding:16px 14px; margin-top:18px;}
 .hist h2 { font-size:20px; color:#ffd98a; text-align:center; margin-bottom:10px;}
 .hist .hrow { border-bottom:1px solid #4a3468; padding:8px 2px; font-size:16px;}
@@ -238,7 +239,7 @@ sendFortune();
 function aiFortune() {
 var prompt = 'あなたは夜市の占い師です。今日の運勢を日本語で150文字以内で占ってください。順位（12位中○位）、ラッキーアイテム、ラッキーカラー、一言アドバイスを必ず入れて、改行せず1行で答えてください。';
 callAI(prompt, 'aiStatus', 'aiDetail', 'aiBtn', function (text) {
-document.getElementById('aiResult').innerHTML = escapeHtml(text);
+document.getElementById('aiResult').innerHTML = decorateLuckyColor(escapeHtml(text));
 speak(text);
 });
 }
@@ -344,6 +345,39 @@ for (var j = 0; j < 3; j++) { document.getElementById('card' + j).disabled = fal
 
 function escapeHtml(s) {
 return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* ---- ラッキーカラーの色見本 ---- */
+var LUCKY_COLORS = {
+'水色': '#4fc3f7', '黄緑': '#9ccc65', '黄色': '#fdd835', '金色': '#c9a227', '銀色': '#b0bec5',
+'茶色': '#6d4c41', '灰色': '#9e9e9e', '若草色': '#aed581', 'ラベンダー': '#b39ddb',
+'ベージュ': '#d7c4a5', 'クリーム': '#fff9c4', 'グレー': '#9e9e9e', 'オレンジ': '#fb8c00', 'ピンク': '#ec407a',
+'赤': '#e53935', '青': '#1e88e5', '黄': '#fdd835', '緑': '#43a047', '紫': '#8e24aa',
+'白': '#f5f5f5', '黒': '#212121', '金': '#c9a227', '銀': '#b0bec5', '茶': '#6d4c41', '紺': '#283593'
+};
+var LUCKY_COLOR_NAMES = ['ラベンダー', 'ベージュ', 'クリーム', 'オレンジ', '若草色', 'グレー', 'ピンク', '水色', '黄緑', '黄色', '金色', '銀色', '茶色', '灰色', '赤', '青', '黄', '緑', '紫', '白', '黒', '金', '銀', '茶', '紺'];
+
+function colorSwatch(name) {
+var hex = LUCKY_COLORS[name];
+if (!hex) { return ''; }
+var border = (name === '白' || name === 'クリーム') ? 'border:1px solid #8f6bb8;' : 'border:1px solid rgba(0,0,0,0.35);';
+return '<span class="swatch" style="background:' + hex + ';' + border + '"></span>';
+}
+
+function decorateLuckyColor(html) {
+var label = html.indexOf('ラッキーカラー');
+if (label < 0) { return html; }
+var from = label + 'ラッキーカラー'.length;
+var tail = html.substring(from, from + 16);
+for (var i = 0; i < LUCKY_COLOR_NAMES.length; i++) {
+var name = LUCKY_COLOR_NAMES[i];
+var pos = tail.indexOf(name);
+if (pos >= 0) {
+var at = from + pos + name.length;
+return html.substring(0, at) + colorSwatch(name) + html.substring(at);
+}
+}
+return html;
 }
 
 /* ---- 占いの履歴 ---- */

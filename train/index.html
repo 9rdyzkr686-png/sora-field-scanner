@@ -85,6 +85,17 @@
     background:rgba(10,16,48,0.75); border:1px solid #3a4680; border-radius:14px;
     padding:16px 14px; margin-bottom:12px;
   }
+  .sceneCard.night { background:rgba(2,4,18,0.94); border-color:#1f2a52; }
+  .windowView.day {
+    background:linear-gradient(180deg,#3a7bd5 0%,#7ec8f7 55%,#cfeefb 80%,#8fb573 100%);
+  }
+  .windowView.day .moon { display:none; }
+  .windowView.day .star { display:none; }
+  .windowView.day .hills { background:#2e5d33; }
+  .windowView.day .hills2 { background:#244d29; }
+  .windowView.day .windowLight {
+    background:linear-gradient(90deg,rgba(255,255,255,0.0),rgba(255,255,255,0.25),rgba(255,255,255,0.0));
+  }
   .progress { font-size:14px; color:#9aa5d6; letter-spacing:1px; margin-bottom:8px; min-height:18px; }
   .progress .stname { color:#ffe9c4; font-size:16px; }
   .sceneText { font-size:18px; line-height:1.85; color:#f2ecdc; min-height:66px;
@@ -137,13 +148,18 @@
 </div>
 
 <div class="controls">
+  <button class="toggleBtn" id="modeDayBtn" type="button">昼の車窓</button>
+  <button class="toggleBtn on" id="modeNightBtn" type="button">夜行列車</button>
+</div>
+
+<div class="controls">
   <button class="rideBtn" id="rideBtn" type="button">乗車する</button>
 </div>
 <div class="status" id="rideStatus"></div>
 
 <div class="announce" id="announceBox"><span class="label">車掌アナウンス</span><span id="announceText"></span></div>
 
-<div class="sceneCard">
+<div class="sceneCard night" id="sceneCard">
   <div class="progress" id="progress"></div>
   <div class="sceneText" id="sceneText">「乗車する」を押すと、夜行列車の旅が始まります。車窓の外は、静かな夜です。</div>
 </div>
@@ -171,6 +187,44 @@ var ANNOUNCE = [
   "食堂車はこの時間も開いております。寝台のお客様は、どうぞごゆっくりお休みください。",
   "まもなく夜明けです。終点に近づいてまいりました。お忘れ物のないよう、ご注意ください。"
 ];
+var STATIONS_DAY = ["青空駅", "田園駅", "川辺駅", "丘の上駅", "夕日駅"];
+var ANNOUNCE_DAY = [
+  "まもなく発車いたします。昼行列車をご利用いただき、ありがとうございます。",
+  "車窓の外には、田園と山の景色が広がっております。どうぞ明るい昼の旅をお楽しみください。",
+  "ただいま、小さな駅を通過いたしました。次の駅まで、しばらくかかります。",
+  "食堂車は開いております。お弁当やお飲み物もご用意しております。",
+  "まもなく終点です。夕日が車窓を染めてまいりました。お忘れ物のないよう、ご注意ください。"
+];
+
+/* ---------- 車窓モード（昼の車窓／夜行列車） ---------- */
+var trainMode = "night";
+try {
+  var savedMode = window.localStorage.getItem("train6_night_v1");
+  if (savedMode === "day" || savedMode === "night") { trainMode = savedMode; }
+} catch (e) {}
+
+function curStations() { return trainMode === "day" ? STATIONS_DAY : STATIONS; }
+function curAnnounce() { return trainMode === "day" ? ANNOUNCE_DAY : ANNOUNCE; }
+
+function applyMode() {
+  el("modeDayBtn").className = "toggleBtn" + (trainMode === "day" ? " on" : "");
+  el("modeNightBtn").className = "toggleBtn" + (trainMode === "night" ? " on" : "");
+  el("windowView").className = "windowView" + (trainMode === "day" ? " day" : "");
+  el("sceneCard").className = "sceneCard" + (trainMode === "night" ? " night" : "");
+  if (sceneIdx < 0) {
+    el("sceneText").textContent = (trainMode === "day")
+      ? "「乗車する」を押すと、昼の列車の旅が始まります。車窓の外は、明るい景色です。"
+      : "「乗車する」を押すと、夜行列車の旅が始まります。車窓の外は、静かな夜です。";
+  }
+}
+function setMode(m) {
+  if (busy) { return; }
+  trainMode = m;
+  try { window.localStorage.setItem("train6_night_v1", m); } catch (e) {}
+  applyMode();
+}
+el("modeDayBtn").onclick = function() { setMode("day"); };
+el("modeNightBtn").onclick = function() { setMode("night"); };
 
 var voiceOn = true;
 var busy = false;
@@ -304,6 +358,8 @@ function setBusy(b) {
   busy = b;
   el("rideBtn").disabled = b;
   el("bentoBtn").disabled = b;
+  el("modeDayBtn").disabled = b;
+  el("modeNightBtn").disabled = b;
   el("nextBtn").disabled = b || sceneIdx < 0 || sceneIdx >= scenes.length - 1;
 }
 function aiErrorText(status, body) {
@@ -439,7 +495,7 @@ function parseScenes(text) {
 /* ---------- 旅の表示 ---------- */
 function showScene(idx) {
   sceneIdx = idx;
-  var stName = STATIONS[idx] || ("第" + (idx + 1) + "駅");
+  var stName = curStations()[idx] || ("第" + (idx + 1) + "駅");
   el("progress").innerHTML = "";
   var span1 = document.createElement("span");
   span1.textContent = (idx + 1) + "駅目 / " + scenes.length + "　";
@@ -448,7 +504,8 @@ function showScene(idx) {
   span2.textContent = stName;
   el("progress").appendChild(span1);
   el("progress").appendChild(span2);
-  el("announceText").textContent = ANNOUNCE[idx] || ANNOUNCE[ANNOUNCE.length - 1];
+  var ann = curAnnounce();
+  el("announceText").textContent = ann[idx] || ann[ann.length - 1];
   el("announceBox").style.display = "block";
   el("sceneText").textContent = scenes[idx];
   var nb = el("nextBtn");
@@ -468,7 +525,12 @@ el("nextBtn").onclick = function() {
 };
 
 el("rideBtn").onclick = function() {
-  var prompt = "夜行列車の短い旅の物語を書いてください。必ず5つの場面に分け、場面の区切りには「===」だけの行を入れてください。各場面は2〜3文、90文字以内にしてください。場面の順番は、1：発車、2：暗い田舎の景色、3：小さな駅を通過、4：食堂車と寝台、5：夜明けが近い、です。静かで穏やかな文体で、マークダウンは使わないでください。";
+  var prompt;
+  if (trainMode === "day") {
+    prompt = "昼の列車の短い旅の物語を書いてください。必ず5つの場面に分け、場面の区切りには「===」だけの行を入れてください。各場面は2〜3文、90文字以内にしてください。場面の順番は、1：発車、2：田園と山と青空の景色、3：小さな駅を通過、4：食堂車と車内、5：夕方・目的地が近い、です。明るく穏やかな文体で、マークダウンは使わないでください。";
+  } else {
+    prompt = "夜行列車の短い旅の物語を書いてください。必ず5つの場面に分け、場面の区切りには「===」だけの行を入れてください。各場面は2〜3文、90文字以内にしてください。場面の順番は、1：発車、2：闇に流れる街の灯りと星空、3：小さな駅のホームの光を通過、4：食堂車と寝台、5：夜明けが近い、です。静かで穏やかな文体で、マークダウンは使わないでください。";
+  }
   callAI(prompt, el("rideStatus"), function(body) {
     scenes = parseScenes(body);
     if (!scenes.length) {
@@ -488,6 +550,9 @@ el("bentoBtn").onclick = function() {
     el("bentoCard").style.display = "block";
   });
 };
+
+/* ---------- 車窓モードの初期表示 ---------- */
+applyMode();
 </script>
 </body>
 </html>

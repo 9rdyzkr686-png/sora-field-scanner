@@ -15,10 +15,15 @@ a.btn,button{display:block;width:100%;min-height:48px;line-height:48px;text-alig
 ul{margin:4px 0;padding-left:20px}
 li{margin:0 0 8px}
 .d{font-size:13px;color:#555}
+.fsb{display:inline-block;width:32%;line-height:48px;font-size:16px}
+.fsb.on{background:#000;color:#fff;font-weight:bold}
+body.fs-s{font-size:15px}body.fs-s h1{font-size:19px}body.fs-s h2{font-size:16px}body.fs-s .big{font-size:22px}body.fs-s .st,body.fs-s .d{font-size:12px}body.fs-s a.btn,body.fs-s button{font-size:15px}
+body.fs-l{font-size:20px}body.fs-l h1{font-size:26px}body.fs-l h2{font-size:21px}body.fs-l .big{font-size:32px}body.fs-l .st,body.fs-l .d{font-size:15px}body.fs-l a.btn,body.fs-l button{font-size:20px}
 </style>
 </head>
 <body>
 <h1>LITE-6 超軽量ボード</h1>
+<div>文字サイズ：<button class="fsb" data-fs="s" type="button">小</button> <button class="fsb" data-fs="m" type="button">標準</button> <button class="fsb" data-fs="l" type="button">大</button></div>
 <a class="btn" href="../portal/">← 全サイト一覧へ</a>
 <button id="upd" type="button">↻ 更新する</button>
 
@@ -93,6 +98,11 @@ function nw(){ $("nwst").innerHTML="取得中…";
 }
 function all(){wx();qk();ov();nw();}
 $("upd").onclick=function(){all();};
+var FSK="lite6_font_v1";
+function fsSet(v){document.body.className=v==="s"?"fs-s":(v==="l"?"fs-l":"");var b=document.getElementsByClassName("fsb");for(var i=0;i<b.length;i++){b[i].className="fsb"+(b[i].getAttribute("data-fs")===v?" on":"");}try{localStorage.setItem(FSK,v);}catch(e){}}
+function fsInit(){var v="m";try{v=localStorage.getItem(FSK)||"m";}catch(e){}if(v!=="s"&&v!=="l")v="m";fsSet(v);
+var b=document.getElementsByClassName("fsb");for(var i=0;i<b.length;i++){(function(x){x.onclick=function(){fsSet(x.getAttribute("data-fs"));};})(b[i]);}}
+fsInit();
 clock();setInterval(clock,30000);
 all();
 </script>

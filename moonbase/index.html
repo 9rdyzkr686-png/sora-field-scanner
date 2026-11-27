@@ -59,6 +59,20 @@
     padding:10px; margin:8px 0;
   }
   .logEntry .when { color:#f0b64a; font-weight:bold; }
+  .evaSelect, .evaInput {
+    display:block; width:100%; min-height:48px;
+    background:#1b1c20; color:#e8e6df; border:1px solid #f0b64a; border-radius:8px;
+    font-size:16px; padding:10px; margin:6px 0;
+  }
+  .evaInput { display:none; }
+  #evaStatus { color:#b9b4a6; min-height:24px; margin:6px 0; }
+  .evaCount { color:#f5f2e9; font-size:17px; margin:8px 0; }
+  .evaEntry .when { font-family:"Courier New",monospace; }
+  .evaDel {
+    display:inline-block; width:auto; min-height:48px; min-width:76px;
+    background:#2c2d33; color:#e8e6df; border:1px solid #f0b64a; border-radius:8px;
+    font-size:14px; font-weight:normal; padding:8px 12px; margin:8px 0 0;
+  }
   .summaryLine { color:#f5f2e9; font-size:17px; margin:8px 0; }
   .crewName { font-size:18px; color:#f5f2e9; }
   .crewRole { color:#f0b64a; font-size:14px; }
@@ -102,6 +116,23 @@
   <div id="logStatus"></div>
   <div id="logSummary" class="summaryLine"></div>
   <div id="logList"></div>
+</div>
+
+<h2>■ 船外活動ログ（EVA）</h2>
+<div class="card">
+  <div class="note">船外活動（EVA）の記録です。活動を選んで記録してください。記録はこの端末に保存されます。</div>
+  <select class="evaSelect" id="evaSelect">
+    <option value="月面散歩">月面散歩</option>
+    <option value="基地の点検">基地の点検</option>
+    <option value="星の観測">星の観測</option>
+    <option value="ダックス像の清掃">ダックス像の清掃</option>
+    <option value="__free">自由入力</option>
+  </select>
+  <input class="evaInput" type="text" id="evaFree" placeholder="活動内容を入力してください" maxlength="60">
+  <button type="button" id="evaBtn">🚀 船外活動を記録</button>
+  <div id="evaStatus"></div>
+  <div class="evaCount" id="evaCount"></div>
+  <div id="evaList"></div>
 </div>
 
 <h2>■ 乗組員</h2>
@@ -330,6 +361,100 @@ el("logBtn").onclick = function() {
   }
   send();
 };
+
+/* ===== 船外活動ログ（EVA・localStorage保存） ===== */
+var evaEntries = [];
+
+function pad3(n) {
+  var s = String(n);
+  while (s.length < 3) s = "0" + s;
+  return s;
+}
+
+function evaLoad() {
+  try {
+    var s = localStorage.getItem("moonbase6_eva_v1");
+    if (s) {
+      var a = JSON.parse(s);
+      if (a && typeof a.length === "number") evaEntries = a;
+    }
+  } catch (e) {}
+}
+
+function evaSave() {
+  try {
+    localStorage.setItem("moonbase6_eva_v1", JSON.stringify(evaEntries));
+  } catch (e) {}
+}
+
+function evaNow() {
+  var d = new Date();
+  return d.getFullYear() + "/" + (d.getMonth() + 1) + "/" + d.getDate() +
+    " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+}
+
+function evaRender() {
+  el("evaCount").innerHTML = "船外活動 " + evaEntries.length + " 回";
+  if (evaEntries.length === 0) {
+    el("evaList").innerHTML = '<div class="note">まだ記録がありません。</div>';
+    return;
+  }
+  var html = "";
+  var i, en;
+  for (i = evaEntries.length - 1; i >= 0; i--) {
+    en = evaEntries[i];
+    html += '<div class="logEntry evaEntry"><span class="when">EVA-' + pad3(en.n) +
+      " ／ " + esc(en.t) + "</span><br>" + esc(en.a) +
+      '<br><button type="button" class="evaDel" data-eva-del="' + i + '">この記録を削除</button></div>';
+  }
+  el("evaList").innerHTML = html;
+}
+
+el("evaSelect").onchange = function() {
+  el("evaFree").style.display = (el("evaSelect").value === "__free") ? "block" : "none";
+};
+
+el("evaBtn").onclick = function() {
+  var act = el("evaSelect").value;
+  if (act === "__free") {
+    act = el("evaFree").value.replace(/^\s+|\s+$/g, "");
+    if (!act) {
+      el("evaStatus").innerHTML = "活動内容を入力してください。";
+      return;
+    }
+  }
+  var maxN = 0;
+  var i;
+  for (i = 0; i < evaEntries.length; i++) {
+    if (evaEntries[i].n > maxN) maxN = evaEntries[i].n;
+  }
+  evaEntries.push({ n: maxN + 1, t: evaNow(), a: act });
+  while (evaEntries.length > 50) evaEntries.shift();
+  evaSave();
+  el("evaFree").value = "";
+  el("evaStatus").innerHTML = "記録しました：EVA-" + pad3(maxN + 1) + "「" + esc(act) + "」";
+  evaRender();
+};
+
+el("evaList").onclick = function(e) {
+  var t = e.target || e.srcElement;
+  var list = el("evaList");
+  while (t && t !== list && t.tagName !== "BUTTON") {
+    t = t.parentNode;
+  }
+  if (t && t.tagName === "BUTTON") {
+    var idx = t.getAttribute("data-eva-del");
+    if (idx !== null && idx !== "") {
+      evaEntries.splice(parseInt(idx, 10), 1);
+      evaSave();
+      el("evaStatus").innerHTML = "記録を削除しました。";
+      evaRender();
+    }
+  }
+};
+
+evaLoad();
+evaRender();
 
 /* ===== 地球からのニュース（CUTIE STREET・本物） ===== */
 function fmtDate(s) {

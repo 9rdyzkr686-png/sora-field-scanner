@@ -158,6 +158,28 @@
   #btnStop { width: 48%; float: right; }
   #btnClose { width: 100%; margin-top: 10px; }
   #voiceMsg { font-size: 13px; color: #9fb0d0; margin-top: 8px; min-height: 18px; text-align: center; }
+  .memo-box {
+    background: #1a1030;
+    border: 1px solid #5b4478;
+    border-radius: 10px;
+    padding: 12px 10px;
+    margin-bottom: 8px;
+  }
+  #spMemoTitle { font-size: 15px; color: #d9c6ee; margin-bottom: 8px; text-align: center; }
+  #spMemoText {
+    width: 100%;
+    min-height: 84px;
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #f0e9d6;
+    background: #0e1834;
+    border: 1px solid #3a4a75;
+    border-radius: 8px;
+    padding: 10px;
+  }
+  #btnSpMemoSave { width: 100%; margin-top: 10px; background: #241436; border-color: #c9a959; }
+  #spMemoMsg { font-size: 13px; color: #cdb1e0; margin-top: 8px; min-height: 18px; text-align: center; }
   footer { text-align: center; margin-top: 18px; }
   .portal-link {
     display: block;
@@ -190,6 +212,12 @@
   <div id="specialBanner"></div>
   <div id="specialCounter">企画展の観覧：0 / 3</div>
   <div class="grid" id="specialGrid"></div>
+  <div class="memo-box">
+    <div id="spMemoTitle">📝 企画展の感想メモ</div>
+    <textarea id="spMemoText" placeholder="この企画展の感想を書いておけます（この端末に保存されます）"></textarea>
+    <button id="btnSpMemoSave" type="button">感想メモを保存</button>
+    <div id="spMemoMsg"></div>
+  </div>
 
   <div class="perm-head">✦ 常 設 展 ✦</div>
   <div class="grid" id="grid"></div>
@@ -425,6 +453,40 @@ function buildSpecial() {
     })(i);
   }
   updateSpCounter();
+  loadSpMemo();
+}
+
+var MEMO_KEY = "museum6_memo_v1";
+
+function loadSpMemo() {
+  var memo = "";
+  try {
+    var raw = localStorage.getItem(MEMO_KEY);
+    if (raw) {
+      var obj = JSON.parse(raw);
+      if (obj && obj["sp" + spIdx]) { memo = obj["sp" + spIdx]; }
+    }
+  } catch (e) {}
+  el("spMemoTitle").innerHTML = "📝 感想メモ：「" + SPECIALS[spIdx].title + "」";
+  el("spMemoText").value = memo;
+  el("spMemoMsg").innerHTML = memo ? "この企画展の感想メモが保存されています。" : "";
+}
+
+function saveSpMemo() {
+  var text = el("spMemoText").value;
+  try {
+    var obj = {};
+    var raw = localStorage.getItem(MEMO_KEY);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed) { obj = parsed; }
+    }
+    obj["sp" + spIdx] = text;
+    localStorage.setItem(MEMO_KEY, JSON.stringify(obj));
+    el("spMemoMsg").innerHTML = "保存しました。";
+  } catch (e) {
+    el("spMemoMsg").innerHTML = "保存できませんでした。";
+  }
 }
 
 function updateSpCounter() {
@@ -496,6 +558,7 @@ function init() {
     el("detail").style.display = "none";
     window.scrollTo(0, 0);
   };
+  el("btnSpMemoSave").onclick = saveSpMemo;
 }
 
 init();

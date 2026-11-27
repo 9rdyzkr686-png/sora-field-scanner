@@ -222,6 +222,54 @@ a { color: #ffd54f; }
   color: #f3e5f5;
 }
 .history-empty { font-size: 14px; color: #b39ddb; }
+/* ===== Favorites ===== */
+.fav-box {
+  margin-bottom: 14px;
+  background: #33270f;
+  border: 2px solid #ffb300;
+  border-radius: 12px;
+  padding: 10px 14px 12px 14px;
+}
+.fav-box h2 {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  color: #ffe082;
+}
+.fav-empty { font-size: 14px; color: #ffcc80; line-height: 1.6; }
+.fav-row {
+  overflow: hidden;
+  padding: 8px 0;
+  border-bottom: 1px dashed #8d6e63;
+}
+.fav-row:last-child { border-bottom: none; }
+.fav-info { font-size: 15px; line-height: 1.55; color: #fff8e1; }
+.fav-del {
+  float: right;
+  min-height: 48px;
+  min-width: 64px;
+  margin-left: 10px;
+  background: #3e2723;
+  border: 2px solid #ffb300;
+  border-radius: 10px;
+  color: #ffe082;
+  font-size: 14px;
+}
+.fav-btn {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 12px;
+  background: #3e2723;
+  border: 3px solid #ffb300;
+  border-radius: 12px;
+  color: #ffe082;
+  font-size: 17px;
+}
+.fav-btn.on {
+  background: #ffb300;
+  color: #3e2723;
+  font-weight: bold;
+}
 .footer-note {
   max-width: 520px;
   margin: 16px auto 0 auto;
@@ -246,6 +294,12 @@ a { color: #ffd54f; }
 </div>
 
 <div class="body-box">
+  <div class="fav-box">
+    <h2>★ お気に入りの曲</h2>
+    <div class="fav-empty" id="favEmpty">まだお気に入りがありません。曲がかかったら、レコードカードの★ボタンで登録できます。</div>
+    <div id="favList"></div>
+  </div>
+
   <div class="sec-title">ジャンルを選んでください</div>
   <div class="genre-wrap" id="genreWrap">
     <button class="genre-chip sel" type="button" data-genre="昭和歌謡">昭和歌謡</button>
@@ -266,6 +320,7 @@ a { color: #ffd54f; }
     <div class="song-artist" id="songArtist"></div>
     <div class="song-genre" id="songGenre"></div>
     <div class="dj-talk" id="djTalk"></div>
+    <button class="fav-btn" id="favBtn" type="button">☆ お気に入りに登録</button>
   </div>
 
   <button class="spotify-btn" id="spotifyBtn" type="button">Spotifyでこのジャンルの曲を探す</button>
@@ -303,6 +358,11 @@ var spotifyBtn = document.getElementById("spotifyBtn");
 var historyList = document.getElementById("historyList");
 var historyEmpty = document.getElementById("historyEmpty");
 var voiceBtn = document.getElementById("voiceBtn");
+var favBtn = document.getElementById("favBtn");
+var favList = document.getElementById("favList");
+var favEmpty = document.getElementById("favEmpty");
+var favs = [];
+var currentSong = null;
 
 function selectGenre(genre, btn) {
   selectedGenre = genre;
@@ -424,6 +484,88 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;");
 }
 
+/* ===== お気に入り（localStorage保存） ===== */
+function loadFavs() {
+  try {
+    var s = localStorage.getItem("juke6_favs_v1");
+    if (s) {
+      var a = JSON.parse(s);
+      if (a && typeof a.length === "number") {
+        favs = a;
+      }
+    }
+  } catch (e) {}
+}
+
+function saveFavs() {
+  try {
+    localStorage.setItem("juke6_favs_v1", JSON.stringify(favs));
+  } catch (e) {}
+}
+
+function findFav(title, artist) {
+  var i;
+  for (i = 0; i < favs.length; i++) {
+    if (favs[i].title === title && favs[i].artist === artist) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function updateFavBtn() {
+  if (currentSong && findFav(currentSong.title, currentSong.artist) >= 0) {
+    favBtn.innerHTML = "★ お気に入り登録済み（タップで解除）";
+    favBtn.className = "fav-btn on";
+  } else {
+    favBtn.innerHTML = "☆ お気に入りに登録";
+    favBtn.className = "fav-btn";
+  }
+}
+
+function renderFavs() {
+  var html = "";
+  var i;
+  for (i = 0; i < favs.length; i++) {
+    html += "<div class=\"fav-row\">" +
+      "<button class=\"fav-del\" type=\"button\" data-fav-del=\"" + i + "\">解除</button>" +
+      "<div class=\"fav-info\">♪ " + escapeHtml(favs[i].title) + "<br>" +
+      escapeHtml(favs[i].artist) + "（" + escapeHtml(favs[i].genre) + "）</div></div>";
+  }
+  favList.innerHTML = html;
+  favEmpty.style.display = favs.length ? "none" : "block";
+  updateFavBtn();
+}
+
+favBtn.onclick = function () {
+  if (!currentSong) {
+    return;
+  }
+  var idx = findFav(currentSong.title, currentSong.artist);
+  if (idx >= 0) {
+    favs.splice(idx, 1);
+  } else {
+    favs.push({ title: currentSong.title, artist: currentSong.artist, genre: currentSong.genre });
+  }
+  saveFavs();
+  renderFavs();
+};
+
+favList.onclick = function (e) {
+  var t = e.target || e.srcElement;
+  while (t && t !== favList && t.tagName !== "BUTTON") {
+    t = t.parentNode;
+  }
+  if (t && t.tagName === "BUTTON") {
+    var idx = t.getAttribute("data-fav-del");
+    if (idx !== null && idx !== "") {
+      favs.splice(parseInt(idx, 10), 1);
+      saveFavs();
+      renderFavs();
+    }
+  }
+};
+
 function showError(kind, httpStatus) {
   var msg;
   if (kind === "quota") {
@@ -507,6 +649,8 @@ function playSong() {
       djTalkEl.innerHTML = escapeHtml(parsed.talk);
       recordCard.style.display = "block";
       spotifyBtn.style.display = "block";
+      currentSong = { title: parsed.title, artist: parsed.artist, genre: selectedGenre };
+      updateFavBtn();
       addHistory(parsed.title, selectedGenre);
       speak(parsed.talk);
     };
@@ -553,6 +697,9 @@ function playSong() {
 }
 
 playBtn.onclick = playSong;
+
+loadFavs();
+renderFavs();
 </script>
 </body>
 </html>

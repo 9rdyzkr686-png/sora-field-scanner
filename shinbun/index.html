@@ -41,6 +41,8 @@ margin-top: 12px; border: 1px solid #1a1a1a; padding: 8px 10px;
 .weather-box.w-title { font-size: 13px; font-weight: bold; letter-spacing: 0.2em; border-bottom: 1px solid #999; padding-bottom: 2px;}
 .weather-box.w-body { font-size: 16px; margin-top: 4px;}
 .weather-box.w-src { font-size: 11px; color: #555; font-family: sans-serif;}
+.w-week-title { font-size: 12px; font-weight: bold; letter-spacing: 0.2em; border-top: 1px dotted #999; margin-top: 6px; padding-top: 4px;}
+.w-week-row { font-size: 14px; line-height: 1.6; border-bottom: 1px dotted #ccc; padding: 2px 0;}
 .issue-btn {
 display: block; width: 100%; min-height: 56px; margin-top: 14px;
 font-size: 20px; font-weight: bold; letter-spacing: 0.1em;
@@ -174,6 +176,7 @@ background: #1a1a1a; color: #faf6ec; border: none; cursor: pointer;
 <div class="weather-box">
 <div class="w-title">天気欄（本物のデータ）</div>
 <div class="w-body" id="weatherBody">発行すると、ふじみ野市の今日の天気がここに出ます</div>
+<div id="weatherWeek"></div>
 <div class="w-src">出典：Open-Meteo（埼玉県ふじみ野市）</div>
 </div>
 
@@ -239,7 +242,7 @@ background: #1a1a1a; color: #faf6ec; border: none; cursor: pointer;
 var RSS2JSON = "https://api.rss2json.com/v1/api.json?rss_url=";
 var CUTIE_FEED = "https://news.google.com/rss/search?q=%22CUTIE%20STREET%22&hl=ja&gl=JP&ceid=JP:ja";
 var SPACE_FEED = "https://sorae.info/feed";
-var WEATHER_URL = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia%2FTokyo";
+var WEATHER_URL = "https://api.open-meteo.com/v1/forecast?latitude=35.8795&longitude=139.5197&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=7&timezone=Asia%2FTokyo";
 var AI_URL = "https://text.pollinations.ai/";
 
 var WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
@@ -339,6 +342,55 @@ if (code === 96 || code === 99) return "雷雨（雹あり）";
 return "不明";
 }
 
+function weatherEmoji(code) {
+if (code === 0) return "☀️";
+if (code === 1) return "🌤";
+if (code === 2) return "⛅";
+if (code === 3) return "☁️";
+if (code === 45 || code === 48) return "🌫";
+if (code === 51 || code === 53 || code === 55) return "🌦";
+if (code === 56 || code === 57) return "🌧";
+if (code === 61 || code === 63 || code === 65) return "🌧";
+if (code === 66 || code === 67) return "🌧";
+if (code === 71 || code === 73 || code === 75 || code === 77) return "🌨";
+if (code === 80 || code === 81 || code === 82) return "🌦";
+if (code === 85 || code === 86) return "🌨";
+if (code === 95 || code === 96 || code === 99) return "⛈";
+return "？";
+}
+
+/* 週間予報（同じOpen-Meteo応答の daily 配列から描く。失敗しても今日の天気は壊さない） */
+function renderWeek(d) {
+var box = el("weatherWeek");
+if (!box) return;
+box.innerHTML = "";
+try {
+var times = d.daily.time;
+var codes = d.daily.weather_code;
+var maxs = d.daily.temperature_2m_max;
+var mins = d.daily.temperature_2m_min;
+var n = times.length;
+if (n > 7) n = 7;
+var title = document.createElement("div");
+title.className = "w-week-title";
+title.textContent = "週間予報";
+box.appendChild(title);
+var wdNames = "日月火水木金土";
+for (var i = 0; i < n; i++) {
+var parts = String(times[i]).split("-");
+var dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+var label = parseInt(parts[1], 10) + "/" + parseInt(parts[2], 10) + "（" + wdNames.charAt(dt.getDay()) + "）";
+if (i === 0) label += " 今日";
+var row = document.createElement("div");
+row.className = "w-week-row";
+row.textContent = label + "　" + weatherEmoji(codes[i]) + " " + weatherName(codes[i]) + "　最高 " + Math.round(maxs[i]) + "℃ ／ 最低 " + Math.round(mins[i]) + "℃";
+box.appendChild(row);
+}
+} catch (e) {
+box.textContent = "週間予報は取得できませんでした";
+}
+}
+
 function fetchWeather() {
 var xhr = new XMLHttpRequest();
 xhr.open("GET", WEATHER_URL, true);
@@ -353,6 +405,7 @@ var min = Math.round(d.daily.temperature_2m_min[0]);
 var name = weatherName(d.daily.weather_code[0]);
 weatherText = "ふじみ野市　" + name + "　最高 " + max + "℃ ／ 最低 " + min + "℃";
 el("weatherBody").textContent = weatherText;
+renderWeek(d);
 } catch (e) {
 el("weatherBody").textContent = "天気データの読み取りに失敗しました";
 }

@@ -195,6 +195,39 @@ h1 {
   color: #8fa583;
   margin-top: 14px;
 }
+.searchRow {
+  overflow: hidden;
+  margin-top: 10px;
+}
+#searchInput {
+  float: left;
+  width: 68%;
+  min-height: 48px;
+  padding: 10px;
+  font-size: 16px;
+  background: #2c4a38;
+  color: #f3ecd8;
+  border: 1px solid #6d8a72;
+  border-radius: 8px;
+}
+#btnSearchClear {
+  float: right;
+  width: 29%;
+  min-height: 48px;
+  padding: 10px 6px;
+  font-size: 16px;
+  background: #2c4a38;
+  color: #f3ecd8;
+  border: 1px solid #6d8a72;
+  border-radius: 8px;
+}
+#searchCount {
+  text-align: center;
+  font-size: 14px;
+  color: #e8d9a0;
+  min-height: 20px;
+  margin-top: 4px;
+}
 </style>
 </head>
 <body>
@@ -221,6 +254,12 @@ h1 {
 <div id="statusLine"></div>
 <div id="sysLine"></div>
 
+<div class="searchRow">
+  <input type="text" id="searchInput" placeholder="章を検索（題名・本文）">
+  <button id="btnSearchClear" type="button">クリア</button>
+</div>
+<div id="searchCount"></div>
+
 <div class="book" id="bookArea">
   <p id="bookTitle"></p>
   <div id="bookGenre"></div>
@@ -246,6 +285,7 @@ var timerId = null;
 var startTime = 0;
 var startArmed = false;
 var clearArmed = false;
+var searchQuery = "";
 
 function el(id) { return document.getElementById(id); }
 
@@ -298,11 +338,17 @@ function render() {
     el("bookGenre").innerHTML = "";
     wrap.innerHTML = '<p class="emptyNote">まだ物語はありません。<br>ジャンルを選んで「新しい物語をはじめる」を押してください。</p>';
     el("finLine").innerHTML = "";
+    el("searchCount").innerHTML = "";
   } else {
     el("bookTitle").innerHTML = esc(title || "（無題）");
     el("bookGenre").innerHTML = "ジャンル：" + esc(genre) + " ／ 全" + chapters.length + "章";
+    var q = searchQuery;
+    var titleHit = (q !== "" && (title || "").indexOf(q) >= 0);
+    var hits = 0;
     var html = "";
     for (var j = 0; j < chapters.length; j++) {
+      if (q !== "" && !titleHit && chapters[j].indexOf(q) < 0) { continue; }
+      hits++;
       html += '<div class="chapter">';
       html += '<p class="chapterHead">第' + (j + 1) + '章</p>';
       html += '<p class="chapterText">' + esc(chapters[j]) + '</p>';
@@ -311,7 +357,11 @@ function render() {
       }
       html += '</div>';
     }
+    if (q !== "" && hits === 0) {
+      html = '<p class="emptyNote">「' + esc(q) + '」に合う章は見つかりませんでした。</p>';
+    }
     wrap.innerHTML = html;
+    el("searchCount").innerHTML = (q !== "") ? ("検索「" + esc(q) + "」：" + hits + "件ヒット（全" + chapters.length + "章）") : "";
     el("finLine").innerHTML = (chapters.length >= MAX_CH) ? "― 物語は完結しました ―" : "";
   }
   el("btnNext").disabled = busy || chapters.length === 0 || chapters.length >= MAX_CH;
@@ -476,6 +526,17 @@ function readLatest() {
   }
 }
 
+function applySearch() {
+  searchQuery = el("searchInput").value.replace(/^\s+/, "").replace(/\s+$/, "");
+  render();
+}
+
+function clearSearch() {
+  el("searchInput").value = "";
+  searchQuery = "";
+  render();
+}
+
 function clearBook() {
   if (busy) { return; }
   if (!clearArmed) {
@@ -500,6 +561,8 @@ function clearBook() {
 
 (function init() {
   var restored = load();
+  el("searchInput").oninput = applySearch;
+  el("btnSearchClear").onclick = clearSearch;
   render();
   if (restored) {
     el("sysLine").innerHTML = "しおりから再開しました";
